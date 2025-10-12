@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import LoginForm from './pages/auth/LoginForm'
-import Dashboard from './pages/Dashboard'
-import ListVirtualFile from './pages/virtualFile/ListVirtualFile'
-import EditVirtualFile from './pages/virtualFile/EditVirtualFile'
+import LoginForm from './presentation/pages/auth/LoginPage'
+import Dashboard from './presentation/pages/dashboard/DashboardPage'
+import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPage'
+import EditVirtualFile from './presentation/pages/older-adults/EditVirtualRecordPage'
 
 export default function App() {
   return (
