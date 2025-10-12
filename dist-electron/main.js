@@ -33,6 +33,7 @@ async function createWindow() {
     const win = new electron_1.BrowserWindow({
         width: 1000,
         height: 700,
+        icon: (0, path_1.join)(__dirname, '..', 'src', 'assets', 'asopogua.png'), // Agregar esta línea
         webPreferences: {
             preload: (0, path_1.join)(__dirname, 'preload.js'),
             contextIsolation: true,
