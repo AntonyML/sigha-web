@@ -38,7 +38,6 @@ export default function ListVirtualFile() {
     }
   }, [items, searchTerm])
 
-  // Función para limpiar la búsqueda
   const handleClearSearch = () => {
     setSearchTerm('')
   }
@@ -46,11 +45,11 @@ export default function ListVirtualFile() {
   if (!canView) return null
 
   const handleView = (item: VirtualFile) => {
-    navigate(`/virtualfiles/view/${item.id}`)
+    navigate(`/virtualFiles/view/${item.id}`)
   }
 
   const handleEdit = (item: VirtualFile) => {
-    navigate(`/virtualfiles/edit/${item.id}`)
+    navigate(`/virtualFiles/edit/${item.id}`)
   }
   
 
@@ -73,9 +72,15 @@ export default function ListVirtualFile() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>Listado de Archivos Virtuales</h2>
         <div className="d-flex gap-2">
-          <Button variant="secondary" onClick={() => navigate('/home')}>Regresar</Button>
+          <Button variant="secondary" onClick={() => navigate('/main-menu')}>
+            <i className="bi bi-arrow-left me-2"></i>
+            Regresar
+          </Button>
           {canCreate && (
-            <Button variant="primary" onClick={() => navigate('/dashboard')}>Crear ficha</Button>
+            <Button variant="primary" onClick={() => navigate('/dashboard')}>
+              <i className="bi bi-plus-circle me-2"></i>
+              Crear ficha
+            </Button>
           )}
         </div>
       </div>
@@ -84,6 +89,9 @@ export default function ListVirtualFile() {
       <div className="row mb-4">
         <div className="col-12 col-md-8 col-lg-6">
           <div className="input-group">
+            <span className="input-group-text">
+              <i className="bi bi-search"></i>
+            </span>
             <input
               type="text"
               className="form-control"
@@ -98,7 +106,7 @@ export default function ListVirtualFile() {
                 onClick={handleClearSearch}
                 title="Limpiar búsqueda"
               >
-                ✕
+                <i className="bi bi-x"></i>
               </button>
             )}
           </div>
@@ -138,9 +146,22 @@ export default function ListVirtualFile() {
                 <td>{it.createdAt ? new Date(it.createdAt).toLocaleString() : ''}</td>
                 <td className="text-end">
                   <div className="d-flex justify-content-end gap-2">
-                    <Button variant="link" onClick={() => handleView(it)}>Ver</Button>
-                    {canEdit && <Button variant="secondary" onClick={() => handleEdit(it)}>Editar</Button>}
-                    {canDelete && <Button variant="danger" onClick={() => handleDeleteClick(it)}>Eliminar</Button>}
+                    <Button variant="info" onClick={() => handleView(it)}>
+                      <i className="bi bi-eye me-1"></i>
+                      Ver
+                    </Button>
+                    {canEdit && (
+                      <Button variant="secondary" onClick={() => handleEdit(it)}>
+                        <i className="bi bi-pencil-square me-2"></i>
+                        Editar
+                      </Button>
+                    )}
+                    {canDelete && (
+                      <Button variant="danger" onClick={() => handleDeleteClick(it)}>
+                        <i className="bi bi-trash me-1"></i>
+                        Eliminar
+                      </Button>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -5,6 +5,7 @@ import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPa
 import EditVirtualFile from './presentation/pages/older-adults/EditVirtualRecordPage'
 import ListUser from './presentation/pages/users/UserListPage'
 import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
+import ViewAdultsPage from './presentation/pages/older-adults/ViewAdultsPage'
 export default function App() {
   return (
     <Routes>
@@ -15,6 +16,7 @@ export default function App() {
       <Route path="/virtualFiles/edit/:id" element={<EditVirtualFile />} />
       <Route path="/users" element={<ListUser />} />
       <Route path="/main-menu" element={<MainMenuPage />} />
+      <Route path="/virtualFiles/view/:id" element={<ViewAdultsPage />} />
     </Routes>
   )
 }
