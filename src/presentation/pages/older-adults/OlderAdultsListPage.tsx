@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components'
 
@@ -16,11 +16,32 @@ export default function ListVirtualFile() {
     { id: '2', title: 'Historia Clínica - María López', patientName: 'María López', createdAt: new Date().toISOString(), description: 'Seguimiento' },
   ])
   const [loading, setLoading] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filteredItems, setFilteredItems] = useState<VirtualFile[]>(items)
   const navigate = useNavigate()
   const [canDelete, setCanDelete] = useState(true)
   const [canEdit, setCanEdit] = useState(true)
   const [canCreate, setCanCreate] = useState(true)
   const [canView, setCanView] = useState(true)
+
+  // Efecto para filtrar los items basado en el término de búsqueda
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredItems(items)
+    } else {
+      const filtered = items.filter(item => 
+        item.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      setFilteredItems(filtered)
+    }
+  }, [items, searchTerm])
+
+  // Función para limpiar la búsqueda
+  const handleClearSearch = () => {
+    setSearchTerm('')
+  }
 
   if (!canView) return null
 
@@ -59,6 +80,36 @@ export default function ListVirtualFile() {
         </div>
       </div>
 
+      {/* Buscador de pacientes */}
+      <div className="row mb-4">
+        <div className="col-12 col-md-8 col-lg-6">
+          <div className="input-group">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por nombre de paciente"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                className="btn btn-outline-secondary"
+                type="button"
+                onClick={handleClearSearch}
+                title="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <small className="text-muted mt-1 d-block">
+              Mostrando {filteredItems.length} de {items.length} registros
+            </small>
+          )}
+        </div>
+      </div>
+
       <div className="table-responsive">
         <table className="table table-striped">
           <thead>
@@ -70,12 +121,17 @@ export default function ListVirtualFile() {
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 && (
+            {filteredItems.length === 0 && searchTerm && (
+              <tr>
+                <td colSpan={4}>No se encontraron resultados para "{searchTerm}".</td>
+              </tr>
+            )}
+            {filteredItems.length === 0 && !searchTerm && (
               <tr>
                 <td colSpan={4}>No se encontraron archivos virtuales.</td>
               </tr>
             )}
-            {items.map((it) => (
+            {filteredItems.map((it) => (
               <tr key={it.id}>
                 <td>{it.title}</td>
                 <td>{it.patientName}</td>
