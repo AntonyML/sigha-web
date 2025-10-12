@@ -1,4 +1,3 @@
-export { default as Button } from './button/Button'
-export { default as TextInput } from './textInput/TextInput'
-export { default as Checkbox } from './checkbox/Checkbox'
-export { default as LoginForm } from '../pages/auth/LoginForm'
+export { default as Button } from './atoms/Button/Button'
+export { default as Input } from './atoms/Input/Input'
+export { default as Checkbox } from './atoms/Checkbox/Checkbox'

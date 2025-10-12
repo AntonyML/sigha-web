@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Logo from '../../../assets/images/asopogua.png'
+import Logo from  '../../assets/asopogua.png'
 export default function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +26,7 @@ export default function LoginForm() {
             <img 
               src={Logo} 
               alt="Logo" 
-              style={{ width: '150px', height: '150px', marginBottom: '20px' }}
+              style={{ width: '80px', height: '80px', marginBottom: '20px' }}
             />
             <h4 className="text-primary">Iniciar sesión</h4>
             <p className="text-muted">Hogar de Ancianos</p>

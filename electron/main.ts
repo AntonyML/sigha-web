@@ -34,7 +34,7 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 1000,
     height: 700,
-    icon: join(__dirname, '..', 'src', 'assets', 'asopogua.png'), // Agregar esta línea
+    icon: join(__dirname, '..', 'src', 'assets', 'asopogua.png'), 
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,

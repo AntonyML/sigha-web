@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type { FormData } from '../../types/formData'
-import { defaultFormData } from '../../types/formData'
+import type { FormData } from '../../../types/formData'
+import { defaultFormData } from '../../../types/formData'
 
 export default function EditVirtualFile() {
   const { id } = useParams<{ id: string }>()

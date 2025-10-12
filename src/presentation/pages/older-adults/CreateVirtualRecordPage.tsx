@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import type { FormData } from '../../types/formData'
-import { defaultFormData } from '../../types/formData'
+import type { FormData } from '../../../types/formData'
+import { defaultFormData } from '../../../types/formData'
 import { useNavigate } from 'react-router-dom'
 
 export default function CreateVirtualFile() {
