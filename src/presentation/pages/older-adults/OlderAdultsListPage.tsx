@@ -29,7 +29,7 @@ export default function ListVirtualFile() {
     if (!searchTerm.trim()) {
       setFilteredItems(items)
     } else {
-      const filtered = items.filter(item => 
+      const filtered = items.filter(item =>
         item.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -51,7 +51,7 @@ export default function ListVirtualFile() {
   const handleEdit = (item: VirtualFile) => {
     navigate(`/virtualFiles/edit/${item.id}`)
   }
-  
+
 
   const handleDeleteClick = (item: VirtualFile) => {
     if (!canDelete) {

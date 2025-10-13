@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../../../assets/images/asopogua.png'
 export default function LoginForm() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('antonyml@gmail.com')
+  const [password, setPassword] = useState('123456')
   const navigate = useNavigate()
 
   function submit(e: React.FormEvent) {

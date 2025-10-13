@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
     id: string;
@@ -29,8 +30,14 @@ export default function UserListPage() {
         }
     ]);
 
+    const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
+    const navigate = useNavigate();
+    const [canDelete, setCanDelete] = useState(true);
+    const [canEdit, setCanEdit] = useState(true);
+    const [canCreate, setCanCreate] = useState(true);
+    const [canView, setCanView] = useState(true);
 
     // Efecto para filtrar los usuarios basado en el término de búsqueda
     useEffect(() => {
@@ -53,16 +60,52 @@ export default function UserListPage() {
         setSearchTerm('');
     };
 
+    if (!canView) return null;
+
+    const handleView = (user: User) => {
+        navigate(`/users/view/${user.id}`);
+        console.log('Ver usuario:', user.id);
+    };
+
+    const handleEdit = (user: User) => {
+        navigate(`/users/edit/${user.id}`);
+        console.log('Editar usuario:', user.id);
+    };
+
+    const handleDeleteClick = (user: User) => {
+        if (!canDelete) {
+            window.alert('No tienes permiso para eliminar.');
+            return;
+        }
+
+        const ok = window.confirm(`¿Estás seguro que deseas eliminar al usuario "${user.name}"?`);
+        if (!ok) return;
+
+        setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    };
+
+    if (loading) return <div>Cargando usuarios...</div>;
+
     return (
         <div className="container py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>Lista de Usuarios</h2>
-                <button
-                    className="btn btn-primary"
-                    onClick={() => console.log('Navegar a creación de usuario')}
-                >
-                    Crear Usuario
-                </button>
+                <div className="d-flex gap-2">
+                    <button
+                        className="btn btn-secondary"
+                        onClick={() => navigate('/main-menu')}
+                    >
+                        Regresar
+                    </button>
+                    {canCreate && (
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate('/users/create')}
+                        >
+                            Crear Usuario
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Buscador de usuarios */}
@@ -103,19 +146,18 @@ export default function UserListPage() {
                             <th>Nombre</th>
                             <th>Roles</th>
                             <th>Email</th>
+                            <th className="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredUsers.length === 0 && searchTerm && (
                             <tr>
-                                <td colSpan={4}>No se encontraron resultados para "{searchTerm}".</td>
+                                <td colSpan={5}>No se encontraron resultados para "{searchTerm}".</td>
                             </tr>
                         )}
                         {filteredUsers.length === 0 && !searchTerm && (
                             <tr>
-                                <td colSpan={4} className="text-center">
-                                    No se encontraron usuarios
-                                </td>
+                                <td colSpan={5}>No se encontraron usuarios.</td>
                             </tr>
                         )}
                         {filteredUsers.map((user, index) => (
@@ -131,6 +173,33 @@ export default function UserListPage() {
                                     ))}
                                 </td>
                                 <td>{user.email}</td>
+                                <td className="text-end">
+                                    <div className="d-flex justify-content-end gap-2">
+                                        <button
+                                            className="btn btn-info btn-sm"
+                                            onClick={() => handleView(user)}
+                                        >
+                                            <i className="bi bi-eye me-1"></i>
+                                            Ver
+                                        </button>
+                                        {canEdit && (
+                                            <button
+                                                className="btn btn-secondary btn-sm"
+                                                onClick={() => handleEdit(user)}
+                                            >
+                                                Editar
+                                            </button>
+                                        )}
+                                        {canDelete && (
+                                            <button
+                                                className="btn btn-danger btn-sm"
+                                                onClick={() => handleDeleteClick(user)}
+                                            >
+                                                Eliminar
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
