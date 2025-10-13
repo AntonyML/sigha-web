@@ -24,7 +24,6 @@ export default function ListVirtualFile() {
   const [canCreate, setCanCreate] = useState(true)
   const [canView, setCanView] = useState(true)
 
-  // Efecto para filtrar los items basado en el término de búsqueda
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredItems(items)
@@ -122,6 +121,7 @@ export default function ListVirtualFile() {
         <table className="table table-striped">
           <thead>
             <tr>
+              <th>#</th>
               <th>Título</th>
               <th>Paciente</th>
               <th>Fecha</th>
@@ -131,36 +131,46 @@ export default function ListVirtualFile() {
           <tbody>
             {filteredItems.length === 0 && searchTerm && (
               <tr>
-                <td colSpan={4}>No se encontraron resultados para "{searchTerm}".</td>
+                <td colSpan={5}>No se encontraron resultados para "{searchTerm}".</td>
               </tr>
             )}
             {filteredItems.length === 0 && !searchTerm && (
               <tr>
-                <td colSpan={4}>No se encontraron archivos virtuales.</td>
+                <td colSpan={5}>No se encontraron archivos virtuales.</td>
               </tr>
             )}
-            {filteredItems.map((it) => (
+            {filteredItems.map((it, index) => (
               <tr key={it.id}>
+                <td>{index + 1}</td>
                 <td>{it.title}</td>
                 <td>{it.patientName}</td>
                 <td>{it.createdAt ? new Date(it.createdAt).toLocaleString() : ''}</td>
                 <td className="text-end">
                   <div className="d-flex justify-content-end gap-2">
-                    <Button variant="info" onClick={() => handleView(it)}>
+                    <button
+                      className="btn btn-info btn-sm"
+                      onClick={() => handleView(it)}
+                    >
                       <i className="bi bi-eye me-1"></i>
                       Ver
-                    </Button>
+                    </button>
                     {canEdit && (
-                      <Button variant="secondary" onClick={() => handleEdit(it)}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => handleEdit(it)}
+                      >
                         <i className="bi bi-pencil-square me-2"></i>
                         Editar
-                      </Button>
+                      </button>
                     )}
                     {canDelete && (
-                      <Button variant="danger" onClick={() => handleDeleteClick(it)}>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDeleteClick(it)}
+                      >
                         <i className="bi bi-trash me-1"></i>
                         Eliminar
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </td>

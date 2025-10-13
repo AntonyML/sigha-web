@@ -10,7 +10,6 @@ export default function EditVirtualFile() {
   const [formData, setFormData] = useState<FormData>(defaultFormData)
   const [loading, setLoading] = useState<boolean>(true)
 
-  // Mock "fetch" — reemplaza por servicio real cuando esté disponible
   useEffect(() => {
     console.log('EditVirtualFile mounted, id=', id)
     if (!id) {
@@ -79,12 +78,10 @@ export default function EditVirtualFile() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    console.log('Guardar virtual file (mock):', id, formData)
-    // TODO: llamar servicio real para guardar
+
     navigate('/virtualFiles')
   }
 
-  // Manejo cuando no hay id en la ruta
   if (!id) {
     return (
       <div className="container py-4">
@@ -104,9 +101,14 @@ export default function EditVirtualFile() {
 
   return (
     <div className="container py-4">
-      <h3 className="mb-3">Editar Expediente Virtual {id ? `#${id}` : ''}</h3>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="mb-0">Editar Expediente Virtual {id ? `#${id}` : ''}</h3>
+        <button className="btn btn-secondary" onClick={() => navigate('/virtualFiles')}>
+          <i className="bi bi-arrow-left me-2"></i>
+          Regresar
+        </button>
+      </div>
       <form onSubmit={handleSubmit}>
-        {/* Reutiliza la misma estructura de campos que CreateVirtualFile */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-3">
             <label htmlFor="fecha" className="form-label">FECHA</label>
@@ -139,8 +141,6 @@ export default function EditVirtualFile() {
               }} />
           </div>
         </div>
-
-        {/* Resto de campos (idénticos a CreateVirtualFile) */}
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-6">
             <label htmlFor="nombreApellido" className="form-label">NOMBRE Y APELLIDO</label>
@@ -204,8 +204,6 @@ export default function EditVirtualFile() {
             <input readOnly className="form-control" value={formData.imc} placeholder="Calculado automáticamente" />
           </div>
         </div>
-
-        {/* Condiciones médicas (checkboxes) */}
         <div className="mb-3">
           <h6>Condiciones Médicas</h6>
           <div className="row">
@@ -251,8 +249,6 @@ export default function EditVirtualFile() {
               onChange={(e) => onInputChange('otrasCondiciones', e.target.value)} />
           </div>
         </div>
-
-        {/* RCVG / Vacunación / Visión / Audición (igual que create) */}
         <div className="mb-4">
           <h6>RCVG</h6>
           <div className="d-flex flex-wrap gap-3">

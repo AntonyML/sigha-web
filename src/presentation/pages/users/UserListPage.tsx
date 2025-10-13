@@ -95,6 +95,7 @@ export default function UserListPage() {
                         className="btn btn-secondary"
                         onClick={() => navigate('/main-menu')}
                     >
+                        <i className="bi bi-arrow-left me-2"></i>
                         Regresar
                     </button>
                     {canCreate && (
@@ -102,6 +103,7 @@ export default function UserListPage() {
                             className="btn btn-primary"
                             onClick={() => navigate('/users/create')}
                         >
+                            <i className="bi bi-plus-circle me-2"></i>
                             Crear Usuario
                         </button>
                     )}
@@ -112,6 +114,9 @@ export default function UserListPage() {
             <div className="row mb-4">
                 <div className="col-12 col-md-8 col-lg-6">
                     <div className="input-group">
+                        <span className="input-group-text">
+                            <i className="bi bi-search"></i>
+                        </span>
                         <input
                             type="text"
                             className="form-control"
@@ -187,6 +192,7 @@ export default function UserListPage() {
                                                 className="btn btn-secondary btn-sm"
                                                 onClick={() => handleEdit(user)}
                                             >
+                                                <i className="bi bi-pencil-square me-2"></i>
                                                 Editar
                                             </button>
                                         )}
@@ -195,6 +201,7 @@ export default function UserListPage() {
                                                 className="btn btn-danger btn-sm"
                                                 onClick={() => handleDeleteClick(user)}
                                             >
+                                                <i className="bi bi-trash me-1"></i>
                                                 Eliminar
                                             </button>
                                         )}

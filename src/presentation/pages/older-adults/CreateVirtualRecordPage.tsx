@@ -20,8 +20,13 @@ export default function CreateVirtualFile() {
   return (
     <div className="container py-4">
       <form onSubmit={handleSubmit}>
-        <h3 className="mb-3">DATOS PERSONALES</h3>
-
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h3 className="mb-0">DATOS PERSONALES</h3>
+          <button className="btn btn-secondary" onClick={() => navigate('/virtualFiles')}>
+            <i className="bi bi-arrow-left me-2"></i>
+            Regresar
+          </button>
+        </div>
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-3">
             <label htmlFor="fecha" className="form-label">FECHA</label>
