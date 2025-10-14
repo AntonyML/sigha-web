@@ -99,7 +99,7 @@ export const twoFactorService = {
     /**
      * Obtener información de debug de 2FA (solo para desarrollo)
      * Requiere autenticación
-     * ⚠️ Este endpoint debe ser eliminado en producción
+     * ADVERTENCIA: Este endpoint debe ser eliminado en producción
      */
     get2FADebug: async (): Promise<TwoFactorDebugResponse> => {
         const response = await apiClient.get<TwoFactorDebugResponse>('/auth/2fa/debug');

@@ -393,7 +393,7 @@ export const twoFactorFlow = {
     /**
      * Flujo para obtener información de debug (solo desarrollo)
      * 
-     * ⚠️ Este método solo debe usarse en desarrollo
+     * ADVERTENCIA: Este método solo debe usarse en desarrollo
      * 
      * @returns Información de debug del 2FA
      */
@@ -401,7 +401,7 @@ export const twoFactorFlow = {
         try {
             const isDev = import.meta.env.DEV;
             if (!isDev) {
-                console.warn('⚠️ Debug info no disponible en producción');
+                console.warn('ADVERTENCIA: Debug info no disponible en producción');
                 return null;
             }
 

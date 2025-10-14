@@ -40,16 +40,16 @@ La interfaz está diseñada con **componentes reutilizables** siguiendo principi
 
 ## Características Principales
 
-- **Autenticación Segura**: Login con JWT + Verificación 2FA obligatoria
-- **Dashboard Interactivo**: Métricas y estadísticas en tiempo real
-- **Gestión de Usuarios**: CRUD completo con asignación de roles
-- **Expedientes Digitales**: Creación, edición y consulta de fichas virtuales
-- **Sistema de Citas**: Calendario interactivo con programación de atenciones
-- **Historiales Médicos**: Visualización completa con timeline de eventos
-- **Auditoría Visual**: Dashboard con filtros avanzados y exportación
-- **Notificaciones en Tiempo Real**: Alertas y recordatorios
-- **Modo Offline**: Caché local para operación sin conexión
-- **Interfaz Accesible**: Diseño inclusivo con fuentes grandes y alto contraste
+- **Autenticación Segura**: Login con JWT + Verificación 2FA obligatoria con códigos TOTP
+- **Configuración 2FA**: Módulo completo para configurar autenticación de dos factores
+- **Dashboard Interactivo**: Menú principal con acceso a todos los módulos
+- **Gestión de Usuarios**: CRUD completo con asignación de roles y estados
+- **Expedientes Digitales**: Sistema de fichas virtuales para adultos mayores
+- **Sistema de Citas**: Gestión de citas médicas y atenciones (en desarrollo)
+- **Historiales Médicos**: Visualización de datos clínicos (en desarrollo)
+- **Auditoría**: Sistema de registro de actividades (en desarrollo)
+- **Control de Sesiones**: Gestión de múltiples sesiones activas por usuario
+- **Interfaz Responsiva**: Diseño adaptable con Bootstrap 5
 
 ---
 
@@ -58,26 +58,80 @@ La interfaz está diseñada con **componentes reutilizables** siguiendo principi
 El frontend implementa **Clean Architecture** con separación de responsabilidades:
 
 ```
-Presentation Layer (UI Components)
+Presentation Layer (UI Components & Pages)
         ↓
-Application Layer (Hooks, Context, State Management)
+Infrastructure Layer (Flows - Business Logic)
         ↓
-Domain Layer (Models, Business Logic)
+Services Layer (HTTP API Calls)
         ↓
-Infrastructure Layer (API Services, Storage)
+Backend API (NestJS)
 ```
 
-**Patrones de Diseño**:
-- **Atomic Design**: Componentes organizados en atoms, molecules, organisms, templates, pages
-- **Container/Presenter Pattern**: Separación entre lógica y presentación
-- **Custom Hooks**: Reutilización de lógica con hooks personalizados
-- **Context API + Zustand**: Gestión de estado global optimizada
-- **Repository Pattern**: Abstracción de llamadas API
+### Capa de Flows (Arquitectura Principal)
 
-**Principios SOLID Aplicados**:
-- **Single Responsibility**: Cada componente tiene una única responsabilidad
-- **Open/Closed**: Componentes extensibles mediante props
-- **Dependency Inversion**: Inyección de dependencias mediante Context
+El proyecto utiliza una **arquitectura basada en Flows** que centraliza la lógica de negocio:
+
+**Page → Flow → Service → Backend**
+
+- **Pages**: Componentes de presentación que manejan UI y estado local
+- **Flows**: Capa intermedia con lógica de negocio, validaciones y transformaciones
+- **Services**: Llamadas HTTP puras sin lógica de negocio
+- **Backend**: API REST con NestJS
+
+### Flows Implementados
+
+#### 1. **authFlow** (`infrastructure/flows/authFlow.ts`)
+Gestión completa de autenticación:
+- `login()`: Login con credenciales, retorna si requiere 2FA
+- `verify2FA()`: Verificación de código 2FA
+- `logout()`: Cierre de sesión y limpieza de tokens
+- `refreshToken()`: Renovación automática de tokens
+- `getCurrentUser()`: Obtener usuario autenticado actual
+- `getActiveSessions()`: Listar sesiones activas del usuario
+- `terminateSession()`: Cerrar sesión específica
+- `terminateAllSessions()`: Cerrar todas las sesiones
+- `isAuthenticated()`: Verificar si hay sesión válida
+
+#### 2. **userFlow** (`infrastructure/flows/userFlow.ts`)
+Gestión de usuarios y roles:
+- `getAllUsers()`: Listar todos los usuarios
+- `getUserById()`: Obtener usuario por ID
+- `createUser()`: Crear nuevo usuario con validaciones
+- `updateUser()`: Actualizar datos de usuario
+- `deleteUser()`: Eliminar usuario (soft delete)
+- `toggleUserStatus()`: Activar/desactivar usuario
+- `changePassword()`: Cambio de contraseña con validación
+- `getAllRoles()`: Obtener lista de roles disponibles
+- `searchUsers()`: Búsqueda de usuarios con filtros
+- `getFullName()`: Formatear nombre completo del usuario
+- `isUserActive()`: Verificar si usuario está activo
+
+#### 3. **twoFactorFlow** (`infrastructure/flows/twoFactorFlow.ts`)
+Configuración y gestión de 2FA:
+- `generate2FA()`: Generar QR code y secret para configurar 2FA
+- `enable2FA()`: Habilitar 2FA con verificación de código
+- `disable2FA()`: Deshabilitar 2FA
+- `get2FAStatus()`: Obtener estado actual de 2FA del usuario
+- `regenerateBackupCodes()`: Regenerar códigos de respaldo
+- `setup2FA()`: Flujo completo de configuración inicial
+- `is2FAEnabled()`: Verificar si 2FA está activo
+
+#### 4. **virtualFileFlow** (`infrastructure/flows/virtualFileFlow.ts`)
+Gestión de expedientes virtuales (en desarrollo)
+
+### Patrones de Diseño
+
+- **Flow Pattern**: Lógica de negocio centralizada en flows
+- **Service Pattern**: Servicios HTTP sin lógica de negocio
+- **Atomic Design**: Componentes organizados en atoms, molecules, organisms, templates, pages
+- **Custom Hooks**: Reutilización de lógica con hooks personalizados
+- **Singleton Storage**: localStorage con patrón singleton
+
+### Principios SOLID Aplicados
+
+- **Single Responsibility**: Cada flow tiene una responsabilidad específica
+- **Open/Closed**: Flows extensibles mediante composición
+- **Dependency Inversion**: Pages dependen de abstracciones (flows) no de implementaciones
 
 ---
 
@@ -89,18 +143,13 @@ Infrastructure Layer (API Services, Storage)
 | Lenguaje | TypeScript 5.3 |
 | Build Tool | Vite 5.0 |
 | Escritorio | Electron 28 |
-| Estilos | TailwindCSS 3.4 |
-| UI Components | Radix UI, Headless UI |
-| Estado Global | Zustand 4.5 |
-| Formularios | React Hook Form 7.5 |
-| Validación | Zod 3.22 |
+| Estilos | Bootstrap 5.3 |
+| Estado Global | React Hooks (useState, useEffect) |
+| Formularios | Validación nativa + React |
 | HTTP Client | Axios 1.6 |
 | Routing | React Router v6 |
-| Iconos | Lucide React |
-| Gráficos | Recharts 2.10 |
-| Tablas | TanStack Table v8 |
-| Fechas | date-fns 3.0 |
-| PDF Viewer | react-pdf 7.7 |
+| Autenticación | JWT + 2FA (TOTP) |
+| Storage | localStorage (Singleton Pattern) |
 | Testing | Vitest, Testing Library |
 | Linting | ESLint, Prettier |
 
@@ -184,12 +233,16 @@ El instalador se generará en `dist/electron/`
 frontend_proton_react_hogar_de_ancianos/
 │
 ├── public/                                    # Archivos estáticos
-│   ├── icons/
-│   └── fonts/
+│
+├── electron/                                  # Configuración Electron
+│   ├── main.ts                                # Proceso principal
+│   ├── preload.ts                             # Preload script
+│   └── tsconfig.json
 │
 ├── src/
 │   ├── main.tsx                               # Entry point
-│   ├── App.tsx                                # Componente raíz
+│   ├── App.tsx                                # Componente raíz con rutas
+│   ├── App.css                                # Estilos globales
 │   │
 │   ├── assets/                                # Recursos estáticos
 │   │   ├── images/
@@ -197,294 +250,118 @@ frontend_proton_react_hogar_de_ancianos/
 │   │   └── styles/
 │   │       └── global.css
 │   │
-│   ├── config/                                # Configuraciones
-│   │   ├── axios.config.ts                    # Configuración Axios
-│   │   ├── constants.ts                       # Constantes globales
-│   │   └── routes.config.ts                   # Configuración de rutas
-│   │
-│   ├── types/                                 # Tipos TypeScript globales
-│   │   ├── api.types.ts
-│   │   ├── auth.types.ts
-│   │   ├── user.types.ts
-│   │   ├── older-adult.types.ts
-│   │   ├── appointment.types.ts
+│   ├── types/                                 # Tipos TypeScript
+│   │   ├── auth.ts                            # Tipos de autenticación
+│   │   ├── user.ts                            # Tipos de usuarios
+│   │   ├── twoFactor.ts                       # Tipos de 2FA
+│   │   ├── virtualFile.ts                     # Tipos de expedientes
+│   │   ├── formData.ts                        # Tipos de formularios
 │   │   └── index.ts
 │   │
 │   ├── infrastructure/                        # Capa de Infraestructura
 │   │   │
-│   │   ├── api/                               # Servicios API
-│   │   │   ├── axios.instance.ts              # Instancia configurada
-│   │   │   ├── auth.service.ts                # Auth endpoints
-│   │   │   ├── users.service.ts               # Users endpoints
-│   │   │   ├── older-adults.service.ts        # Older adults endpoints
-│   │   │   ├── appointments.service.ts        # Appointments endpoints
-│   │   │   ├── medical-records.service.ts     # Medical records endpoints
-│   │   │   ├── roles.service.ts               # Roles endpoints
-│   │   │   ├── audit.service.ts               # Audit endpoints
-│   │   │   ├── programs.service.ts            # Programs endpoints
-│   │   │   └── index.ts
+│   │   ├── flows/                             # Lógica de negocio
+│   │   │   ├── authFlow.ts                    # Flow de autenticación
+│   │   │   ├── userFlow.ts                    # Flow de usuarios
+│   │   │   ├── twoFactorFlow.ts               # Flow de 2FA
+│   │   │   └── virtualFileFlow.ts             # Flow de expedientes
 │   │   │
 │   │   ├── storage/                           # Almacenamiento local
-│   │   │   ├── local-storage.service.ts       # LocalStorage helper
-│   │   │   ├── session-storage.service.ts     # SessionStorage helper
-│   │   │   └── index-db.service.ts            # IndexedDB para offline
+│   │   │   └── authStorage.ts                 # Storage de autenticación
 │   │   │
 │   │   └── utils/                             # Utilidades
-│   │       ├── format-date.util.ts
-│   │       ├── format-currency.util.ts
-│   │       ├── validate-dni.util.ts
-│   │       ├── pdf-generator.util.ts
-│   │       └── index.ts
+│   │       └── Alert.ts                       # Alertas personalizadas
+│   │
+│   ├── services/                              # Servicios HTTP
+│   │   ├── authService.ts                     # API de autenticación
+│   │   ├── userService.ts                     # API de usuarios
+│   │   ├── twoFactorService.ts                # API de 2FA
+│   │   └── virtualFileService.ts              # API de expedientes
 │   │
 │   ├── domain/                                # Capa de Dominio
 │   │   ├── models/                            # Modelos de dominio
-│   │   │   ├── User.model.ts
-│   │   │   ├── OlderAdult.model.ts
-│   │   │   ├── Appointment.model.ts
-│   │   │   ├── MedicalRecord.model.ts
-│   │   │   └── index.ts
-│   │   │
-│   │   ├── interfaces/                        # Interfaces de dominio
-│   │   │   ├── IAuthRepository.ts
-│   │   │   ├── IUserRepository.ts
-│   │   │   └── index.ts
-│   │   │
+│   │   ├── interfaces/                        # Interfaces
 │   │   └── enums/                             # Enumeraciones
-│   │       ├── roles.enum.ts
-│   │       ├── appointment-status.enum.ts
-│   │       └── index.ts
-│   │
-│   ├── application/                           # Capa de Aplicación
-│   │   │
-│   │   ├── hooks/                             # Custom Hooks
-│   │   │   ├── auth/
-│   │   │   │   ├── useAuth.ts                 # Hook de autenticación
-│   │   │   │   ├── useLogin.ts                # Hook de login
-│   │   │   │   └── use2FA.ts                  # Hook de 2FA
-│   │   │   ├── users/
-│   │   │   │   ├── useUsers.ts                # Hook CRUD usuarios
-│   │   │   │   ├── useCreateAdmin.ts
-│   │   │   │   └── useUserPermissions.ts
-│   │   │   ├── older-adults/
-│   │   │   │   ├── useOlderAdults.ts
-│   │   │   │   ├── useVirtualRecord.ts
-│   │   │   │   └── useGeneratePDF.ts
-│   │   │   ├── appointments/
-│   │   │   │   ├── useAppointments.ts
-│   │   │   │   ├── useScheduleAppointment.ts
-│   │   │   │   └── useAppointmentCalendar.ts
-│   │   │   ├── medical-records/
-│   │   │   │   ├── useMedicalRecords.ts
-│   │   │   │   └── useClinicalHistory.ts
-│   │   │   ├── audit/
-│   │   │   │   ├── useAuditLogs.ts
-│   │   │   │   └── useGenerateReport.ts
-│   │   │   ├── roles/
-│   │   │   │   ├── useRoles.ts
-│   │   │   │   └── usePermissions.ts
-│   │   │   └── common/
-│   │   │       ├── useDebounce.ts
-│   │   │       ├── useLocalStorage.ts
-│   │   │       ├── useOnlineStatus.ts
-│   │   │       └── usePagination.ts
-│   │   │
-│   │   ├── context/                           # Context Providers
-│   │   │   ├── AuthContext.tsx                # Contexto de autenticación
-│   │   │   ├── ThemeContext.tsx               # Contexto de tema
-│   │   │   ├── NotificationContext.tsx        # Contexto de notificaciones
-│   │   │   └── index.ts
-│   │   │
-│   │   └── store/                             # Estado Global (Zustand)
-│   │       ├── auth.store.ts                  # Store de autenticación
-│   │       ├── user.store.ts                  # Store de usuarios
-│   │       ├── notification.store.ts          # Store de notificaciones
-│   │       └── index.ts
 │   │
 │   ├── presentation/                          # Capa de Presentación
 │   │   │
 │   │   ├── components/                        # Componentes UI (Atomic Design)
-│   │   │   │
 │   │   │   ├── atoms/                         # Componentes básicos
 │   │   │   │   ├── Button/
-│   │   │   │   │   ├── Button.tsx
-│   │   │   │   │   ├── Button.test.tsx
-│   │   │   │   │   └── Button.styles.ts
+│   │   │   │   │   └── Button.tsx
 │   │   │   │   ├── Input/
-│   │   │   │   ├── Label/
-│   │   │   │   ├── Badge/
-│   │   │   │   ├── Avatar/
-│   │   │   │   ├── Icon/
-│   │   │   │   ├── Spinner/
+│   │   │   │   │   └── Input.tsx
+│   │   │   │   ├── Checkbox/
+│   │   │   │   │   └── Checkbox.tsx
 │   │   │   │   └── index.ts
-│   │   │   │
 │   │   │   ├── molecules/                     # Componentes combinados
-│   │   │   │   ├── FormField/
-│   │   │   │   ├── SearchBar/
-│   │   │   │   ├── DatePicker/
-│   │   │   │   ├── SelectDropdown/
-│   │   │   │   ├── UserAvatar/
-│   │   │   │   ├── StatusBadge/
-│   │   │   │   ├── ActionButton/
-│   │   │   │   ├── NotificationItem/
-│   │   │   │   └── index.ts
-│   │   │   │
 │   │   │   ├── organisms/                     # Componentes complejos
-│   │   │   │   ├── Header/
-│   │   │   │   │   ├── Header.tsx
-│   │   │   │   │   └── Header.test.tsx
-│   │   │   │   ├── Sidebar/
-│   │   │   │   ├── DataTable/
-│   │   │   │   ├── LoginForm/
-│   │   │   │   ├── TwoFactorForm/
-│   │   │   │   ├── UserForm/
-│   │   │   │   ├── OlderAdultForm/
-│   │   │   │   ├── AppointmentCalendar/
-│   │   │   │   ├── MedicalRecordTimeline/
-│   │   │   │   ├── AuditLogTable/
-│   │   │   │   ├── NotificationPanel/
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── templates/                     # Layouts de página
-│   │   │   │   ├── AuthLayout/
-│   │   │   │   │   └── AuthLayout.tsx
-│   │   │   │   ├── DashboardLayout/
-│   │   │   │   │   ├── DashboardLayout.tsx
-│   │   │   │   │   ├── DashboardHeader.tsx
-│   │   │   │   │   └── DashboardSidebar.tsx
-│   │   │   │   ├── EmptyLayout/
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   └── shared/                        # Componentes compartidos
-│   │   │       ├── ErrorBoundary/
-│   │   │       ├── LoadingScreen/
-│   │   │       ├── Modal/
-│   │   │       ├── Toast/
-│   │   │       ├── ConfirmDialog/
-│   │   │       └── index.ts
+│   │   │   └── templates/                     # Layouts de página
 │   │   │
-│   │   ├── pages/                             # Páginas de la aplicación
-│   │   │   │
-│   │   │   ├── auth/                          # Módulo de Autenticación
-│   │   │   │   ├── LoginPage.tsx              # Página de login
-│   │   │   │   ├── TwoFactorPage.tsx          # Página de verificación 2FA
-│   │   │   │   ├── ForgotPasswordPage.tsx     # Recuperar contraseña
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── dashboard/                     # Dashboard Principal
-│   │   │   │   ├── DashboardPage.tsx          # Dashboard general
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── StatsCard.tsx
-│   │   │   │   │   ├── RecentActivities.tsx
-│   │   │   │   │   ├── QuickActions.tsx
-│   │   │   │   │   └── AppointmentsOverview.tsx
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── users/                         # Gestión de Usuarios
-│   │   │   │   ├── UsersListPage.tsx          # Lista de usuarios
-│   │   │   │   ├── CreateUserPage.tsx         # Crear usuario
-│   │   │   │   ├── CreateAdminPage.tsx        # Crear administrador
-│   │   │   │   ├── CreateSuperAdminPage.tsx   # Crear super admin
-│   │   │   │   ├── EditUserPage.tsx           # Editar usuario
-│   │   │   │   ├── UserDetailPage.tsx         # Detalle de usuario
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── roles/                         # Gestión de Roles
-│   │   │   │   ├── RolesListPage.tsx          # Lista de roles
-│   │   │   │   ├── CreateRolePage.tsx         # Crear rol personalizado
-│   │   │   │   ├── EditRolePage.tsx           # Editar rol
-│   │   │   │   ├── RoleDetailPage.tsx         # Detalle de rol
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── older-adults/                  # Gestión de Adultos Mayores
-│   │   │   │   ├── OlderAdultsListPage.tsx    # Lista de adultos mayores
-│   │   │   │   ├── CreateVirtualRecordPage.tsx # Crear ficha virtual
-│   │   │   │   ├── EditVirtualRecordPage.tsx  # Editar ficha
-│   │   │   │   ├── VirtualRecordDetailPage.tsx # Detalle completo
-│   │   │   │   ├── GeneratePDFPage.tsx        # Vista previa PDF
-│   │   │   │   ├── ShareWithSpecialistPage.tsx # Compartir ficha
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── appointments/                  # Gestión de Citas
-│   │   │   │   ├── AppointmentsListPage.tsx   # Lista de citas
-│   │   │   │   ├── ScheduleAppointmentPage.tsx # Programar cita
-│   │   │   │   ├── AppointmentCalendarPage.tsx # Vista de calendario
-│   │   │   │   ├── RegisterNursingCarePage.tsx # Registrar atención enfermería
-│   │   │   │   ├── GenerateMedicalReportPage.tsx # Generar reporte médico
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── medical-records/               # Historiales Médicos
-│   │   │   │   ├── MedicalRecordsPage.tsx     # Historial completo
-│   │   │   │   ├── ClinicalHistoryPage.tsx    # Antecedentes clínicos
-│   │   │   │   ├── MedicationPage.tsx         # Gestión de medicamentos
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── specialized-areas/             # Áreas Especializadas
-│   │   │   │   ├── NursingPage.tsx            # Módulo de enfermería
-│   │   │   │   ├── PhysiotherapyPage.tsx      # Módulo de fisioterapia
-│   │   │   │   ├── PsychologyPage.tsx         # Módulo de psicología
-│   │   │   │   ├── SocialWorkPage.tsx         # Módulo de trabajo social
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── programs/                      # Gestión de Programas
-│   │   │   │   ├── ProgramsListPage.tsx       # Lista de programas
-│   │   │   │   ├── CreateProgramPage.tsx      # Crear programa
-│   │   │   │   ├── EditProgramPage.tsx        # Editar programa
-│   │   │   │   ├── ProgramDetailPage.tsx      # Detalle de programa
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── audit/                         # Auditoría
-│   │   │   │   ├── AuditLogsPage.tsx          # Logs de auditoría
-│   │   │   │   ├── AuditReportsPage.tsx       # Reportes de auditoría
-│   │   │   │   ├── GenerateReportPage.tsx     # Generar reporte
-│   │   │   │   ├── AuditDashboardPage.tsx     # Dashboard de auditoría
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── access-control/                # Control de Acceso
-│   │   │   │   ├── EntrancesExitsPage.tsx     # Registro entradas/salidas
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── notifications/                 # Centro de Notificaciones
-│   │   │   │   ├── NotificationsPage.tsx      # Todas las notificaciones
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   ├── settings/                      # Configuración
-│   │   │   │   ├── ProfilePage.tsx            # Perfil de usuario
-│   │   │   │   ├── SecurityPage.tsx           # Configuración 2FA
-│   │   │   │   ├── SystemSettingsPage.tsx     # Configuración sistema
-│   │   │   │   └── index.ts
-│   │   │   │
-│   │   │   └── errors/                        # Páginas de error
-│   │   │       ├── NotFoundPage.tsx           # 404
-│   │   │       ├── UnauthorizedPage.tsx       # 403
-│   │   │       └── ServerErrorPage.tsx        # 500
-│   │   │
-│   │   └── routes/                            # Configuración de rutas
-│   │       ├── AppRoutes.tsx                  # Rutas principales
-│   │       ├── PrivateRoute.tsx               # Ruta protegida
-│   │       ├── PublicRoute.tsx                # Ruta pública
-│   │       └── RoleBasedRoute.tsx             # Ruta por rol
+│   │   └── pages/                             # Páginas de la aplicación
+│   │       │
+│   │       ├── auth/                          # Módulo de Autenticación
+│   │       │   └── LoginPage.tsx              # Página de login
+│   │       │
+│   │       ├── two-factor/                    # Módulo 2FA
+│   │       │   └── TwoFactorPage.tsx          # Configuración 2FA
+│   │       │
+│   │       ├── dashboard/                     # Dashboard Principal
+│   │       │   ├── DashboardPage.tsx          # Dashboard general
+│   │       │   └── components/                # Componentes del dashboard
+│   │       │
+│   │       ├── main-menu/                     # Menú Principal
+│   │       │   ├── MainMenuPage.tsx           # Menú de navegación
+│   │       │   └── style.css                  # Estilos del menú
+│   │       │
+│   │       ├── users/                         # Gestión de Usuarios
+│   │       │   ├── UserListPage.tsx           # Lista de usuarios
+│   │       │   ├── CreateUserPage.tsx         # Crear usuario
+│   │       │   ├── EditUserPage.tsx           # Editar usuario
+│   │       │   └── ViewUserPage.tsx           # Ver detalle de usuario
+│   │       │
+│   │       ├── older-adults/                  # Gestión de Adultos Mayores
+│   │       │   ├── OlderAdultsListPage.tsx    # Lista de adultos mayores
+│   │       │   ├── CreateVirtualRecordPage.tsx # Crear ficha virtual
+│   │       │   ├── EditVirtualRecordPage.tsx  # Editar ficha
+│   │       │   └── ViewAdultsPage.tsx         # Ver detalle
+│   │       │
+│   │       ├── roles/                         # Gestión de Roles
+│   │       ├── appointments/                  # Gestión de Citas
+│   │       ├── medical-records/               # Historiales Médicos
+│   │       ├── specialized-areas/             # Áreas Especializadas
+│   │       ├── programs/                      # Gestión de Programas
+│   │       ├── audit/                         # Auditoría
+│   │       ├── access-control/                # Control de Acceso
+│   │       ├── notifications/                 # Notificaciones
+│   │       ├── settings/                      # Configuración
+│   │       └── errors/                        # Páginas de error
 │   │
-│   └── electron/                              # Configuración Electron
-│       ├── main.ts                            # Proceso principal
-│       ├── preload.ts                         # Preload script
-│       └── electron-builder.config.js         # Configuración de build
+│   └── utils/                                 # Utilidades generales
+│       └── virtualFileApiHelper.ts            # Helper para API de expedientes
 │
 ├── tests/                                     # Tests
 │   ├── unit/
+│   │   ├── components/
+│   │   │   ├── atoms/
+│   │   │   ├── molecules/
+│   │   │   └── organisms/
+│   │   ├── hooks/
+│   │   └── utils/
 │   ├── integration/
+│   │   └── pages/
 │   └── e2e/
 │
+├── dist-electron/                             # Build de Electron
 ├── .env.example                               # Variables de entorno ejemplo
 ├── .env                                       # Variables de entorno (no commitear)
 ├── .gitignore                                 # Archivos ignorados por git
-├── .eslintrc.cjs                              # Configuración ESLint
-├── .prettierrc                                # Configuración Prettier
+├── eslint.config.js                           # Configuración ESLint
 ├── tsconfig.json                              # Configuración TypeScript
+├── tsconfig.app.json                          # Config TS para app
+├── tsconfig.node.json                         # Config TS para Node
 ├── vite.config.ts                             # Configuración Vite
-├── tailwind.config.js                         # Configuración TailwindCSS
-├── postcss.config.js                          # Configuración PostCSS
 ├── package.json                               # Dependencias
-├── package-lock.json                          # Lock de dependencias
 └── README.md                                  # Documentación
 ```
 
@@ -492,252 +369,228 @@ frontend_proton_react_hogar_de_ancianos/
 
 ## Flujo de Navegación
 
-### Flujo Principal (Super Administrador)
+### Flujo de Autenticación
 
 ```
 1. Login (/login)
+   - Ingreso de DNI y contraseña
+   - Validación de credenciales
    ↓
-2. Verificación 2FA (/auth/2fa)
+2. Verificación 2FA (requiere configuración previa)
+   - Código TOTP de 6 dígitos desde app autenticadora
+   - O código de respaldo de 8 caracteres
    ↓
 3. Dashboard Principal (/dashboard)
-   │
-   ├─→ Gestión de Usuarios (/users)
-   │   ├─→ Lista de Usuarios (/users)
-   │   ├─→ Crear Administrador (/users/create-admin)
-   │   ├─→ Crear Super Admin (/users/create-super-admin)
-   │   ├─→ Editar Usuario (/users/:id/edit)
-   │   └─→ Detalle Usuario (/users/:id)
-   │
-   ├─→ Gestión de Roles (/roles)
-   │   ├─→ Lista de Roles (/roles)
-   │   ├─→ Crear Rol Personalizado (/roles/create)
-   │   ├─→ Editar Rol (/roles/:id/edit)
-   │   └─→ Detalle Rol (/roles/:id)
-   │
-   ├─→ Gestión de Adultos Mayores (/older-adults)
-   │   ├─→ Lista de Adultos Mayores (/older-adults)
-   │   ├─→ Crear Ficha Virtual (/older-adults/create)
-   │   ├─→ Editar Ficha (/older-adults/:id/edit)
-   │   ├─→ Detalle Completo (/older-adults/:id)
-   │   ├─→ Generar PDF (/older-adults/:id/pdf)
-   │   └─→ Compartir con Especialista (/older-adults/:id/share)
-   │
-   ├─→ Gestión de Citas (/appointments)
-   │   ├─→ Lista de Citas (/appointments)
-   │   ├─→ Calendario de Citas (/appointments/calendar)
-   │   ├─→ Programar Cita (/appointments/schedule)
-   │   ├─→ Registrar Atención (/appointments/:id/register-care)
-   │   └─→ Generar Reporte Médico (/appointments/:id/report)
-   │
-   ├─→ Historiales Médicos (/medical-records)
-   │   ├─→ Historial Completo (/medical-records/:patientId)
-   │   ├─→ Antecedentes Clínicos (/medical-records/:patientId/clinical-history)
-   │   └─→ Gestión de Medicamentos (/medical-records/:patientId/medication)
-   │
-   ├─→ Áreas Especializadas (/specialized-areas)
-   │   ├─→ Enfermería (/specialized-areas/nursing)
-   │   ├─→ Fisioterapia (/specialized-areas/physiotherapy)
-   │   ├─→ Psicología (/specialized-areas/psychology)
-   │   └─→ Trabajo Social (/specialized-areas/social-work)
-   │
-   ├─→ Gestión de Programas (/programs)
-   │   ├─→ Lista de Programas (/programs)
-   │   ├─→ Crear Programa (/programs/create)
-   │   ├─→ Editar Programa (/programs/:id/edit)
-   │   └─→ Detalle Programa (/programs/:id)
-   │
-   ├─→ Auditoría (/audit)
-   │   ├─→ Logs de Auditoría (/audit/logs)
-   │   ├─→ Dashboard de Auditoría (/audit/dashboard)
-   │   ├─→ Generar Reporte (/audit/reports/generate)
-   │   └─→ Historial de Reportes (/audit/reports)
-   │
-   ├─→ Control de Acceso (/access-control)
-   │   └─→ Entradas y Salidas (/access-control/entries-exits)
-   │
-   ├─→ Notificaciones (/notifications)
-   │
-   └─→ Configuración (/settings)
-       ├─→ Mi Perfil (/settings/profile)
-       ├─→ Seguridad y 2FA (/settings/security)
-       └─→ Configuración del Sistema (/settings/system)
+   - Resumen de métricas del sistema
+   ↓
+4. Menú Principal (/main-menu)
+   - Acceso a todos los módulos del sistema
 ```
+
+### Módulos Implementados
+
+#### Gestión de Usuarios (/users)
+```
+Menú Principal → Gestión de Usuarios
+   │
+   ├─→ Lista de Usuarios (/users)
+   │   - Tabla con búsqueda y filtros
+   │   - Ver, Editar, Eliminar usuarios
+   │   - Activar/Desactivar usuarios
+   │
+   ├─→ Crear Usuario (/users/create)
+   │   - Formulario completo de registro
+   │   - Asignación de rol
+   │   - Validación de datos
+   │
+   ├─→ Editar Usuario (/users/edit/:id)
+   │   - Modificar información del usuario
+   │   - Cambio de rol
+   │   - Cambio de contraseña opcional
+   │
+   └─→ Ver Usuario (/users/view/:id)
+       - Información completa del usuario
+       - Roles asignados
+       - Estado de cuenta
+```
+
+#### Gestión de Adultos Mayores (/older-adults)
+```
+Menú Principal → Gestión de Adultos Mayores
+   │
+   ├─→ Lista de Adultos Mayores (/older-adults)
+   │   - Búsqueda por DNI/nombre
+   │   - Filtros avanzados
+   │
+   ├─→ Crear Ficha Virtual (/older-adults/create)
+   │   - Formulario de datos personales
+   │   - Información de contacto
+   │   - Datos familiares
+   │
+   ├─→ Editar Ficha (/older-adults/edit/:id)
+   │   - Actualizar información
+   │
+   └─→ Ver Ficha (/older-adults/view/:id)
+       - Detalle completo del expediente
+```
+
+#### Configuración 2FA (/two-factor)
+```
+Menú Principal → Configuración 2FA
+   │
+   ├─→ Estado de 2FA
+   │   - Ver si está habilitado/deshabilitado
+   │
+   ├─→ Generar Configuración
+   │   - Código QR para app autenticadora
+   │   - Secret key manual
+   │   - 8 códigos de respaldo
+   │
+   ├─→ Verificar y Habilitar
+   │   - Ingresar código de 6 dígitos
+   │   - Confirmar habilitación
+   │
+   └─→ Gestión
+       - Deshabilitar 2FA
+       - Regenerar códigos de respaldo
+```
+
+### Rutas Configuradas
+
+| Ruta | Componente | Protección | Descripción |
+|------|-----------|------------|-------------|
+| `/` | LoginPage | Pública | Página de inicio/login |
+| `/login` | LoginPage | Pública | Login con DNI y contraseña |
+| `/dashboard` | DashboardPage | Privada | Dashboard principal |
+| `/main-menu` | MainMenuPage | Privada | Menú de navegación |
+| `/two-factor` | TwoFactorPage | Privada | Configuración 2FA |
+| `/users` | UserListPage | Privada | Lista de usuarios |
+| `/users/create` | CreateUserPage | Privada | Crear usuario |
+| `/users/edit/:id` | EditUserPage | Privada | Editar usuario |
+| `/users/view/:id` | ViewUserPage | Privada | Ver detalle usuario |
+| `/older-adults` | OlderAdultsListPage | Privada | Lista adultos mayores |
+| `/older-adults/create` | CreateVirtualRecordPage | Privada | Crear ficha |
+| `/older-adults/edit/:id` | EditVirtualRecordPage | Privada | Editar ficha |
+| `/older-adults/view/:id` | ViewAdultsPage | Privada | Ver ficha |
 
 ---
 
-## Componentes Principales
+## Componentes Principales Implementados
 
 ### 1. Autenticación
 
-**LoginPage** (`/auth/login`)
-- Formulario de login con validación
-- Integración con JWT
+**LoginPage** (`/login`)
+- Formulario de login con DNI y contraseña
+- Validación de credenciales con JWT
 - Manejo de errores (credenciales incorrectas, cuenta desactivada)
-- Redirección a 2FA después de login exitoso
+- Redirección automática a dashboard tras autenticación exitosa
+- Integración con authFlow
 
-**TwoFactorPage** (`/auth/2fa`)
-- Input de código 2FA de 6 dígitos
-- Validación en tiempo real
-- Temporizador de expiración
-- Opción de reenviar código
+**TwoFactorPage** (`/two-factor`)
+- Vista de estado actual de 2FA (habilitado/deshabilitado)
+- Generación de QR code para apps autenticadoras (Google Authenticator, Authy, etc.)
+- Visualización de secret key manual
+- Generación de 8 códigos de respaldo con opciones de:
+  - Copiar al portapapeles
+  - Descargar como archivo de texto
+- Input de verificación de 6 dígitos
+- Proceso completo de habilitación con confirmación
+- Opción para deshabilitar 2FA
+- Regeneración de códigos de respaldo con modal
+- Integración con twoFactorFlow
 
-### 2. Dashboard
+### 2. Dashboard y Menú
 
 **DashboardPage** (`/dashboard`)
-- Tarjetas de estadísticas (usuarios activos, adultos mayores, citas del día)
-- Gráficos de actividad (recharts)
-- Lista de actividades recientes
-- Acciones rápidas contextuales por rol
-- Notificaciones importantes
+- Vista principal tras login
+- Acceso rápido al menú principal
+- Bienvenida personalizada
+
+**MainMenuPage** (`/main-menu`)
+- Grid de opciones de navegación:
+  - Gestión de Usuarios
+  - Gestión de Adultos Mayores
+  - Gestión de Citas
+  - Configuración 2FA
+  - Roles y Permisos
+  - Auditoría
+  - Programas y Actividades
+  - Reportes y Estadísticas
+- Diseño con tarjetas Bootstrap 5
+- Iconos descriptivos para cada módulo
+- Navegación con React Router
 
 ### 3. Gestión de Usuarios
 
-**UsersListPage** (`/users`)
-- Tabla con filtros avanzados (rol, estado, búsqueda)
-- Paginación
-- Acciones: Ver, Editar, Desactivar
-- Botón "Crear Administrador" y "Crear Super Administrador"
+**UserListPage** (`/users`)
+- Tabla completa de usuarios del sistema
+- Búsqueda por nombre, DNI o correo
+- Columnas: ID, Nombre completo, DNI, Correo, Rol, Estado
+- Acciones por usuario:
+  - Ver detalle (botón azul con ícono de ojo)
+  - Editar (botón amarillo con ícono de lápiz)
+  - Eliminar (botón rojo con ícono de papelera, requiere confirmación)
+  - Activar/Desactivar (toggle con confirmación)
+- Badge de estado (Activo/Inactivo)
+- Integración con userFlow
+- Manejo de estados de carga y errores
 
-**CreateAdminPage** (`/users/create-admin`)
-- Formulario con validación (react-hook-form + zod)
-- Campos: DNI, nombre, apellidos, correo, rol
-- Validación de DNI único en tiempo real
-- Confirmación de creación
-- Envío automático de credenciales por email
+**CreateUserPage** (`/users/create`)
+- Formulario completo de registro:
+  - DNI (requerido, único)
+  - Primer nombre (requerido)
+  - Segundo nombre (opcional)
+  - Primer apellido (requerido)
+  - Segundo apellido (opcional)
+  - Correo electrónico (requerido, único)
+  - Teléfono (requerido)
+  - Contraseña (requerido, mínimo 6 caracteres)
+  - Confirmar contraseña (debe coincidir)
+  - Rol (selector dinámico desde backend)
+- Validaciones en tiempo real
+- Mensaje de éxito con redirección
+- Botón "Volver a la lista"
+- Integración con userFlow.createUser()
 
-**CreateSuperAdminPage** (`/users/create-super-admin`)
-- Formulario extendido con justificación obligatoria
-- Confirmación de identidad (contraseña actual)
-- Doble confirmación por acción crítica
-- Notificación a otros super admins
+**EditUserPage** (`/users/edit/:id`)
+- Carga de datos del usuario desde backend
+- Formulario prellenado con información actual
+- Campos editables:
+  - DNI, nombres, apellidos
+  - Correo, teléfono
+  - Rol (selector dinámico)
+- Cambio de contraseña opcional (solo si se completan ambos campos)
+- Validación de confirmación de contraseña
+- Actualización inteligente (solo envía campos modificados)
+- Mensaje de éxito con redirección
+- Integración con userFlow.getUserById() y userFlow.updateUser()
 
-### 4. Gestión de Adultos Mayores
+**ViewUserPage** (`/users/view/:id`)
+- Vista detallada de información del usuario en 4 secciones:
+  1. **Información Personal**: Nombres, apellidos, DNI
+  2. **Contacto**: Correo, teléfono
+  3. **Acceso al Sistema**: Rol, estado (badge), fecha de creación, última actualización
+  4. **Roles y Permisos**: Lista de roles asignados con badges de colores
+- Botones de acción: Volver, Editar usuario
+- Diseño con cards de Bootstrap 5
+- Estados de carga y errores
+- Integración con userFlow.getUserById() y userFlow.getAllRoles()
+
+### 4. Gestión de Adultos Mayores (En Desarrollo)
 
 **OlderAdultsListPage** (`/older-adults`)
-- Tabla con búsqueda por DNI, nombre
-- Filtros: estado (vivo/fallecido), programa
-- Vista de tarjetas con foto de perfil
-- Acciones: Ver ficha, Editar, Generar PDF, Compartir
+- Lista de adultos mayores registrados
+- Búsqueda y filtros (en desarrollo)
+- Acciones: Ver, Editar, Crear nuevo
 
 **CreateVirtualRecordPage** (`/older-adults/create`)
-- Formulario multi-paso (wizard):
-  1. Datos personales
-  2. Información familiar
-  3. Historial educativo y laboral
-  4. Datos económicos
-  5. Contactos de emergencia
-- Validaciones por paso
-- Guardado automático (draft)
-- Vista previa antes de guardar
+- Formulario de creación de ficha virtual (en desarrollo)
 
-**VirtualRecordDetailPage** (`/older-adults/:id`)
-- Vista completa con tabs:
-  - Información General
-  - Familia y Contactos
-  - Historial Médico
-  - Citas Programadas
-  - Programas Asociados
-  - Timeline de Actividades
-- Botones de acción: Editar, Generar PDF, Compartir
+**EditVirtualRecordPage** (`/older-adults/edit/:id`)
+- Edición de ficha virtual (en desarrollo)
 
-### 5. Gestión de Citas
-
-**AppointmentCalendarPage** (`/appointments/calendar`)
-- Calendario mensual interactivo
-- Código de colores por tipo de cita
-- Vista diaria/semanal/mensual
-- Drag & drop para reprogramar
-- Modal de detalles al hacer click
-
-**ScheduleAppointmentPage** (`/appointments/schedule`)
-- Selector de área especializada
-- Selector de paciente (autocompletado)
-- Selector de fecha y hora
-- Selector de profesional asignado
-- Tipo de cita (checkup, evaluación, terapia)
-- Prioridad (baja, media, alta, urgente)
-- Notas adicionales
-
-**RegisterNursingCarePage** (`/appointments/:id/register-care`)
-- Formulario de signos vitales:
-  - Temperatura
-  - Presión arterial
-  - Frecuencia cardíaca
-  - Nivel de dolor (escala 0-10)
-- Movilidad, apetito, calidad de sueño
-- Notas de observación
-- Subida de archivos adjuntos
-
-### 6. Historiales Médicos
-
-**MedicalRecordsPage** (`/medical-records/:patientId`)
-- Timeline cronológico de eventos médicos
-- Filtros por tipo de evento, fecha, área
-- Vista de resumen con métricas clave
-- Gráficos de evolución (peso, presión, etc.)
-- Exportar historial completo a PDF
-
-**ClinicalHistoryPage** (`/medical-records/:patientId/clinical-history`)
-- Antecedentes clínicos (padecimientos, caídas frecuentes)
-- Datos biométricos (peso, altura, IMC, presión)
-- Riesgo cardiovascular (RCVG)
-- Problemas de visión/audición
-- Vacunas aplicadas (checklist)
-- Neoplasias (con descripción)
-
-### 7. Roles y Permisos
-
-**CreateRolePage** (`/roles/create`)
-- Nombre y código de rol
-- Descripción detallada (mínimo 20 caracteres)
-- Nivel de prioridad (1-10)
-- Árbol de permisos por módulo:
-  - Gestión de Usuarios (ver, crear, editar, eliminar)
-  - Adultos Mayores (ver, crear, editar, eliminar, PDF, compartir)
-  - Citas (ver, crear, editar, cancelar, registrar atención)
-  - Historiales Médicos (ver, crear, editar)
-  - Auditoría (ver logs, generar reportes, exportar)
-  - Roles (ver, crear, editar, eliminar)
-  - Programas (ver, crear, editar, eliminar)
-- Dependencias automáticas (ej: editar requiere ver)
-- Vista previa de permisos seleccionados
-
-### 8. Auditoría
-
-**AuditLogsPage** (`/audit/logs`)
-- Tabla paginada de logs
-- Filtros avanzados:
-  - Rango de fechas
-  - Usuario
-  - Acción (login, create, update, delete)
-  - Tabla afectada
-  - Registro ID
-- Búsqueda por descripción
-- Exportar a CSV/PDF
-- Vista de detalles en modal
-
-**AuditDashboardPage** (`/audit/dashboard`)
-- Gráficos de actividad por usuario
-- Gráficos de acciones por tipo
-- Métricas de accesos al sistema
-- Top 10 usuarios más activos
-- Timeline de eventos críticos
-
-**GenerateReportPage** (`/audit/reports/generate`)
-- Selector de tipo de reporte:
-  - Acciones generales
-  - Cambios de roles
-  - Actualizaciones de adultos mayores
-  - Accesos al sistema
-- Rango de fechas
-- Vista previa antes de generar
-- Descarga inmediata en PDF
-
-### 9. Programas
-
-**ProgramsListPage** (`/programs`)
-- Tarjetas de programas con info resumida
-- Filtros por tipo, estado
+**ViewAdultsPage** (`/older-adults/view/:id`)
+- Vista detallada de expediente (en desarrollo)
 - Vista de lista/tarjetas (toggle)
 - Acciones: Ver, Editar, Eliminar
 
@@ -862,17 +715,17 @@ El archivo `electron-builder.config.js` incluye:
 
 ## Guía de Estilos
 
-### TailwindCSS
+### Bootstrap 5
 
-El proyecto usa TailwindCSS para estilos. Convenciones:
+El proyecto usa Bootstrap 5 para estilos. Convenciones:
 
 ```tsx
-// ✅ Correcto: usar clases de Tailwind
-<button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+// CORRECTO: usar clases de Bootstrap
+<button className="btn btn-primary">
   Guardar
 </button>
 
-// ❌ Incorrecto: estilos inline
+// INCORRECTO: estilos inline
 <button style={{ backgroundColor: 'blue', color: 'white' }}>
   Guardar
 </button>
@@ -881,13 +734,13 @@ El proyecto usa TailwindCSS para estilos. Convenciones:
 ### Nomenclatura de Componentes
 
 ```tsx
-// ✅ Correcto: PascalCase para componentes
+// CORRECTO: PascalCase para componentes
 const UserCard = () => { ... }
 
-// ✅ Correcto: camelCase para funciones
+// CORRECTO: camelCase para funciones
 const handleSubmit = () => { ... }
 
-// ✅ Correcto: UPPER_CASE para constantes
+// CORRECTO: UPPER_CASE para constantes
 const API_BASE_URL = 'http://localhost:3000'
 ```
 
@@ -898,20 +751,17 @@ const API_BASE_URL = 'http://localhost:3000'
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// 2. Imports de configuración y tipos
-import { API_ENDPOINTS } from '@config/constants';
-import type { User } from '@types/user.types';
+// 2. Imports de tipos
+import type { User } from '../../types/user';
 
-// 3. Imports de servicios y hooks
-import { useAuth } from '@application/hooks/auth/useAuth';
-import { usersService } from '@infrastructure/api/users.service';
+// 3. Imports de flows
+import { userFlow } from '../../infrastructure/flows/userFlow';
 
 // 4. Imports de componentes
-import { Button } from '@presentation/components/atoms/Button';
-import { UserForm } from '@presentation/components/organisms/UserForm';
+import { Button } from '../components/atoms/Button/Button';
 
 // 5. Imports de estilos (si aplica)
-import './UserCard.styles.css';
+import './UserCard.css';
 ```
 
 ---
@@ -956,7 +806,7 @@ VITE_ELECTRON_WINDOW_HEIGHT=800
 ### Componentes Funcionales
 
 ```tsx
-// ✅ Correcto: Usar FC con tipado
+// CORRECTO: Usar FC con tipado
 import { FC } from 'react';
 
 interface ButtonProps {
@@ -984,77 +834,87 @@ export const Button: FC<ButtonProps> = ({
 };
 ```
 
-### Custom Hooks
+### Uso de Flows
 
 ```tsx
-// ✅ Correcto: Hooks con tipado completo
+// CORRECTO: Usar flows para lógica de negocio
 import { useState, useEffect } from 'react';
-import { usersService } from '@infrastructure/api/users.service';
-import type { User } from '@types/user.types';
+import { userFlow } from '../../infrastructure/flows/userFlow';
+import type { User } from '../../types/user';
 
-interface UseUsersReturn {
-  users: User[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-}
-
-export const useUsers = (): UseUsersReturn => {
+export const UserList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
     try {
       setLoading(true);
-      const data = await usersService.getAll();
-      setUsers(data);
-      setError(null);
-    } catch (err) {
-      setError('Error al cargar usuarios');
+      const result = await userFlow.getAllUsers();
+      
+      if (result.success && result.users) {
+        setUsers(result.users);
+      } else {
+        alert(result.error || 'Error al cargar usuarios');
+      }
+    } catch (error) {
+      alert('Error al cargar usuarios');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  return { users, loading, error, refetch: fetchUsers };
+  return (
+    <div>
+      {loading ? (
+        <p>Cargando...</p>
+      ) : (
+        <ul>
+          {users.map(user => (
+            <li key={user.id}>{userFlow.getFullName(user)}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 };
 ```
 
-### Servicios API
+### Servicios HTTP
 
 ```tsx
-// ✅ Correcto: Servicios con axios instance
-import { axiosInstance } from './axios.instance';
-import type { User, CreateUserDto } from '@types/user.types';
+// CORRECTO: Servicios con axios y tipos
+import axios from 'axios';
+import type { User, CreateUserData, UpdateUserData } from '../types/user';
 
-export const usersService = {
-  getAll: async (): Promise<User[]> => {
-    const { data } = await axiosInstance.get<User[]>('/users');
-    return data;
+const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+export const userService = {
+  async getAllUsers(): Promise<User[]> {
+    const response = await axios.get<User[]>(`${API_BASE_URL}/users`);
+    return response.data;
   },
 
-  getById: async (id: number): Promise<User> => {
-    const { data } = await axiosInstance.get<User>(`/users/${id}`);
-    return data;
+  async getUserById(id: number): Promise<User> {
+    const response = await axios.get<User>(`${API_BASE_URL}/users/${id}`);
+    return response.data;
   },
 
-  create: async (userData: CreateUserDto): Promise<User> => {
-    const { data } = await axiosInstance.post<User>('/users', userData);
-    return data;
+  async createUser(data: CreateUserData): Promise<User> {
+    const response = await axios.post<User>(`${API_BASE_URL}/users`, data);
+    return response.data;
   },
 
-  update: async (id: number, userData: Partial<User>): Promise<User> => {
-    const { data } = await axiosInstance.patch<User>(`/users/${id}`, userData);
-    return data;
+  async updateUser(id: number, data: UpdateUserData): Promise<User> {
+    const response = await axios.patch<User>(`${API_BASE_URL}/users/${id}`, data);
+    return response.data;
   },
 
-  delete: async (id: number): Promise<void> => {
-    await axiosInstance.delete(`/users/${id}`);
+  async deleteUser(id: number): Promise<void> {
+    await axios.delete(`${API_BASE_URL}/users/${id}`);
   },
 };
 ```
@@ -1170,20 +1030,36 @@ Para contribuir al proyecto:
 
 ## Roadmap
 
-- [x] Autenticación con JWT y 2FA
+### Completado
+- [x] Autenticación con JWT
+- [x] Verificación 2FA con TOTP
+- [x] Configuración completa de 2FA (QR, secret, códigos de respaldo)
+- [x] Gestión de sesiones activas
 - [x] Dashboard principal
-- [x] Gestión de usuarios
-- [ ] Gestión completa de adultos mayores
+- [x] Menú principal de navegación
+- [x] CRUD completo de usuarios con flows
+- [x] Sistema de roles y permisos
+- [x] Arquitectura basada en Flows (authFlow, userFlow, twoFactorFlow)
+- [x] Storage con patrón Singleton
+- [x] Componentes atómicos (Button, Input, Checkbox)
+- [x] Páginas de usuarios (List, Create, Edit, View)
+- [x] Inicio de gestión de adultos mayores
+
+### En Desarrollo
+- [ ] Completar módulo de adultos mayores (fichas virtuales completas)
 - [ ] Sistema de citas con calendario
 - [ ] Historiales médicos completos
 - [ ] Módulos especializados (enfermería, fisioterapia, psicología)
+
+### Pendiente
 - [ ] Auditoría completa con dashboard
 - [ ] Gestión de roles personalizados
 - [ ] Notificaciones en tiempo real (WebSockets)
-- [ ] Modo offline completo
 - [ ] Exportación masiva de datos
 - [ ] Gráficos analíticos avanzados
+- [ ] Modo offline completo
 - [ ] Soporte multi-idioma (i18n)
+- [ ] Tests E2E completos
 
 ---
 
@@ -1214,9 +1090,9 @@ Para consultas o soporte:
 
 - Universidad de Costa Rica (UCR) - Análisis de Sistemas 2025
 - React Community
-- TailwindCSS Team
+- Bootstrap Team
 - NestJS Backend Team
 
 ---
 
-**Desarrollado con React, TypeScript y TailwindCSS**
+**Desarrollado con React, TypeScript y Bootstrap 5**
