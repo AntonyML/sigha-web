@@ -10,7 +10,7 @@ import type {
   VerifyEmailData
 } from '../types/auth';
 
-const API_BASE_URL =  'http://localhost:9999/api';
+const API_BASE_URL = 'http://localhost:9999/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -47,10 +47,10 @@ apiClient.interceptors.response.use(
             `${API_BASE_URL}/auth/refresh-token`,
             { refreshToken }
           );
-          
+
           const { token } = response.data;
           localStorage.setItem('authToken', token);
-       
+
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return apiClient(originalRequest);
         }
@@ -75,7 +75,7 @@ export const authService = {
     localStorage.setItem('authToken', token);
     localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
-    
+
     return response.data;
   },
 
@@ -99,12 +99,12 @@ export const authService = {
     confirmPassword: string;
   }): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', userData);
-   
+
     const { token, refreshToken, user } = response.data;
     localStorage.setItem('authToken', token);
     localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
-    
+
     return response.data;
   },
 
@@ -118,7 +118,7 @@ export const authService = {
       refreshToken,
     });
     localStorage.setItem('authToken', response.data.token);
-    
+
     return response.data;
   },
 
