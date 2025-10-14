@@ -1,20 +1,32 @@
-import React, { useState } from 'react'
-import type { FormData } from '../../../types/formData'
-import { defaultFormData } from '../../../types/formData'
+import React, { useState, useEffect } from 'react'
+import type { VirtualFile } from '../../../types/virtualFile'
+import { defaultVirtualFile } from '../../../types/virtualFile'
 import { useNavigate } from 'react-router-dom'
 
 export default function CreateVirtualFile() {
-  const [formData, setFormData] = useState<FormData>(defaultFormData)
+  const [formData, setFormData] = useState<VirtualFile>(defaultVirtualFile)
   const navigate = useNavigate()
 
-
-  function onInputChange(field: keyof FormData, value: string | boolean) {
-    setFormData((prev) => ({ ...prev, [field]: value } as FormData))
+  function onInputChange(field: keyof VirtualFile, value: string | boolean) {
+    setFormData((prev) => ({ ...prev, [field]: value } as VirtualFile))
   }
+
+  // Efecto para calcular el IMC automáticamente
+  useEffect(() => {
+    if (formData.peso && formData.talla) {
+      const peso = parseFloat(formData.peso)
+      const talla = parseFloat(formData.talla) / 100 // convertir cm a metros
+      if (!isNaN(peso) && !isNaN(talla) && talla > 0) {
+        const imc = (peso / (talla * talla)).toFixed(2)
+        setFormData(prev => ({ ...prev, imc }))
+      }
+    }
+  }, [formData.peso, formData.talla])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     console.log('Formulario enviado:', formData)
+    // Aquí implementarías la lógica para enviar los datos al servidor
   }
 
   return (
@@ -150,7 +162,7 @@ export default function CreateVirtualFile() {
                 <div className="form-check">
                   <input className="form-check-input" type="checkbox" id={String(key)}
                     checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof FormData, e.target.checked)} />
+                    onChange={(e) => onInputChange(key as keyof VirtualFile, e.target.checked)} />
                   <label className="form-check-label" htmlFor={String(key)}>{label}</label>
                 </div>
               </div>
@@ -205,7 +217,7 @@ export default function CreateVirtualFile() {
                 <div className="form-check">
                   <input className="form-check-input" type="checkbox" id={String(key)}
                     checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof FormData, e.target.checked)} />
+                    onChange={(e) => onInputChange(key as keyof VirtualFile, e.target.checked)} />
                   <label className="form-check-label" htmlFor={String(key)}>{label}</label>
                 </div>
               </div>
