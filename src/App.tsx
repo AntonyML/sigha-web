@@ -16,6 +16,9 @@ import CreateUser from './presentation/pages/users/CreateUserPage'
 import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
 
+//Two Factor
+import TwoFactorPage from './presentation/pages/two-factor/TwoFactorPage'
+
 export default function App() {
   return (
     <Routes>
@@ -34,6 +37,8 @@ export default function App() {
       <Route path="/users/create" element={<CreateUser />} />
       <Route path="/users/view/:id" element={<ViewUserPage />} />
       <Route path="/users/edit/:id" element={<EditUserPage />} />
+
+      <Route path="/two-factor" element={<TwoFactorPage />} />
     </Routes>
   )
 }
