@@ -1,72 +1,68 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
-interface UserFormData {
-    u_identification: string;
-    u_name: string;
-    u_f_last_name: string;
-    u_s_last_name: string;
-    u_email: string;
-    u_email_verified: boolean;
-    u_is_active: boolean;
-    role_id: string;
-}
-
-const defaultUserFormData: UserFormData = {
-    u_identification: '',
-    u_name: '',
-    u_f_last_name: '',
-    u_s_last_name: '',
-    u_email: '',
-    u_email_verified: false,
-    u_is_active: true,
-    role_id: ''
-};
-
-// Roles simulados
-const roles = [
-    { id: '1', name: 'Administrador' },
-    { id: '2', name: 'Médico' },
-    { id: '3', name: 'Enfermero' },
-    { id: '4', name: 'Recepcionista' },
-    { id: '5', name: 'Usuario Básico' }
-];
+import { userFlow } from '../../../infrastructure/flows/userFlow';
+import type { User, UserRole } from '../../../types/user';
 
 export default function ViewUserPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<UserFormData>(defaultUserFormData);
+    const [user, setUser] = useState<User | null>(null);
+    const [roles, setRoles] = useState<UserRole[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string>('');
 
-    // Mock "fetch" — reemplaza por servicio real cuando esté disponible
+    // Cargar usuario y roles
     useEffect(() => {
-        console.log('ViewUserPage mounted, id=', id);
-        if (!id) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        const t = setTimeout(() => {
-            const mock: UserFormData = {
-                u_identification: `ID-${id}`,
-                u_name: 'Juan',
-                u_f_last_name: 'Pérez',
-                u_s_last_name: 'Gómez',
-                u_email: `usuario${id}@ejemplo.com`,
-                u_email_verified: true,
-                u_is_active: true,
-                role_id: '2'
-            };
-            setFormData(mock);
-            setLoading(false);
-        }, 300);
-        return () => clearTimeout(t);
+        const loadData = async () => {
+            console.log('ViewUserPage mounted, id=', id);
+            if (!id) {
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            setError('');
+
+            try {
+                // Cargar usuario y roles en paralelo
+                const [userResult, rolesResult] = await Promise.all([
+                    userFlow.getUserById(Number(id)),
+                    userFlow.getAllRoles()
+                ]);
+
+                // Manejar resultado del usuario
+                if (userResult.success && userResult.user) {
+                    setUser(userResult.user);
+                } else {
+                    setError(userResult.error || 'Error al cargar usuario');
+                }
+
+                // Manejar resultado de roles
+                if (rolesResult.success && rolesResult.roles) {
+                    setRoles(rolesResult.roles);
+                }
+            } catch (err) {
+                console.error('Error cargando datos:', err);
+                setError('Error inesperado al cargar los datos');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
     }, [id]);
 
     // Obtener nombre del rol
-    const getRoleName = (roleId: string) => {
+    const getRoleName = (roleId?: number): string => {
+        if (!roleId) return 'No asignado';
         const role = roles.find(r => r.id === roleId);
         return role ? role.name : 'No asignado';
+    };
+
+    // Obtener nombre completo
+    const getFullName = (): string => {
+        if (!user) return '';
+        return userFlow.getFullName(user);
     };
 
     // Manejo cuando no hay id en la ruta
@@ -85,10 +81,41 @@ export default function ViewUserPage() {
     }
 
     if (loading) {
-        return <div className="container py-4">Cargando información del usuario...</div>;
+        return (
+            <div className="container py-4">
+                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                    <div className="text-center">
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Cargando...</span>
+                        </div>
+                        <p className="mt-3 text-muted">Cargando información del usuario...</p>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
-    const fullName = `${formData.u_name} ${formData.u_f_last_name} ${formData.u_s_last_name}`.trim();
+    if (error || !user) {
+        return (
+            <div className="container py-4">
+                <div className="alert alert-danger" role="alert">
+                    <h4 className="alert-heading">Error</h4>
+                    <p>{error || 'No se pudo cargar la información del usuario'}</p>
+                    <hr />
+                    <div className="d-flex gap-2">
+                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
+                            Volver a la lista
+                        </button>
+                        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const fullName = getFullName();
 
     return (
         <div className="container py-4">
@@ -119,25 +146,25 @@ export default function ViewUserPage() {
                     <div className="row">
                         <div className="col-md-6 mb-3">
                             <strong>Identificación:</strong>
-                            <p className="mb-0">{formData.u_identification || 'No especificada'}</p>
+                            <p className="mb-0">{user.identification || 'No especificada'}</p>
                         </div>
                         <div className="col-md-6 mb-3">
                             <strong>Email:</strong>
-                            <p className="mb-0">{formData.u_email || 'No especificado'}</p>
+                            <p className="mb-0">{user.u_email || 'No especificado'}</p>
                         </div>
                     </div>
                     <div className="row">
                         <div className="col-md-4 mb-3">
                             <strong>Nombre:</strong>
-                            <p className="mb-0">{formData.u_name || 'No especificado'}</p>
+                            <p className="mb-0">{user.name || 'No especificado'}</p>
                         </div>
                         <div className="col-md-4 mb-3">
                             <strong>Primer apellido:</strong>
-                            <p className="mb-0">{formData.u_f_last_name || 'No especificado'}</p>
+                            <p className="mb-0">{user.fLastName || 'No especificado'}</p>
                         </div>
                         <div className="col-md-4 mb-3">
                             <strong>Segundo apellido:</strong>
-                            <p className="mb-0">{formData.u_s_last_name || 'No especificado'}</p>
+                            <p className="mb-0">{user.sLastName || 'No especificado'}</p>
                         </div>
                     </div>
                     <div className="row">
@@ -158,13 +185,13 @@ export default function ViewUserPage() {
                     <div className="row">
                         <div className="col-md-6 mb-3">
                             <strong>Rol:</strong>
-                            <p className="mb-0">{getRoleName(formData.role_id)}</p>
+                            <p className="mb-0">{getRoleName(user.role_id)}</p>
                         </div>
                         <div className="col-md-6 mb-3">
                             <strong>Estado de la cuenta:</strong>
                             <p className="mb-0">
-                                <span className={`badge ${formData.u_is_active ? 'bg-success' : 'bg-danger'}`}>
-                                    {formData.u_is_active ? 'Activo' : 'Inactivo'}
+                                <span className={`badge ${user.u_is_active ? 'bg-success' : 'bg-danger'}`}>
+                                    {user.u_is_active ? 'Activo' : 'Inactivo'}
                                 </span>
                             </p>
                         </div>
@@ -173,14 +200,14 @@ export default function ViewUserPage() {
                         <div className="col-md-6 mb-3">
                             <strong>Verificación de email:</strong>
                             <p className="mb-0">
-                                <span className={`badge ${formData.u_email_verified ? 'bg-success' : 'bg-warning'}`}>
-                                    {formData.u_email_verified ? 'Verificado' : 'Pendiente'}
+                                <span className={`badge ${user.u_email_verified ? 'bg-success' : 'bg-warning'}`}>
+                                    {user.u_email_verified ? 'Verificado' : 'Pendiente'}
                                 </span>
                             </p>
                         </div>
                         <div className="col-md-6 mb-3">
                             <strong>Fecha de creación:</strong>
-                            <p className="mb-0">{new Date().toLocaleDateString()}</p>
+                            <p className="mb-0">{new Date(user.create_at).toLocaleDateString()}</p>
                         </div>
                     </div>
                 </div>
@@ -196,7 +223,7 @@ export default function ViewUserPage() {
                         <div className="col-md-6">
                             <h6>Capacidades del Rol:</h6>
                             <ul className="list-unstyled">
-                                {formData.role_id === '1' && (
+                                {user.role_id === 1 && (
                                     <>
                                         <li>✅ Acceso completo al sistema</li>
                                         <li>✅ Gestión de usuarios</li>
@@ -204,7 +231,7 @@ export default function ViewUserPage() {
                                         <li>✅ Configuración del sistema</li>
                                     </>
                                 )}
-                                {formData.role_id === '2' && (
+                                {user.role_id === 2 && (
                                     <>
                                         <li>✅ Ver todas las fichas virtuales</li>
                                         <li>✅ Crear y editar fichas</li>
@@ -212,7 +239,7 @@ export default function ViewUserPage() {
                                         <li>❌ Gestión de usuarios</li>
                                     </>
                                 )}
-                                {formData.role_id === '3' && (
+                                {user.role_id === 3 && (
                                     <>
                                         <li>✅ Ver fichas asignadas</li>
                                         <li>✅ Actualizar registros de enfermería</li>
@@ -220,7 +247,7 @@ export default function ViewUserPage() {
                                         <li>❌ Gestión de usuarios</li>
                                     </>
                                 )}
-                                {formData.role_id === '4' && (
+                                {user.role_id === 4 && (
                                     <>
                                         <li>✅ Registrar nuevos pacientes</li>
                                         <li>✅ Ver información básica</li>
@@ -228,7 +255,7 @@ export default function ViewUserPage() {
                                         <li>❌ Gestión de usuarios</li>
                                     </>
                                 )}
-                                {formData.role_id === '5' && (
+                                {user.role_id === 5 && (
                                     <>
                                         <li>✅ Ver información personal</li>
                                         <li>❌ Acceso a otras fichas</li>
@@ -236,7 +263,7 @@ export default function ViewUserPage() {
                                         <li>❌ Gestión de usuarios</li>
                                     </>
                                 )}
-                                {!formData.role_id && (
+                                {!user.role_id && (
                                     <li>❌ Sin permisos asignados</li>
                                 )}
                             </ul>
@@ -262,23 +289,27 @@ export default function ViewUserPage() {
                 <div className="card-body">
                     <div className="row">
                         <div className="col-md-4 mb-3">
-                            <strong>Registros creados:</strong>
-                            <p className="mb-0">15</p>
+                            <strong>ID de Usuario:</strong>
+                            <p className="mb-0">{user.id}</p>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <strong>Última actualización:</strong>
-                            <p className="mb-0">{new Date().toLocaleDateString()}</p>
+                            <strong>Fecha de creación:</strong>
+                            <p className="mb-0">{new Date(user.create_at).toLocaleDateString()}</p>
                         </div>
                         <div className="col-md-4 mb-3">
-                            <strong>Días activo:</strong>
-                            <p className="mb-0">45 días</p>
+                            <strong>Estado:</strong>
+                            <p className="mb-0">
+                                <span className={`badge ${userFlow.isUserActive(user) ? 'bg-success' : 'bg-secondary'}`}>
+                                    {userFlow.isUserActive(user) ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </p>
                         </div>
                     </div>
                     <div className="row">
                         <div className="col-12">
                             <strong>Notas:</strong>
                             <p className="mb-0 text-muted">
-                                {formData.u_is_active
+                                {user.u_is_active
                                     ? 'Usuario activo en el sistema con todos los permisos correspondientes a su rol.'
                                     : 'Usuario inactivo. No puede acceder al sistema hasta que sea reactivado.'
                                 }

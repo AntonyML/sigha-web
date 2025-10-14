@@ -1,36 +1,47 @@
+// ==================== User Types ====================
+
 export interface User {
   id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
+  identification: string;
+  name: string;
+  fLastName: string;
+  sLastName?: string;
+  u_email: string;
+  u_email_verified: boolean;
+  u_is_active: boolean;
+  create_at: string;
+  role_id?: number;
+  role?: UserRole;
 }
 
 export interface UserRole {
   id: number;
   name: string;
-  description: string;
-  permissions: string[];
+  description?: string;
+  permissions?: string[];
 }
 
+// ==================== DTOs ====================
+
 export interface CreateUserData {
-  firstName: string;
-  lastName: string;
+  identification: string;
+  name: string;
+  fLastName: string;
+  sLastName?: string;
   email: string;
   password: string;
   roleId: number;
 }
 
 export interface UpdateUserData {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  identification?: string;
+  name?: string;
+  fLastName?: string;
+  sLastName?: string;
+  u_email?: string;
+  password?: string;
   roleId?: number;
-  isActive?: boolean;
+  u_is_active?: boolean;
 }
 
 export interface UserChangePasswordData {
@@ -42,13 +53,13 @@ export interface UserChangePasswordData {
 export interface UserSearchParams {
   name?: string;
   email?: string;
-  role?: string;
+  roleId?: number;
   isActive?: boolean;
 }
 
-export interface UserApiResponse {
+export interface UserListResponse {
   data: User[];
-  total: number;
-  page: number;
-  limit: number;
+  total?: number;
+  page?: number;
+  limit?: number;
 }
