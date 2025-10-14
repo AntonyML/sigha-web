@@ -11,11 +11,10 @@ export default function CreateVirtualFile() {
     setFormData((prev) => ({ ...prev, [field]: value } as VirtualFile))
   }
 
-  // Efecto para calcular el IMC automáticamente
   useEffect(() => {
     if (formData.peso && formData.talla) {
       const peso = parseFloat(formData.peso)
-      const talla = parseFloat(formData.talla) / 100 // convertir cm a metros
+      const talla = parseFloat(formData.talla) / 100 
       if (!isNaN(peso) && !isNaN(talla) && talla > 0) {
         const imc = (peso / (talla * talla)).toFixed(2)
         setFormData(prev => ({ ...prev, imc }))
@@ -26,7 +25,7 @@ export default function CreateVirtualFile() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     console.log('Formulario enviado:', formData)
-    // Aquí implementarías la lógica para enviar los datos al servidor
+    // Aquí enviar datos al server
   }
 
   return (
