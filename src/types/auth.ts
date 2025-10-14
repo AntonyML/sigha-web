@@ -1,21 +1,29 @@
+// ==================== Login & Auth ====================
+
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
+export interface LoginResponse {
+  requiresTwoFactor: boolean;
+  tempToken?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: AuthUser;
+}
+
 export interface AuthResponse {
-  token: string;
+  accessToken: string;
   refreshToken: string;
   user: AuthUser;
-  expiresIn: number;
 }
 
 export interface AuthUser {
   id: number;
-  firstName: string;
-  lastName: string;
   email: string;
-  role: AuthUserRole;
+  name: string;
+  roleId?: number;
 }
 
 export interface AuthUserRole {
@@ -24,10 +32,17 @@ export interface AuthUserRole {
   permissions: string[];
 }
 
+// ==================== Token Management ====================
+
 export interface RefreshTokenResponse {
-  token: string;
-  expiresIn: number;
+  accessToken: string;
 }
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+// ==================== Password Management ====================
 
 export interface ForgotPasswordData {
   email: string;
@@ -45,9 +60,28 @@ export interface ChangePasswordData {
   confirmPassword: string;
 }
 
+// ==================== Email Verification ====================
+
 export interface VerifyEmailData {
   token: string;
 }
+
+// ==================== Session Management ====================
+
+export interface UserSession {
+  id: number;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: Date;
+  lastActivity: Date;
+  expiresAt: Date;
+}
+
+export interface SessionsResponse {
+  sessions: UserSession[];
+}
+
+// ==================== Error Handling ====================
 
 export interface ApiError {
   message: string;
