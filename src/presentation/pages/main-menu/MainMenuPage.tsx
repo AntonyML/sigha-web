@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './style.css';
 
@@ -27,6 +26,13 @@ export default function MainMenuPage() {
             description: 'Administrar usuarios del sistema y sus permisos',
             image: '👥',
             route: '/users'
+        },
+        {
+            id: '3',
+            title: 'Configuración 2FA',
+            description: 'Configurar autenticación de dos factores para mayor seguridad',
+            image: '🔐',
+            route: '/two-factor'
         }
     ];
 

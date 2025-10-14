@@ -5,8 +5,8 @@ import { authFlow } from '../../../infrastructure/flows/authFlow'
 import { authStorage } from '../../../infrastructure/storage/authStorage'
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('antonyml@gmail.com')
-  const [password, setPassword] = useState('123456')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false)
   const [loading, setLoading] = useState(false)
