@@ -43,9 +43,9 @@ export default function UserListPage() {
             setFilteredUsers(users);
         } else {
             const filtered = users.filter(user =>
-                user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.u_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.identification.toLowerCase().includes(searchTerm.toLowerCase())
+                user.uName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.uEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.uIdentification || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
             );
             setFilteredUsers(filtered);
         }
@@ -83,7 +83,7 @@ export default function UserListPage() {
     };
 
     const handleToggleStatus = async (user: User) => {
-        const newStatus = !user.u_is_active;
+        const newStatus = !user.uIsActive;
         const action = newStatus ? 'activar' : 'desactivar';
         const fullName = userFlow.getFullName(user);
 
@@ -225,14 +225,14 @@ export default function UserListPage() {
                         {filteredUsers.map((user, index) => (
                             <tr key={user.id}>
                                 <td>{index + 1}</td>
-                                <td>{user.identification}</td>
+                                <td>{user.uIdentification}</td>
                                 <td>{userFlow.getFullName(user)}</td>
-                                <td>{user.u_email}</td>
+                                <td>{user.uEmail}</td>
                                 <td>
-                                    <span className={`badge ${user.u_is_active ? 'bg-success' : 'bg-secondary'}`}>
-                                        {user.u_is_active ? 'Activo' : 'Inactivo'}
+                                    <span className={`badge ${user.uIsActive ? 'bg-success' : 'bg-secondary'}`}>
+                                        {user.uIsActive ? 'Activo' : 'Inactivo'}
                                     </span>
-                                    {user.u_email_verified && (
+                                    {user.uEmailVerified && (
                                         <span className="badge bg-info ms-1" title="Email verificado">
                                             <i className="bi bi-check-circle"></i>
                                         </span>
@@ -255,11 +255,11 @@ export default function UserListPage() {
                                             <i className="bi bi-pencil-square"></i>
                                         </button>
                                         <button
-                                            className={`btn btn-sm ${user.u_is_active ? 'btn-warning' : 'btn-success'}`}
+                                            className={`btn btn-sm ${user.uIsActive ? 'btn-warning' : 'btn-success'}`}
                                             onClick={() => handleToggleStatus(user)}
-                                            title={user.u_is_active ? 'Desactivar' : 'Activar'}
+                                            title={user.uIsActive ? 'Desactivar' : 'Activar'}
                                         >
-                                            <i className={`bi ${user.u_is_active ? 'bi-toggle-on' : 'bi-toggle-off'}`}></i>
+                                            <i className={`bi ${user.uIsActive ? 'bi-toggle-on' : 'bi-toggle-off'}`}></i>
                                         </button>
                                         <button
                                             className="btn btn-danger btn-sm"

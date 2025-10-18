@@ -170,14 +170,14 @@ export const userFlow = {
     async createUser(data: CreateUserData): Promise<CreateUserFlowResult> {
         try {
             // Validar datos requeridos
-            if (!data.identification || !data.name || !data.fLastName) {
+            if (!data.uIdentification || !data.uName || !data.uFLastName) {
                 return {
                     success: false,
                     error: 'Identificación, nombre y primer apellido son requeridos',
                 };
             }
 
-            if (!data.email || !data.password) {
+            if (!data.uEmail || !data.uPassword) {
                 return {
                     success: false,
                     error: 'Email y contraseña son requeridos',
@@ -186,7 +186,7 @@ export const userFlow = {
 
             // Validar formato de email
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.email)) {
+            if (!emailRegex.test(data.uEmail)) {
                 return {
                     success: false,
                     error: 'El formato del email no es válido',
@@ -194,10 +194,10 @@ export const userFlow = {
             }
 
             // Validar longitud de contraseña
-            if (data.password.length < 6) {
+            if (data.uPassword.length < 8) {
                 return {
                     success: false,
-                    error: 'La contraseña debe tener al menos 6 caracteres',
+                    error: 'La contraseña debe tener al menos 8 caracteres',
                 };
             }
 
@@ -280,9 +280,9 @@ export const userFlow = {
             }
 
             // Validar formato de email si se proporciona
-            if (data.u_email) {
+            if (data.uEmail) {
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(data.u_email)) {
+                if (!emailRegex.test(data.uEmail)) {
                     return {
                         success: false,
                         error: 'El formato del email no es válido',
@@ -291,10 +291,10 @@ export const userFlow = {
             }
 
             // Validar contraseña si se proporciona
-            if (data.password && data.password.length < 6) {
+            if (data.uPassword && data.uPassword.length < 8) {
                 return {
                     success: false,
-                    error: 'La contraseña debe tener al menos 6 caracteres',
+                    error: 'La contraseña debe tener al menos 8 caracteres',
                 };
             }
 
@@ -662,9 +662,9 @@ export const userFlow = {
      * Formatea el nombre completo del usuario
      */
     getFullName(user: User): string {
-        const parts = [user.name, user.fLastName];
-        if (user.sLastName) {
-            parts.push(user.sLastName);
+        const parts = [user.uName, user.uFLastName];
+        if (user.uSLastName) {
+            parts.push(user.uSLastName);
         }
         return parts.join(' ');
     },
@@ -673,8 +673,8 @@ export const userFlow = {
      * Obtiene las iniciales del usuario
      */
     getInitials(user: User): string {
-        const firstInitial = user.name.charAt(0).toUpperCase();
-        const lastInitial = user.fLastName.charAt(0).toUpperCase();
+        const firstInitial = user.uName.charAt(0).toUpperCase();
+        const lastInitial = user.uFLastName.charAt(0).toUpperCase();
         return `${firstInitial}${lastInitial}`;
     },
 
@@ -682,13 +682,13 @@ export const userFlow = {
      * Verifica si un usuario está activo
      */
     isUserActive(user: User): boolean {
-        return user.u_is_active === true;
+        return user.uIsActive === true;
     },
 
     /**
      * Verifica si el email del usuario está verificado
      */
     isEmailVerified(user: User): boolean {
-        return user.u_email_verified === true;
+        return user.uEmailVerified === true;
     },
 };

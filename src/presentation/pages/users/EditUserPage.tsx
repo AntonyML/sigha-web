@@ -4,23 +4,23 @@ import { userFlow } from '../../../infrastructure/flows/userFlow';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
 
 interface UserFormData {
-    identification: string;
-    name: string;
-    fLastName: string;
-    sLastName: string;
-    email: string;
-    password: string;
+    uIdentification: string;
+    uName: string;
+    uFLastName: string;
+    uSLastName?: string;
+    uEmail: string;
+    uPassword?: string;
     roleId: number;
     isActive: boolean;
 }
 
 const defaultUserFormData: UserFormData = {
-    identification: '',
-    name: '',
-    fLastName: '',
-    sLastName: '',
-    email: '',
-    password: '',
+    uIdentification: '',
+    uName: '',
+    uFLastName: '',
+    uSLastName: '',
+    uEmail: '',
+    uPassword: '',
     roleId: 0,
     isActive: true
 };
@@ -62,14 +62,14 @@ export default function EditUserPage() {
                 const user = userResult.user;
                 setOriginalUser(user);
                 setFormData({
-                    identification: user.identification,
-                    name: user.name,
-                    fLastName: user.fLastName,
-                    sLastName: user.sLastName || '',
-                    email: user.u_email,
-                    password: '', // No cargamos la contraseña por seguridad
-                    roleId: user.role_id || 0,
-                    isActive: user.u_is_active
+                    uIdentification: user.uIdentification || '',
+                    uName: user.uName || '',
+                    uFLastName: user.uFLastName || '',
+                    uSLastName: user.uSLastName || '',
+                    uEmail: user.uEmail || '',
+                    uPassword: '', // No cargamos la contraseña por seguridad
+                    roleId: user.roleId || 0,
+                    isActive: user.uIsActive === undefined ? true : user.uIsActive
                 });
             } else {
                 setError(userResult.error || 'Error al cargar usuario');
@@ -105,29 +105,29 @@ export default function EditUserPage() {
         // Construir objeto de actualización solo con campos modificados
         const updateData: UpdateUserData = {};
 
-        if (formData.identification !== originalUser?.identification) {
-            updateData.identification = formData.identification;
+        if (formData.uIdentification !== originalUser?.uIdentification) {
+            updateData.uIdentification = formData.uIdentification;
         }
-        if (formData.name !== originalUser?.name) {
-            updateData.name = formData.name;
+        if (formData.uName !== originalUser?.uName) {
+            updateData.uName = formData.uName;
         }
-        if (formData.fLastName !== originalUser?.fLastName) {
-            updateData.fLastName = formData.fLastName;
+        if (formData.uFLastName !== originalUser?.uFLastName) {
+            updateData.uFLastName = formData.uFLastName;
         }
-        if (formData.sLastName !== (originalUser?.sLastName || '')) {
-            updateData.sLastName = formData.sLastName || undefined;
+        if (formData.uSLastName !== (originalUser?.uSLastName || '')) {
+            updateData.uSLastName = formData.uSLastName || undefined;
         }
-        if (formData.email !== originalUser?.u_email) {
-            updateData.u_email = formData.email;
+        if (formData.uEmail !== originalUser?.uEmail) {
+            updateData.uEmail = formData.uEmail;
         }
-        if (formData.password) {
-            updateData.password = formData.password;
+        if (formData.uPassword) {
+            updateData.uPassword = formData.uPassword;
         }
-        if (formData.roleId !== originalUser?.role_id) {
+        if (formData.roleId !== originalUser?.roleId) {
             updateData.roleId = formData.roleId;
         }
-        if (formData.isActive !== originalUser?.u_is_active) {
-            updateData.u_is_active = formData.isActive;
+        if (formData.isActive !== originalUser?.uIsActive) {
+            updateData.uIsActive = formData.isActive;
         }
 
         // Verificar si hay cambios
@@ -227,11 +227,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-6">
                         <label htmlFor="identification" className="form-label">IDENTIFICACIÓN *</label>
                         <input
-                            id="identification"
+                            id="uIdentification"
                             type="text"
                             className="form-control"
-                            value={formData.identification}
-                            onChange={(e) => onInputChange('identification', e.target.value)}
+                            value={formData.uIdentification}
+                            onChange={(e) => onInputChange('uIdentification', e.target.value)}
                             placeholder="Número de identificación"
                             required
                             disabled={saving}
@@ -240,11 +240,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-6">
                         <label htmlFor="email" className="form-label">EMAIL *</label>
                         <input
-                            id="email"
+                            id="uEmail"
                             type="email"
                             className="form-control"
-                            value={formData.email}
-                            onChange={(e) => onInputChange('email', e.target.value)}
+                            value={formData.uEmail}
+                            onChange={(e) => onInputChange('uEmail', e.target.value)}
                             placeholder="correo@ejemplo.com"
                             required
                             disabled={saving}
@@ -257,11 +257,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="name" className="form-label">NOMBRE *</label>
                         <input
-                            id="name"
+                            id="uName"
                             type="text"
                             className="form-control"
-                            value={formData.name}
-                            onChange={(e) => onInputChange('name', e.target.value)}
+                            value={formData.uName}
+                            onChange={(e) => onInputChange('uName', e.target.value)}
                             placeholder="Nombre"
                             required
                             disabled={saving}
@@ -270,11 +270,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="fLastName" className="form-label">PRIMER APELLIDO *</label>
                         <input
-                            id="fLastName"
+                            id="uFLastName"
                             type="text"
                             className="form-control"
-                            value={formData.fLastName}
-                            onChange={(e) => onInputChange('fLastName', e.target.value)}
+                            value={formData.uFLastName}
+                            onChange={(e) => onInputChange('uFLastName', e.target.value)}
                             placeholder="Primer apellido"
                             required
                             disabled={saving}
@@ -283,11 +283,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="sLastName" className="form-label">SEGUNDO APELLIDO</label>
                         <input
-                            id="sLastName"
+                            id="uSLastName"
                             type="text"
                             className="form-control"
-                            value={formData.sLastName}
-                            onChange={(e) => onInputChange('sLastName', e.target.value)}
+                            value={formData.uSLastName}
+                            onChange={(e) => onInputChange('uSLastName', e.target.value)}
                             placeholder="Segundo apellido (opcional)"
                             disabled={saving}
                         />
@@ -303,11 +303,11 @@ export default function EditUserPage() {
                     <div className="col-12 col-md-6">
                         <label htmlFor="password" className="form-label">CONTRASEÑA</label>
                         <input
-                            id="password"
+                            id="uPassword"
                             type="password"
                             className="form-control"
-                            value={formData.password}
-                            onChange={(e) => onInputChange('password', e.target.value)}
+                            value={formData.uPassword}
+                            onChange={(e) => onInputChange('uPassword', e.target.value)}
                             placeholder="Dejar vacío para mantener la actual"
                             disabled={saving}
                             minLength={6}

@@ -4,22 +4,22 @@ import { userFlow } from '../../../infrastructure/flows/userFlow';
 import type { UserRole, CreateUserData } from '../../../types/user';
 
 interface UserFormData {
-    identification: string;
-    name: string;
-    fLastName: string;
-    sLastName: string;
-    email: string;
-    password: string;
+    uIdentification: string;
+    uName: string;
+    uFLastName: string;
+    uSLastName?: string;
+    uEmail: string;
+    uPassword: string;
     roleId: number;
 }
 
 const defaultUserFormData: UserFormData = {
-    identification: '',
-    name: '',
-    fLastName: '',
-    sLastName: '',
-    email: '',
-    password: '',
+    uIdentification: '',
+    uName: '',
+    uFLastName: '',
+    uSLastName: '',
+    uEmail: '',
+    uPassword: '',
     roleId: 0
 };
 
@@ -50,8 +50,8 @@ export default function CreateUserPage() {
         setFormData((prev) => ({ ...prev, [field]: value }));
 
         // Validar contraseñas si estamos cambiando el campo de contraseña
-        if (field === 'password') {
-            setPasswordsMatch(value === confirmPassword);
+        if (field === 'uPassword') {
+            setPasswordsMatch((value as string) === confirmPassword);
         }
     }
 
@@ -78,12 +78,12 @@ export default function CreateUserPage() {
 
         // Crear el objeto de datos para enviar
         const createData: CreateUserData = {
-            identification: formData.identification,
-            name: formData.name,
-            fLastName: formData.fLastName,
-            sLastName: formData.sLastName || undefined,
-            email: formData.email,
-            password: formData.password,
+            uIdentification: formData.uIdentification,
+            uName: formData.uName,
+            uFLastName: formData.uFLastName,
+            uSLastName: formData.uSLastName || undefined,
+            uEmail: formData.uEmail,
+            uPassword: formData.uPassword,
             roleId: formData.roleId
         };
 
@@ -125,31 +125,31 @@ export default function CreateUserPage() {
                 {/* Identificación y Email */}
                 <div className="row g-3 mb-4">
                     <div className="col-12 col-md-6">
-                        <label htmlFor="identification" className="form-label">IDENTIFICACIÓN *</label>
-                        <input
-                            id="identification"
-                            type="text"
-                            className="form-control"
-                            value={formData.identification}
-                            onChange={(e) => onInputChange('identification', e.target.value)}
-                            placeholder="Número de identificación"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label htmlFor="email" className="form-label">EMAIL *</label>
-                        <input
-                            id="email"
-                            type="email"
-                            className="form-control"
-                            value={formData.email}
-                            onChange={(e) => onInputChange('email', e.target.value)}
-                            placeholder="correo@ejemplo.com"
-                            required
-                            disabled={loading}
-                        />
-                    </div>
+                            <label htmlFor="uIdentification" className="form-label">IDENTIFICACIÓN *</label>
+                            <input
+                                id="uIdentification"
+                                type="text"
+                                className="form-control"
+                                value={formData.uIdentification}
+                                onChange={(e) => onInputChange('uIdentification', e.target.value)}
+                                placeholder="Número de identificación"
+                                required
+                                disabled={loading}
+                            />
+                        </div>
+                        <div className="col-12 col-md-6">
+                            <label htmlFor="uEmail" className="form-label">EMAIL *</label>
+                            <input
+                                id="uEmail"
+                                type="email"
+                                className="form-control"
+                                value={formData.uEmail}
+                                onChange={(e) => onInputChange('uEmail', e.target.value)}
+                                placeholder="correo@ejemplo.com"
+                                required
+                                disabled={loading}
+                            />
+                        </div>
                 </div>
 
                 {/* Nombres y Apellidos */}
@@ -157,11 +157,11 @@ export default function CreateUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="name" className="form-label">NOMBRE *</label>
                         <input
-                            id="name"
+                            id="uName"
                             type="text"
                             className="form-control"
-                            value={formData.name}
-                            onChange={(e) => onInputChange('name', e.target.value)}
+                            value={formData.uName}
+                            onChange={(e) => onInputChange('uName', e.target.value)}
                             placeholder="Nombre"
                             required
                             disabled={loading}
@@ -170,11 +170,11 @@ export default function CreateUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="fLastName" className="form-label">PRIMER APELLIDO *</label>
                         <input
-                            id="fLastName"
+                            id="uFLastName"
                             type="text"
                             className="form-control"
-                            value={formData.fLastName}
-                            onChange={(e) => onInputChange('fLastName', e.target.value)}
+                            value={formData.uFLastName}
+                            onChange={(e) => onInputChange('uFLastName', e.target.value)}
                             placeholder="Primer apellido"
                             required
                             disabled={loading}
@@ -183,11 +183,11 @@ export default function CreateUserPage() {
                     <div className="col-12 col-md-4">
                         <label htmlFor="sLastName" className="form-label">SEGUNDO APELLIDO</label>
                         <input
-                            id="sLastName"
+                            id="uSLastName"
                             type="text"
                             className="form-control"
-                            value={formData.sLastName}
-                            onChange={(e) => onInputChange('sLastName', e.target.value)}
+                            value={formData.uSLastName}
+                            onChange={(e) => onInputChange('uSLastName', e.target.value)}
                             placeholder="Segundo apellido (opcional)"
                             disabled={loading}
                         />
@@ -203,11 +203,11 @@ export default function CreateUserPage() {
                     <div className="col-12 col-md-6">
                         <label htmlFor="password" className="form-label">CONTRASEÑA *</label>
                         <input
-                            id="password"
+                            id="uPassword"
                             type="password"
                             className="form-control"
-                            value={formData.password}
-                            onChange={(e) => onInputChange('password', e.target.value)}
+                            value={formData.uPassword}
+                            onChange={(e) => onInputChange('uPassword', e.target.value)}
                             placeholder="Mínimo 6 caracteres"
                             required
                             disabled={loading}
