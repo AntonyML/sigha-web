@@ -9,7 +9,7 @@
     "dev:electron": "concurrently -k \"npm:start:dev:main\" \"npm:start:dev:renderer\" \"npm:start:dev:electron-wait\"",
     "start:dev:main": "tsc -p electron/tsconfig.json -w",
     "start:dev:renderer": "cross-env VITE_DEV_SERVER_URL=http://localhost:5173 vite",
-    "start:dev:electron-wait": "cmd /c \"wait-on http://localhost:5173 && wait-on file:dist-electron/main.cjs && electron ./dist-electron/main.cjs\"",
+    "start:dev:electron-wait": "wait-on http://localhost:5173 && wait-on file:dist-electron/main.cjs && electron ./dist-electron/main.cjs",
     "build:renderer": "vite build",
     "build:electron": "tsc -p electron/tsconfig.json",
     "build": "npm run build:renderer && npm run build:electron",

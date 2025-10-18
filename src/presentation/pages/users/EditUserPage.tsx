@@ -105,9 +105,6 @@ export default function EditUserPage() {
         // Construir objeto de actualización solo con campos modificados
         const updateData: UpdateUserData = {};
 
-        if (formData.uIdentification !== originalUser?.uIdentification) {
-            updateData.uIdentification = formData.uIdentification;
-        }
         if (formData.uName !== originalUser?.uName) {
             updateData.uName = formData.uName;
         }
@@ -119,9 +116,6 @@ export default function EditUserPage() {
         }
         if (formData.uEmail !== originalUser?.uEmail) {
             updateData.uEmail = formData.uEmail;
-        }
-        if (formData.uPassword) {
-            updateData.uPassword = formData.uPassword;
         }
         if (formData.roleId !== originalUser?.roleId) {
             updateData.roleId = formData.roleId;

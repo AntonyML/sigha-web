@@ -57,7 +57,7 @@ export default function CreateUserPage() {
 
     function handleConfirmPasswordChange(value: string) {
         setConfirmPassword(value);
-        setPasswordsMatch(formData.password === value);
+        setPasswordsMatch(formData.uPassword === value);
     }
 
     async function handleSubmit(e: React.FormEvent) {

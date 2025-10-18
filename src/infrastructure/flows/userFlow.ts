@@ -290,14 +290,6 @@ export const userFlow = {
                 }
             }
 
-            // Validar contraseña si se proporciona
-            if (data.uPassword && data.uPassword.length < 8) {
-                return {
-                    success: false,
-                    error: 'La contraseña debe tener al menos 8 caracteres',
-                };
-            }
-
             // Actualizar usuario
             const user = await userService.updateUser(id, data);
 
@@ -427,7 +419,7 @@ export const userFlow = {
             }
 
             // Validar que todos los campos estén presentes
-            if (!data.currentPassword || !data.newPassword || !data.confirmPassword) {
+            if (!data.currentPassword || !data.newPassword) {
                 return {
                     success: false,
                     error: 'Todos los campos son requeridos',
@@ -435,18 +427,10 @@ export const userFlow = {
             }
 
             // Validar longitud de nueva contraseña
-            if (data.newPassword.length < 6) {
+            if (data.newPassword.length < 8) {
                 return {
                     success: false,
-                    error: 'La nueva contraseña debe tener al menos 6 caracteres',
-                };
-            }
-
-            // Validar que las contraseñas coincidan
-            if (data.newPassword !== data.confirmPassword) {
-                return {
-                    success: false,
-                    error: 'Las contraseñas nuevas no coinciden',
+                    error: 'La nueva contraseña debe tener al menos 8 caracteres',
                 };
             }
 
@@ -599,7 +583,7 @@ export const userFlow = {
                 };
             }
 
-            const user = await userService.updateUser(id, { u_is_active: isActive });
+            const user = await userService.updateUser(id, { uIsActive: isActive });
 
             return {
                 success: true,
