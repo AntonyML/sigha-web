@@ -3,15 +3,8 @@ import type {
   LoginCredentials,
   LoginResponse,
   AuthUser,
-  RefreshTokenResponse,
-  RefreshTokenRequest,
-  ForgotPasswordData,
-  ResetPasswordData,
-  ChangePasswordData,
-  VerifyEmailData,
-  SessionsResponse,
 } from '../types/auth';
-import type { Verify2FARequest, Verify2FAResponse } from '../types/twoFactor';
+import type { TwoFactorVerificationRequest } from '../types/twoFactor';
 
 const API_BASE_URL = 'http://localhost:3000';
 
@@ -36,38 +29,17 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar errores 401 y refresh token
+// Interceptor para manejar errores 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post<RefreshTokenResponse>(
-            `${API_BASE_URL}/auth/refresh`,
-            { refreshToken }
-          );
-
-          const { accessToken } = response.data;
-          localStorage.setItem('authToken', accessToken);
-
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
+    if (error.response?.status === 401) {
+      // Limpiar tokens y redirigir a login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tempToken');
+      window.location.href = '/login';
     }
-
     return Promise.reject(error);
   }
 );
@@ -80,7 +52,7 @@ export const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
 
-    const { requiresTwoFactor, accessToken, refreshToken, user, tempToken } = response.data;
+    const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
 
     // Si requiere 2FA, solo guardamos el tempToken temporalmente
     if (requiresTwoFactor && tempToken) {
@@ -88,10 +60,9 @@ export const authService = {
       return response.data;
     }
 
-    // Si no requiere 2FA, guardamos los tokens y usuario
-    if (accessToken && refreshToken && user) {
+    // Si no requiere 2FA, guardamos el token y usuario
+    if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
     }
 
@@ -101,18 +72,25 @@ export const authService = {
   /**
    * Verifica código 2FA y completa el login
    */
-  verify2FA: async (data: Verify2FARequest): Promise<Verify2FAResponse> => {
-    const response = await apiClient.post<Verify2FAResponse>('/auth/verify-2fa', data);
+  verify2FA: async (data: TwoFactorVerificationRequest): Promise<LoginResponse> => {
+    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
 
-    const { accessToken, refreshToken, user } = response.data;
+    const { accessToken, user } = response.data;
 
-    if (accessToken && refreshToken && user) {
+    if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.removeItem('tempToken');
     }
 
+    return response.data;
+  },
+
+  /**
+   * Obtener perfil del usuario autenticado
+   */
+  getProfile: async (): Promise<AuthUser> => {
+    const response = await apiClient.get<AuthUser>('/auth/profile');
     return response.data;
   },
 
@@ -126,103 +104,9 @@ export const authService = {
       console.error('Error durante logout:', error);
     } finally {
       localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       localStorage.removeItem('tempToken');
     }
-  },
-
-  /**
-   * Renovar access token usando refresh token
-   */
-  refreshToken: async (): Promise<RefreshTokenResponse> => {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const request: RefreshTokenRequest = { refreshToken };
-    const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh', request);
-
-    localStorage.setItem('authToken', response.data.accessToken);
-
-    return response.data;
-  },
-
-  /**
-   * Obtener usuario autenticado actual
-   */
-  getCurrentUser: async (): Promise<AuthUser> => {
-    const response = await apiClient.get<AuthUser>('/auth/me');
-    return response.data;
-  },
-
-  /**
-   * Olvidé mi contraseña
-   */
-  forgotPassword: async (data: ForgotPasswordData): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>('/auth/forgot-password', data);
-    return response.data;
-  },
-
-  /**
-   * Restablecer contraseña
-   */
-  resetPassword: async (data: ResetPasswordData): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>('/auth/reset-password', data);
-    return response.data;
-  },
-
-  /**
-   * Cambiar contraseña
-   */
-  changePassword: async (data: ChangePasswordData): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>('/auth/change-password', data);
-    return response.data;
-  },
-
-  /**
-   * Verificar email
-   */
-  verifyEmail: async (data: VerifyEmailData): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>('/auth/verify-email', data);
-    return response.data;
-  },
-
-  /**
-   * Reenviar email de verificación
-   */
-  resendVerificationEmail: async (): Promise<{ message: string }> => {
-    const response = await apiClient.post<{ message: string }>('/auth/resend-verification');
-    return response.data;
-  },
-
-  /**
-   * Obtener sesiones activas del usuario
-   */
-  getActiveSessions: async (): Promise<SessionsResponse> => {
-    const response = await apiClient.get<SessionsResponse>('/auth/sessions');
-    return response.data;
-  },
-
-  /**
-   * Cerrar todas las sesiones del usuario
-   */
-  logoutAllSessions: async (): Promise<{ success: boolean; message: string }> => {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-      '/auth/sessions/all'
-    );
-    return response.data;
-  },
-
-  /**
-   * Cerrar una sesión específica
-   */
-  logoutSession: async (sessionId: number): Promise<{ success: boolean; message: string }> => {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-      `/auth/sessions/${sessionId}`
-    );
-    return response.data;
   },
 
   // ==================== Helpers ====================
@@ -263,7 +147,6 @@ export const authService = {
    */
   clearLocalSession: (): void => {
     localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tempToken');
   },

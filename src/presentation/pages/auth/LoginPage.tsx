@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../../../assets/images/asopogua.png'
 import { authFlow } from '../../../infrastructure/flows/authFlow'
-import { authStorage } from '../../../infrastructure/storage/authStorage'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -99,7 +98,8 @@ export default function LoginForm() {
     setRequiresTwoFactor(false)
     setTwoFactorCode('')
     setError('')
-    authStorage.removeTempToken()
+    // Limpiar tempToken usando authFlow
+    localStorage.removeItem('tempToken')
   }
 
   return (

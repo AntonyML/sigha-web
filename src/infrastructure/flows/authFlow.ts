@@ -3,10 +3,8 @@ import type {
     LoginCredentials,
     LoginResponse,
     AuthUser,
-    SessionsResponse,
-    UserSession,
 } from '../../types/auth';
-import type { Verify2FARequest } from '../../types/twoFactor';
+import type { TwoFactorVerificationRequest } from '../../types/twoFactor';
 
 /**
  * Resultado del flujo de login
@@ -37,36 +35,10 @@ export interface LogoutFlowResult {
 }
 
 /**
- * Resultado del flujo de refresh token
- */
-export interface RefreshTokenFlowResult {
-    success: boolean;
-    error?: string;
-}
-
-/**
- * Resultado del flujo de obtener usuario actual
- */
-export interface GetCurrentUserFlowResult {
-    success: boolean;
-    user?: AuthUser;
-    error?: string;
-}
-
-/**
- * Resultado del flujo de gestión de sesiones
- */
-export interface SessionsFlowResult {
-    success: boolean;
-    sessions?: UserSession[];
-    error?: string;
-}
-
-/**
  * AuthFlow - Flujo de autenticación
  * 
  * Encapsula toda la lógica de autenticación, incluyendo login, logout,
- * manejo de tokens, sesiones y verificación 2FA.
+ * manejo de tokens y verificación 2FA.
  */
 export const authFlow = {
     /**
@@ -79,10 +51,10 @@ export const authFlow = {
      * - Almacenamiento de tokens y usuario
      * - Manejo de errores
      * 
-     * @param credentials - Email y password del usuario
+     * @param credentials - uEmail y uPassword del usuario
      * @returns LoginFlowResult con el estado del login
      */
-    async login(credentials: LoginCredentials): Promise<LoginFlowResult> {
+    async login(credentials: { email: string; password: string }): Promise<LoginFlowResult> {
         try {
             // Validar credenciales
             if (!credentials.email || !credentials.password) {
@@ -103,8 +75,14 @@ export const authFlow = {
                 };
             }
 
+            // Convertir credenciales al formato del backend
+            const loginCredentials: LoginCredentials = {
+                uEmail: credentials.email,
+                uPassword: credentials.password
+            };
+
             // Intentar login
-            const response: LoginResponse = await authService.login(credentials);
+            const response: LoginResponse = await authService.login(loginCredentials);
 
             // Caso 1: Requiere 2FA
             if (response.requiresTwoFactor && response.tempToken) {
@@ -192,9 +170,9 @@ export const authFlow = {
             }
 
             // Verificar código 2FA
-            const request: Verify2FARequest = {
-                sessionToken: tempToken,
-                token: cleanCode,
+            const request: TwoFactorVerificationRequest = {
+                tempToken: tempToken,
+                twoFactorCode: cleanCode,
             };
 
             const response = await authService.verify2FA(request);
@@ -252,137 +230,6 @@ export const authFlow = {
             return {
                 success: true, // Consideramos éxito porque se limpió localmente
                 error: 'Sesión cerrada localmente (error al comunicar con servidor)',
-            };
-        }
-    },
-
-    /**
-     * Flujo de refresh token
-     * 
-     * Maneja:
-     * - Renovación automática del access token
-     * - Validación de refresh token
-     * - Manejo de errores (redirige a login si falla)
-     * 
-     * @returns RefreshTokenFlowResult con el estado del refresh
-     */
-    async refreshToken(): Promise<RefreshTokenFlowResult> {
-        try {
-            await authService.refreshToken();
-            return {
-                success: true,
-            };
-        } catch (error: any) {
-            console.error('Error en authFlow.refreshToken:', error);
-
-            // Si falla el refresh, limpiar sesión
-            authService.clearLocalSession();
-
-            return {
-                success: false,
-                error: 'Sesión expirada, por favor inicia sesión nuevamente',
-            };
-        }
-    },
-
-    /**
-     * Flujo para obtener usuario actual desde el backend
-     * 
-     * Maneja:
-     * - Obtención de datos actualizados del usuario
-     * - Actualización del localStorage
-     * - Manejo de errores
-     * 
-     * @returns GetCurrentUserFlowResult con los datos del usuario
-     */
-    async getCurrentUser(): Promise<GetCurrentUserFlowResult> {
-        try {
-            const user = await authService.getCurrentUser();
-
-            // Actualizar usuario en localStorage
-            localStorage.setItem('user', JSON.stringify(user));
-
-            return {
-                success: true,
-                user,
-            };
-        } catch (error: any) {
-            console.error('Error en authFlow.getCurrentUser:', error);
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener datos del usuario',
-            };
-        }
-    },
-
-    /**
-     * Flujo para obtener sesiones activas del usuario
-     * 
-     * @returns SessionsFlowResult con la lista de sesiones
-     */
-    async getActiveSessions(): Promise<SessionsFlowResult> {
-        try {
-            const response: SessionsResponse = await authService.getActiveSessions();
-
-            return {
-                success: true,
-                sessions: response.sessions,
-            };
-        } catch (error: any) {
-            console.error('Error en authFlow.getActiveSessions:', error);
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener sesiones activas',
-            };
-        }
-    },
-
-    /**
-     * Flujo para cerrar una sesión específica
-     * 
-     * @param sessionId - ID de la sesión a cerrar
-     * @returns LogoutFlowResult con el estado
-     */
-    async logoutSession(sessionId: number): Promise<LogoutFlowResult> {
-        try {
-            await authService.logoutSession(sessionId);
-
-            return {
-                success: true,
-            };
-        } catch (error: any) {
-            console.error('Error en authFlow.logoutSession:', error);
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al cerrar la sesión',
-            };
-        }
-    },
-
-    /**
-     * Flujo para cerrar todas las sesiones del usuario
-     * 
-     * @returns LogoutFlowResult con el estado
-     */
-    async logoutAllSessions(): Promise<LogoutFlowResult> {
-        try {
-            await authService.logoutAllSessions();
-
-            // Limpiar sesión local también
-            authService.clearLocalSession();
-
-            return {
-                success: true,
-            };
-        } catch (error: any) {
-            console.error('Error en authFlow.logoutAllSessions:', error);
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al cerrar todas las sesiones',
             };
         }
     },

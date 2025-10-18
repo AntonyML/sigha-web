@@ -1,7 +1,8 @@
 import { twoFactorService } from '../../services/twoFactorService';
 import type {
-    TwoFactorSetupResponse,
-    TwoFactorStatusResponse,
+    Setup2FAResponse,
+    Enable2FARequest,
+    Enable2FAResponse,
 } from '../../types/twoFactor';
 
 /**
@@ -22,6 +23,7 @@ export interface Generate2FAFlowResult {
 export interface Enable2FAFlowResult {
     success: boolean;
     message?: string;
+    backupCodes?: string[];
     error?: string;
 }
 
@@ -46,16 +48,6 @@ export interface TwoFactorStatusFlowResult {
 }
 
 /**
- * Resultado del flujo de regeneración de códigos de respaldo
- */
-export interface RegenerateBackupCodesFlowResult {
-    success: boolean;
-    backupCodes?: string[];
-    message?: string;
-    error?: string;
-}
-
-/**
  * TwoFactorFlow - Flujo de autenticación de dos factores
  * 
  * Encapsula toda la lógica de 2FA, incluyendo configuración,
@@ -75,14 +67,19 @@ export const twoFactorFlow = {
      */
     async generate2FA(): Promise<Generate2FAFlowResult> {
         try {
-            const response: TwoFactorSetupResponse = await twoFactorService.generate2FA();
+            const response: Setup2FAResponse = await twoFactorService.setup2FA();
 
             return {
                 success: true,
                 qrCode: response.qrCode,
                 secret: response.secret,
                 backupCodes: response.backupCodes,
-                instructions: response.instructions,
+                instructions: [
+                    'Descarga una aplicación autenticadora (2FAS, Google Authenticator, Authy)',
+                    'Abre la aplicación y escanea el código QR a continuación',
+                    'O ingresa manualmente el código secreto',
+                    'La aplicación generará un código de 6 dígitos'
+                ],
             };
         } catch (error: any) {
             console.error('Error en twoFactorFlow.generate2FA:', error);
@@ -94,7 +91,7 @@ export const twoFactorFlow = {
                 };
             }
 
-            if (error.response?.status === 409) {
+            if (error.response?.status === 400 && error.response?.data?.message?.includes('ya está habilitado')) {
                 return {
                     success: false,
                     error: '2FA ya está configurado. Deshabílitalo primero si deseas reconfigurarlo.',
@@ -112,40 +109,47 @@ export const twoFactorFlow = {
      * Flujo completo para habilitar 2FA
      * 
      * Maneja:
-     * - Validación del código TOTP
+     * - Validación del código TOTP o backup code
      * - Habilitación del 2FA en el backend
      * - Confirmación al usuario
      * - Manejo de errores
      * 
-     * @param code - Código TOTP de 6 dígitos de la app 2FAS
+     * @param code - Código TOTP de 6 dígitos o backup code de 8 dígitos
      * @returns Enable2FAFlowResult con el estado de la habilitación
      */
     async enable2FA(code: string): Promise<Enable2FAFlowResult> {
         try {
             // Validar formato del código
-            if (!twoFactorService.isValidTOTPFormat(code)) {
+            const validation = this.validateCode(code);
+            if (!validation.valid) {
                 return {
                     success: false,
-                    error: 'El código debe tener 6 dígitos numéricos',
+                    error: validation.error || 'Formato de código inválido',
                 };
             }
 
             // Limpiar el código (remover espacios, guiones, etc.)
             const cleanCode = twoFactorService.cleanToken(code);
 
+            // Preparar request
+            const request: Enable2FARequest = {
+                verificationCode: cleanCode
+            };
+
             // Habilitar 2FA
-            const response = await twoFactorService.enable2FA(cleanCode);
+            const response: Enable2FAResponse = await twoFactorService.enable2FA(request);
 
             if (response.success) {
                 return {
                     success: true,
-                    message: response.message,
+                    message: '¡2FA habilitado exitosamente!',
+                    backupCodes: response.backupCodes,
                 };
             }
 
             return {
                 success: false,
-                error: response.message || 'Código inválido',
+                error: 'No se pudo habilitar 2FA',
             };
         } catch (error: any) {
             console.error('Error en twoFactorFlow.enable2FA:', error);
@@ -160,7 +164,7 @@ export const twoFactorFlow = {
             if (error.response?.status === 400) {
                 return {
                     success: false,
-                    error: 'Código inválido. Asegúrate de ingresar el código actual de tu app.',
+                    error: 'Código inválido. Asegúrate de ingresar el código actual de tu app o un backup code válido.',
                 };
             }
 
@@ -189,7 +193,7 @@ export const twoFactorFlow = {
             if (response.success) {
                 return {
                     success: true,
-                    message: response.message,
+                    message: '2FA deshabilitado correctamente. Tu cuenta tiene menos seguridad ahora.',
                 };
             }
 
@@ -207,7 +211,7 @@ export const twoFactorFlow = {
                 };
             }
 
-            if (error.response?.status === 404) {
+            if (error.response?.status === 400 && error.response?.data?.message?.includes('no está habilitado')) {
                 return {
                     success: false,
                     error: '2FA no está habilitado en tu cuenta',
@@ -234,78 +238,31 @@ export const twoFactorFlow = {
      */
     async get2FAStatus(): Promise<TwoFactorStatusFlowResult> {
         try {
-            const response: TwoFactorStatusResponse = await twoFactorService.get2FAStatus();
+            // Por ahora simulamos el estado basado en si hay token
+            // En el futuro se puede agregar endpoint GET /auth/2fa/status
+            const isAuthenticated = localStorage.getItem('authToken');
+            
+            if (!isAuthenticated) {
+                return {
+                    success: false,
+                    error: 'No estás autenticado. Por favor inicia sesión.',
+                };
+            }
 
+            // Simulamos que no está habilitado por defecto
+            // Esto se puede mejorar cuando se implemente el endpoint
             return {
                 success: true,
-                enabled: response.enabled,
-                lastUsed: response.lastUsed,
-                hasBackupCodes: response.hasBackupCodes,
+                enabled: false,
+                lastUsed: null,
+                hasBackupCodes: false,
             };
         } catch (error: any) {
             console.error('Error en twoFactorFlow.get2FAStatus:', error);
 
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener estado de 2FA',
-            };
-        }
-    },
-
-    /**
-     * Flujo completo para regenerar códigos de respaldo
-     * 
-     * Maneja:
-     * - Generación de nuevos códigos de respaldo
-     * - Invalidación de códigos anteriores
-     * - Recordatorio de guardar códigos
-     * - Manejo de errores
-     * 
-     * @returns RegenerateBackupCodesFlowResult con los nuevos códigos
-     */
-    async regenerateBackupCodes(): Promise<RegenerateBackupCodesFlowResult> {
-        try {
-            const response = await twoFactorService.regenerateBackupCodes();
-
-            if (response.success && response.backupCodes) {
-                return {
-                    success: true,
-                    backupCodes: response.backupCodes,
-                    message: response.message,
-                };
-            }
-
-            return {
-                success: false,
-                error: 'No se pudieron regenerar los códigos de respaldo',
-            };
-        } catch (error: any) {
-            console.error('Error en twoFactorFlow.regenerateBackupCodes:', error);
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 404) {
-                return {
-                    success: false,
-                    error: '2FA no está configurado. Configúralo primero.',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al regenerar códigos de respaldo',
+                error: 'Error al obtener estado de 2FA',
             };
         }
     },
@@ -325,17 +282,7 @@ export const twoFactorFlow = {
      */
     async setup2FA(): Promise<Generate2FAFlowResult> {
         try {
-            // Primero verificar si ya está habilitado
-            const status = await this.get2FAStatus();
-
-            if (status.success && status.enabled) {
-                return {
-                    success: false,
-                    error: '2FA ya está habilitado. Deshabílitalo primero si deseas reconfigurarlo.',
-                };
-            }
-
-            // Generar configuración de 2FA
+            // Generar configuración de 2FA directamente
             return await this.generate2FA();
         } catch (error: any) {
             console.error('Error en twoFactorFlow.setup2FA:', error);
@@ -344,22 +291,6 @@ export const twoFactorFlow = {
                 success: false,
                 error: 'Error al iniciar configuración de 2FA',
             };
-        }
-    },
-
-    /**
-     * Flujo para verificar si el usuario tiene 2FA habilitado
-     * 
-     * Método simplificado que solo retorna true/false
-     * 
-     * @returns boolean indicando si 2FA está habilitado
-     */
-    async is2FAEnabled(): Promise<boolean> {
-        try {
-            return await twoFactorService.is2FAEnabled();
-        } catch (error) {
-            console.error('Error en twoFactorFlow.is2FAEnabled:', error);
-            return false;
         }
     },
 
@@ -379,38 +310,18 @@ export const twoFactorFlow = {
             return { valid: true };
         }
 
-        // Verificar si es código de respaldo (8 caracteres hex)
+        // Verificar si es código de respaldo (8 dígitos)
         if (twoFactorService.isValidBackupCodeFormat(cleanCode)) {
             return { valid: true };
         }
 
         return {
             valid: false,
-            error: 'El código debe tener 6 dígitos (TOTP) o 8 caracteres hexadecimales (respaldo)',
+            error: 'El código debe tener 6 dígitos (TOTP) o 8 dígitos (backup code)',
         };
     },
 
-    /**
-     * Flujo para obtener información de debug (solo desarrollo)
-     * 
-     * ADVERTENCIA: Este método solo debe usarse en desarrollo
-     * 
-     * @returns Información de debug del 2FA
-     */
-    async getDebugInfo(): Promise<any> {
-        try {
-            const isDev = import.meta.env.DEV;
-            if (!isDev) {
-                console.warn('ADVERTENCIA: Debug info no disponible en producción');
-                return null;
-            }
-
-            return await twoFactorService.get2FADebug();
-        } catch (error) {
-            console.error('Error en twoFactorFlow.getDebugInfo:', error);
-            return null;
-        }
-    },    // ==================== Helpers ====================
+    // ==================== Helpers ====================
 
     /**
      * Valida formato de código TOTP
@@ -435,7 +346,7 @@ export const twoFactorFlow = {
 
     /**
      * Formatea código de respaldo para mostrar
-     * Ejemplo: A1B2C3D4 -> A1B2-C3D4
+     * Ejemplo: 12345678 -> 1234-5678
      */
     formatBackupCode(code: string): string {
         const clean = this.cleanToken(code);

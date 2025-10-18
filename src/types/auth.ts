@@ -1,29 +1,28 @@
 // ==================== Login & Auth ====================
 
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  uEmail: string;  // Cambio para coincidir con backend
+  uPassword: string;  // Cambio para coincidir con backend
+  twoFactorCode?: string;  // Opcional para cuando ya se configura 2FA
 }
 
 export interface LoginResponse {
-  requiresTwoFactor: boolean;
+  accessToken: string;
+  user: AuthUser;
+  requiresTwoFactor?: boolean;
   tempToken?: string;
-  accessToken?: string;
-  refreshToken?: string;
-  user?: AuthUser;
 }
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: AuthUser;
 }
 
 export interface AuthUser {
   id: number;
-  email: string;
-  name: string;
-  roleId?: number;
+  uEmail: string;
+  uName: string;
+  role: string;  // El nombre del rol directamente
 }
 
 export interface AuthUserRole {
