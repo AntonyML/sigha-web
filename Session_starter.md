@@ -113,6 +113,10 @@ This file should be added to .gitignore to avoid committing session-specific dat
 - MCP tool preferences for this session: UI component MCPs (21st, Magic UI, shadcn/ui) as primary for component work; Filesystem MCP as primary for file ops; GitHub MCP available for repo actions.
 - Assumptions: Backend remains at http://localhost:3000; Node/npm versions per README are available on developer machine.
 
+### Preferencia de idioma
+
+Todas las respuestas y notas generadas por el asistente durante esta sesión deberán estar en español.
+
 ### Update Log
 
 Date | Summary

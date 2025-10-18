@@ -1,20 +1,22 @@
 // ==================== Login & Auth ====================
 
 export interface LoginCredentials {
-  uEmail: string;  // Cambio para coincidir con backend
-  uPassword: string;  // Cambio para coincidir con backend
-  twoFactorCode?: string;  // Opcional para cuando ya se configura 2FA
+  uEmail: string;
+  uPassword: string;
+  twoFactorCode?: string;
 }
 
 export interface LoginResponse {
-  accessToken: string;
-  user: AuthUser;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: AuthUser;
   requiresTwoFactor?: boolean;
   tempToken?: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
+  refreshToken?: string;
   user: AuthUser;
 }
 
@@ -22,13 +24,15 @@ export interface AuthUser {
   id: number;
   uEmail: string;
   uName: string;
-  role: string;  // El nombre del rol directamente
+  uFLastName?: string;
+  uSLastName?: string;
+  role?: string | number;
 }
 
 export interface AuthUserRole {
   id: number;
   name: string;
-  permissions: string[];
+  permissions?: string[];
 }
 
 // ==================== Token Management ====================

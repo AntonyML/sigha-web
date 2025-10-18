@@ -2,15 +2,15 @@
 
 export interface User {
   id: number;
-  identification: string;
-  name: string;
-  fLastName: string;
-  sLastName?: string;
-  u_email: string;
-  u_email_verified: boolean;
-  u_is_active: boolean;
-  create_at: string;
-  role_id?: number;
+  uIdentification: string;
+  uName: string;
+  uFLastName: string;
+  uSLastName?: string;
+  uEmail: string;
+  uEmailVerified?: boolean;
+  uIsActive?: boolean;
+  createAt?: string;
+  roleId?: number;
   role?: UserRole;
 }
 
@@ -24,35 +24,31 @@ export interface UserRole {
 // ==================== DTOs ====================
 
 export interface CreateUserData {
-  identification: string;
-  name: string;
-  fLastName: string;
-  sLastName?: string;
-  email: string;
-  password: string;
+  uIdentification: string;
+  uName: string;
+  uFLastName: string;
+  uSLastName?: string;
+  uEmail: string;
+  uPassword: string;
   roleId: number;
 }
 
 export interface UpdateUserData {
-  identification?: string;
-  name?: string;
-  fLastName?: string;
-  sLastName?: string;
-  u_email?: string;
-  password?: string;
+  uName?: string;
+  uFLastName?: string;
+  uSLastName?: string;
+  uEmail?: string;
   roleId?: number;
-  u_is_active?: boolean;
+  uIsActive?: boolean;
 }
 
 export interface UserChangePasswordData {
   currentPassword: string;
   newPassword: string;
-  confirmPassword: string;
 }
 
 export interface UserSearchParams {
-  name?: string;
-  email?: string;
+  term?: string;
   roleId?: number;
   isActive?: boolean;
 }
