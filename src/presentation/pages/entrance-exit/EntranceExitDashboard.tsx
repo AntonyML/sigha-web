@@ -30,12 +30,25 @@ export default function EntranceExitDashboard() {
     }
   };
 
-  const handleFinalize = async (id: number) => {
+  const handleFinalizeEntrance = async (id: number) => {
     try {
-      await entranceExitService.finalizeEntranceExit(id);
-      await loadData();
+      console.log('🔄 Finalizing entrance record:', id);
+      await entranceExitService.finalizeEntranceRecord(id);
+      console.log('✅ Entrance record finalized successfully');
+      await loadData(); // Recargar datos
     } catch (error) {
-      console.error('Error finalizing record:', error);
+      console.error('❌ Error finalizing entrance record:', error);
+    }
+  };
+
+  const handleFinalizeExit = async (id: number) => {
+    try {
+      console.log('🔄 Finalizing exit record:', id);
+      await entranceExitService.finalizeExitRecord(id);
+      console.log('✅ Exit record finalized successfully');
+      await loadData(); // Recargar datos
+    } catch (error) {
+      console.error('❌ Error finalizing exit record:', error);
     }
   };
 
@@ -105,15 +118,7 @@ export default function EntranceExitDashboard() {
               onClick={() => navigate('/entrance-exit/history?filter=entrances')}
             >
               <i className="bi bi-list-ul me-2"></i>
-              Ver Entradas-Salidas
-            </button>
-            
-            <button 
-              className="btn btn-secondary"
-              onClick={() => navigate('/entrance-exit/history?filter=exits')}
-            >
-              <i className="bi bi-list-ul me-2"></i>
-              Ver Salidas-Entradas
+              Ver registros pasados
             </button>
           </div>
         </div>
@@ -175,8 +180,8 @@ export default function EntranceExitDashboard() {
                             <td>
                               <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => handleFinalize(item.id)}
-                                title="Finalizar registro"
+                                onClick={() => handleFinalizeEntrance(item.id)}
+                                title="Finalizar registro de entrada"
                               >
                                 <i className="bi bi-check-circle me-1"></i>
                                 Finalizar
@@ -233,8 +238,8 @@ export default function EntranceExitDashboard() {
                             <td>
                               <button
                                 className="btn btn-sm btn-danger"
-                                onClick={() => handleFinalize(item.id)}
-                                title="Finalizar registro"
+                                onClick={() => handleFinalizeExit(item.id)}
+                                title="Finalizar registro de salida"
                               >
                                 <i className="bi bi-check-circle me-1"></i>
                                 Finalizar

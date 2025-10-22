@@ -49,10 +49,68 @@ export const entranceExitService = {
   finalizeEntranceExit: async (id: number): Promise<EntranceExitResponse> => {
     const updateData = {
       eeClose: true,
-      eeDatetimeExit: new Date().toISOString()
+      eeDatetimeExit: new Date().toISOString(),
+      eeObservations: "Ciclo cerrado automáticamente"
     };
-    const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/finalize`, updateData);
+    const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/close-cycle`, updateData);
     return response.data;
+  },
+
+  finalizeEntranceRecord: async (id: number): Promise<EntranceExitResponse> => {
+    const now = new Date().toISOString();
+    const updateData = {
+      eeDatetimeExit: now,
+      eeObservations: "Ciclo de entrada cerrado automáticamente",
+      eeClose: true
+    };
+    
+    try {
+      
+      const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/close-cycle`, updateData);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Full Error Object:', error);
+      console.error('❌ Server Response Message:', error.response?.data?.message);
+      console.error('❌ Complete Error Details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        serverMessage: error.response?.data?.message,
+        serverError: error.response?.data?.error,
+        fullData: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        payload: updateData
+      });
+      throw error;
+    }
+  },
+
+  finalizeExitRecord: async (id: number): Promise<EntranceExitResponse> => {
+    const now = new Date().toISOString();
+    const updateData = {
+      eeDatetimeEntrance: now, // Solo agregar fecha de entrada para completar el ciclo de salida
+      eeObservations: "Ciclo de salida cerrado automáticamente", 
+      eeClose: true
+    };
+    
+    try {
+      console.log('🔄 Finalizing exit cycle - ID:', id);
+      console.log('📤 Payload being sent:', JSON.stringify(updateData, null, 2));
+      
+      const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/close-cycle`, updateData);
+      console.log('✅ Response received:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        payload: updateData
+      });
+      throw error;
+    }
   },
 
   deleteEntranceExit: async (id: number): Promise<void> => {
@@ -62,6 +120,25 @@ export const entranceExitService = {
   searchEntranceExits: async (params: EntranceExitSearchParams): Promise<EntranceExitListResponse> => {
     const response = await apiClient.get<EntranceExitListResponse>('/entrances-exits/search', { params });
     return response.data;
+  },
+
+  getClosedRecords: async (): Promise<EntranceExitResponse[]> => {
+    try {
+      console.log('Fetching closed records...');
+      const response = await apiClient.get<EntranceExitResponse[]>('/entrances-exits/closed-records');
+      console.log(' Closed records response:', response.data);
+      
+      if (!Array.isArray(response.data)) {
+        console.warn('Response is not an array for closed records:', response.data);
+        return [];
+      }
+      
+      console.log('Returning closed records array:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching closed records:', error);
+      return [];
+    }
   },
 
   getActiveEntrances: async (): Promise<EntranceExitResponse[]> => {

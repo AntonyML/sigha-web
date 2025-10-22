@@ -3,46 +3,29 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { entranceExitService } from '../../../services/entranceExitService';
 import type { EntranceExitResponse } from '../../../types/entranceExit';
-import type { EntranceExitSearchParams } from '../../../types/entranceExitApi';
 
 export default function EntranceExitHistory() {
     const [records, setRecords] = useState<EntranceExitResponse[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchParams, setSearchParams] = useSearchParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
     const filter = searchParams.get('filter') || 'all';
-    const [filters, setFilters] = useState<EntranceExitSearchParams>({
-        eeClose: true,
-        page: 1,
-        limit: 100
-    });
 
-    useEffect(() => {
-        let newFilters = { ...filters, eeClose: true };
-
-        if (filter === 'entrances') {
-            newFilters.eeAccessType = 'entrance';
-        } else if (filter === 'exits') {
-            newFilters.eeAccessType = 'exit';
-        } else {
-            delete newFilters.eeAccessType;
-        }
-
-        setFilters(newFilters);
-    }, [filter]);
 
     useEffect(() => {
         loadData();
-    }, [filters]);
+    }, [filter]); 
 
     const loadData = async () => {
         try {
             setLoading(true);
-            const response = await entranceExitService.searchEntranceExits(filters);
-            setRecords(response.data);
+           
+            const closedRecords = await entranceExitService.getClosedRecords();
+            setRecords(closedRecords);
         } catch (error) {
-            console.error('Error loading data:', error);
+            console.error('Error loading history data:', error);
+            setRecords([]);
         } finally {
             setLoading(false);
         }
@@ -71,16 +54,10 @@ export default function EntranceExitHistory() {
     };
 
     const getTitle = () => {
-        switch (filter) {
-            case 'entrances': return 'Historial de Entradas-Salidas';
-            case 'exits': return 'Historial de Salidas-Entradas';
-            default: return 'Historial Completo de Entradas y Salidas';
-        }
+        return 'Historial Completo de Entradas y Salidas';
     };
 
-    const handleFilterChange = (newFilter: string) => {
-        setSearchParams({ filter: newFilter });
-    };
+
 
     if (loading) {
         return (
@@ -113,19 +90,10 @@ export default function EntranceExitHistory() {
                     <div className="card-body">
                         <div className="row align-items-center">
                             <div className="col-md-auto">
-                                <label className="form-label mb-0 me-3">Filtrar por:</label>
-                            </div>
-                            <div className="col-md-auto">
-                                <div className="btn-group" role="group">
-                                    <button
-                                        type="button"
-                                        className={`btn ${filter === 'all' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                        onClick={() => handleFilterChange('all')}
-                                    >
-                                        <i className="bi bi-list me-2"></i>
-                                        Todos los Registros
-                                    </button>
-                                </div>
+                                <span className="text-muted">
+                                    <i className="bi bi-info-circle me-2"></i>
+                                    Mostrando todos los registros finalizados
+                                </span>
                             </div>
                             <div className="col-md-auto ms-auto">
                                 <button
@@ -133,7 +101,8 @@ export default function EntranceExitHistory() {
                                     onClick={loadData}
                                     title="Actualizar datos"
                                 >
-                                    <i className="bi bi-arrow-clockwise"></i>
+                                    <i className="bi bi-arrow-clockwise me-2"></i>
+                                    Actualizar
                                 </button>
                             </div>
                         </div>
