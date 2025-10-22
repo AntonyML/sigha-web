@@ -206,6 +206,10 @@ export type RCVG = '<10%' | 'e/10 y 20%' | 'e/20 y 30%' | 'e/30 y 40%' | '>40%';
 // Tipo para respuestas Si/No
 export type SiNo = 'SI' | 'NO';
 
+
+
+
+
 // Interfaces para el JSON del API
 export interface ApiProgram {
   id: number;

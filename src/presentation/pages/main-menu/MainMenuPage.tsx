@@ -33,6 +33,13 @@ export default function MainMenuPage() {
             description: 'Configurar autenticación de dos factores para mayor seguridad',
             image: '🔐',
             route: '/two-factor'
+        },
+         {
+            id: '4',
+            title: 'Entradas y Salidas',
+            description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
+            image: '➡️',
+            route: '/entrance-exit'
         }
     ];
 

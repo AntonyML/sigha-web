@@ -18,6 +18,9 @@ import EditUserPage from './presentation/pages/users/EditUserPage'
 
 //Two Factor
 import TwoFactorPage from './presentation/pages/two-factor/TwoFactorPage'
+import EntranceExitDashboard from './presentation/pages/entrance-exit/EntranceExitDashboard'
+import RegisterEntranceExit from './presentation/pages/entrance-exit/RegisterEntranceExit'
+import EntranceExitHistory from './presentation/pages/entrance-exit/EntranceExitHistory'
 
 export default function App() {
   return (
@@ -39,6 +42,9 @@ export default function App() {
       <Route path="/users/edit/:id" element={<EditUserPage />} />
 
       <Route path="/two-factor" element={<TwoFactorPage />} />
+      <Route path="/entrance-exit" element={<EntranceExitDashboard />} />
+      <Route path="/entrance-exit/register" element={<RegisterEntranceExit />} />
+      <Route path="/entrance-exit/history" element={<EntranceExitHistory />} />
     </Routes>
   )
 }
