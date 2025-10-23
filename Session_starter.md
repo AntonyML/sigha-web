@@ -102,16 +102,28 @@ npm run start:prod       # Electron production mode
 - ✅ Electron configurado: fullscreen dev, menú oculto, scripts auto-rename .cjs
 - ✅ LoginPageNew con Tailwind CSS mobile-first funcionando
 - ✅ Componentes shadcn/ui creados (Button, Input, Label, Card)
-- ✅ **Módulo de Auditoría COMPLETO**: 
-  - audit.ts (109 líneas): Audit, AuditAction (12 tipos), AuditEntity (9 tipos), AuditStats
-  - auditService.ts (127 líneas): 9 métodos HTTP con axios (getAllAudits, getAuditById, searchAudits, getAuditsByUser, getAuditsByEntity, getAuditStats, exportAudits)
-  - auditFlow.ts (465 líneas): 6 métodos principales + 6 helpers (formatAuditDate, getActionLabel, getEntityLabel, getActionBadgeClass, getChangeSummary, isCriticalAudit)
-  - AuditMenuPage.tsx: menú principal de auditoría con 3 opciones + accesos rápidos (creaciones, eliminaciones, logins, intentos fallidos) + breadcrumbs
-  - AuditListPage.tsx: tabla paginada, filtros (acción, entidad, fechas), búsqueda, exportar CSV, breadcrumbs
-  - ViewAuditPage.tsx: 5 cards (info general, metadata técnica, valores antiguos/nuevos, comparación de cambios)
-  - AuditDashboardPage.tsx: cards de resumen, gráficos con progress bars, top usuarios, actividad reciente, breadcrumbs
+- ✅ **Módulo de Auditoría ✅ 100% COMPLETADO - SINCRONIZADO CON BACKEND**: 
+  - **Backend Real:** `/audit/digital-records` (NestJS) - Tabla: `digital_record` (MySQL)
+  - **Tipos (audit.ts):** DigitalRecord, SearchDigitalRecordsDto, PaginatedDigitalRecordsResponse, AuditStatistics - 0 errores ✅
+  - **Service (auditService.ts):** 5 métodos HTTP sincronizados con backend NestJS - 0 errores ✅
+    * `GET /audit/digital-records/search` → searchDigitalRecords()
+    * `GET /audit/digital-records/:id` → getDigitalRecordById()
+    * `POST /audit/digital-records` → createDigitalRecord()
+    * `GET /audit/statistics` → getAuditStatistics()
+    * exportDigitalRecords() → Genera CSV localmente
+  - **Flow (auditFlow.ts):** 5 métodos + 6 helpers (getActionLabel, getTableLabel, getActionBadgeClass, isCriticalAudit, getActionIcon, formatAuditDate) - 0 errores ✅
+  - **UI Pages (3/3) - SINCRONIZADAS CON ESTRATEGIA INCREMENTAL:** - 0 errores ✅
+    * AuditListPage.tsx: Tabla paginada, filtros (userId, action, tableName), búsqueda, export CSV - 6 chunks ~80 líneas
+    * ViewAuditPage.tsx: Vista detallada con 1 card (info general simplificada) - 4 chunks ~75 líneas, eliminadas 4 cards no soportadas
+    * AuditDashboardPage.tsx: Estadísticas, gráficos, top usuarios, actividad reciente - 3 chunks ~50 líneas
+    * **Estrategia:** Incremental replacement (replace_string_in_file) en bloques ~50-80 líneas preservando git history
+  - AuditMenuPage.tsx: Submenú con 3 opciones + breadcrumbs - 0 errores ✅
   - Rutas configuradas: /audits (menú), /audits/list, /audits/view/:id, /audits/dashboard
-  - Integración con MainMenuPage: nueva opción "Auditoría 🛡️"
+  - Build exitoso: 0 errores TypeScript en todos los archivos ✅
+  - **IMPORTANTE:** Backend usa lowercase actions (`'login'`, `'create'`, `'delete'`), tableName directo (`'users'`, `'older_adult'`), response key `records` (no `data`)
+  - **Documento de referencia:** `ADAPTACION_AUDITORIA_RESUMEN.md` (plan completo de sincronización)
+  - **Tiempo invertido:** ~2.5 horas (análisis backend + tipos + service + flow + 3 páginas UI)
+  - **Testing con backend:** ⚠️ PENDIENTE - Verificar endpoints reales con base de datos MySQL
 - ✅ Build exitoso: 0 errores TypeScript, dist 455.52 kB
 
 **2025-10-22:**
@@ -128,22 +140,13 @@ npm run start:prod       # Electron production mode
 
 ## 🚀 Próximas Tareas
 
-### Módulo de Auditoría ✅ COMPLETADO
-- [x] ✅ Tipos, servicio y flow (audit.ts, auditService.ts, auditFlow.ts)
-- [x] ✅ **AuditListPage.tsx** - Tabla paginada con filtros (acción, entidad, fechas), búsqueda, exportar CSV
-- [x] ✅ **ViewAuditPage.tsx** - Vista detallada con 5 cards (info general, metadata, valores antiguos/nuevos, comparación de cambios)
-- [x] ✅ **AuditDashboardPage.tsx** - Dashboard con cards de resumen, gráficos por tipo/entidad, top usuarios, actividad reciente
-- [x] ✅ Rutas configuradas en App.tsx (/audits, /audits/view/:id, /audits/dashboard)
-- [x] ✅ Build verificado: 0 errores TypeScript, dist 455.52 kB
-
-**Módulo completo y listo para integración con backend en http://localhost:3000/audits**
-
 ### General
 - [ ] Testing responsive en dispositivos reales (iPhone, iPad, Android)
 - [ ] Tests de accesibilidad WCAG (contraste, navegación teclado, screen readers)
 - [ ] Documentar patrones de diseño (UX_PATTERNS.md)
 - [ ] Integración completa login → 2FA → dashboard con backend
 - [ ] Migrar páginas restantes a Tailwind CSS (dashboard, users, etc.)
+- [ ] Testing de integración módulo Auditoría con backend NestJS (endpoints /audit/digital-records)
 
 ---
 
@@ -158,6 +161,7 @@ npm run start:prod       # Electron production mode
 
 **Archivos Clave:**
 - `Session_starter.md` - Memoria del proyecto (este archivo)
+- `ADAPTACION_AUDITORIA_RESUMEN.md` - Plan sincronización backend NestJS
 - `src/presentation/pages/auth/LoginPageNew.tsx` - Login mobile-first
 - `electron/main.ts` - Configuración Electron
 - `scripts/watch-electron.js` - Workflow TypeScript → .cjs
@@ -168,7 +172,8 @@ npm run start:prod       # Electron production mode
 - Tokens en localStorage (authToken, tempToken, user)
 - 2FA requiere QR code con authenticator app
 - Electron requiere archivos .cjs (CommonJS) no .js
+- **Auditoría backend:** Endpoints `/audit/digital-records/*`, `/audit/statistics`, response key `records`, fields sin prefijo `a`, actions lowercase, tableName string directo
 
 ---
 
-*Última actualización: 2025-10-23 - Session_starter.md optimizado y limpiado*
+*Última actualización: 2025-10-23 - Módulo auditoría 100% sincronizado con backend NestJS (core + UI, 0 errores TypeScript)*

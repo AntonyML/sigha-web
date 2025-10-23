@@ -1,96 +1,70 @@
 // ==================== Audit Types ====================
+// Sincronizado con backend NestJS: audit.service.ts
+// Endpoints: /audit/digital-records, /audit/statistics
 
 /**
  * Tipo de acción realizada en el sistema
+ * Sincronizado con backend enum AuditAction
  */
 export type AuditAction =
-  | 'CREATE'
-  | 'UPDATE'
-  | 'DELETE'
-  | 'LOGIN'
-  | 'LOGOUT'
-  | 'LOGIN_FAILED'
-  | 'PASSWORD_CHANGE'
-  | 'PASSWORD_RESET'
-  | '2FA_ENABLED'
-  | '2FA_DISABLED'
-  | 'EXPORT'
-  | 'IMPORT'
-  | 'VIEW'
-  | 'OTHER';
+  | 'login'
+  | 'logout'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'view'
+  | 'export'
+  | 'other';
 
 /**
- * Entidades del sistema que pueden ser auditadas
+ * Registro de auditoría digital (Digital Record)
+ * Mapea a tabla digital_record en DB
+ * Campos con prefijo 'dr' del backend
  */
-export type AuditEntity =
-  | 'USER'
-  | 'ROLE'
-  | 'VIRTUAL_FILE'
-  | 'ENTRANCE_EXIT'
-  | 'PROGRAM'
-  | 'CLINICAL_HISTORY'
-  | 'FAMILY'
-  | 'MEDICATION'
-  | 'AUTH'
-  | 'SYSTEM'
-  | 'OTHER';
-
-/**
- * Registro de auditoría
- * Campos sincronizados con backend NestJS (prefijo 'a' para audit)
- */
-export interface Audit {
+export interface DigitalRecord {
   id: number;
-  aAction: AuditAction;
-  aEntity: AuditEntity;
-  aEntityId?: number | null;
-  aDescription: string;
-  aIpAddress?: string | null;
-  aUserAgent?: string | null;
-  aOldValues?: Record<string, any> | null;
-  aNewValues?: Record<string, any> | null;
-  aUserId?: number | null;
-  aUsername?: string | null;
-  createAt: string;
-  updateAt?: string;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  action: AuditAction;
+  tableName: string | null;       // Tabla afectada (ej: 'older_adult', 'users', 'programs')
+  recordId: number | null;         // ID del registro afectado
+  description: string | null;
+  timestamp: string;               // drTimestamp del backend
 }
 
 /**
- * DTO para crear un registro de auditoría
+ * DTO para crear un registro de auditoría digital
+ * Sincronizado con CreateDigitalRecordDto del backend
  */
-export interface CreateAuditData {
-  aAction: AuditAction;
-  aEntity: AuditEntity;
-  aEntityId?: number;
-  aDescription: string;
-  aIpAddress?: string;
-  aUserAgent?: string;
-  aOldValues?: Record<string, any>;
-  aNewValues?: Record<string, any>;
+export interface CreateDigitalRecordDto {
+  action: AuditAction;
+  tableName?: string;
+  recordId?: number;
+  description?: string;
 }
 
 /**
- * Parámetros de búsqueda/filtrado de auditorías
+ * Parámetros de búsqueda de registros digitales
+ * Sincronizado con SearchDigitalRecordsDto del backend
  */
-export interface AuditSearchParams {
-  action?: AuditAction;
-  entity?: AuditEntity;
-  entityId?: number;
+export interface SearchDigitalRecordsDto {
   userId?: number;
-  username?: string;
+  action?: AuditAction;
+  tableName?: string;
+  recordId?: number;
   startDate?: string;
   endDate?: string;
   page?: number;
   limit?: number;
-  sortBy?: 'createAt' | 'aAction' | 'aEntity';
-  sortOrder?: 'ASC' | 'DESC';
 }
 
 /**
- * Respuesta paginada de auditorías
+ * Respuesta paginada de registros digitales
+ * Sincronizado con PaginatedDigitalRecordsResponse del backend
  */
-export interface AuditListResponse {
-  data: Audit[];
+export interface PaginatedDigitalRecordsResponse {
+  records: DigitalRecord[];
   total: number;
   page: number;
   limit: number;
@@ -99,25 +73,48 @@ export interface AuditListResponse {
 
 /**
  * Estadísticas de auditoría
+ * Sincronizado con getAuditStatistics del backend
  */
-export interface AuditStats {
+export interface AuditStatistics {
   totalActions: number;
-  actionsByType: Record<AuditAction, number>;
-  actionsByEntity: Record<AuditEntity, number>;
+  actionsByType: Record<string, number>;      // { login: 45, create: 23, delete: 12, ... }
+  actionsByEntity: Record<string, number>;    // { older_adult: 34, users: 21, programs: 10, ... }
   topUsers: Array<{
     userId: number;
     username: string;
     actionCount: number;
   }>;
-  recentActivity: Audit[];
+  recentActivity: DigitalRecord[];
+}
+
+// ==================== Legacy Types (mantener compatibilidad) ====================
+
+/**
+ * @deprecated Usar DigitalRecord en su lugar
+ * Mantener para compatibilidad con componentes existentes
+ */
+export interface Audit extends DigitalRecord {
+  aAction: AuditAction;
+  aEntity: string;
+  aEntityId: number | null;
+  aDescription: string | null;
+  aUserId: number;
+  aUsername: string;
+  createAt: string;
 }
 
 /**
- * Resumen de cambios para mostrar en UI
+ * @deprecated Usar PaginatedDigitalRecordsResponse
  */
-export interface AuditChangeSummary {
-  field: string;
-  oldValue: any;
-  newValue: any;
-  changed: boolean;
+export interface AuditListResponse {
+  data: DigitalRecord[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
+
+/**
+ * @deprecated Usar AuditStatistics
+ */
+export interface AuditStats extends AuditStatistics {}

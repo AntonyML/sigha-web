@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/auditFlow';
-import type { AuditStats, Audit } from '../../../types/audit';
+import type { AuditStatistics, DigitalRecord } from '../../../types/audit';
 
 export default function AuditDashboardPage() {
-    const [stats, setStats] = useState<AuditStats | null>(null);
-    const [recentAudits, setRecentAudits] = useState<Audit[]>([]);
+    const [stats, setStats] = useState<AuditStatistics | null>(null);
+    const [recentRecords, setRecentRecords] = useState<DigitalRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [dateRange, setDateRange] = useState({
@@ -23,9 +23,9 @@ export default function AuditDashboardPage() {
         setError('');
 
         try {
-            const [statsResult, auditsResult] = await Promise.all([
-                auditFlow.getAuditStats(dateRange.start, dateRange.end),
-                auditFlow.getAllAudits({ page: 1, limit: 10, sortBy: 'createAt', sortOrder: 'DESC' })
+            const [statsResult, recordsResult] = await Promise.all([
+                auditFlow.getAuditStatistics(dateRange.start, dateRange.end),
+                auditFlow.searchDigitalRecords({ page: 1, limit: 10 })
             ]);
 
             if (statsResult.success && statsResult.stats) {
@@ -34,8 +34,8 @@ export default function AuditDashboardPage() {
                 setError(statsResult.error || 'Error al cargar estadísticas');
             }
 
-            if (auditsResult.success && auditsResult.audits) {
-                setRecentAudits(auditsResult.audits);
+            if (recordsResult.success && recordsResult.records) {
+                setRecentRecords(recordsResult.records);
             }
         } catch (err) {
             console.error('Error cargando dashboard:', err);
@@ -309,11 +309,11 @@ export default function AuditDashboardPage() {
                                         <div className="d-flex flex-column gap-3">
                                             {Object.entries(stats.actionsByEntity)
                                                 .sort(([, a], [, b]) => b - a)
-                                                .map(([entity, count]) => (
-                                                    <div key={entity}>
+                                                .map(([tableName, count]) => (
+                                                    <div key={tableName}>
                                                         <div className="d-flex justify-content-between mb-1">
                                                             <span className="badge bg-secondary">
-                                                                {auditFlow.getEntityLabel(entity as any)}
+                                                                {auditFlow.getTableLabel(tableName)}
                                                             </span>
                                                             <strong>{count}</strong>
                                                         </div>
@@ -399,35 +399,35 @@ export default function AuditDashboardPage() {
                                     </h5>
                                 </div>
                                 <div className="card-body p-0">
-                                    {recentAudits.length > 0 ? (
+                                    {recentRecords.length > 0 ? (
                                         <div className="list-group list-group-flush">
-                                            {recentAudits.map((audit) => (
+                                            {recentRecords.map((record) => (
                                                 <div
-                                                    key={audit.id}
+                                                    key={record.id}
                                                     className="list-group-item list-group-item-action"
                                                     style={{ cursor: 'pointer' }}
-                                                    onClick={() => navigate(`/audits/view/${audit.id}`)}
+                                                    onClick={() => navigate(`/audits/view/${record.id}`)}
                                                 >
                                                     <div className="d-flex w-100 justify-content-between align-items-start">
                                                         <div className="flex-grow-1">
                                                             <div className="mb-1">
-                                                                <span className={`badge ${auditFlow.getActionBadgeClass(audit.aAction)} me-2`}>
-                                                                    {auditFlow.getActionLabel(audit.aAction)}
+                                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)} me-2`}>
+                                                                    {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
                                                                 </span>
                                                                 <span className="badge bg-secondary">
-                                                                    {auditFlow.getEntityLabel(audit.aEntity)}
+                                                                    {auditFlow.getTableLabel(record.tableName)}
                                                                 </span>
                                                             </div>
                                                             <p className="mb-1 text-truncate" style={{ maxWidth: '300px' }}>
-                                                                {audit.aDescription}
+                                                                {record.description || <span className="text-muted fst-italic">Sin descripción</span>}
                                                             </p>
                                                             <small className="text-muted">
                                                                 <i className="bi bi-person-circle me-1"></i>
-                                                                {audit.aUsername || 'Sistema'}
+                                                                {record.userName}
                                                             </small>
                                                         </div>
                                                         <small className="text-muted text-end">
-                                                            {auditFlow.formatAuditDate(audit.createAt)}
+                                                            {auditFlow.formatAuditDate(record.timestamp)}
                                                         </small>
                                                     </div>
                                                 </div>

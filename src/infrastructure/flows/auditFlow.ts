@@ -1,11 +1,11 @@
 import { auditService } from '../../services/auditService';
 import type {
-  Audit,
-  CreateAuditData,
-  AuditSearchParams,
-  AuditListResponse,
-  AuditStats,
-  AuditChangeSummary,
+  DigitalRecord,
+  CreateDigitalRecordDto,
+  SearchDigitalRecordsDto,
+  PaginatedDigitalRecordsResponse,
+  AuditStatistics,
+  AuditAction,
 } from '../../types/audit';
 
 /**
@@ -18,87 +18,127 @@ export interface AuditFlowResult {
 }
 
 /**
- * Resultado de obtener un registro de auditoría
+ * Resultado de obtener un registro digital
  */
-export interface GetAuditFlowResult extends AuditFlowResult {
-  audit?: Audit;
+export interface GetDigitalRecordFlowResult extends AuditFlowResult {
+  record?: DigitalRecord;
 }
 
 /**
- * Resultado de obtener lista de auditorías
+ * Resultado de obtener lista de registros digitales
  */
-export interface GetAuditsFlowResult extends AuditFlowResult {
-  audits?: Audit[];
+export interface GetDigitalRecordsFlowResult extends AuditFlowResult {
+  records?: DigitalRecord[];
   total?: number;
   page?: number;
   totalPages?: number;
 }
 
 /**
- * Resultado de crear un registro de auditoría
+ * Resultado de crear un registro digital
  */
-export interface CreateAuditFlowResult extends AuditFlowResult {
-  audit?: Audit;
+export interface CreateDigitalRecordFlowResult extends AuditFlowResult {
+  record?: DigitalRecord;
 }
 
 /**
  * Resultado de obtener estadísticas
  */
-export interface GetAuditStatsFlowResult extends AuditFlowResult {
-  stats?: AuditStats;
+export interface GetAuditStatisticsFlowResult extends AuditFlowResult {
+  stats?: AuditStatistics;
 }
 
 /**
  * AuditFlow - Flujo de gestión de auditoría
  * 
- * Encapsula toda la lógica de consulta y análisis de registros de auditoría,
+ * SINCRONIZADO CON BACKEND NestJS audit.service.ts
+ * Endpoints disponibles:
+ * - POST /audit/digital-records
+ * - GET /audit/digital-records/search
+ * - GET /audit/digital-records/:id
+ * - GET /audit/statistics
+ * 
+ * Encapsula toda la lógica de consulta y análisis de registros de auditoría (digital records),
  * incluyendo búsquedas, filtrado, estadísticas y exportación.
  */
 export const auditFlow = {
   /**
-   * Flujo para obtener todos los registros de auditoría
+   * Flujo para buscar registros digitales con filtros
+   * Backend: searchDigitalRecords()
    * 
    * Maneja:
-   * - Obtención de auditorías con paginación
+   * - Búsqueda con filtros (userId, action, tableName, recordId, fechas)
+   * - Paginación
+   * - Validación de fechas
    * - Manejo de errores
-   * - Validación de respuesta
    * 
-   * @param params - Parámetros de paginación y filtros
-   * @returns GetAuditsFlowResult con la lista de auditorías
+   * @param params - Parámetros de búsqueda
+   * @returns GetDigitalRecordsFlowResult con registros encontrados
    */
-  async getAllAudits(params?: AuditSearchParams): Promise<GetAuditsFlowResult> {
+  async searchDigitalRecords(params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
     try {
-      const response: AuditListResponse = await auditService.getAllAudits(params);
+      // Validar fechas si se proporcionan
+      if (params?.startDate && params?.endDate) {
+        const start = new Date(params.startDate);
+        const end = new Date(params.endDate);
+
+        if (start > end) {
+          return {
+            success: false,
+            error: 'La fecha de inicio no puede ser mayor que la fecha de fin',
+          };
+        }
+      }
+
+      const response: PaginatedDigitalRecordsResponse = await auditService.searchDigitalRecords(params);
+
+      // Backend SIEMPRE retorna: { records, total, page, limit, totalPages }
+      const records = response.records || [];
+      const total = response.total || 0;
+      const page = response.page || 1;
+      const totalPages = response.totalPages || 1;
+
+      if (records.length === 0) {
+        return {
+          success: true,
+          records: [],
+          total: 0,
+          page,
+          totalPages,
+          message: 'No se encontraron registros que coincidan con los criterios de búsqueda',
+        };
+      }
 
       return {
         success: true,
-        audits: response.data,
-        total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
-        message: `${response.data.length} registros de auditoría encontrados`,
+        records,
+        total,
+        page,
+        totalPages,
+        message: `${records.length} registros encontrados`,
       };
     } catch (error: any) {
-      console.error('Error en auditFlow.getAllAudits:', error);
+      console.error('Error en auditFlow.searchDigitalRecords:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Error al obtener registros de auditoría',
+        error: error.response?.data?.message || 'Error al buscar registros de auditoría',
       };
     }
   },
 
   /**
-   * Flujo para obtener un registro de auditoría por ID
+   * Flujo para obtener un registro digital por ID
+   * Backend: getDigitalRecordById()
    * 
    * Maneja:
    * - Validación del ID
    * - Obtención del registro
    * - Manejo de errores 404
    * 
-   * @param id - ID del registro de auditoría
-   * @returns GetAuditFlowResult con el registro encontrado
+   * @param id - ID del registro digital
+   * @returns GetDigitalRecordFlowResult con el registro encontrado
    */
-  async getAuditById(id: number): Promise<GetAuditFlowResult> {
+  async getDigitalRecordById(id: number): Promise<GetDigitalRecordFlowResult> {
     try {
       if (!id || id <= 0) {
         return {
@@ -107,15 +147,15 @@ export const auditFlow = {
         };
       }
 
-      const audit = await auditService.getAuditById(id);
+      const record = await auditService.getDigitalRecordById(id);
 
       return {
         success: true,
-        audit,
+        record,
         message: 'Registro de auditoría obtenido exitosamente',
       };
     } catch (error: any) {
-      console.error('Error en auditFlow.getAuditById:', error);
+      console.error('Error en auditFlow.getDigitalRecordById:', error);
 
       if (error.response?.status === 404) {
         return {
@@ -132,35 +172,56 @@ export const auditFlow = {
   },
 
   /**
-   * Flujo para crear un registro de auditoría manual
+   * Flujo para crear un registro digital manual
+   * Backend: createDigitalRecord()
    * 
    * Maneja:
    * - Validación de datos requeridos
+   * - Obtención del userId del usuario autenticado
    * - Creación del registro
    * - Manejo de errores
    * 
-   * @param data - Datos del registro de auditoría
-   * @returns CreateAuditFlowResult con el registro creado
+   * @param data - Datos del registro digital
+   * @returns CreateDigitalRecordFlowResult con el registro creado
    */
-  async createAudit(data: CreateAuditData): Promise<CreateAuditFlowResult> {
+  async createDigitalRecord(data: CreateDigitalRecordDto): Promise<CreateDigitalRecordFlowResult> {
     try {
       // Validar datos requeridos
-      if (!data.aAction || !data.aEntity || !data.aDescription) {
+      if (!data.action) {
         return {
           success: false,
-          error: 'Acción, entidad y descripción son requeridas',
+          error: 'La acción es requerida',
         };
       }
 
-      const audit = await auditService.createAudit(data);
+      // Obtener userId del localStorage (usuario autenticado)
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        return {
+          success: false,
+          error: 'Usuario no autenticado',
+        };
+      }
+
+      const user = JSON.parse(userStr);
+      const userId = user.id;
+
+      if (!userId) {
+        return {
+          success: false,
+          error: 'ID de usuario no disponible',
+        };
+      }
+
+      const record = await auditService.createDigitalRecord(userId, data);
 
       return {
         success: true,
-        audit,
+        record,
         message: 'Registro de auditoría creado exitosamente',
       };
     } catch (error: any) {
-      console.error('Error en auditFlow.createAudit:', error);
+      console.error('Error en auditFlow.createDigitalRecord:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Error al crear el registro de auditoría',
@@ -169,160 +230,23 @@ export const auditFlow = {
   },
 
   /**
-   * Flujo para buscar auditorías con filtros
-   * 
-   * Maneja:
-   * - Validación de parámetros de búsqueda
-   * - Búsqueda con filtros avanzados
-   * - Manejo de resultados vacíos
-   * - Manejo de errores
-   * 
-   * @param params - Parámetros de búsqueda
-   * @returns GetAuditsFlowResult con auditorías encontradas
-   */
-  async searchAudits(params: AuditSearchParams): Promise<GetAuditsFlowResult> {
-    try {
-      // Validar fechas si se proporcionan
-      if (params.startDate && params.endDate) {
-        const start = new Date(params.startDate);
-        const end = new Date(params.endDate);
-
-        if (start > end) {
-          return {
-            success: false,
-            error: 'La fecha de inicio no puede ser mayor que la fecha de fin',
-          };
-        }
-      }
-
-      const response: AuditListResponse = await auditService.searchAudits(params);
-
-      if (!response.data || response.data.length === 0) {
-        return {
-          success: true,
-          audits: [],
-          total: 0,
-          message: 'No se encontraron registros que coincidan con los criterios de búsqueda',
-        };
-      }
-
-      return {
-        success: true,
-        audits: response.data,
-        total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
-        message: `${response.data.length} registros encontrados`,
-      };
-    } catch (error: any) {
-      console.error('Error en auditFlow.searchAudits:', error);
-      return {
-        success: false,
-        error: error.response?.data?.message || 'Error al buscar registros de auditoría',
-      };
-    }
-  },
-
-  /**
-   * Flujo para obtener auditorías de un usuario específico
-   * 
-   * @param userId - ID del usuario
-   * @param params - Parámetros adicionales
-   * @returns GetAuditsFlowResult con auditorías del usuario
-   */
-  async getAuditsByUser(
-    userId: number,
-    params?: AuditSearchParams
-  ): Promise<GetAuditsFlowResult> {
-    try {
-      if (!userId || userId <= 0) {
-        return {
-          success: false,
-          error: 'ID de usuario inválido',
-        };
-      }
-
-      const response: AuditListResponse = await auditService.getAuditsByUser(userId, params);
-
-      return {
-        success: true,
-        audits: response.data,
-        total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
-        message: `${response.data.length} acciones realizadas por el usuario`,
-      };
-    } catch (error: any) {
-      console.error('Error en auditFlow.getAuditsByUser:', error);
-      return {
-        success: false,
-        error:
-          error.response?.data?.message || 'Error al obtener auditorías del usuario',
-      };
-    }
-  },
-
-  /**
-   * Flujo para obtener auditorías de una entidad específica
-   * 
-   * @param entity - Nombre de la entidad
-   * @param entityId - ID de la entidad
-   * @param params - Parámetros adicionales
-   * @returns GetAuditsFlowResult con auditorías de la entidad
-   */
-  async getAuditsByEntity(
-    entity: string,
-    entityId: number,
-    params?: AuditSearchParams
-  ): Promise<GetAuditsFlowResult> {
-    try {
-      if (!entity || !entityId || entityId <= 0) {
-        return {
-          success: false,
-          error: 'Entidad e ID de entidad son requeridos',
-        };
-      }
-
-      const response: AuditListResponse = await auditService.getAuditsByEntity(
-        entity,
-        entityId,
-        params
-      );
-
-      return {
-        success: true,
-        audits: response.data,
-        total: response.total,
-        page: response.page,
-        totalPages: response.totalPages,
-        message: `${response.data.length} cambios registrados para ${entity} #${entityId}`,
-      };
-    } catch (error: any) {
-      console.error('Error en auditFlow.getAuditsByEntity:', error);
-      return {
-        success: false,
-        error:
-          error.response?.data?.message || 'Error al obtener auditorías de la entidad',
-      };
-    }
-  },
-
-  /**
    * Flujo para obtener estadísticas de auditoría
+   * Backend: getAuditStatistics()
    * 
    * Maneja:
-   * - Obtención de estadísticas
+   * - Obtención de estadísticas con filtro de fechas opcional
    * - Validación de fechas
+   * - Formateo de estadísticas
    * - Manejo de errores
    * 
    * @param startDate - Fecha de inicio (opcional)
    * @param endDate - Fecha de fin (opcional)
-   * @returns GetAuditStatsFlowResult con estadísticas
+   * @returns GetAuditStatisticsFlowResult con estadísticas
    */
-  async getAuditStats(
+  async getAuditStatistics(
     startDate?: string,
     endDate?: string
-  ): Promise<GetAuditStatsFlowResult> {
+  ): Promise<GetAuditStatisticsFlowResult> {
     try {
       if (startDate && endDate) {
         const start = new Date(startDate);
@@ -336,15 +260,25 @@ export const auditFlow = {
         }
       }
 
-      const stats = await auditService.getAuditStats(startDate, endDate);
+      const stats = await auditService.getAuditStatistics(startDate, endDate);
+
+      // Backend retorna: { totalActions, actionsByType, actionsByEntity, topUsers, recentActivity }
+      // Validación defensiva
+      const safeStats: AuditStatistics = {
+        totalActions: stats?.totalActions || 0,
+        actionsByType: stats?.actionsByType || {},
+        actionsByEntity: stats?.actionsByEntity || {},
+        topUsers: Array.isArray(stats?.topUsers) ? stats.topUsers : [],
+        recentActivity: Array.isArray(stats?.recentActivity) ? stats.recentActivity : [],
+      };
 
       return {
         success: true,
-        stats,
+        stats: safeStats,
         message: 'Estadísticas de auditoría obtenidas exitosamente',
       };
     } catch (error: any) {
-      console.error('Error en auditFlow.getAuditStats:', error);
+      console.error('Error en auditFlow.getAuditStatistics:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Error al obtener estadísticas de auditoría',
@@ -353,10 +287,11 @@ export const auditFlow = {
   },
 
   /**
-   * Flujo para exportar auditorías
+   * Flujo para exportar registros digitales a CSV
    * 
    * Maneja:
    * - Exportación con filtros
+   * - Generación de CSV en frontend
    * - Descarga del archivo
    * - Manejo de errores
    * 
@@ -364,12 +299,12 @@ export const auditFlow = {
    * @param filename - Nombre del archivo a descargar
    * @returns AuditFlowResult indicando éxito o error
    */
-  async exportAudits(
-    params?: AuditSearchParams,
+  async exportDigitalRecords(
+    params?: SearchDigitalRecordsDto,
     filename: string = 'auditorias.csv'
   ): Promise<AuditFlowResult> {
     try {
-      const blob = await auditService.exportAudits(params);
+      const blob = await auditService.exportDigitalRecords(params);
 
       // Crear link de descarga
       const url = window.URL.createObjectURL(blob);
@@ -386,7 +321,7 @@ export const auditFlow = {
         message: 'Auditorías exportadas exitosamente',
       };
     } catch (error: any) {
-      console.error('Error en auditFlow.exportAudits:', error);
+      console.error('Error en auditFlow.exportDigitalRecords:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Error al exportar auditorías',
@@ -402,7 +337,7 @@ export const auditFlow = {
   formatAuditDate(dateString: string): string {
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('es-ES', {
+      return date.toLocaleString('es-CR', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -416,108 +351,101 @@ export const auditFlow = {
 
   /**
    * Obtiene una descripción amigable de la acción
+   * Sincronizado con backend enum AuditAction
    */
-  getActionLabel(action: string): string {
-    const labels: Record<string, string> = {
-      CREATE: 'Creación',
-      UPDATE: 'Actualización',
-      DELETE: 'Eliminación',
-      LOGIN: 'Inicio de sesión',
-      LOGOUT: 'Cierre de sesión',
-      LOGIN_FAILED: 'Intento de inicio de sesión fallido',
-      PASSWORD_CHANGE: 'Cambio de contraseña',
-      PASSWORD_RESET: 'Restablecimiento de contraseña',
-      '2FA_ENABLED': 'Autenticación 2FA habilitada',
-      '2FA_DISABLED': 'Autenticación 2FA deshabilitada',
-      EXPORT: 'Exportación de datos',
-      IMPORT: 'Importación de datos',
-      VIEW: 'Visualización',
-      OTHER: 'Otra acción',
+  getActionLabel(action: AuditAction): string {
+    const labels: Record<AuditAction, string> = {
+      login: 'Inicio de sesión',
+      logout: 'Cierre de sesión',
+      create: 'Creación',
+      update: 'Actualización',
+      delete: 'Eliminación',
+      view: 'Visualización',
+      export: 'Exportación',
+      other: 'Otra acción',
     };
 
     return labels[action] || action;
   },
 
   /**
-   * Obtiene una descripción amigable de la entidad
+   * Obtiene una descripción amigable de la tabla
+   * Backend usa nombres de tabla MySQL directamente
    */
-  getEntityLabel(entity: string): string {
+  getTableLabel(tableName: string | null): string {
+    if (!tableName) return 'Sistema';
+
     const labels: Record<string, string> = {
-      USER: 'Usuario',
-      ROLE: 'Rol',
-      VIRTUAL_FILE: 'Ficha virtual',
-      ENTRANCE_EXIT: 'Entrada/Salida',
-      PROGRAM: 'Programa',
-      CLINICAL_HISTORY: 'Historia clínica',
-      FAMILY: 'Familiar',
-      MEDICATION: 'Medicación',
-      AUTH: 'Autenticación',
-      SYSTEM: 'Sistema',
-      OTHER: 'Otro',
+      users: 'Usuarios',
+      roles: 'Roles',
+      older_adult: 'Adultos Mayores',
+      older_adult_family: 'Familiares',
+      programs: 'Programas',
+      sub_programs: 'Subprogramas',
+      clinical_history: 'Historia Clínica',
+      clinical_medication: 'Medicación',
+      entrances_exits: 'Entradas/Salidas',
+      specialized_area: 'Áreas Especializadas',
+      specialized_appointment: 'Citas',
+      nursing_records: 'Registros de Enfermería',
+      physiotherapy_sessions: 'Sesiones de Fisioterapia',
+      psychology_sessions: 'Sesiones de Psicología',
+      social_work_reports: 'Reportes de Trabajo Social',
+      medical_record: 'Expediente Médico',
+      digital_record: 'Registros Digitales',
+      audit_reports: 'Reportes de Auditoría',
+      notifications: 'Notificaciones',
     };
 
-    return labels[entity] || entity;
+    return labels[tableName] || tableName;
   },
 
   /**
    * Obtiene la clase CSS para el badge de acción
    */
-  getActionBadgeClass(action: string): string {
-    const classes: Record<string, string> = {
-      CREATE: 'bg-success',
-      UPDATE: 'bg-primary',
-      DELETE: 'bg-danger',
-      LOGIN: 'bg-info',
-      LOGOUT: 'bg-secondary',
-      LOGIN_FAILED: 'bg-warning',
-      PASSWORD_CHANGE: 'bg-primary',
-      PASSWORD_RESET: 'bg-warning',
-      '2FA_ENABLED': 'bg-success',
-      '2FA_DISABLED': 'bg-danger',
-      EXPORT: 'bg-info',
-      IMPORT: 'bg-info',
-      VIEW: 'bg-secondary',
-      OTHER: 'bg-secondary',
+  getActionBadgeClass(action: AuditAction): string {
+    const classes: Record<AuditAction, string> = {
+      create: 'bg-success',
+      update: 'bg-primary',
+      delete: 'bg-danger',
+      login: 'bg-info',
+      logout: 'bg-secondary',
+      view: 'bg-secondary',
+      export: 'bg-info',
+      other: 'bg-secondary',
     };
 
     return classes[action] || 'bg-secondary';
   },
 
   /**
-   * Compara valores antiguos y nuevos para generar resumen de cambios
+   * Determina si una auditoría es crítica (requiere atención)
    */
-  getChangeSummary(oldValues: Record<string, any>, newValues: Record<string, any>): AuditChangeSummary[] {
-    const changes: AuditChangeSummary[] = [];
-
-    if (!oldValues || !newValues) {
-      return changes;
-    }
-
-    const allKeys = new Set([...Object.keys(oldValues), ...Object.keys(newValues)]);
-
-    allKeys.forEach((key) => {
-      const oldValue = oldValues[key];
-      const newValue = newValues[key];
-      const changed = JSON.stringify(oldValue) !== JSON.stringify(newValue);
-
-      if (changed) {
-        changes.push({
-          field: key,
-          oldValue,
-          newValue,
-          changed: true,
-        });
-      }
-    });
-
-    return changes;
+  isCriticalAudit(record: DigitalRecord): boolean {
+    const criticalActions: AuditAction[] = ['delete'];
+    const criticalTables = ['users', 'roles', 'older_adult'];
+    
+    return (
+      criticalActions.includes(record.action) ||
+      (record.tableName !== null && criticalTables.includes(record.tableName))
+    );
   },
 
   /**
-   * Determina si una auditoría es crítica (requiere atención)
+   * Obtiene icono para la acción
    */
-  isCriticalAudit(audit: Audit): boolean {
-    const criticalActions = ['DELETE', 'LOGIN_FAILED', '2FA_DISABLED', 'PASSWORD_RESET'];
-    return criticalActions.includes(audit.aAction);
+  getActionIcon(action: AuditAction): string {
+    const icons: Record<AuditAction, string> = {
+      login: '🔓',
+      logout: '🔒',
+      create: '➕',
+      update: '✏️',
+      delete: '🗑️',
+      view: '👁️',
+      export: '📤',
+      other: '📋',
+    };
+
+    return icons[action] || '📋';
   },
 };

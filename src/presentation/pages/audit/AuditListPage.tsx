@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/auditFlow';
-import type { Audit, AuditAction, AuditEntity, AuditSearchParams } from '../../../types/audit';
+import type { DigitalRecord, AuditAction, SearchDigitalRecordsDto } from '../../../types/audit';
 
 export default function AuditListPage() {
-    const [audits, setAudits] = useState<Audit[]>([]);
+    const [records, setRecords] = useState<DigitalRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterAction, setFilterAction] = useState<AuditAction | 'ALL'>('ALL');
-    const [filterEntity, setFilterEntity] = useState<AuditEntity | 'ALL'>('ALL');
+    const [filterTable, setFilterTable] = useState<string | 'ALL'>('ALL');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -18,29 +18,27 @@ export default function AuditListPage() {
     const [pageSize, setPageSize] = useState(25);
     const navigate = useNavigate();
 
-    // Cargar auditorías al montar el componente o cuando cambien los filtros
+    // Cargar registros al montar el componente o cuando cambien los filtros
     useEffect(() => {
-        loadAudits();
-    }, [currentPage, pageSize, filterAction, filterEntity, startDate, endDate]);
+        loadRecords();
+    }, [currentPage, pageSize, filterAction, filterTable, startDate, endDate]);
 
-    const loadAudits = async () => {
+    const loadRecords = async () => {
         setLoading(true);
         setError('');
 
         try {
-            const params: AuditSearchParams = {
+            const params: SearchDigitalRecordsDto = {
                 page: currentPage,
                 limit: pageSize,
-                sortBy: 'createAt',
-                sortOrder: 'DESC',
             };
 
             if (filterAction !== 'ALL') {
                 params.action = filterAction;
             }
 
-            if (filterEntity !== 'ALL') {
-                params.entity = filterEntity;
+            if (filterTable !== 'ALL') {
+                params.tableName = filterTable;
             }
 
             if (startDate) {
@@ -51,10 +49,10 @@ export default function AuditListPage() {
                 params.endDate = endDate;
             }
 
-            const result = await auditFlow.getAllAudits(params);
+            const result = await auditFlow.searchDigitalRecords(params);
 
-            if (result.success && result.audits) {
-                setAudits(result.audits);
+            if (result.success && result.records) {
+                setRecords(result.records);
                 setTotalRecords(result.total || 0);
                 setTotalPages(result.totalPages || 1);
             } else {
@@ -69,31 +67,31 @@ export default function AuditListPage() {
     };
 
     // Filtrar por término de búsqueda (local)
-    const filteredAudits = audits.filter(audit => {
+    const filteredRecords = records.filter(record => {
         if (!searchTerm.trim()) return true;
 
         const term = searchTerm.toLowerCase();
         return (
-            audit.aDescription.toLowerCase().includes(term) ||
-            (audit.aUsername || '').toLowerCase().includes(term) ||
-            audit.aAction.toLowerCase().includes(term) ||
-            audit.aEntity.toLowerCase().includes(term)
+            (record.description || '').toLowerCase().includes(term) ||
+            record.userName.toLowerCase().includes(term) ||
+            record.action.toLowerCase().includes(term) ||
+            (record.tableName || '').toLowerCase().includes(term)
         );
     });
 
-    const handleView = (audit: Audit) => {
-        navigate(`/audits/view/${audit.id}`);
+    const handleView = (record: DigitalRecord) => {
+        navigate(`/audits/view/${record.id}`);
     };
 
     const handleExport = async () => {
-        const params: AuditSearchParams = {
+        const params: SearchDigitalRecordsDto = {
             action: filterAction !== 'ALL' ? filterAction : undefined,
-            entity: filterEntity !== 'ALL' ? filterEntity : undefined,
+            tableName: filterTable !== 'ALL' ? filterTable : undefined,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
         };
 
-        const result = await auditFlow.exportAudits(params, 'auditorias.csv');
+        const result = await auditFlow.exportDigitalRecords(params, 'auditorias.csv');
 
         if (result.success) {
             alert(result.message || 'Auditorías exportadas exitosamente');
@@ -105,7 +103,7 @@ export default function AuditListPage() {
     const handleClearFilters = () => {
         setSearchTerm('');
         setFilterAction('ALL');
-        setFilterEntity('ALL');
+        setFilterTable('ALL');
         setStartDate('');
         setEndDate('');
         setCurrentPage(1);
@@ -229,39 +227,35 @@ export default function AuditListPage() {
                                 onChange={(e) => setFilterAction(e.target.value as AuditAction | 'ALL')}
                             >
                                 <option value="ALL">Todas</option>
-                                <option value="CREATE">Creación</option>
-                                <option value="UPDATE">Actualización</option>
-                                <option value="DELETE">Eliminación</option>
-                                <option value="LOGIN">Inicio sesión</option>
-                                <option value="LOGOUT">Cierre sesión</option>
-                                <option value="LOGIN_FAILED">Login fallido</option>
-                                <option value="PASSWORD_CHANGE">Cambio contraseña</option>
-                                <option value="2FA_ENABLED">2FA habilitado</option>
-                                <option value="2FA_DISABLED">2FA deshabilitado</option>
-                                <option value="EXPORT">Exportación</option>
-                                <option value="VIEW">Visualización</option>
-                                <option value="OTHER">Otra</option>
+                                <option value="login">Inicio sesión</option>
+                                <option value="logout">Cierre sesión</option>
+                                <option value="create">Creación</option>
+                                <option value="update">Actualización</option>
+                                <option value="delete">Eliminación</option>
+                                <option value="view">Visualización</option>
+                                <option value="export">Exportación</option>
+                                <option value="other">Otra</option>
                             </select>
                         </div>
 
-                        {/* Filtro por Entidad */}
+                        {/* Filtro por Tabla */}
                         <div className="col-md-2">
-                            <label className="form-label">Entidad</label>
+                            <label className="form-label">Tabla</label>
                             <select
                                 className="form-select"
-                                value={filterEntity}
-                                onChange={(e) => setFilterEntity(e.target.value as AuditEntity | 'ALL')}
+                                value={filterTable}
+                                onChange={(e) => setFilterTable(e.target.value)}
                             >
                                 <option value="ALL">Todas</option>
-                                <option value="USER">Usuario</option>
-                                <option value="ROLE">Rol</option>
-                                <option value="VIRTUAL_FILE">Ficha virtual</option>
-                                <option value="ENTRANCE_EXIT">Entrada/Salida</option>
-                                <option value="PROGRAM">Programa</option>
-                                <option value="CLINICAL_HISTORY">Historia clínica</option>
-                                <option value="AUTH">Autenticación</option>
-                                <option value="SYSTEM">Sistema</option>
-                                <option value="OTHER">Otro</option>
+                                <option value="users">Usuarios</option>
+                                <option value="roles">Roles</option>
+                                <option value="older_adult">Adultos Mayores</option>
+                                <option value="older_adult_family">Familiares</option>
+                                <option value="programs">Programas</option>
+                                <option value="clinical_history">Historia Clínica</option>
+                                <option value="entrances_exits">Entradas/Salidas</option>
+                                <option value="specialized_area">Áreas Especializadas</option>
+                                <option value="notifications">Notificaciones</option>
                             </select>
                         </div>
 
@@ -326,7 +320,7 @@ export default function AuditListPage() {
                     </div>
                 </div>
                 <div className="card-body p-0">
-                    {filteredAudits.length === 0 ? (
+                    {filteredRecords.length === 0 ? (
                         <div className="text-center py-5">
                             <i className="bi bi-inbox display-1 text-muted"></i>
                             <p className="mt-3 text-muted">No se encontraron registros de auditoría</p>
@@ -339,49 +333,50 @@ export default function AuditListPage() {
                                         <th style={{ width: '80px' }}>ID</th>
                                         <th style={{ width: '150px' }}>Fecha</th>
                                         <th style={{ width: '120px' }}>Acción</th>
-                                        <th style={{ width: '120px' }}>Entidad</th>
+                                        <th style={{ width: '150px' }}>Tabla</th>
+                                        <th style={{ width: '100px' }}>ID Registro</th>
                                         <th style={{ width: '150px' }}>Usuario</th>
                                         <th>Descripción</th>
                                         <th style={{ width: '100px' }} className="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredAudits.map((audit) => (
-                                        <tr key={audit.id}>
+                                    {filteredRecords.map((record) => (
+                                        <tr key={record.id}>
                                             <td>
-                                                <code>#{audit.id}</code>
+                                                <code>#{record.id}</code>
                                             </td>
                                             <td>
-                                                <small>{auditFlow.formatAuditDate(audit.createAt)}</small>
+                                                <small>{auditFlow.formatAuditDate(record.timestamp)}</small>
                                             </td>
                                             <td>
-                                                <span className={`badge ${auditFlow.getActionBadgeClass(audit.aAction)}`}>
-                                                    {auditFlow.getActionLabel(audit.aAction)}
+                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)}`}>
+                                                    {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
                                                 </span>
                                             </td>
                                             <td>
                                                 <span className="badge bg-secondary">
-                                                    {auditFlow.getEntityLabel(audit.aEntity)}
+                                                    {auditFlow.getTableLabel(record.tableName)}
                                                 </span>
                                             </td>
                                             <td>
-                                                {audit.aUsername ? (
-                                                    <span>
-                                                        <i className="bi bi-person-circle me-1"></i>
-                                                        {audit.aUsername}
-                                                    </span>
+                                                {record.recordId ? (
+                                                    <code className="text-primary">#{record.recordId}</code>
                                                 ) : (
-                                                    <span className="text-muted">
-                                                        <i className="bi bi-dash-circle me-1"></i>
-                                                        Sistema
-                                                    </span>
+                                                    <span className="text-muted">—</span>
                                                 )}
                                             </td>
                                             <td>
+                                                <span>
+                                                    <i className="bi bi-person-circle me-1"></i>
+                                                    {record.userName}
+                                                </span>
+                                            </td>
+                                            <td>
                                                 <div className="text-truncate" style={{ maxWidth: '300px' }}>
-                                                    {audit.aDescription}
+                                                    {record.description || <span className="text-muted">Sin descripción</span>}
                                                 </div>
-                                                {auditFlow.isCriticalAudit(audit) && (
+                                                {auditFlow.isCriticalAudit(record) && (
                                                     <span className="badge bg-warning text-dark ms-2">
                                                         <i className="bi bi-exclamation-triangle me-1"></i>
                                                         Crítico
@@ -391,7 +386,7 @@ export default function AuditListPage() {
                                             <td className="text-center">
                                                 <button
                                                     className="btn btn-sm btn-outline-primary"
-                                                    onClick={() => handleView(audit)}
+                                                    onClick={() => handleView(record)}
                                                     title="Ver detalles"
                                                 >
                                                     <i className="bi bi-eye"></i>
