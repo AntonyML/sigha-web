@@ -30,9 +30,16 @@ async function isServerRunning(url, timeout = 2000) {
     }
 }
 async function createWindow() {
+    const isDev = process.env.VITE_DEV_SERVER_URL !== undefined;
     const win = new electron_1.BrowserWindow({
-        width: 1000,
-        height: 700,
+        width: 1200,
+        height: 800,
+        minWidth: 360,
+        minHeight: 640,
+        center: true,
+        fullscreen: isDev, // Pantalla completa en modo desarrollo (oculta taskbar)
+        autoHideMenuBar: true, // Ocultar barra de menú automáticamente
+        frame: true, // Mantener el frame pero sin menú
         icon: (0, path_1.join)(__dirname, '..', 'src', 'assets', 'asopogua.png'),
         webPreferences: {
             preload: (0, path_1.join)(__dirname, 'preload.js'),
@@ -40,6 +47,8 @@ async function createWindow() {
             nodeIntegration: false,
         },
     });
+    // Remover menú de la ventana específica (Windows/Linux)
+    win.removeMenu();
     const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
     try {
         const up = await isServerRunning(devUrl, 2000);
@@ -60,7 +69,11 @@ async function createWindow() {
     console.log('Electron loading file:', indexPath);
     await win.loadFile(indexPath);
 }
-electron_1.app.whenReady().then(createWindow);
+electron_1.app.whenReady().then(() => {
+    // Remover menú de la aplicación completamente (File, Edit, View, Window, Help)
+    electron_1.Menu.setApplicationMenu(null);
+    createWindow();
+});
 electron_1.app.on('window-all-closed', () => {
     if (process.platform !== 'darwin')
         electron_1.app.quit();

@@ -35,7 +35,6 @@ export default function EditUserPage() {
     const [roles, setRoles] = useState<UserRole[]>([]);
     const [originalUser, setOriginalUser] = useState<User | null>(null);
 
-    // Cargar usuario y roles al montar el componente
     useEffect(() => {
         if (!id) {
             setLoading(false);
@@ -51,13 +50,11 @@ export default function EditUserPage() {
         setError('');
 
         try {
-            // Cargar usuario y roles en paralelo
             const [userResult, rolesResult] = await Promise.all([
                 userFlow.getUserById(Number(id)),
                 userFlow.getAllRoles()
             ]);
 
-            // Manejar resultado del usuario
             if (userResult.success && userResult.user) {
                 const user = userResult.user;
                 setOriginalUser(user);
@@ -67,7 +64,7 @@ export default function EditUserPage() {
                     uFLastName: user.uFLastName || '',
                     uSLastName: user.uSLastName || '',
                     uEmail: user.uEmail || '',
-                    uPassword: '', // No cargamos la contraseña por seguridad
+                    uPassword: '',
                     roleId: user.roleId || 0,
                     isActive: user.uIsActive === undefined ? true : user.uIsActive
                 });
@@ -75,7 +72,6 @@ export default function EditUserPage() {
                 setError(userResult.error || 'Error al cargar usuario');
             }
 
-            // Manejar resultado de roles
             if (rolesResult.success && rolesResult.roles) {
                 setRoles(rolesResult.roles);
             }
@@ -143,15 +139,24 @@ export default function EditUserPage() {
         setSaving(false);
     }
 
-    // Manejo cuando no hay id en la ruta
     if (!id) {
         return (
-            <div className="container py-4">
-                <h3 className="mb-3">ID no proporcionado</h3>
-                <p>No se encontró el identificador del usuario. Puedes crear uno nuevo o volver a la lista.</p>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-primary" onClick={() => navigate('/users/create')}>Crear nuevo</button>
-                    <button className="btn btn-secondary" onClick={() => navigate('/users')}>Volver a la lista</button>
+            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-6">
+                            <div className="card shadow-sm border-0">
+                                <div className="card-body p-5 text-center">
+                                    <i className="bi bi-exclamation-triangle display-1 text-warning mb-3 d-block"></i>
+                                    <h4 className="mb-3">ID no proporcionado</h4>
+                                    <p className="text-muted mb-4">No se encontró el identificador del usuario.</p>
+                                    <button className="btn btn-primary" onClick={() => navigate('/users')}>
+                                        Volver a la lista
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -159,14 +164,12 @@ export default function EditUserPage() {
 
     if (loading) {
         return (
-            <div className="container py-4">
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-                    <div className="text-center">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Cargando...</span>
-                        </div>
-                        <p className="mt-3 text-muted">Cargando información del usuario...</p>
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+                <div className="text-center">
+                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                        <span className="visually-hidden">Cargando...</span>
                     </div>
+                    <p className="text-muted fw-medium">Cargando información del usuario...</p>
                 </div>
             </div>
         );
@@ -174,18 +177,26 @@ export default function EditUserPage() {
 
     if (error && !originalUser) {
         return (
-            <div className="container py-4">
-                <div className="alert alert-danger" role="alert">
-                    <h4 className="alert-heading">Error</h4>
-                    <p>{error}</p>
-                    <hr />
-                    <div className="d-flex gap-2">
-                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
-                            Volver a la lista
-                        </button>
-                        <button className="btn btn-primary" onClick={loadUserAndRoles}>
-                            Reintentar
-                        </button>
+            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-6">
+                            <div className="card shadow-sm border-0">
+                                <div className="card-body p-5 text-center">
+                                    <i className="bi bi-exclamation-circle display-1 text-danger mb-3 d-block"></i>
+                                    <h4 className="mb-3">Error al cargar usuario</h4>
+                                    <p className="text-muted mb-4">{error}</p>
+                                    <div className="d-flex gap-2 justify-content-center">
+                                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
+                                            Volver a la lista
+                                        </button>
+                                        <button className="btn btn-primary" onClick={loadUserAndRoles}>
+                                            Reintentar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -193,214 +204,294 @@ export default function EditUserPage() {
     }
 
     return (
-        <div className="container py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2>Editar Usuario {originalUser ? `- ${userFlow.getFullName(originalUser)}` : `#${id}`}</h2>
-                <button
-                    className="btn btn-secondary"
-                    onClick={() => navigate('/users')}
-                    disabled={saving}
-                >
-                    <i className="bi bi-arrow-left me-2"></i>
-                    Regresar
-                </button>
-            </div>
-
-            {error && (
-                <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                    {error}
-                    <button type="button" className="btn-close" onClick={() => setError('')}></button>
-                </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-                <h3 className="mb-3">INFORMACIÓN PERSONAL</h3>
-
-                {/* Identificación y Email */}
-                <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-6">
-                        <label htmlFor="identification" className="form-label">IDENTIFICACIÓN *</label>
-                        <input
-                            id="uIdentification"
-                            type="text"
-                            className="form-control"
-                            value={formData.uIdentification}
-                            onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                            placeholder="Número de identificación"
-                            required
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label htmlFor="email" className="form-label">EMAIL *</label>
-                        <input
-                            id="uEmail"
-                            type="email"
-                            className="form-control"
-                            value={formData.uEmail}
-                            onChange={(e) => onInputChange('uEmail', e.target.value)}
-                            placeholder="correo@ejemplo.com"
-                            required
-                            disabled={saving}
-                        />
-                    </div>
-                </div>
-
-                {/* Nombres y Apellidos */}
-                <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-4">
-                        <label htmlFor="name" className="form-label">NOMBRE *</label>
-                        <input
-                            id="uName"
-                            type="text"
-                            className="form-control"
-                            value={formData.uName}
-                            onChange={(e) => onInputChange('uName', e.target.value)}
-                            placeholder="Nombre"
-                            required
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="col-12 col-md-4">
-                        <label htmlFor="fLastName" className="form-label">PRIMER APELLIDO *</label>
-                        <input
-                            id="uFLastName"
-                            type="text"
-                            className="form-control"
-                            value={formData.uFLastName}
-                            onChange={(e) => onInputChange('uFLastName', e.target.value)}
-                            placeholder="Primer apellido"
-                            required
-                            disabled={saving}
-                        />
-                    </div>
-                    <div className="col-12 col-md-4">
-                        <label htmlFor="sLastName" className="form-label">SEGUNDO APELLIDO</label>
-                        <input
-                            id="uSLastName"
-                            type="text"
-                            className="form-control"
-                            value={formData.uSLastName}
-                            onChange={(e) => onInputChange('uSLastName', e.target.value)}
-                            placeholder="Segundo apellido (opcional)"
-                            disabled={saving}
-                        />
-                    </div>
-                </div>
-
-                <hr />
-
-                <h3 className="mb-3">CONFIGURACIÓN DE CUENTA</h3>
-
-                {/* Contraseña (opcional en edición) */}
-                <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-6">
-                        <label htmlFor="password" className="form-label">CONTRASEÑA</label>
-                        <input
-                            id="uPassword"
-                            type="password"
-                            className="form-control"
-                            value={formData.uPassword}
-                            onChange={(e) => onInputChange('uPassword', e.target.value)}
-                            placeholder="Dejar vacío para mantener la actual"
-                            disabled={saving}
-                            minLength={6}
-                        />
-                        <small className="text-muted">
-                            Solo completa este campo si deseas cambiar la contraseña (mínimo 6 caracteres)
-                        </small>
-                    </div>
-                    <div className="col-12 col-md-6">
-                        <label htmlFor="roleId" className="form-label">ROL *</label>
-                        <select
-                            id="roleId"
-                            className="form-select"
-                            value={formData.roleId}
-                            onChange={(e) => onInputChange('roleId', Number(e.target.value))}
-                            required
-                            disabled={saving}
-                        >
-                            <option value={0}>Seleccionar rol</option>
-                            {roles.map(role => (
-                                <option key={role.id} value={role.id}>
-                                    {role.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Estado */}
-                <div className="row g-3 mb-4">
-                    <div className="col-12 col-md-6">
-                        <label className="form-label">ESTADO DE LA CUENTA *</label>
-                        <div className="mt-2">
-                            <div className="form-check form-check-inline">
-                                <input
-                                    className="form-check-input"
-                                    type="radio"
-                                    id="activeTrue"
-                                    name="isActive"
-                                    checked={formData.isActive === true}
-                                    onChange={() => onInputChange('isActive', true)}
-                                    disabled={saving}
-                                />
-                                <label className="form-check-label" htmlFor="activeTrue">
-                                    Activo
-                                </label>
+        <div className="min-vh-100 bg-light py-4">
+            <div className="container-fluid">
+                <div className="row mb-4">
+                    <div className="col-12">
+                        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                            <div>
+                                <h1 className="h3 fw-bold mb-1">Editar Usuario</h1>
+                                <p className="text-muted mb-0">{originalUser ? userFlow.getFullName(originalUser) : `#${id}`}</p>
                             </div>
-                            <div className="form-check form-check-inline">
-                                <input
-                                    className="form-check-input"
-                                    type="radio"
-                                    id="activeFalse"
-                                    name="isActive"
-                                    checked={formData.isActive === false}
-                                    onChange={() => onInputChange('isActive', false)}
-                                    disabled={saving}
-                                />
-                                <label className="form-check-label" htmlFor="activeFalse">
-                                    Inactivo
-                                </label>
-                            </div>
+                            <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/users')} disabled={saving}>
+                                <i className="bi bi-arrow-left"></i>
+                                Volver a la lista
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div className="d-flex gap-2">
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                        {saving ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Guardando...
-                            </>
-                        ) : (
-                            <>
-                                <i className="bi bi-save me-2"></i>
-                                Guardar Cambios
-                            </>
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => navigate('/users')}
-                        disabled={saving}
-                    >
-                        <i className="bi bi-x-circle me-2"></i>
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-info"
-                        onClick={() => navigate(`/users/view/${id}`)}
-                        disabled={saving}
-                    >
-                        <i className="bi bi-eye me-2"></i>
-                        Ver Detalles
-                    </button>
-                </div>
-            </form>
+                {error && (
+                    <div className="row mb-4">
+                        <div className="col-12">
+                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                                {error}
+                                <button type="button" className="btn-close" onClick={() => setError('')}></button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit}>
+                    <div className="row">
+                        <div className="col-12">
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-person-circle me-2 text-primary"></i>
+                                        Información Personal
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row g-4">
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="uIdentification" className="form-label fw-semibold">
+                                                Identificación <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                id="uIdentification"
+                                                type="text"
+                                                className="form-control form-control-lg"
+                                                value={formData.uIdentification}
+                                                onChange={(e) => onInputChange('uIdentification', e.target.value)}
+                                                placeholder="Ej: 1234567890"
+                                                required
+                                                disabled={saving}
+                                            />
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Número único de identificación
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="uName" className="form-label fw-semibold">
+                                                Nombre <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                id="uName"
+                                                type="text"
+                                                className="form-control form-control-lg"
+                                                value={formData.uName}
+                                                onChange={(e) => onInputChange('uName', e.target.value)}
+                                                placeholder="Nombre completo"
+                                                required
+                                                disabled={saving}
+                                            />
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="uFLastName" className="form-label fw-semibold">
+                                                Primer Apellido <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                id="uFLastName"
+                                                type="text"
+                                                className="form-control form-control-lg"
+                                                value={formData.uFLastName}
+                                                onChange={(e) => onInputChange('uFLastName', e.target.value)}
+                                                placeholder="Primer apellido"
+                                                required
+                                                disabled={saving}
+                                            />
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="uSLastName" className="form-label fw-semibold">
+                                                Segundo Apellido
+                                            </label>
+                                            <input
+                                                id="uSLastName"
+                                                type="text"
+                                                className="form-control form-control-lg"
+                                                value={formData.uSLastName}
+                                                onChange={(e) => onInputChange('uSLastName', e.target.value)}
+                                                placeholder="Segundo apellido (opcional)"
+                                                disabled={saving}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-envelope me-2 text-primary"></i>
+                                        Información de Contacto
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row g-4">
+                                        <div className="col-12">
+                                            <label htmlFor="uEmail" className="form-label fw-semibold">
+                                                Correo Electrónico <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                id="uEmail"
+                                                type="email"
+                                                className="form-control form-control-lg"
+                                                value={formData.uEmail}
+                                                onChange={(e) => onInputChange('uEmail', e.target.value)}
+                                                placeholder="correo@ejemplo.com"
+                                                required
+                                                disabled={saving}
+                                            />
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Se utilizará para autenticación y notificaciones
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-key me-2 text-primary"></i>
+                                        Rol y Permisos
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row g-4">
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="roleId" className="form-label fw-semibold">
+                                                Asignar Rol <span className="text-danger">*</span>
+                                            </label>
+                                            <select
+                                                id="roleId"
+                                                className="form-select form-select-lg"
+                                                value={formData.roleId}
+                                                onChange={(e) => onInputChange('roleId', Number(e.target.value))}
+                                                required
+                                                disabled={saving}
+                                            >
+                                                <option value={0}>Seleccionar rol...</option>
+                                                {roles.map(role => (
+                                                    <option key={role.id} value={role.id}>
+                                                        {role.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Los permisos se definen según el rol asignado
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="isActive" className="form-label fw-semibold">
+                                                Estado de Cuenta <span className="text-danger">*</span>
+                                            </label>
+                                            <div className="btn-group w-100" role="group" aria-label="Estado de la cuenta">
+                                                <input
+                                                    type="radio"
+                                                    className="btn-check"
+                                                    id="activeTrue"
+                                                    name="isActive"
+                                                    checked={formData.isActive === true}
+                                                    onChange={() => onInputChange('isActive', true)}
+                                                    disabled={saving}
+                                                />
+                                                <label className="btn btn-outline-success" htmlFor="activeTrue">
+                                                    <i className="bi bi-check-circle me-1"></i>
+                                                    Activo
+                                                </label>
+
+                                                <input
+                                                    type="radio"
+                                                    className="btn-check"
+                                                    id="activeFalse"
+                                                    name="isActive"
+                                                    checked={formData.isActive === false}
+                                                    onChange={() => onInputChange('isActive', false)}
+                                                    disabled={saving}
+                                                />
+                                                <label className="btn btn-outline-secondary" htmlFor="activeFalse">
+                                                    <i className="bi bi-x-circle me-1"></i>
+                                                    Inactivo
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-shield-lock me-2 text-primary"></i>
+                                        Credenciales de Seguridad
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    <div className="row g-4">
+                                        <div className="col-12">
+                                            <label htmlFor="uPassword" className="form-label fw-semibold">
+                                                Contraseña
+                                            </label>
+                                            <input
+                                                id="uPassword"
+                                                type="password"
+                                                className="form-control form-control-lg"
+                                                value={formData.uPassword}
+                                                onChange={(e) => onInputChange('uPassword', e.target.value)}
+                                                placeholder="Dejar vacío para mantener la actual"
+                                                disabled={saving}
+                                                minLength={8}
+                                            />
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Completa solo si deseas cambiar la contraseña (mínimo 8 caracteres)
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0">
+                                <div className="card-body p-4">
+                                    <div className="d-flex flex-column flex-sm-row gap-3">
+                                        <button 
+                                            type="submit" 
+                                            className="btn btn-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" 
+                                            disabled={saving}
+                                        >
+                                            {saving ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                    Guardando cambios...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-check-circle"></i>
+                                                    Guardar Cambios
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={() => navigate('/users')}
+                                            disabled={saving}
+                                        >
+                                            <i className="bi bi-x-circle"></i>
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={() => navigate(`/users/view/${id}`)}
+                                            disabled={saving}
+                                        >
+                                            <i className="bi bi-eye"></i>
+                                            Ver Detalles
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 
-import LoginForm from './presentation/pages/auth/LoginPage'
+import LoginForm from './presentation/pages/auth/LoginPageNew'
 
 import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
 

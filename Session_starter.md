@@ -10,13 +10,14 @@ This file should be added to .gitignore to avoid committing session-specific dat
 **Project:** frontend_proton_react_hogar_de_ancianos
 **Type:** React Frontend (Vite + TypeScript)
 **Purpose:** Frontend client for elderly care home management system with authentication and 2FA support
-**Status:** Active development - authentication flows configured
+**Status:** Active development - UI migration to Tailwind CSS + shadcn/ui in progress
 **Core Technologies:**
-- React 18+ with TypeScript
-- Vite build system
+- React 19.1.1 with TypeScript 5.9.3
+- Vite 7.1.9 build system
 - React Router for navigation
 - Axios HTTP client with interceptors
-- Bootstrap UI framework
+- Tailwind CSS v3.4.0 + shadcn/ui (NEW - mobile-first adaptive UI)
+- Bootstrap 5.3.8 (gradual migration in progress)
 - LocalStorage for token management
 
 **Backend Integration:**
@@ -101,6 +102,17 @@ This file should be added to .gitignore to avoid committing session-specific dat
 2025-10-18 | All user pages updated to use correct field names (uIdentification, uName, uFLastName, uEmail, etc.)
 2025-10-18 | userFlow validation logic aligned with backend requirements (8-char password min, no confirmPassword)
 2025-10-18 | Type-safe integration complete: 0 TypeScript compilation errors across entire project
+2025-10-22 | Investigación UX/UI completada: 7 fuentes consultadas (A11Y Project, NN/g, PageFlows, M3, Tailwind, Chakra, MUI)
+2025-10-22 | Documento UX_DESIGN_RESEARCH.md creado con hallazgos, patrones y checklist WCAG AA
+2025-10-22 | Decisión: Tailwind CSS + shadcn/ui seleccionados para diseño adaptativo mobile-first
+2025-10-22 | Instalación completada: Tailwind CSS v3.4.0, @tailwindcss/forms, Radix UI, CVA, clsx, tailwind-merge
+2025-10-22 | Configuración establecida: tailwind.config.js (breakpoints mobile/tablet/desktop), postcss.config.js, global.css con CSS variables
+2025-10-22 | Path alias @/* configurado en tsconfig.app.json y vite.config.ts
+2025-10-22 | Componentes shadcn/ui creados: ButtonNew (6 variants), InputNew (responsive), Label (Radix), Card system
+2025-10-22 | Build exitoso: compilación con Tailwind CSS integrado sin errores (dist 414.25 kB, CSS 327.57 kB gzip 49.02 kB)
+2025-10-22 | **LoginPageNew.tsx creado**: diseño mobile-first, accesibilidad WCAG AA, transiciones animadas login ↔ 2FA, responsive 360px-1440px
+2025-10-22 | App.tsx actualizado para usar LoginPageNew como página de login principal
+2025-10-23 | **Electron main.ts configurado**: pantalla completa en dev (fullscreen: isDev), menú superior oculto (setMenuBarVisibility(false)), dimensiones adaptativas (1200x800, minWidth 360px, minHeight 640px)
 
 ---
 
@@ -111,8 +123,13 @@ This file should be added to .gitignore to avoid committing session-specific dat
 - [x] ✅ Update all user pages to use correct field names
 - [x] ✅ Fix userFlow validation logic to match backend requirements
 - [x] ✅ Eliminate all TypeScript compilation errors
+- [x] ✅ Aplicar mejores prácticas CRUD (orden lógico de campos según Growform)
+- [x] ✅ Repositor email ANTES de contraseñas en formulario Create
+- [x] ✅ Refactorizar EditUserPage con 5 cards full-width (uniforme con Create)
+- [x] ✅ Refactorizar ViewUserPage con 5 cards full-width (elimina sidebar + redundancia)
 - [ ] 🔄 Test complete frontend-backend integration (login → 2FA → dashboard)
-- [ ] 🔄 Test user management CRUD operations with backend
+- [ ] 🔄 Test user management CRUD operations with backend (Create → Read → Update → Delete)
+- [ ] 🔄 Testing mobile responsive en dispositivos reales (iPhone, iPad)
 - [ ] Verify role management integration
 - [ ] Add comprehensive error handling and user feedback
 - [ ] Implement password change page (currentPassword + newPassword only)
@@ -141,6 +158,25 @@ Date | Summary
 2025-10-18 | All user management pages and flows updated with u-prefixed field names
 2025-10-18 | Validation logic updated: 8-char password minimum, confirmPassword removed from backend flow
 2025-10-18 | TypeScript compilation successful: 0 errors across entire frontend codebase
+2025-10-22 | Aplicadas mejores prácticas CRUD según Growform: orden lógico de campos en CreateUserPage
+2025-10-22 | Email movido ANTES de contraseñas (correo necesario para recuperación, menos sensible)
+2025-10-22 | Orden correcto: Identificación → Personales → Contacto → Rol → Seguridad
+2025-10-22 | Archivo CRUD_BEST_PRACTICES.md creado con referencias de 5 fuentes UX/UI
+2025-10-22 | Build exitoso: npm run build compiló sin errores tras cambios de reordenamiento
+2025-10-22 | EditUserPage.tsx refactorizada: 8+4 layout → 5 cards full-width, elimina duplicación datos
+2025-10-22 | Estructura uniforme en Create/Edit: Personales → Contacto → Rol → Seguridad → Acciones
+2025-10-22 | ViewUserPage.tsx refactorizada: sidebar 8+4 → 5 cards full-width, cero redundancia
+2025-10-22 | Implementadas 5 cards en ViewUserPage: Personal, Contacto, Rol, Permisos, Información Adicional
+2025-10-22 | Build exitoso tras refactorización de ViewUserPage: 0 errores, dist 364.10 kB (gzip 101.94 kB)
+2025-10-22 | Documentación: VIEWPAGE_REFACTOR_REPORT.md creado con comparativa antes/después
+2025-10-22 | Sesión iniciada: se aplicaron las instrucciones de `session-startup.prompt.md`, se creó la lista de tareas del asistente y se leyeron `Session_starter.md` y `README.md` (tareas registradas).
+2025-10-22 | Investigación UX/UI completada: consultadas 7 fuentes (A11Y Project, Nielsen Norman, PageFlows, Material Design 3, Tailwind CSS, Chakra UI, MUI) para diseño adaptativo y accesibilidad
+2025-10-22 | Documentación creada: UX_DESIGN_RESEARCH.md con hallazgos clave, patrones de diseño, y plan de implementación de login adaptativo mobile-first
+2025-10-22 | Decisión técnica: Tailwind CSS + shadcn/ui seleccionados para refactorización de LoginPage (mobile-first, WCAG AA, TypeScript)
+2025-10-22 | Instalación completada: Tailwind CSS v3.4, @tailwindcss/forms, Radix UI primitives, class-variance-authority, clsx, tailwind-merge, lucide-react
+2025-10-22 | Configuración: tailwind.config.js (breakpoints mobile/tablet/desktop, variables CSS, animaciones), postcss.config.js, path alias @/* en tsconfig y vite.config
+2025-10-22 | Componentes shadcn/ui creados: Button, Input, Label, Card (con variantes y accesibilidad Radix UI) en src/presentation/components/atoms/
+2025-10-22 | Build exitoso: compilación con Tailwind CSS integrado sin errores (dist 414.25 kB, CSS 327.57 kB gzip 49.02 kB)
 
 ---
 
@@ -152,6 +188,87 @@ Date | Summary
 - `npm run preview` - Preview production build
 - `npm install` - Install dependencies
 - `npm run type-check` - TypeScript type checking
+
+## Workspace scan (2025-10-22)
+
+- Top-level files and folders detected: `.chatcatalyst/`, `.git/`, `.github/`, `.gitignore`, `.vscode/`, `dist/`, `dist-electron/`, `electron/`, `eslint.config.js`, `index.html`, `LICENSE`, `node_modules/`, `package-lock.json`, `package.json`, `public/`, `README.md`, `Session_starter.md`, `src/`, `tests/`, `tsconfig.app.json`, `tsconfig.json`, `tsconfig.node.json`, `vite.config.ts`.
+
+- `package.json` highlights:
+	- name: `asopogua`, private: `true`, type: `module`, main: `dist-electron/main.cjs`.
+	- scripts: `dev` (vite), `dev:electron` (concurrently runs renderer + main + electron-wait), `build` (renderer + electron), `start:prod` (electron production), `lint`, `preview`.
+	- runtime dependencies: `react` ^19.1.1, `react-dom` ^19.1.1, `react-router-dom`, `axios`, `bootstrap`, `bootstrap-icons`, `sweetalert2`.
+	- devDependencies: `vite`, `typescript` ~5.9.3, `@vitejs/plugin-react`, `electron`, `electron-builder`, `concurrently`, `cross-env`, `wait-on`, `eslint` and plugins.
+
+Notes: Electron build tooling is present; project supports both web (Vite) and Electron desktop builds.
+
+## Cierre de sesión (2025-10-22)
+
+Resumen de acciones:
+
+- Se creó y gestionó el todo list de la sesión.
+- Se leyeron y analizaron `Session_starter.md` y `README.md` para obtener contexto del proyecto.
+- Se actualizó `Session_starter.md` con un registro de inicio de sesión y con los resultados del escaneo del workspace (`package.json`, scripts, dependencias).
+- Se añadió la sección "Plan MCP / herramientas" especificando qué MCPs usar y para qué propósitos.
+
+Verificaciones realizadas:
+
+- Confirmé la existencia de scripts clave en `package.json` (dev, dev:electron, build, build:renderer, build:electron, start:prod, preview).
+- Verifiqué que las dependencias y devDependencies necesarias para Vite y Electron están presentes (`react`, `vite`, `electron`, `electron-builder`, `typescript`, etc.).
+- Revisé la estructura de carpetas y archivos top-level del repositorio (`src/`, `electron/`, `public/`, `tests/`, `dist-electron/`, etc.).
+
+Observación sobre ejecución local:
+
+- Nota: el intento anterior de ejecutar `npm run dev:electron` devolvió exit code 1 (ver contexto). Flujo recomendado para desarrollo con Electron:
+
+1) En una terminal (desarrollador web) arrancar Vite:
+
+```pwsh
+npm run dev
+```
+
+2) En otra terminal arrancar el proceso Electron en modo development (el script `dev:electron` usa concurrently y espera a que Vite esté listo):
+
+```pwsh
+npm run dev:electron
+```
+
+Si `npm run dev:electron` falla, pasos de diagnóstico rápidos:
+
+- Asegurarse de que `npm run dev` esté corriendo y accesible en `http://localhost:5173`.
+- Ejecutar `npm run build:electron` para compilar `dist-electron/main.cjs` y comprobar errores de TypeScript en la carpeta `electron/`:
+
+```pwsh
+npm run build:electron
+```
+
+- Revisar la salida completa del comando fallido para localizar el error (dependencias faltantes, permisos, o rutas incorrectas).
+
+Próximos pasos recomendados:
+
+- Ejecutar pruebas de integración del flujo de autenticación (login → 2FA → dashboard) contra el backend local en `http://localhost:3000`.
+- Añadir tests unitarios mínimos para `authFlow` y `userFlow` si aún no existen.
+- Si quieres, puedo abrir PRs con cambios propuestos o crear issues que documenten tareas pendientes (p. ej. pruebas e2e, mobile responsive, mejoras de accesibilidad).
+
+Cierre y estado de la sesión:
+
+- Tareas del todo list completadas. `Session_starter.md` actualizado con la información solicitada y el plan MCP.
+- Paso siguiente: esperar indicaciones tuyas para implementar cambios de código, crear componentes UI o abrir PRs.
+
+## Plan MCP / herramientas (2025-10-22)
+
+Se seguirá la política del `session-startup.prompt.md` de priorizar MCPs cuando correspondan. Plan de uso concreto:
+
+- Filesystem MCP: operación principal para leer/editar archivos del repositorio (`Session_starter.md`, código fuente, tests, generación de parches). Se usará para aplicar cambios seguros y rastreables en el proyecto.
+- GitHub MCP: operaciones de repositorio (crear issues/PRs, revisar cambios, obtener información del repo) cuando sea necesario coordinar con control de versiones o abrir PRs con cambios propuestos.
+- UI component MCPs (21st, Magic UI, shadcn/ui): generación e inspiración de componentes UI cuando necesitemos crear o rediseñar componentes React (atoms/molecules). Priorizaré estos para propuestas de UI que encajen con la arquitectura Atomic Design existente.
+- Upstash/Documentation MCP (Upstash Conte): referencia y búsqueda de documentación para librerías y APIs cuando se necesite confirmar APIs públicas, hooks o patrones de integración.
+- Knowledge graph / Memory MCP: registrar decisiones arquitectónicas y cambios importantes en la memoria de la sesión para mantener continuidad entre sesiones posteriores.
+- Puppeteer MCP: automatización y scraping para pruebas de e2e o captura de pantallas si se requiere automatizar flujos en la UI (solo si el escenario lo amerita).
+
+Notas de comportamiento:
+- Nunca exfiltrar secretos ni ejecutar llamadas de red externas no autorizadas.
+- Preferir operaciones locales primero; usar GitHub MCP sólo para acciones que impliquen PR/issue o revisión remota.
+- Mantener las notas de sesión en español y actualizar el `Session_starter.md` después de cambios mayores.
 
 **Key Files:**
 - src/main.tsx - Application entry point
@@ -199,6 +316,7 @@ Date | Summary
 
 **Pages Layer (`src/presentation/pages/`):**
 - `auth/LoginPage.tsx` - ✅ Uses authFlow.login() and authFlow.verify2FA() correctly
+- `auth/LoginPageNew.tsx` - ✅ **NUEVO**: Versión mobile-first con Tailwind CSS + shadcn/ui, accesibilidad WCAG AA, transiciones animadas entre login y 2FA
 - `two-factor/TwoFactorPage.tsx` - ✅ Uses twoFactorFlow methods correctly
 - `dashboard/DashboardPage.tsx` - Main dashboard after authentication
 - `users/` - User management pages (CreateUserPage, EditUserPage, UserListPage, ViewUserPage)
