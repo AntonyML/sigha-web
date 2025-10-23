@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Calendar, Bell, User } from 'lucide-react';
+import { auditService } from '../../../../services/auditService';
 
 interface NavItem {
   id: string;
@@ -54,6 +55,22 @@ export default function Navbar() {
     navigate(path);
   };
 
+  const handleLogout = async () => {
+    try {
+      // IMPORTANTE: Registrar logout ANTES de limpiar el token
+      await auditService.logLogout('Usuario cerró sesión');
+      
+      // Limpiar storage y redirigir
+      localStorage.clear();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error al registrar logout:', error);
+      // Continuar con el logout aunque falle la auditoría
+      localStorage.clear();
+      navigate('/login');
+    }
+  };
+
   return (
     <>
       {/* Desktop Navbar - Top */}
@@ -103,10 +120,7 @@ export default function Navbar() {
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
               <button
-                onClick={() => {
-                  localStorage.clear();
-                  navigate('/login');
-                }}
+                onClick={handleLogout}
                 className="text-sm text-gray-600 hover:text-red-600 font-medium transition-colors"
               >
                 Salir

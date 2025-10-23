@@ -9,6 +9,7 @@ import { virtualFileService } from '../../../services/virtualFileService'
 import { programService } from '../../../services/programService'
 import { vaccineService } from '../../../services/vaccineService'
 import { clinicalConditionService } from '../../../services/clinicalConditionService'
+import { auditService } from '../../../services/auditService'
 
 export default function CreateVirtualFile() {
   const [formData, setFormData] = useState<VirtualFile>(defaultVirtualFile)
@@ -111,6 +112,20 @@ export default function CreateVirtualFile() {
       );
       
       console.log('✅ Archivo virtual creado:', result);
+      
+      // Registrar creación en auditoría
+      if (result && result.id) {
+        await auditService.logCreate(
+          'older_adult',
+          result.id,
+          {
+            identification: formData.cedula,
+            name: formData.nombreApellido,
+            program: currentProgram?.pName || 'Desconocido'
+          },
+          `Nuevo expediente creado: ${formData.nombreApellido}`
+        );
+      }
       
       // Navegar de vuelta a la lista
       navigate('/virtualFiles');

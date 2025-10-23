@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userFlow } from '../../../infrastructure/flows/userFlow';
+import { auditService } from '../../../services/auditService';
 import type { UserRole, CreateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -89,7 +90,20 @@ export default function CreateUserPage() {
 
         const result = await userFlow.createUser(createData);
 
-        if (result.success) {
+        if (result.success && result.user) {
+            // Registrar creación de usuario en auditoría
+            const roleName = roles.find(r => r.id === formData.roleId)?.name || 'Desconocido';
+            await auditService.logCreate(
+                'users',
+                result.user.id,
+                {
+                    email: result.user.uEmail,
+                    name: `${result.user.uName} ${result.user.uFLastName}`,
+                    role: roleName
+                },
+                `Nuevo usuario creado: ${result.user.uEmail} con rol ${roleName}`
+            );
+            
             alert(result.message || 'Usuario creado exitosamente');
             navigate('/users');
         } else {

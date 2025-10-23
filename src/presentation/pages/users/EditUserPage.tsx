@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { userFlow } from '../../../infrastructure/flows/userFlow';
+import { auditService } from '../../../services/auditService';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -130,6 +131,19 @@ export default function EditUserPage() {
         const result = await userFlow.updateUser(Number(id), updateData);
 
         if (result.success) {
+            // Registrar cambio de rol si aplica
+            if (updateData.roleId && originalUser) {
+                const oldRole = roles.find(r => r.id === originalUser.roleId)?.name || 'Desconocido';
+                const newRole = roles.find(r => r.id === updateData.roleId)?.name || 'Desconocido';
+                
+                await auditService.logRoleChange(
+                    Number(id),
+                    oldRole,
+                    newRole,
+                    `Cambio de rol de ${oldRole} a ${newRole} para usuario ${originalUser.uEmail}`
+                );
+            }
+            
             alert(result.message || 'Usuario actualizado exitosamente');
             navigate('/users');
         } else {

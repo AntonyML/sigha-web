@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Logo from '../../../assets/images/asopogua.png'
 import { authFlow } from '../../../infrastructure/flows/authFlow'
+import { auditService } from '../../../services/auditService'
 
 export default function LoginForm() {
   const [email, setEmail] = useState('')
@@ -45,6 +46,9 @@ export default function LoginForm() {
 
       // Caso 2: Login exitoso sin 2FA
       if (result.user) {
+        // Registrar login exitoso en auditoría
+        await auditService.logLogin('Ingreso exitoso al sistema')
+        
         // Redirigir al menú principal
         navigate('/main-menu')
       }
@@ -81,6 +85,9 @@ export default function LoginForm() {
 
       // Login completado exitosamente
       if (result.user) {
+        // Registrar login exitoso con 2FA en auditoría
+        await auditService.logLogin('Ingreso exitoso al sistema con verificación 2FA')
+        
         navigate('/main-menu')
       }
     } catch (err: any) {
