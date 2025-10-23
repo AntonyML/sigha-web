@@ -102,27 +102,36 @@ npm run start:prod       # Electron production mode
 - ✅ Electron configurado: fullscreen dev, menú oculto, scripts auto-rename .cjs
 - ✅ LoginPageNew con Tailwind CSS mobile-first funcionando
 - ✅ Componentes shadcn/ui creados (Button, Input, Label, Card)
-- ✅ **Módulo de Auditoría ✅ 100% COMPLETADO - SINCRONIZADO CON BACKEND**: 
-  - **Backend Real:** `/audit/digital-records` (NestJS) - Tabla: `digital_record` (MySQL)
+- ✅ **Módulo de Auditoría ✅ 100% COMPLETADO - SINCRONIZADO CON BACKEND REAL**: 
+  - **Backend Real:** `/audits/*` (NestJS) - Tabla: `digital_record` (MySQL)
   - **Tipos (audit.ts):** DigitalRecord, SearchDigitalRecordsDto, PaginatedDigitalRecordsResponse, AuditStatistics - 0 errores ✅
-  - **Service (auditService.ts):** 5 métodos HTTP sincronizados con backend NestJS - 0 errores ✅
-    * `GET /audit/digital-records/search` → searchDigitalRecords()
-    * `GET /audit/digital-records/:id` → getDigitalRecordById()
-    * `POST /audit/digital-records` → createDigitalRecord()
-    * `GET /audit/statistics` → getAuditStatistics()
+  - **Service (auditService.ts):** 6 métodos HTTP sincronizados 100% con backend NestJS - 0 errores ✅
+    * `GET /audits/search` → searchDigitalRecords() ✅ ACTUALIZADO
+    * `GET /audits/:id` → getDigitalRecordById() ✅ ACTUALIZADO
+    * `POST /audits` → createDigitalRecord() ✅ ACTUALIZADO (userId removido, backend usa JWT)
+    * `GET /audits/stats` → getAuditStatistics() ✅ ACTUALIZADO
+    * `GET /audits/user/:userId` → getAuditsByUser() ✅ NUEVO
+    * `GET /audits/entity/:entity/:entityId` → getAuditsByEntity() ✅ NUEVO
     * exportDigitalRecords() → Genera CSV localmente
-  - **Flow (auditFlow.ts):** 5 métodos + 6 helpers (getActionLabel, getTableLabel, getActionBadgeClass, isCriticalAudit, getActionIcon, formatAuditDate) - 0 errores ✅
+  - **Flow (auditFlow.ts):** 7 métodos + 6 helpers - 0 errores ✅
+    * getAuditsByUser() ✅ NUEVO
+    * getAuditsByEntity() ✅ NUEVO
+    * createDigitalRecord() ✅ ACTUALIZADO (userId removido)
   - **UI Pages (3/3) - SINCRONIZADAS CON ESTRATEGIA INCREMENTAL:** - 0 errores ✅
-    * AuditListPage.tsx: Tabla paginada, filtros (userId, action, tableName), búsqueda, export CSV - 6 chunks ~80 líneas
-    * ViewAuditPage.tsx: Vista detallada con 1 card (info general simplificada) - 4 chunks ~75 líneas, eliminadas 4 cards no soportadas
-    * AuditDashboardPage.tsx: Estadísticas, gráficos, top usuarios, actividad reciente - 3 chunks ~50 líneas
-    * **Estrategia:** Incremental replacement (replace_string_in_file) en bloques ~50-80 líneas preservando git history
+    * AuditListPage.tsx: Tabla paginada, filtros (userId, action, tableName), búsqueda, export CSV
+    * ViewAuditPage.tsx: Vista detallada con 1 card (info general simplificada)
+    * AuditDashboardPage.tsx: Estadísticas, gráficos, top usuarios, actividad reciente
   - AuditMenuPage.tsx: Submenú con 3 opciones + breadcrumbs - 0 errores ✅
-  - Rutas configuradas: /audits (menú), /audits/list, /audits/view/:id, /audits/dashboard
+  - Rutas configuradas: /audits (menú), /audits/list, /audits/view/:id, /audits/dashboard ✅
+  - **Menú Principal:** Opción "Auditoría 🛡️" agregada en MainMenuPage ✅
   - Build exitoso: 0 errores TypeScript en todos los archivos ✅
-  - **IMPORTANTE:** Backend usa lowercase actions (`'login'`, `'create'`, `'delete'`), tableName directo (`'users'`, `'older_adult'`), response key `records` (no `data`)
+  - **CAMBIOS CRÍTICOS APLICADOS (2025-10-23):**
+    * ✅ Rutas actualizadas: `/audit/digital-records/*` → `/audits/*`
+    * ✅ Estadísticas: `/audit/statistics` → `/audits/stats`
+    * ✅ CreateDigitalRecord: Removido parámetro `userId` (backend usa JWT)
+    * ✅ Agregados endpoints: `/audits/user/:userId`, `/audits/entity/:entity/:entityId`
   - **Documento de referencia:** `ADAPTACION_AUDITORIA_RESUMEN.md` (plan completo de sincronización)
-  - **Tiempo invertido:** ~2.5 horas (análisis backend + tipos + service + flow + 3 páginas UI)
+  - **Tiempo invertido:** ~3 horas (análisis backend + tipos + service + flow + 3 páginas UI + corrección rutas)
   - **Testing con backend:** ⚠️ PENDIENTE - Verificar endpoints reales con base de datos MySQL
 - ✅ Build exitoso: 0 errores TypeScript, dist 455.52 kB
 

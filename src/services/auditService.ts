@@ -46,22 +46,24 @@ apiClient.interceptors.response.use(
 /**
  * Servicio de auditoría
  * Endpoints sincronizados con backend NestJS:
- * - POST /audit/digital-records
- * - GET /audit/digital-records/search
- * - GET /audit/digital-records/:id
- * - GET /audit/statistics
+ * - POST /audits
+ * - GET /audits/search
+ * - GET /audits/:id
+ * - GET /audits/stats
+ * - GET /audits/user/:userId
+ * - GET /audits/entity/:entity/:entityId
  */
 export const auditService = {
   /**
    * Buscar registros digitales con filtros
    * Backend: searchDigitalRecords()
-   * Endpoint: GET /audit/digital-records/search
+   * Endpoint: GET /audits/search
    */
   searchDigitalRecords: async (
     params?: SearchDigitalRecordsDto
   ): Promise<PaginatedDigitalRecordsResponse> => {
     const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
-      '/audit/digital-records/search',
+      '/audits/search',
       { params }
     );
     return response.data;
@@ -70,39 +72,55 @@ export const auditService = {
   /**
    * Obtener un registro digital por ID
    * Backend: getDigitalRecordById()
-   * Endpoint: GET /audit/digital-records/:id
+   * Endpoint: GET /audits/:id
    */
   getDigitalRecordById: async (id: number): Promise<DigitalRecord> => {
-    const response = await apiClient.get<DigitalRecord>(`/audit/digital-records/${id}`);
+    const response = await apiClient.get<DigitalRecord>(`/audits/${id}`);
     return response.data;
   },
 
   /**
    * Crear un nuevo registro digital (auditoría)
    * Backend: createDigitalRecord()
-   * Endpoint: POST /audit/digital-records
-   * Nota: Requiere userId del usuario autenticado
+   * Endpoint: POST /audits
+   * Nota: Backend obtiene userId del token JWT automáticamente
    */
   createDigitalRecord: async (
-    userId: number,
     data: CreateDigitalRecordDto
   ): Promise<DigitalRecord> => {
-    const response = await apiClient.post<DigitalRecord>('/audit/digital-records', {
-      userId,
-      ...data,
-    });
+    const response = await apiClient.post<DigitalRecord>('/audits', data);
     return response.data;
   },
 
   /**
    * Obtener estadísticas de auditoría
    * Backend: getAuditStatistics()
-   * Endpoint: GET /audit/statistics
+   * Endpoint: GET /audits/stats
    */
   getAuditStatistics: async (startDate?: string, endDate?: string): Promise<AuditStatistics> => {
-    const response = await apiClient.get<AuditStatistics>('/audit/statistics', {
+    const response = await apiClient.get<AuditStatistics>('/audits/stats', {
       params: { startDate, endDate },
     });
+    return response.data;
+  },
+
+  /**
+   * Obtener auditorías por usuario
+   * Backend: getAuditsByUser()
+   * Endpoint: GET /audits/user/:userId
+   */
+  getAuditsByUser: async (userId: number): Promise<DigitalRecord[]> => {
+    const response = await apiClient.get<DigitalRecord[]>(`/audits/user/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Obtener auditorías por entidad
+   * Backend: getAuditsByEntity()
+   * Endpoint: GET /audits/entity/:entity/:entityId
+   */
+  getAuditsByEntity: async (entity: string, entityId: number): Promise<DigitalRecord[]> => {
+    const response = await apiClient.get<DigitalRecord[]>(`/audits/entity/${entity}/${entityId}`);
     return response.data;
   },
 

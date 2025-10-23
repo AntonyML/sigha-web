@@ -177,8 +177,7 @@ export const auditFlow = {
    * 
    * Maneja:
    * - Validación de datos requeridos
-   * - Obtención del userId del usuario autenticado
-   * - Creación del registro
+   * - Creación del registro (backend obtiene userId del token JWT)
    * - Manejo de errores
    * 
    * @param data - Datos del registro digital
@@ -194,26 +193,8 @@ export const auditFlow = {
         };
       }
 
-      // Obtener userId del localStorage (usuario autenticado)
-      const userStr = localStorage.getItem('user');
-      if (!userStr) {
-        return {
-          success: false,
-          error: 'Usuario no autenticado',
-        };
-      }
-
-      const user = JSON.parse(userStr);
-      const userId = user.id;
-
-      if (!userId) {
-        return {
-          success: false,
-          error: 'ID de usuario no disponible',
-        };
-      }
-
-      const record = await auditService.createDigitalRecord(userId, data);
+      // Backend obtiene userId automáticamente del token JWT
+      const record = await auditService.createDigitalRecord(data);
 
       return {
         success: true,
@@ -416,6 +397,77 @@ export const auditFlow = {
     };
 
     return classes[action] || 'bg-secondary';
+  },
+
+  /**
+   * Flujo para obtener auditorías de un usuario específico
+   * Backend: getAuditsByUser()
+   * Endpoint: GET /audits/user/:userId
+   * 
+   * @param userId - ID del usuario
+   * @returns GetDigitalRecordsFlowResult con los registros del usuario
+   */
+  async getAuditsByUser(userId: number): Promise<GetDigitalRecordsFlowResult> {
+    try {
+      if (!userId || userId <= 0) {
+        return {
+          success: false,
+          error: 'ID de usuario inválido',
+        };
+      }
+
+      const records = await auditService.getAuditsByUser(userId);
+
+      return {
+        success: true,
+        records,
+        total: records.length,
+        page: 1,
+        totalPages: 1,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getAuditsByUser:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener auditorías del usuario',
+      };
+    }
+  },
+
+  /**
+   * Flujo para obtener auditorías de una entidad específica
+   * Backend: getAuditsByEntity()
+   * Endpoint: GET /audits/entity/:entity/:entityId
+   * 
+   * @param entity - Nombre de la tabla (users, older_adult, etc.)
+   * @param entityId - ID del registro
+   * @returns GetDigitalRecordsFlowResult con los registros de la entidad
+   */
+  async getAuditsByEntity(entity: string, entityId: number): Promise<GetDigitalRecordsFlowResult> {
+    try {
+      if (!entity || !entityId || entityId <= 0) {
+        return {
+          success: false,
+          error: 'Entidad o ID inválido',
+        };
+      }
+
+      const records = await auditService.getAuditsByEntity(entity, entityId);
+
+      return {
+        success: true,
+        records,
+        total: records.length,
+        page: 1,
+        totalPages: 1,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getAuditsByEntity:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener auditorías de la entidad',
+      };
+    }
   },
 
   /**
