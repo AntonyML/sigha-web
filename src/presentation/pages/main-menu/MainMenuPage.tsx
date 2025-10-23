@@ -29,13 +29,20 @@ export default function MainMenuPage() {
         },
         {
             id: '3',
+            title: 'Auditoría',
+            description: 'Consultar registros de auditoría y actividad del sistema',
+            image: '🛡️',
+            route: '/audits'
+        },
+        {
+            id: '4',
             title: 'Configuración 2FA',
             description: 'Configurar autenticación de dos factores para mayor seguridad',
             image: '🔐',
             route: '/two-factor'
         },
          {
-            id: '4',
+            id: '5',
             title: 'Entradas y Salidas',
             description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
             image: '➡️',

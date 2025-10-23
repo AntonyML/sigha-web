@@ -16,6 +16,12 @@ import CreateUser from './presentation/pages/users/CreateUserPage'
 import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
 
+//Audit
+import AuditMenuPage from './presentation/pages/audit/AuditMenuPage'
+import AuditListPage from './presentation/pages/audit/AuditListPage'
+import ViewAuditPage from './presentation/pages/audit/ViewAuditPage'
+import AuditDashboardPage from './presentation/pages/audit/AuditDashboardPage'
+
 //Two Factor
 import TwoFactorPage from './presentation/pages/two-factor/TwoFactorPage'
 import EntranceExitDashboard from './presentation/pages/entrance-exit/EntranceExitDashboard'
@@ -40,6 +46,11 @@ export default function App() {
       <Route path="/users/create" element={<CreateUser />} />
       <Route path="/users/view/:id" element={<ViewUserPage />} />
       <Route path="/users/edit/:id" element={<EditUserPage />} />
+
+      <Route path="/audits" element={<AuditMenuPage />} />
+      <Route path="/audits/list" element={<AuditListPage />} />
+      <Route path="/audits/view/:id" element={<ViewAuditPage />} />
+      <Route path="/audits/dashboard" element={<AuditDashboardPage />} />
 
       <Route path="/two-factor" element={<TwoFactorPage />} />
       <Route path="/entrance-exit" element={<EntranceExitDashboard />} />
