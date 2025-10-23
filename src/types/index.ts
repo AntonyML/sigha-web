@@ -10,3 +10,5 @@ export * from './virtualFile';
 export * from './formData';
 
 export * from './clinicalCondition';
+
+export * from './audit';

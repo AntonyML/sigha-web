@@ -34,12 +34,19 @@ export default function MainMenuPage() {
             image: '🔐',
             route: '/two-factor'
         },
-         {
+        {
             id: '4',
             title: 'Entradas y Salidas',
             description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
             image: '➡️',
             route: '/entrance-exit'
+        },
+        {
+            id: '5',
+            title: 'Auditoría',
+            description: 'Revisar registros de auditoría y actividad del sistema',
+            image: '🛡️',
+            route: '/audits'
         }
     ];
 

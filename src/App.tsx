@@ -31,9 +31,17 @@ import CreateSubProgramPage from './presentation/pages/sub-programs/CreateSubPro
 
 //Two Factor
 import TwoFactorPage from './presentation/pages/two-factor/TwoFactorPage'
+
+//Entrance Exit
 import EntranceExitDashboard from './presentation/pages/entrance-exit/EntranceExitDashboard'
 import RegisterEntranceExit from './presentation/pages/entrance-exit/RegisterEntranceExit'
 import EntranceExitHistory from './presentation/pages/entrance-exit/EntranceExitHistory'
+
+//Audit
+import AuditMenuPage from './presentation/pages/audit/AuditMenuPage'
+import AuditListPage from './presentation/pages/audit/AuditListPage'
+import ViewAuditPage from './presentation/pages/audit/ViewAuditPage'
+import AuditDashboardPage from './presentation/pages/audit/AuditDashboardPage'
 
 export default function App() {
   return (
@@ -64,9 +72,15 @@ export default function App() {
       <Route path="/sub-programs/create" element={<CreateSubProgramPage />} />
 
       <Route path="/two-factor" element={<TwoFactorPage />} />
+      
       <Route path="/entrance-exit" element={<EntranceExitDashboard />} />
       <Route path="/entrance-exit/register" element={<RegisterEntranceExit />} />
       <Route path="/entrance-exit/history" element={<EntranceExitHistory />} />
+
+      <Route path="/audits" element={<AuditMenuPage />} />
+      <Route path="/audits/list" element={<AuditListPage />} />
+      <Route path="/audits/view/:id" element={<ViewAuditPage />} />
+      <Route path="/audits/dashboard" element={<AuditDashboardPage />} />
     </Routes>
   )
 }
