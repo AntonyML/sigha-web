@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 
+import { AppLayout } from './presentation/components/organisms'
+
 import LoginForm from './presentation/pages/auth/LoginPageNew'
 
 import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
@@ -45,42 +47,44 @@ import AuditDashboardPage from './presentation/pages/audit/AuditDashboardPage'
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginForm />} />
+    <AppLayout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginForm />} />
 
-      <Route path="/main-menu" element={<MainMenuPage />} />
+        <Route path="/main-menu" element={<MainMenuPage />} />
 
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/virtualFiles" element={<ListVirtualFile />} />
-      <Route path="/virtualFiles/create" element={<CreateVirtualFile />} />
-      <Route path="/virtualFiles/edit/:id" element={<EditVirtualFile />} />
-      <Route path="/virtualFiles/view/:id" element={<ViewAdultsPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/virtualFiles" element={<ListVirtualFile />} />
+        <Route path="/virtualFiles/create" element={<CreateVirtualFile />} />
+        <Route path="/virtualFiles/edit/:id" element={<EditVirtualFile />} />
+        <Route path="/virtualFiles/view/:id" element={<ViewAdultsPage />} />
 
-      <Route path="/users" element={<ListUser />} />
-      <Route path="/users/create" element={<CreateUser />} />
-      <Route path="/users/view/:id" element={<ViewUserPage />} />
-      <Route path="/users/edit/:id" element={<EditUserPage />} />
+        <Route path="/users" element={<ListUser />} />
+        <Route path="/users/create" element={<CreateUser />} />
+        <Route path="/users/view/:id" element={<ViewUserPage />} />
+        <Route path="/users/edit/:id" element={<EditUserPage />} />
 
-      <Route path="/programs" element={<ProgramListPage />} />
-      <Route path="/programs/create" element={<CreateProgramPage />} />
+        <Route path="/programs" element={<ProgramListPage />} />
+        <Route path="/programs/create" element={<CreateProgramPage />} />
 
-      <Route path="/vaccines" element={<VaccineListPage />} />
-      <Route path="/vaccines/create" element={<CreateVaccinePage />} />
+        <Route path="/vaccines" element={<VaccineListPage />} />
+        <Route path="/vaccines/create" element={<CreateVaccinePage />} />
 
-      <Route path="/sub-programs" element={<SubProgramListPage />} />
-      <Route path="/sub-programs/create" element={<CreateSubProgramPage />} />
+        <Route path="/sub-programs" element={<SubProgramListPage />} />
+        <Route path="/sub-programs/create" element={<CreateSubProgramPage />} />
 
-      <Route path="/two-factor" element={<TwoFactorPage />} />
-      
-      <Route path="/entrance-exit" element={<EntranceExitDashboard />} />
-      <Route path="/entrance-exit/register" element={<RegisterEntranceExit />} />
-      <Route path="/entrance-exit/history" element={<EntranceExitHistory />} />
+        <Route path="/two-factor" element={<TwoFactorPage />} />
+        
+        <Route path="/entrance-exit" element={<EntranceExitDashboard />} />
+        <Route path="/entrance-exit/register" element={<RegisterEntranceExit />} />
+        <Route path="/entrance-exit/history" element={<EntranceExitHistory />} />
 
-      <Route path="/audits" element={<AuditMenuPage />} />
-      <Route path="/audits/list" element={<AuditListPage />} />
-      <Route path="/audits/view/:id" element={<ViewAuditPage />} />
-      <Route path="/audits/dashboard" element={<AuditDashboardPage />} />
-    </Routes>
+        <Route path="/audits" element={<AuditMenuPage />} />
+        <Route path="/audits/list" element={<AuditListPage />} />
+        <Route path="/audits/view/:id" element={<ViewAuditPage />} />
+        <Route path="/audits/dashboard" element={<AuditDashboardPage />} />
+      </Routes>
+    </AppLayout>
   )
 }
