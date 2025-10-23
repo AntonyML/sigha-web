@@ -1,12 +1,52 @@
 // ==================== Audit Types ====================
 // Sincronizado con backend NestJS: audit.service.ts
-// Endpoints: /audit/digital-records, /audit/statistics
+// Endpoints: POST /audits/log, GET /audits/search, GET /audits/stats
 
 /**
- * Tipo de acción realizada en el sistema
+ * Enums de auditoría - Sincronizados con backend NestJS
+ * Usando const objects para compatibilidad con erasableSyntaxOnly
+ */
+
+/**
+ * Tipos de reporte de auditoría
+ * Sincronizado con backend enum AuditReportType
+ */
+export const AuditReportType = {
+  GENERAL_ACTIONS: 'general_actions',
+  ROLE_CHANGES: 'role_changes',
+  OLDER_ADULT_UPDATES: 'older_adult_updates',
+  SYSTEM_ACCESS: 'system_access',
+  LOGIN_ATTEMPTS: 'login_attempts',
+  PASSWORD_RESETS: 'password_resets',
+  CLINICAL_RECORD_CHANGES: 'clinical_record_changes',
+  NOTIFICATIONS: 'notifications',
+  OTHER: 'other'
+} as const;
+
+export type AuditReportType = typeof AuditReportType[keyof typeof AuditReportType];
+
+/**
+ * Acciones de auditoría
  * Sincronizado con backend enum AuditAction
  */
-export type AuditAction =
+export const AuditAction = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  VIEW: 'view',
+  LOGIN: 'login',
+  LOGOUT: 'logout',
+  EXPORT: 'export',
+  OTHER: 'other'
+} as const;
+
+export type AuditAction = typeof AuditAction[keyof typeof AuditAction];
+
+/**
+ * Tipo de acción (type alias para compatibilidad)
+ * @deprecated Usar AuditAction enum en su lugar
+ */
+export type AuditActionType =
   | 'login'
   | 'logout'
   | 'create'
@@ -17,16 +57,42 @@ export type AuditAction =
   | 'other';
 
 /**
- * Registro de auditoría digital (Digital Record)
+ * Request para registrar auditoría usando stored procedure
+ * Sincronizado con LogAuditDto del backend
+ * Endpoint: POST /audits/log
+ */
+export interface LogAuditRequest {
+  type: AuditReportType;           // Requerido - tipo de reporte
+  action: AuditAction;             // Requerido - acción realizada
+  entityName?: string;             // Opcional - nombre de tabla (ej: 'users', 'older_adult')
+  entityId?: number;               // Opcional - ID del registro afectado
+  oldValue?: string;               // Opcional - valor anterior (JSON string)
+  newValue?: string;               // Opcional - valor nuevo (JSON string)
+  ipAddress?: string;              // Opcional - IP del cliente (backend lo obtiene si no se envía)
+  userAgent?: string;              // Opcional - navegador/app
+  observations?: string;           // Opcional - descripción/notas
+}
+
+/**
+ * Response de logging de auditoría
+ * Sincronizado con backend response
+ */
+export interface LogAuditResponse {
+  success: boolean;
+  message: string;
+}
+
+/**
+ * Registro de auditoría digital (Digital Record) - LEGACY
  * Mapea a tabla digital_record en DB
- * Campos con prefijo 'dr' del backend
+ * @deprecated Usar LogAuditRequest para nuevos registros
  */
 export interface DigitalRecord {
   id: number;
   userId: number;
   userName: string;
   userEmail: string;
-  action: AuditAction;
+  action: AuditActionType;
   tableName: string | null;       // Tabla afectada (ej: 'older_adult', 'users', 'programs')
   recordId: number | null;         // ID del registro afectado
   description: string | null;
@@ -34,11 +100,12 @@ export interface DigitalRecord {
 }
 
 /**
- * DTO para crear un registro de auditoría digital
+ * DTO para crear un registro de auditoría digital - LEGACY
+ * @deprecated Usar LogAuditRequest en su lugar
  * Sincronizado con CreateDigitalRecordDto del backend
  */
 export interface CreateDigitalRecordDto {
-  action: AuditAction;
+  action: AuditActionType;
   tableName?: string;
   recordId?: number;
   description?: string;
@@ -50,7 +117,7 @@ export interface CreateDigitalRecordDto {
  */
 export interface SearchDigitalRecordsDto {
   userId?: number;
-  action?: AuditAction;
+  action?: AuditActionType;
   tableName?: string;
   recordId?: number;
   startDate?: string;
@@ -94,7 +161,7 @@ export interface AuditStatistics {
  * Mantener para compatibilidad con componentes existentes
  */
 export interface Audit extends DigitalRecord {
-  aAction: AuditAction;
+  aAction: AuditActionType;
   aEntity: string;
   aEntityId: number | null;
   aDescription: string | null;

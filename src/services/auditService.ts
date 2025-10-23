@@ -1,10 +1,16 @@
 import axios from 'axios';
+import {
+  AuditAction,
+  AuditReportType,
+} from '../types/audit';
 import type {
   DigitalRecord,
   CreateDigitalRecordDto,
   SearchDigitalRecordsDto,
   PaginatedDigitalRecordsResponse,
   AuditStatistics,
+  LogAuditRequest,
+  LogAuditResponse,
 } from '../types/audit';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -43,21 +49,269 @@ apiClient.interceptors.response.use(
   }
 );
 
+// ==================== Helper Functions ====================
+
 /**
- * Servicio de auditoría
+ * Obtiene la IP del cliente (simplificado)
+ * En producción, el backend lo maneja desde req.ip
+ */
+const getClientIP = (): string | undefined => {
+  return undefined; 
+};
+
+/**
+ * Obtiene el User Agent del navegador
+ */
+const getUserAgent = (): string => {
+  return navigator.userAgent;
+};
+
+/**
+ * Servicio de auditoría - Métodos principales y helpers
  * Endpoints sincronizados con backend NestJS:
- * - POST /audits
- * - GET /audits/search
- * - GET /audits/:id
- * - GET /audits/stats
- * - GET /audits/user/:userId
- * - GET /audits/entity/:entity/:entityId
+ * - POST /audits/log (PRINCIPAL - usar este para registrar auditorías)
+ * - GET /audits/search (búsqueda legacy)
+ * - GET /audits/:id (obtener por ID legacy)
+ * - GET /audits/stats (estadísticas)
+ * - GET /audits/user/:userId (por usuario)
+ * - GET /audits/entity/:entity/:entityId (por entidad)
  */
 export const auditService = {
+  // ==================== MÉTODO PRINCIPAL ====================
+  
   /**
-   * Buscar registros digitales con filtros
+   * 🎯 MÉTODO PRINCIPAL: Registra una acción de auditoría usando stored procedure
+   * Backend: logAudit() con stored procedure sp_insert_audit_log
+   * Endpoint: POST /audits/log
+   * 
+   * IMPORTANTE:
+   * - NO enviar userId (el backend lo extrae del JWT automáticamente)
+   * - ipAddress es opcional (backend lo obtiene de req.ip)
+   * - userAgent se envía automáticamente
+   * - oldValue y newValue deben ser JSON strings si son objetos
+   * - NO debe interrumpir el flujo de la aplicación si falla
+   * 
+   * @param request - Datos de la auditoría
+   * @returns Promise con el resultado del logging
+   */
+  logAudit: async (
+    request: LogAuditRequest
+  ): Promise<LogAuditResponse> => {
+    try {
+      const response = await apiClient.post<LogAuditResponse>(
+        '/audits/log',
+        {
+          ...request,
+          ipAddress: request.ipAddress || getClientIP(),
+          userAgent: request.userAgent || getUserAgent(),
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error logging audit:', error);
+      // No lanzar error para no interrumpir flujo de la app
+      return { success: false, message: 'Failed to log audit' };
+    }
+  },
+
+  // ==================== HELPERS ESPECÍFICOS ====================
+  
+  /**
+   * 🔐 Helper para login exitoso
+   */
+  logLogin: async (observations?: string): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.LOGIN_ATTEMPTS,
+      action: AuditAction.LOGIN,
+      observations: observations || 'Ingreso al sistema',
+    });
+  },
+
+  /**
+   * 🚪 Helper para logout
+   */
+  logLogout: async (observations?: string): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.LOGIN_ATTEMPTS,
+      action: AuditAction.LOGOUT,
+      observations: observations || 'Cierre de sesión',
+    });
+  },
+
+  /**
+   * 👥 Helper para cambios de rol
+   */
+  logRoleChange: async (
+    userId: number,
+    oldRole: string,
+    newRole: string,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.ROLE_CHANGES,
+      action: AuditAction.UPDATE,
+      entityName: 'users',
+      entityId: userId,
+      oldValue: oldRole,
+      newValue: newRole,
+      observations: observations || `Cambio de rol de ${oldRole} a ${newRole}`,
+    });
+  },
+
+  /**
+   * 👴 Helper para actualización de adulto mayor
+   */
+  logOlderAdultUpdate: async (
+    adultId: number,
+    fieldChanged: string,
+    oldValue: unknown,
+    newValue: unknown,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.OLDER_ADULT_UPDATES,
+      action: AuditAction.UPDATE,
+      entityName: 'older_adult',
+      entityId: adultId,
+      oldValue: typeof oldValue === 'object' ? JSON.stringify(oldValue) : String(oldValue),
+      newValue: typeof newValue === 'object' ? JSON.stringify(newValue) : String(newValue),
+      observations: observations || `Actualización de campo: ${fieldChanged}`,
+    });
+  },
+
+  /**
+   * 👁️ Helper para acceso a expedientes
+   */
+  logSystemAccess: async (
+    entityName: string,
+    entityId: number,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.SYSTEM_ACCESS,
+      action: AuditAction.VIEW,
+      entityName,
+      entityId,
+      observations: observations || `Acceso a ${entityName} #${entityId}`,
+    });
+  },
+
+  /**
+   * 🏥 Helper para cambios en historiales clínicos
+   */
+  logClinicalRecordChange: async (
+    recordId: number,
+    action: keyof typeof AuditAction,
+    oldValue?: unknown,
+    newValue?: unknown,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.CLINICAL_RECORD_CHANGES,
+      action: AuditAction[action],
+      entityName: 'clinical_history',
+      entityId: recordId,
+      oldValue: oldValue ? JSON.stringify(oldValue) : undefined,
+      newValue: newValue ? JSON.stringify(newValue) : undefined,
+      observations: observations || 'Cambio en historial clínico',
+    });
+  },
+
+  /**
+   * 🔑 Helper para reseteo de contraseña
+   */
+  logPasswordReset: async (
+    userId: number,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.PASSWORD_RESETS,
+      action: AuditAction.UPDATE,
+      entityName: 'users',
+      entityId: userId,
+      observations: observations || 'Reseteo de contraseña',
+    });
+  },
+
+  /**
+   * 🔔 Helper para notificaciones
+   */
+  logNotification: async (
+    notificationId: number,
+    action: keyof typeof AuditAction,
+    newValue?: unknown,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.NOTIFICATIONS,
+      action: AuditAction[action],
+      entityName: 'notifications',
+      entityId: notificationId,
+      newValue: newValue ? JSON.stringify(newValue) : undefined,
+      observations: observations || 'Acción en notificación',
+    });
+  },
+
+  /**
+   * 📤 Helper para exportación de datos
+   */
+  logExport: async (
+    entityName: string,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.GENERAL_ACTIONS,
+      action: AuditAction.EXPORT,
+      entityName,
+      observations: observations || `Exportación de datos de ${entityName}`,
+    });
+  },
+
+  /**
+   * ➕ Helper para crear registros
+   */
+  logCreate: async (
+    entityName: string,
+    entityId: number,
+    newValue?: unknown,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.GENERAL_ACTIONS,
+      action: AuditAction.CREATE,
+      entityName,
+      entityId,
+      newValue: newValue ? JSON.stringify(newValue) : undefined,
+      observations: observations || `Creación de ${entityName} #${entityId}`,
+    });
+  },
+
+  /**
+   * ❌ Helper para eliminar registros
+   */
+  logDelete: async (
+    entityName: string,
+    entityId: number,
+    oldValue?: unknown,
+    observations?: string
+  ): Promise<LogAuditResponse> => {
+    return auditService.logAudit({
+      type: AuditReportType.GENERAL_ACTIONS,
+      action: AuditAction.DELETE,
+      entityName,
+      entityId,
+      oldValue: oldValue ? JSON.stringify(oldValue) : undefined,
+      observations: observations || `Eliminación de ${entityName} #${entityId}`,
+    });
+  },
+
+  // ==================== MÉTODOS LEGACY (mantener para búsqueda) ====================
+  /**
+   * Buscar registros digitales con filtros (LEGACY)
    * Backend: searchDigitalRecords()
    * Endpoint: GET /audits/search
+   * @deprecated Mantener solo para consultas. Para registrar use logAudit()
    */
   searchDigitalRecords: async (
     params?: SearchDigitalRecordsDto
@@ -70,7 +324,7 @@ export const auditService = {
   },
 
   /**
-   * Obtener un registro digital por ID
+   * Obtener un registro digital por ID (LEGACY)
    * Backend: getDigitalRecordById()
    * Endpoint: GET /audits/:id
    */
@@ -80,7 +334,8 @@ export const auditService = {
   },
 
   /**
-   * Crear un nuevo registro digital (auditoría)
+   * Crear un nuevo registro digital (auditoría) - LEGACY
+   * @deprecated Usar logAudit() en su lugar
    * Backend: createDigitalRecord()
    * Endpoint: POST /audits
    * Nota: Backend obtiene userId del token JWT automáticamente
@@ -88,6 +343,7 @@ export const auditService = {
   createDigitalRecord: async (
     data: CreateDigitalRecordDto
   ): Promise<DigitalRecord> => {
+    console.warn('⚠️ createDigitalRecord está deprecado. Use logAudit() en su lugar.');
     const response = await apiClient.post<DigitalRecord>('/audits', data);
     return response.data;
   },
