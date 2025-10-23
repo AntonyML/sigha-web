@@ -44,7 +44,7 @@ async function createWindow() {
     frame: true, // Mantener el frame pero sin menú
     icon: join(__dirname, '..', 'src', 'assets', 'asopogua.png'), 
     webPreferences: {
-      preload: join(__dirname, 'preload.js'),
+      preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
