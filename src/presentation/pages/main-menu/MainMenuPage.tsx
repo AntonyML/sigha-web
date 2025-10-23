@@ -29,34 +29,13 @@ export default function MainMenuPage() {
         },
         {
             id: '3',
-            title: 'Programas',
-            description: 'Gestionar programas del hogar de ancianos',
-            image: '📊',
-            route: '/programs'
-        },
-        {
-            id: '4',
-            title: 'Vacunas',
-            description: 'Administrar catálogo de vacunas disponibles',
-            image: '💉',
-            route: '/vaccines'
-        },
-        {
-            id: '5',
-            title: 'Subprogramas',
-            description: 'Gestionar subprogramas y actividades específicas',
-            image: '🔗',
-            route: '/sub-programs'
-        },
-        {
-            id: '6',
             title: 'Configuración 2FA',
             description: 'Configurar autenticación de dos factores para mayor seguridad',
             image: '🔐',
             route: '/two-factor'
         },
          {
-            id: '7',
+            id: '4',
             title: 'Entradas y Salidas',
             description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
             image: '➡️',

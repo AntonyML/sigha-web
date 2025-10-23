@@ -1,0 +1,472 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { auditFlow } from '../../../infrastructure/flows/auditFlow';
+import type { Audit, AuditAction, AuditEntity, AuditSearchParams } from '../../../types/audit';
+
+export default function AuditListPage() {
+    const [audits, setAudits] = useState<Audit[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterAction, setFilterAction] = useState<AuditAction | 'ALL'>('ALL');
+    const [filterEntity, setFilterEntity] = useState<AuditEntity | 'ALL'>('ALL');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
+    const [pageSize, setPageSize] = useState(25);
+    const navigate = useNavigate();
+
+    // Cargar auditorías al montar el componente o cuando cambien los filtros
+    useEffect(() => {
+        loadAudits();
+    }, [currentPage, pageSize, filterAction, filterEntity, startDate, endDate]);
+
+    const loadAudits = async () => {
+        setLoading(true);
+        setError('');
+
+        try {
+            const params: AuditSearchParams = {
+                page: currentPage,
+                limit: pageSize,
+                sortBy: 'createAt',
+                sortOrder: 'DESC',
+            };
+
+            if (filterAction !== 'ALL') {
+                params.action = filterAction;
+            }
+
+            if (filterEntity !== 'ALL') {
+                params.entity = filterEntity;
+            }
+
+            if (startDate) {
+                params.startDate = startDate;
+            }
+
+            if (endDate) {
+                params.endDate = endDate;
+            }
+
+            const result = await auditFlow.getAllAudits(params);
+
+            if (result.success && result.audits) {
+                setAudits(result.audits);
+                setTotalRecords(result.total || 0);
+                setTotalPages(result.totalPages || 1);
+            } else {
+                setError(result.error || 'Error al cargar registros de auditoría');
+            }
+        } catch (err) {
+            console.error('Error cargando auditorías:', err);
+            setError('Error inesperado al cargar auditorías');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Filtrar por término de búsqueda (local)
+    const filteredAudits = audits.filter(audit => {
+        if (!searchTerm.trim()) return true;
+
+        const term = searchTerm.toLowerCase();
+        return (
+            audit.aDescription.toLowerCase().includes(term) ||
+            (audit.aUsername || '').toLowerCase().includes(term) ||
+            audit.aAction.toLowerCase().includes(term) ||
+            audit.aEntity.toLowerCase().includes(term)
+        );
+    });
+
+    const handleView = (audit: Audit) => {
+        navigate(`/audits/view/${audit.id}`);
+    };
+
+    const handleExport = async () => {
+        const params: AuditSearchParams = {
+            action: filterAction !== 'ALL' ? filterAction : undefined,
+            entity: filterEntity !== 'ALL' ? filterEntity : undefined,
+            startDate: startDate || undefined,
+            endDate: endDate || undefined,
+        };
+
+        const result = await auditFlow.exportAudits(params, 'auditorias.csv');
+
+        if (result.success) {
+            alert(result.message || 'Auditorías exportadas exitosamente');
+        } else {
+            alert(result.error || 'Error al exportar auditorías');
+        }
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setFilterAction('ALL');
+        setFilterEntity('ALL');
+        setStartDate('');
+        setEndDate('');
+        setCurrentPage(1);
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+        }
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        setPageSize(newSize);
+        setCurrentPage(1); // Reset a primera página
+    };
+
+    if (loading) {
+        return (
+            <div className="container-fluid mt-4">
+                <div className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Cargando...</span>
+                    </div>
+                    <p className="mt-2">Cargando registros de auditoría...</p>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="container-fluid mt-4">
+            {/* Header */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i className="bi bi-shield-check me-2"></i>
+                        Auditoría del Sistema
+                    </h2>
+                    <nav aria-label="breadcrumb">
+                        <ol className="breadcrumb mb-0">
+                            <li className="breadcrumb-item">
+                                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/audits'); }} style={{ cursor: 'pointer' }}>
+                                    Menú Auditoría
+                                </a>
+                            </li>
+                            <li className="breadcrumb-item active">Registros</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <button
+                        className="btn btn-outline-secondary me-2"
+                        onClick={() => navigate('/audits')}
+                    >
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Volver
+                    </button>
+                    <button
+                        className="btn btn-primary me-2"
+                        onClick={() => navigate('/audits/dashboard')}
+                    >
+                        <i className="bi bi-graph-up me-2"></i>
+                        Dashboard
+                    </button>
+                    <button
+                        className="btn btn-success"
+                        onClick={handleExport}
+                        disabled={loading}
+                    >
+                        <i className="bi bi-download me-2"></i>
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+            {/* Error Alert */}
+            {error && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    {error}
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={() => setError('')}
+                        aria-label="Close"
+                    ></button>
+                </div>
+            )}
+
+            {/* Filtros */}
+            <div className="card mb-4">
+                <div className="card-header">
+                    <i className="bi bi-funnel me-2"></i>
+                    Filtros de Búsqueda
+                </div>
+                <div className="card-body">
+                    <div className="row g-3">
+                        {/* Búsqueda por texto */}
+                        <div className="col-md-4">
+                            <label className="form-label">Búsqueda</label>
+                            <div className="input-group">
+                                <span className="input-group-text">
+                                    <i className="bi bi-search"></i>
+                                </span>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Buscar por descripción, usuario..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Filtro por Acción */}
+                        <div className="col-md-2">
+                            <label className="form-label">Acción</label>
+                            <select
+                                className="form-select"
+                                value={filterAction}
+                                onChange={(e) => setFilterAction(e.target.value as AuditAction | 'ALL')}
+                            >
+                                <option value="ALL">Todas</option>
+                                <option value="CREATE">Creación</option>
+                                <option value="UPDATE">Actualización</option>
+                                <option value="DELETE">Eliminación</option>
+                                <option value="LOGIN">Inicio sesión</option>
+                                <option value="LOGOUT">Cierre sesión</option>
+                                <option value="LOGIN_FAILED">Login fallido</option>
+                                <option value="PASSWORD_CHANGE">Cambio contraseña</option>
+                                <option value="2FA_ENABLED">2FA habilitado</option>
+                                <option value="2FA_DISABLED">2FA deshabilitado</option>
+                                <option value="EXPORT">Exportación</option>
+                                <option value="VIEW">Visualización</option>
+                                <option value="OTHER">Otra</option>
+                            </select>
+                        </div>
+
+                        {/* Filtro por Entidad */}
+                        <div className="col-md-2">
+                            <label className="form-label">Entidad</label>
+                            <select
+                                className="form-select"
+                                value={filterEntity}
+                                onChange={(e) => setFilterEntity(e.target.value as AuditEntity | 'ALL')}
+                            >
+                                <option value="ALL">Todas</option>
+                                <option value="USER">Usuario</option>
+                                <option value="ROLE">Rol</option>
+                                <option value="VIRTUAL_FILE">Ficha virtual</option>
+                                <option value="ENTRANCE_EXIT">Entrada/Salida</option>
+                                <option value="PROGRAM">Programa</option>
+                                <option value="CLINICAL_HISTORY">Historia clínica</option>
+                                <option value="AUTH">Autenticación</option>
+                                <option value="SYSTEM">Sistema</option>
+                                <option value="OTHER">Otro</option>
+                            </select>
+                        </div>
+
+                        {/* Fecha inicio */}
+                        <div className="col-md-2">
+                            <label className="form-label">Fecha inicio</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Fecha fin */}
+                        <div className="col-md-2">
+                            <label className="form-label">Fecha fin</label>
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={endDate}
+                                onChange={(e) => setEndDate(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-3">
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={handleClearFilters}
+                        >
+                            <i className="bi bi-x-circle me-2"></i>
+                            Limpiar Filtros
+                        </button>
+                        <span className="ms-3 text-muted">
+                            <i className="bi bi-info-circle me-1"></i>
+                            {totalRecords} registros encontrados
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Tabla de Auditorías */}
+            <div className="card">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                        <i className="bi bi-list-ul me-2"></i>
+                        Registros de Auditoría
+                    </span>
+                    <div>
+                        <label className="me-2">Registros por página:</label>
+                        <select
+                            className="form-select form-select-sm d-inline-block w-auto"
+                            value={pageSize}
+                            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+                </div>
+                <div className="card-body p-0">
+                    {filteredAudits.length === 0 ? (
+                        <div className="text-center py-5">
+                            <i className="bi bi-inbox display-1 text-muted"></i>
+                            <p className="mt-3 text-muted">No se encontraron registros de auditoría</p>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover table-striped mb-0">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th style={{ width: '80px' }}>ID</th>
+                                        <th style={{ width: '150px' }}>Fecha</th>
+                                        <th style={{ width: '120px' }}>Acción</th>
+                                        <th style={{ width: '120px' }}>Entidad</th>
+                                        <th style={{ width: '150px' }}>Usuario</th>
+                                        <th>Descripción</th>
+                                        <th style={{ width: '100px' }} className="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredAudits.map((audit) => (
+                                        <tr key={audit.id}>
+                                            <td>
+                                                <code>#{audit.id}</code>
+                                            </td>
+                                            <td>
+                                                <small>{auditFlow.formatAuditDate(audit.createAt)}</small>
+                                            </td>
+                                            <td>
+                                                <span className={`badge ${auditFlow.getActionBadgeClass(audit.aAction)}`}>
+                                                    {auditFlow.getActionLabel(audit.aAction)}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span className="badge bg-secondary">
+                                                    {auditFlow.getEntityLabel(audit.aEntity)}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {audit.aUsername ? (
+                                                    <span>
+                                                        <i className="bi bi-person-circle me-1"></i>
+                                                        {audit.aUsername}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted">
+                                                        <i className="bi bi-dash-circle me-1"></i>
+                                                        Sistema
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <div className="text-truncate" style={{ maxWidth: '300px' }}>
+                                                    {audit.aDescription}
+                                                </div>
+                                                {auditFlow.isCriticalAudit(audit) && (
+                                                    <span className="badge bg-warning text-dark ms-2">
+                                                        <i className="bi bi-exclamation-triangle me-1"></i>
+                                                        Crítico
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="text-center">
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    onClick={() => handleView(audit)}
+                                                    title="Ver detalles"
+                                                >
+                                                    <i className="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Paginación */}
+                {totalPages > 1 && (
+                    <div className="card-footer">
+                        <nav>
+                            <ul className="pagination pagination-sm mb-0 justify-content-center">
+                                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                    <button
+                                        className="page-link"
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                    >
+                                        <i className="bi bi-chevron-left"></i>
+                                    </button>
+                                </li>
+
+                                {/* Páginas */}
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <li
+                                            key={pageNum}
+                                            className={`page-item ${currentPage === pageNum ? 'active' : ''}`}
+                                        >
+                                            <button
+                                                className="page-link"
+                                                onClick={() => handlePageChange(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        </li>
+                                    );
+                                })}
+
+                                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                    <button
+                                        className="page-link"
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                    >
+                                        <i className="bi bi-chevron-right"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div className="text-center mt-2">
+                            <small className="text-muted">
+                                Página {currentPage} de {totalPages} ({totalRecords} registros totales)
+                            </small>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

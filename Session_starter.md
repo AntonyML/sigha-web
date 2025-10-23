@@ -1,220 +1,174 @@
-AI Session Starter: frontend_proton_react_hogar_de_ancianos
+a# AI Session Starter: frontend_proton_react_hogar_de_ancianos
 
-Project memory file for AI assistant session continuity. Auto-referenced by custom instructions.
-This file should be added to .gitignore to avoid committing session-specific data.
+Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instrucciones personalizadas.
 
 ---
 
-## Project Context
+## 📋 Project Context
 
-**Project:** frontend_proton_react_hogar_de_ancianos
-**Type:** React Frontend (Vite + TypeScript)
-**Purpose:** Frontend client for elderly care home management system with authentication and 2FA support
-**Status:** Active development - authentication flows configured
-**Core Technologies:**
-- React 18+ with TypeScript
-- Vite build system
-- React Router for navigation
-- Axios HTTP client with interceptors
-- Bootstrap UI framework
-- LocalStorage for token management
+**Proyecto:** ASOPOGUA - Sistema de gestión para hogar de ancianos  
+**Tipo:** React + TypeScript + Electron Desktop App  
+**Estado:** ✅ Desarrollo activo - LoginPage migrado a Tailwind CSS + shadcn/ui
+
+### Stack Tecnológico
+
+**Frontend:**
+- React 19.1.1 + TypeScript 5.9.3
+- Vite 7.1.9 (build tool)
+- Tailwind CSS 3.4.0 + shadcn/ui (mobile-first, WCAG AA)
+- React Router (navegación)
+- Axios (HTTP client con interceptores)
+
+**Desktop:**
+- Electron 38.2.2 (fullscreen dev, menú oculto, 1200x800)
+- TypeScript → CommonJS (.cjs) via scripts/watch-electron.js
 
 **Backend Integration:**
-- NestJS backend on http://localhost:3000
-- JWT authentication + Two-Factor Authentication
-- REST API endpoints: /auth/login, /auth/verify-2fa, /auth/profile
-- 2FA endpoints: /auth/setup-2fa, /auth/enable-2fa, /auth/disable-2fa
+- NestJS API: http://localhost:3000
+- JWT + 2FA (QR code authenticator)
+- Endpoints: /auth/login, /auth/verify-2fa, /auth/profile
 
-**Available AI Capabilities:**
-- MCP Servers: Filesystem MCP (active), GitHub MCP (active)
-- UI Components: 21st, Magic UI, shadcn/ui available
-- Documentation: Upstash Conte MCP for library documentation
+### Herramientas AI Disponibles
+- MCP Filesystem, GitHub, shadcn/ui, Magic UI, 21st
+- Documentación: Upstash Conte MCP
 
 ---
 
-## Current State
+## 🎯 Estado Actual
 
-**Build Status:** Ready for backend integration testing
-**Key Achievement:** Frontend types completely synchronized with NestJS backend DTOs
-**Active Issue:** None - all TypeScript compilation errors resolved
-**AI Enhancement:** MCP filesystem and GitHub tools active for enhanced development workflow
+**Build Status:** ✅ Compilación exitosa - 0 errores TypeScript  
+**Última Actualización:** 2025-10-23 - Electron configurado correctamente  
+**Próximo Objetivo:** Testing responsive en dispositivos reales
 
-**Architecture Highlights:**
-- Clean Architecture: domain → services → flows → pages separation
-- Type-safe interfaces matching backend API contracts
-- Layered authentication with JWT + 2FA support
-- Atomic Design components structure (atoms, molecules, organisms)
-- Centralized HTTP client with automatic token management
-- Error handling and user feedback integrated
+### Arquitectura
 
----
+```
+src/
+├── types/          # Interfaces TypeScript (sincronizadas con backend)
+├── services/       # HTTP client wrappers (Axios)
+├── infrastructure/
+│   ├── flows/      # Lógica de negocio (authFlow, userFlow, etc.)
+│   └── storage/    # LocalStorage management
+└── presentation/
+    ├── components/ # Atomic Design (atoms, molecules, organisms)
+    └── pages/      # React Router pages
 
-## Technical Memory
+electron/
+├── main.ts         # Electron main process (fullscreen, sin menú)
+└── preload.ts      # Context isolation bridge
 
-**Critical Discoveries:**
-- React frontend with Vite + TypeScript for modern development
-- Authentication flows properly layered: types → services → flows → pages
-- Frontend credentials (email/password) converted to backend format (uEmail/uPassword) in authFlow
-- Backend uses u-prefixed camelCase for all user fields (uEmail, uPassword, uName, uFLastName, uSLastName, uIdentification, uIsActive)
-- Password minimum length: 8 characters (enforced in backend DTOs)
-- UpdateUserData does not include password field - use dedicated changePassword endpoint
-- ChangePasswordData only has currentPassword and newPassword (no confirmPassword in backend)
-- Token management via localStorage (authToken, tempToken, user)
-- Bootstrap UI with custom styling and responsive design
-- MCP filesystem tools provide enhanced file management capabilities
-- Backend NestJS repository: AntonyML/backend_nest_hogar_de_ancianos_api
-
-**Performance Insights:**
-- Axios interceptors for automatic token attachment and 401 handling
-- React Router for client-side navigation without page reloads
-- LocalStorage for persistent authentication state
-- Atomic Design component structure for reusability
-- Type-safe API contracts prevent runtime errors
-
-**Known Constraints:**
-- Frontend expects backend running on localhost:3000
-- Token expiration redirects to login page automatically
-- 2FA requires QR code scanning with authenticator app
-- Bootstrap framework limits custom styling flexibility
-- MCP filesystem tools limited to allowed directories only
+scripts/
+├── watch-electron.js   # TypeScript watch + auto rename .js → .cjs
+└── rename-to-cjs.js    # Post-build renaming utility
+```
 
 ---
 
-## Recent Achievements
+## 🔑 Decisiones Técnicas Clave
 
-**Date** | **Achievement**
----------|----------------
-2025-10-18 | Frontend authentication architecture established with React + TypeScript
-2025-10-18 | Type definitions aligned with NestJS backend API contracts
-2025-10-18 | Authentication services rewritten to use correct /auth/* endpoints
-2025-10-18 | AuthFlow business logic updated for credential conversion and 2FA
-2025-10-18 | LoginPage fixed to remove deprecated authStorage dependencies
-2025-10-18 | TwoFactorFlow enhanced with regenerateBackupCodes method
-2025-10-18 | All frontend authentication flows verified and ready for testing
-2025-10-18 | Session continuity established with comprehensive project context
-2025-10-18 | MCP filesystem tools activated for enhanced development workflow
-2025-10-18 | Session file reviewed by AI assistant and automated todo tracking started (Session_starter.md updated)
-2025-10-18 | Todo list created and initial tasks marked (read session file, prepare updates)
-2025-10-18 | Applied session-startup.prompt.md policies: todo tracking, MCP preferences noted, and session update written by assistant
-2025-10-18 | Backend DTOs extracted from NestJS repository (auth and users modules)
-2025-10-18 | Frontend types fully synchronized with backend DTOs (u-prefixed camelCase fields)
-2025-10-18 | All user pages updated to use correct field names (uIdentification, uName, uFLastName, uEmail, etc.)
-2025-10-18 | userFlow validation logic aligned with backend requirements (8-char password min, no confirmPassword)
-2025-10-18 | Type-safe integration complete: 0 TypeScript compilation errors across entire project
+### Electron Workflow
+- **Problema resuelto:** TypeScript compila a `.js` pero Electron requiere `.cjs` (CommonJS)
+- **Solución:** Scripts automáticos (watch-electron.js, rename-to-cjs.js) renombran post-compilación
+- **Configuración:** fullscreen en dev, Menu.setApplicationMenu(null), win.removeMenu(), preload usa .cjs
+
+### UI/UX
+- **LoginPageNew.tsx:** Mobile-first (360px-1440px), Tailwind CSS + shadcn/ui
+- **Accesibilidad:** WCAG AA (aria-labels, focus rings, navegación teclado)
+- **Componentes:** Button (6 variants), Input (responsive), Label (Radix), Card system
+
+### Backend Integration
+- **Credenciales:** Frontend (email/password) → Backend (uEmail/uPassword) via authFlow
+- **Campos usuario:** Backend usa prefijo `u` (uName, uFLastName, uIdentification, uIsActive)
+- **Tokens:** localStorage (authToken, tempToken, user)
+- **Validación:** Password mínimo 8 caracteres
 
 ---
 
-## Active Priorities
+## 📦 Comandos Principales
 
-- [x] ✅ Extract backend DTOs from NestJS repository
-- [x] ✅ Synchronize frontend types with backend DTOs (u-prefixed fields)
-- [x] ✅ Update all user pages to use correct field names
-- [x] ✅ Fix userFlow validation logic to match backend requirements
-- [x] ✅ Eliminate all TypeScript compilation errors
-- [ ] 🔄 Test complete frontend-backend integration (login → 2FA → dashboard)
-- [ ] 🔄 Test user management CRUD operations with backend
-- [ ] Verify role management integration
-- [ ] Add comprehensive error handling and user feedback
-- [ ] Implement password change page (currentPassword + newPassword only)
-- [ ] Add loading states and skeleton screens
-- [ ] Implement proper form validation with visual feedback
-- [ ] Add comprehensive component testing with Jest
-- [ ] Mobile responsiveness improvements and PWA features
-
-## AI Actions & Notes
-
-- Session startup prompt (`.github/prompts/session-startup.prompt.md`) followed and applied to session behavior.
-- MCP tool preferences for this session: UI component MCPs (21st, Magic UI, shadcn/ui) as primary for component work; Filesystem MCP as primary for file ops; GitHub MCP available for repo actions.
-- Assumptions: Backend remains at http://localhost:3000; Node/npm versions per README are available on developer machine.
-
-### Preferencia de idioma
-
-Todas las respuestas y notas generadas por el asistente durante esta sesión deberán estar en español.
-
-### Update Log
-
-Date | Summary
------|--------
-2025-10-18 | Session-startup prompt applied; session todo list created and session starter updated by AI assistant.
-2025-10-18 | Scope limited to auth/users/roles modules; Spanish language preference added; .env.example removed
-2025-10-18 | Backend DTOs extracted and mapped to frontend types; complete type alignment achieved
-2025-10-18 | All user management pages and flows updated with u-prefixed field names
-2025-10-18 | Validation logic updated: 8-char password minimum, confirmPassword removed from backend flow
-2025-10-18 | TypeScript compilation successful: 0 errors across entire frontend codebase
+```bash
+npm run dev              # Vite dev server (web only)
+npm run dev:electron     # Electron desktop app (watch mode)
+npm run build            # Production build (renderer + electron)
+npm run build:electron   # Compile Electron TypeScript → .cjs
+npm run start:prod       # Electron production mode
+```
 
 ---
 
-## Development Environment
+## 📝 Historial Reciente (Últimas 2 semanas)
 
-**Common Commands:**
-- `npm run dev` - Start Vite development server
-- `npm run build` - Build production bundle
-- `npm run preview` - Preview production build
-- `npm install` - Install dependencies
-- `npm run type-check` - TypeScript type checking
+**2025-10-23:**
+- ✅ Electron configurado: fullscreen dev, menú oculto, scripts auto-rename .cjs
+- ✅ LoginPageNew con Tailwind CSS mobile-first funcionando
+- ✅ Componentes shadcn/ui creados (Button, Input, Label, Card)
+- ✅ **Módulo de Auditoría COMPLETO**: 
+  - audit.ts (109 líneas): Audit, AuditAction (12 tipos), AuditEntity (9 tipos), AuditStats
+  - auditService.ts (127 líneas): 9 métodos HTTP con axios (getAllAudits, getAuditById, searchAudits, getAuditsByUser, getAuditsByEntity, getAuditStats, exportAudits)
+  - auditFlow.ts (465 líneas): 6 métodos principales + 6 helpers (formatAuditDate, getActionLabel, getEntityLabel, getActionBadgeClass, getChangeSummary, isCriticalAudit)
+  - AuditMenuPage.tsx: menú principal de auditoría con 3 opciones + accesos rápidos (creaciones, eliminaciones, logins, intentos fallidos) + breadcrumbs
+  - AuditListPage.tsx: tabla paginada, filtros (acción, entidad, fechas), búsqueda, exportar CSV, breadcrumbs
+  - ViewAuditPage.tsx: 5 cards (info general, metadata técnica, valores antiguos/nuevos, comparación de cambios)
+  - AuditDashboardPage.tsx: cards de resumen, gráficos con progress bars, top usuarios, actividad reciente, breadcrumbs
+  - Rutas configuradas: /audits (menú), /audits/list, /audits/view/:id, /audits/dashboard
+  - Integración con MainMenuPage: nueva opción "Auditoría 🛡️"
+- ✅ Build exitoso: 0 errores TypeScript, dist 455.52 kB
 
-**Key Files:**
-- src/main.tsx - Application entry point
-- src/App.tsx - Root component with routing
-- src/types/ - TypeScript interfaces matching backend
-- src/services/ - HTTP client wrappers for API endpoints
-- src/infrastructure/flows/ - Business logic layer
-- src/presentation/pages/ - React page components
-- Session_starter.md - Project context and continuity
+**2025-10-22:**
+- ✅ Investigación UX/UI completada (7 fuentes: A11Y, NN/g, PageFlows, M3, Tailwind, Chakra, MUI)
+- ✅ Documentación: UX_DESIGN_RESEARCH.md creado
+- ✅ Tailwind CSS 3.4.0 instalado y configurado (breakpoints mobile/tablet/desktop)
 
-**Setup Requirements:**
-- Node.js 18+ and npm
-- Backend running on http://localhost:3000
-- Modern browser with JavaScript enabled
-- Authenticator app for 2FA testing
-
-**AI Tools:**
-- MCP Filesystem tools for file operations and project management
-- MCP GitHub tools for repository management and version control
-- UI component MCPs (21st, Magic UI, shadcn/ui) for component generation
-
----
-
-## Code Architecture Status
-
-**✅ COMPLETED Components:**
-
-**Types Layer (`src/types/`):**
-- `auth.ts` - LoginCredentials (uEmail/uPassword), AuthUser, LoginResponse
-- `twoFactor.ts` - Setup2FAResponse, Enable2FARequest/Response, TwoFactorVerificationRequest
-- `user.ts` - User management interfaces
-- `virtualFile.ts` - Virtual file management interfaces
-
-**Services Layer (`src/services/`):**
-- `authService.ts` - login(), verify2FA(), getProfile(), logout() using /auth/* endpoints
-- `twoFactorService.ts` - setup2FA(), enable2FA(), disable2FA() with validation helpers
-- `userService.ts` - User CRUD operations
-- `virtualFileService.ts` - File management operations
-
-**Flows Layer (`src/infrastructure/flows/`):**
-- `authFlow.ts` - login(), verify2FA() with credential conversion and error handling
-- `twoFactorFlow.ts` - generate2FA(), enable2FA(), disable2FA(), regenerateBackupCodes(), get2FAStatus()
-- `userFlow.ts` - User management business logic
-- `virtualFileFlow.ts` - File operations business logic
-
-**Pages Layer (`src/presentation/pages/`):**
-- `auth/LoginPage.tsx` - ✅ Uses authFlow.login() and authFlow.verify2FA() correctly
-- `two-factor/TwoFactorPage.tsx` - ✅ Uses twoFactorFlow methods correctly
-- `dashboard/DashboardPage.tsx` - Main dashboard after authentication
-- `users/` - User management pages (CreateUserPage, EditUserPage, UserListPage, ViewUserPage)
-
-**🔄 NEXT PHASE:**
-- Integration testing of complete authentication flow
-- Verification of user management pages using correct userFlow methods
-- Testing 2FA setup, enable, disable, and backup codes regeneration
+**2025-10-18:**
+- ✅ Frontend types sincronizados con backend NestJS (campos u-prefixed)
+- ✅ Flujos de autenticación refactorizados (authFlow, twoFactorFlow, userFlow)
+- ✅ Páginas CRUD actualizadas con mejores prácticas UX (orden lógico campos)
 
 ---
 
-## Gitignore Configuration
+## 🚀 Próximas Tareas
 
-Ensure .chatcatalyst/ is added to .gitignore to keep session data local.
-If .gitignore does not exist, create it with: .chatcatalyst/
+### Módulo de Auditoría ✅ COMPLETADO
+- [x] ✅ Tipos, servicio y flow (audit.ts, auditService.ts, auditFlow.ts)
+- [x] ✅ **AuditListPage.tsx** - Tabla paginada con filtros (acción, entidad, fechas), búsqueda, exportar CSV
+- [x] ✅ **ViewAuditPage.tsx** - Vista detallada con 5 cards (info general, metadata, valores antiguos/nuevos, comparación de cambios)
+- [x] ✅ **AuditDashboardPage.tsx** - Dashboard con cards de resumen, gráficos por tipo/entidad, top usuarios, actividad reciente
+- [x] ✅ Rutas configuradas en App.tsx (/audits, /audits/view/:id, /audits/dashboard)
+- [x] ✅ Build verificado: 0 errores TypeScript, dist 455.52 kB
+
+**Módulo completo y listo para integración con backend en http://localhost:3000/audits**
+
+### General
+- [ ] Testing responsive en dispositivos reales (iPhone, iPad, Android)
+- [ ] Tests de accesibilidad WCAG (contraste, navegación teclado, screen readers)
+- [ ] Documentar patrones de diseño (UX_PATTERNS.md)
+- [ ] Integración completa login → 2FA → dashboard con backend
+- [ ] Migrar páginas restantes a Tailwind CSS (dashboard, users, etc.)
 
 ---
 
-This file serves as persistent project memory for enhanced AI assistant session continuity with MCP server integration.
+## 🔧 Notas para el Asistente AI
+
+**Idioma:** Español  
+**MCP Preferences:**
+- Filesystem MCP: operaciones de archivos (lectura, edición, parches)
+- GitHub MCP: PRs, issues, control de versiones
+- UI MCPs (shadcn/ui, Magic UI, 21st): generación componentes React
+- Upstash Conte: documentación de librerías
+
+**Archivos Clave:**
+- `Session_starter.md` - Memoria del proyecto (este archivo)
+- `src/presentation/pages/auth/LoginPageNew.tsx` - Login mobile-first
+- `electron/main.ts` - Configuración Electron
+- `scripts/watch-electron.js` - Workflow TypeScript → .cjs
+- `tailwind.config.js` - Configuración Tailwind (breakpoints, tema)
+
+**Constraints:**
+- Backend esperado en http://localhost:3000
+- Tokens en localStorage (authToken, tempToken, user)
+- 2FA requiere QR code con authenticator app
+- Electron requiere archivos .cjs (CommonJS) no .js
+
+---
+
+*Última actualización: 2025-10-23 - Session_starter.md optimizado y limpiado*

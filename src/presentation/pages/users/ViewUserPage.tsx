@@ -11,10 +11,8 @@ export default function ViewUserPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
 
-    // Cargar usuario y roles
     useEffect(() => {
         const loadData = async () => {
-            console.log('ViewUserPage mounted, id=', id);
             if (!id) {
                 setLoading(false);
                 return;
@@ -24,20 +22,17 @@ export default function ViewUserPage() {
             setError('');
 
             try {
-                // Cargar usuario y roles en paralelo
                 const [userResult, rolesResult] = await Promise.all([
                     userFlow.getUserById(Number(id)),
                     userFlow.getAllRoles()
                 ]);
 
-                // Manejar resultado del usuario
                 if (userResult.success && userResult.user) {
                     setUser(userResult.user);
                 } else {
                     setError(userResult.error || 'Error al cargar usuario');
                 }
 
-                // Manejar resultado de roles
                 if (rolesResult.success && rolesResult.roles) {
                     setRoles(rolesResult.roles);
                 }
@@ -52,27 +47,25 @@ export default function ViewUserPage() {
         loadData();
     }, [id]);
 
-    // Obtener nombre del rol
     const getRoleName = (roleId?: number): string => {
         if (!roleId) return 'No asignado';
         const role = roles.find(r => r.id === roleId);
         return role ? role.name : 'No asignado';
     };
 
-    // Obtener nombre completo
     const getFullName = (): string => {
         if (!user) return '';
         return userFlow.getFullName(user);
     };
 
-    // Manejo cuando no hay id en la ruta
     if (!id) {
         return (
-            <div className="container py-4">
-                <h3 className="mb-3">ID no proporcionado</h3>
-                <p>No se encontró el identificador del usuario.</p>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-secondary" onClick={() => navigate('/users')}>
+            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
+                <div className="text-center">
+                    <i className="bi bi-exclamation-triangle display-1 text-warning mb-3 d-block"></i>
+                    <h3 className="mb-3">ID no proporcionado</h3>
+                    <p className="text-muted mb-4">No se encontró el identificador del usuario.</p>
+                    <button className="btn btn-primary" onClick={() => navigate('/users')}>
                         Volver a la lista
                     </button>
                 </div>
@@ -82,14 +75,12 @@ export default function ViewUserPage() {
 
     if (loading) {
         return (
-            <div className="container py-4">
-                <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-                    <div className="text-center">
-                        <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">Cargando...</span>
-                        </div>
-                        <p className="mt-3 text-muted">Cargando información del usuario...</p>
+            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+                <div className="text-center">
+                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
+                        <span className="visually-hidden">Cargando...</span>
                     </div>
+                    <p className="text-muted fw-medium">Cargando información del usuario...</p>
                 </div>
             </div>
         );
@@ -97,18 +88,26 @@ export default function ViewUserPage() {
 
     if (error || !user) {
         return (
-            <div className="container py-4">
-                <div className="alert alert-danger" role="alert">
-                    <h4 className="alert-heading">Error</h4>
-                    <p>{error || 'No se pudo cargar la información del usuario'}</p>
-                    <hr />
-                    <div className="d-flex gap-2">
-                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
-                            Volver a la lista
-                        </button>
-                        <button className="btn btn-primary" onClick={() => window.location.reload()}>
-                            Reintentar
-                        </button>
+            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
+                <div className="container">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-6">
+                            <div className="card shadow-sm border-0">
+                                <div className="card-body p-5 text-center">
+                                    <i className="bi bi-exclamation-circle display-1 text-danger mb-3 d-block"></i>
+                                    <h4 className="mb-3">Error al cargar usuario</h4>
+                                    <p className="text-muted mb-4">{error || 'No se pudo cargar la información del usuario'}</p>
+                                    <div className="d-flex gap-2 justify-content-center">
+                                        <button className="btn btn-outline-secondary" onClick={() => navigate('/users')}>
+                                            Volver a la lista
+                                        </button>
+                                        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+                                            Reintentar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -118,202 +117,251 @@ export default function ViewUserPage() {
     const fullName = getFullName();
 
     return (
-        <div className="container py-4">
-            {/* Header */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2>Usuario #{id}</h2>
-                    <p className="text-muted mb-0">{fullName}</p>
+        <div className="min-vh-100 bg-light">
+            <div className="container-fluid py-4">
+                <div className="row mb-4">
+                    <div className="col-12">
+                        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                            <div>
+                                <div className="d-flex align-items-center gap-3 mb-2">
+                                    <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                        <i className="bi bi-person-fill text-primary fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h1 className="h3 fw-bold mb-1">{fullName}</h1>
+                                        <p className="text-muted mb-0">Usuario #{id}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="d-flex gap-2">
+                                <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/users')}>
+                                    <i className="bi bi-arrow-left"></i>
+                                    Volver
+                                </button>
+                                <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => navigate(`/users/edit/${id}`)}>
+                                    <i className="bi bi-pencil"></i>
+                                    Editar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="d-flex gap-2">
-                    <button className="btn btn-secondary" onClick={() => navigate('/users')}>
-                        <i className="bi bi-arrow-left me-2"></i>
-                        Regresar
-                    </button>
-                    <button className="btn btn-primary" onClick={() => navigate(`/users/edit/${id}`)}>
-                        <i className="bi bi-pencil-square me-2"></i>
-                        Editar
-                    </button>
-                </div>
-            </div>
 
-            {/* Información Personal */}
-            <div className="card mb-4">
-                <div className="card-header">
-                    <h5 className="mb-0">👤 Información Personal</h5>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-6 mb-3">
-                            <strong>Identificación:</strong>
-                            <p className="mb-0">{user.identification || 'No especificada'}</p>
+                <div className="row g-4">
+                    <div className="col-12">
+                        {/* Card 1: Información Personal */}
+                        <div className="card shadow-sm border-0 mb-4">
+                            <div className="card-header bg-white border-bottom py-3">
+                                <h5 className="card-title mb-0 fw-semibold">
+                                    <i className="bi bi-person-circle me-2 text-primary"></i>
+                                    Información Personal
+                                </h5>
+                                <small className="text-muted d-block mt-1">Datos de identificación del usuario</small>
+                            </div>
+                            <div className="card-body p-4">
+                                <div className="row g-4">
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Identificación</small>
+                                            <span className="fs-5">{user.uIdentification || 'No especificada'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Nombre</small>
+                                            <span className="fs-5">{user.uName || 'No especificado'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Primer Apellido</small>
+                                            <span className="fs-5">{user.uFLastName || 'No especificado'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Segundo Apellido</small>
+                                            <span className="fs-5">{user.uSLastName || 'No especificado'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="col-md-6 mb-3">
-                            <strong>Email:</strong>
-                            <p className="mb-0">{user.u_email || 'No especificado'}</p>
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-md-4 mb-3">
-                            <strong>Nombre:</strong>
-                            <p className="mb-0">{user.name || 'No especificado'}</p>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <strong>Primer apellido:</strong>
-                            <p className="mb-0">{user.fLastName || 'No especificado'}</p>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <strong>Segundo apellido:</strong>
-                            <p className="mb-0">{user.sLastName || 'No especificado'}</p>
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-md-12">
-                            <strong>Nombre completo:</strong>
-                            <p className="mb-0">{fullName || 'No especificado'}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Información de la Cuenta */}
-            <div className="card mb-4">
-                <div className="card-header">
-                    <h5 className="mb-0">⚙️ Configuración de la Cuenta</h5>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-6 mb-3">
-                            <strong>Rol:</strong>
-                            <p className="mb-0">{getRoleName(user.role_id)}</p>
+                        {/* Card 2: Información de Contacto */}
+                        <div className="card shadow-sm border-0 mb-4">
+                            <div className="card-header bg-white border-bottom py-3">
+                                <h5 className="card-title mb-0 fw-semibold">
+                                    <i className="bi bi-envelope me-2 text-primary"></i>
+                                    Información de Contacto
+                                </h5>
+                                <small className="text-muted d-block mt-1">Datos de comunicación del usuario</small>
+                            </div>
+                            <div className="card-body p-4">
+                                <div className="row g-4">
+                                    <div className="col-12">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Correo Electrónico</small>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <i className="bi bi-envelope text-muted"></i>
+                                                <span className="fs-5">{user.uEmail || 'No especificado'}</span>
+                                                {user.uEmailVerified && (
+                                                    <span className="badge bg-success bg-opacity-10 text-success">
+                                                        <i className="bi bi-patch-check-fill me-1"></i>
+                                                        Verificado
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="col-md-6 mb-3">
-                            <strong>Estado de la cuenta:</strong>
-                            <p className="mb-0">
-                                <span className={`badge ${user.u_is_active ? 'bg-success' : 'bg-danger'}`}>
-                                    {user.u_is_active ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-md-6 mb-3">
-                            <strong>Verificación de email:</strong>
-                            <p className="mb-0">
-                                <span className={`badge ${user.u_email_verified ? 'bg-success' : 'bg-warning'}`}>
-                                    {user.u_email_verified ? 'Verificado' : 'Pendiente'}
-                                </span>
-                            </p>
-                        </div>
-                        <div className="col-md-6 mb-3">
-                            <strong>Fecha de creación:</strong>
-                            <p className="mb-0">{new Date(user.create_at).toLocaleDateString()}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Resumen de Permisos */}
-            <div className="card mb-4">
-                <div className="card-header">
-                    <h5 className="mb-0">🔐 Resumen de Permisos</h5>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-6">
-                            <h6>Capacidades del Rol:</h6>
-                            <ul className="list-unstyled">
-                                {user.role_id === 1 && (
-                                    <>
-                                        <li>✅ Acceso completo al sistema</li>
-                                        <li>✅ Gestión de usuarios</li>
-                                        <li>✅ Gestión de fichas virtuales</li>
-                                        <li>✅ Configuración del sistema</li>
-                                    </>
-                                )}
-                                {user.role_id === 2 && (
-                                    <>
-                                        <li>✅ Ver todas las fichas virtuales</li>
-                                        <li>✅ Crear y editar fichas</li>
-                                        <li>✅ Generar reportes médicos</li>
-                                        <li>❌ Gestión de usuarios</li>
-                                    </>
-                                )}
-                                {user.role_id === 3 && (
-                                    <>
-                                        <li>✅ Ver fichas asignadas</li>
-                                        <li>✅ Actualizar registros de enfermería</li>
-                                        <li>❌ Crear nuevas fichas</li>
-                                        <li>❌ Gestión de usuarios</li>
-                                    </>
-                                )}
-                                {user.role_id === 4 && (
-                                    <>
-                                        <li>✅ Registrar nuevos pacientes</li>
-                                        <li>✅ Ver información básica</li>
-                                        <li>❌ Acceso a historial médico completo</li>
-                                        <li>❌ Gestión de usuarios</li>
-                                    </>
-                                )}
-                                {user.role_id === 5 && (
-                                    <>
-                                        <li>✅ Ver información personal</li>
-                                        <li>❌ Acceso a otras fichas</li>
-                                        <li>❌ Funciones administrativas</li>
-                                        <li>❌ Gestión de usuarios</li>
-                                    </>
-                                )}
-                                {!user.role_id && (
-                                    <li>❌ Sin permisos asignados</li>
-                                )}
-                            </ul>
+                        {/* Card 3: Rol y Permisos */}
+                        <div className="card shadow-sm border-0 mb-4">
+                            <div className="card-header bg-white border-bottom py-3">
+                                <h5 className="card-title mb-0 fw-semibold">
+                                    <i className="bi bi-key me-2 text-primary"></i>
+                                    Rol y Permisos
+                                </h5>
+                                <small className="text-muted d-block mt-1">Rol asignado para gestionar accesos</small>
+                            </div>
+                            <div className="card-body p-4">
+                                <div className="row g-4">
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Rol del Usuario</small>
+                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 w-fit fs-6">
+                                                <i className="bi bi-person-badge me-1"></i>
+                                                {getRoleName(user.roleId)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Estado de la Cuenta</small>
+                                            <span className={`badge bg-${user.uIsActive ? 'success' : 'danger'} bg-opacity-10 text-${user.uIsActive ? 'success' : 'danger'} fs-6 py-2 px-3`}>
+                                                <i className={`bi ${user.uIsActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1`}></i>
+                                                {user.uIsActive ? 'Activo' : 'Inactivo'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="col-md-6">
-                            <h6>Estado del Sistema:</h6>
-                            <ul className="list-unstyled">
-                                <li>📊 Total de sesiones: 24</li>
-                                <li>🕒 Último acceso: {new Date().toLocaleDateString()}</li>
-                                <li>🔔 Notificaciones: 3 pendientes</li>
-                                <li>📈 Actividad: Normal</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Información Adicional */}
-            <div className="card">
-                <div className="card-header">
-                    <h5 className="mb-0">📊 Información Adicional</h5>
-                </div>
-                <div className="card-body">
-                    <div className="row">
-                        <div className="col-md-4 mb-3">
-                            <strong>ID de Usuario:</strong>
-                            <p className="mb-0">{user.id}</p>
+                        {/* Card 4: Permisos Específicos */}
+                        <div className="card shadow-sm border-0 mb-4">
+                            <div className="card-header bg-white border-bottom py-3">
+                                <h5 className="card-title mb-0 fw-semibold">
+                                    <i className="bi bi-shield-lock me-2 text-primary"></i>
+                                    Permisos Específicos del Rol
+                                </h5>
+                                <small className="text-muted d-block mt-1">Acciones disponibles según el rol asignado</small>
+                            </div>
+                            <div className="card-body p-4">
+                                {user.roleId === 1 && (
+                                    <ul className="list-unstyled mb-0">
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Acceso completo al sistema
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Gestión de usuarios
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Gestión de fichas virtuales
+                                        </li>
+                                        <li className="mb-0">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Configuración del sistema
+                                        </li>
+                                    </ul>
+                                )}
+                                {user.roleId === 2 && (
+                                    <ul className="list-unstyled mb-0">
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Ver todas las fichas virtuales
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Crear y editar fichas
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Generar reportes médicos
+                                        </li>
+                                        <li className="mb-0">
+                                            <i className="bi bi-x-circle-fill text-danger me-2"></i>
+                                            Gestión de usuarios
+                                        </li>
+                                    </ul>
+                                )}
+                                {user.roleId === 3 && (
+                                    <ul className="list-unstyled mb-0">
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Ver fichas asignadas
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-check-circle-fill text-success me-2"></i>
+                                            Actualizar registros
+                                        </li>
+                                        <li className="mb-2">
+                                            <i className="bi bi-x-circle-fill text-danger me-2"></i>
+                                            Crear nuevas fichas
+                                        </li>
+                                        <li className="mb-0">
+                                            <i className="bi bi-x-circle-fill text-danger me-2"></i>
+                                            Gestión de usuarios
+                                        </li>
+                                    </ul>
+                                )}
+                                {(!user.roleId || (user.roleId > 3)) && (
+                                    <p className="text-muted mb-0">
+                                        <i className="bi bi-info-circle me-2"></i>
+                                        Permisos específicos del rol no disponibles
+                                    </p>
+                                )}
+                            </div>
                         </div>
-                        <div className="col-md-4 mb-3">
-                            <strong>Fecha de creación:</strong>
-                            <p className="mb-0">{new Date(user.create_at).toLocaleDateString()}</p>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <strong>Estado:</strong>
-                            <p className="mb-0">
-                                <span className={`badge ${userFlow.isUserActive(user) ? 'bg-success' : 'bg-secondary'}`}>
-                                    {userFlow.isUserActive(user) ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col-12">
-                            <strong>Notas:</strong>
-                            <p className="mb-0 text-muted">
-                                {user.u_is_active
-                                    ? 'Usuario activo en el sistema con todos los permisos correspondientes a su rol.'
-                                    : 'Usuario inactivo. No puede acceder al sistema hasta que sea reactivado.'
-                                }
-                            </p>
+
+                        {/* Card 5: Información Adicional */}
+                        <div className="card shadow-sm border-0">
+                            <div className="card-header bg-white border-bottom py-3">
+                                <h5 className="card-title mb-0 fw-semibold">
+                                    <i className="bi bi-clock-history me-2 text-primary"></i>
+                                    Información Adicional
+                                </h5>
+                                <small className="text-muted d-block mt-1">Metadatos históricos de la cuenta</small>
+                            </div>
+                            <div className="card-body p-4">
+                                <div className="row g-4">
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">ID de Usuario</small>
+                                            <span className="badge bg-light text-dark">{user.id}</span>
+                                        </div>
+                                    </div>
+                                    <div className="col-12 col-md-6">
+                                        <div className="d-flex flex-column">
+                                            <small className="text-muted text-uppercase fw-semibold mb-2">Fecha de Creación</small>
+                                            <span className="fs-5">
+                                                <i className="bi bi-calendar3 text-muted me-2"></i>
+                                                {user.createAt ? new Date(user.createAt).toLocaleDateString('es-ES', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                }) : 'No disponible'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

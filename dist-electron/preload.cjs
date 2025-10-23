@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const { contextBridge } = require('electron');
-contextBridge.exposeInMainWorld('electron', {
+const electron_1 = require("electron");
+electron_1.contextBridge.exposeInMainWorld('electron', {
     versions: {
         node: process.versions.node,
         chrome: process.versions.chrome,
