@@ -7,6 +7,7 @@ import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
 //Older Adults
 import Dashboard from './presentation/pages/dashboard/DashboardPage'
 import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPage'
+import CreateVirtualFile from './presentation/pages/older-adults/CreateVirtualRecordPage'
 import EditVirtualFile from './presentation/pages/older-adults/EditVirtualRecordPage'
 import ViewAdultsPage from './presentation/pages/older-adults/ViewAdultsPage'
 
@@ -15,6 +16,18 @@ import ListUser from './presentation/pages/users/UserListPage'
 import CreateUser from './presentation/pages/users/CreateUserPage'
 import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
+
+//Programs
+import ProgramListPage from './presentation/pages/programs/ProgramListPage'
+import CreateProgramPage from './presentation/pages/programs/CreateProgramPage'
+
+//Vaccines
+import VaccineListPage from './presentation/pages/vaccines/VaccineListPage'
+import CreateVaccinePage from './presentation/pages/vaccines/CreateVaccinePage'
+
+//SubPrograms
+import SubProgramListPage from './presentation/pages/sub-programs/SubProgramListPage'
+import CreateSubProgramPage from './presentation/pages/sub-programs/CreateSubProgramPage'
 
 //Two Factor
 import TwoFactorPage from './presentation/pages/two-factor/TwoFactorPage'
@@ -32,14 +45,23 @@ export default function App() {
 
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/virtualFiles" element={<ListVirtualFile />} />
+      <Route path="/virtualFiles/create" element={<CreateVirtualFile />} />
       <Route path="/virtualFiles/edit/:id" element={<EditVirtualFile />} />
       <Route path="/virtualFiles/view/:id" element={<ViewAdultsPage />} />
-
 
       <Route path="/users" element={<ListUser />} />
       <Route path="/users/create" element={<CreateUser />} />
       <Route path="/users/view/:id" element={<ViewUserPage />} />
       <Route path="/users/edit/:id" element={<EditUserPage />} />
+
+      <Route path="/programs" element={<ProgramListPage />} />
+      <Route path="/programs/create" element={<CreateProgramPage />} />
+
+      <Route path="/vaccines" element={<VaccineListPage />} />
+      <Route path="/vaccines/create" element={<CreateVaccinePage />} />
+
+      <Route path="/sub-programs" element={<SubProgramListPage />} />
+      <Route path="/sub-programs/create" element={<CreateSubProgramPage />} />
 
       <Route path="/two-factor" element={<TwoFactorPage />} />
       <Route path="/entrance-exit" element={<EntranceExitDashboard />} />

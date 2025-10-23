@@ -110,21 +110,16 @@ export default function EditVirtualFile() {
       </div>
       <form onSubmit={handleSubmit}>
         <div className="row g-3 mb-4">
-          <div className="col-12 col-md-3">
-            <label htmlFor="fecha" className="form-label">FECHA</label>
-            <input id="fecha" type="date" className="form-control"
-              value={formData.fecha} onChange={(e) => onInputChange('fecha', e.target.value)} />
-          </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="cedula" className="form-label">CÉDULA</label>
             <input id="cedula" className="form-control" value={formData.cedula}
               onChange={(e) => onInputChange('cedula', e.target.value)} placeholder="Número de cédula" />
           </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="edad" className="form-label">EDAD</label>
             <input id="edad" type="text" className="form-control" readOnly value={formData.edad} />
           </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="fechaNacimiento" className="form-label">FECHA NACIMIENTO</label>
             <input id="fechaNacimiento" type="date" className="form-control"
               value={formData.fechaNacimiento}

@@ -3,9 +3,9 @@ import { transformVirtualFileToApiPayload } from '../types/virtualFile';
 
 // Ejemplo de uso de la función de transformación
 
-// Ejemplo de datos de un VirtualFile
+// Ejemplo de datos de un VirtualFile (coincide con el JSON del backend)
 const exampleVirtualFile: VirtualFile = {
-  fecha: '2024-01-15',
+  fecha: '2024-01-15T11:00:00.000Z',
   cedula: '1-1234-5678',
   edad: '79',
   fechaNacimiento: '1945-03-15',
@@ -31,15 +31,15 @@ const exampleVirtualFile: VirtualFile = {
   talla: '162',
   imc: '26.1',
   
-  // Condiciones médicas
-  hta: true,
+  // Condiciones médicas (corresponden a IDs 1, 5, 8 en el JSON)
+  hta: true,           // ID 1
   dbt: false,
   dislip: false,
   irc: false,
-  cardioIsq: true,
+  cardioIsq: true,     // ID 5
   acv: false,
   amputacion: false,
-  tabaquismo: true,
+  tabaquismo: true,    // ID 8
   alcoholismo: false,
   parkinson: false,
   demencia: false,
@@ -51,20 +51,20 @@ const exampleVirtualFile: VirtualFile = {
   otrasCondiciones: 'Costurera y ama de casa',
   
   // RCVG
-  rcvg: 'e/20 y 30%',
+  rcvg: 'e /20y30%',
   
-  // Vacunación
-  vacunaCt: true,
+  // Vacunación (corresponden a IDs 1, 3, 7 en el JSON)
+  vacunaCt: true,          // ID 1
   vacunaHepB: false,
-  vacunaGripe: true,
-  vacunaNeumococo: true,
+  vacunaGripe: true,       // ID 3
+  vacunaNeumococo: true,   // ID 7
   
   // Visión y audición
   dificultadesVision: 'SI',
   problemasAudicion: 'NO'
 };
 
-// Ejemplo de datos de familia
+// Ejemplo de datos de familia (coincide con el JSON del backend)
 const familyData: ApiFamily = {
   pf_identification: '1-9876-5432',
   pf_name: 'Carlos Alberto',

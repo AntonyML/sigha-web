@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components'
 
@@ -15,14 +15,14 @@ export default function ListVirtualFile() {
     { id: '1', title: 'Historia Clínica - Juan Pérez', patientName: 'Juan Pérez', createdAt: new Date().toISOString(), description: 'Registro inicial' },
     { id: '2', title: 'Historia Clínica - María López', patientName: 'María López', createdAt: new Date().toISOString(), description: 'Seguimiento' },
   ])
-  const [loading, setLoading] = useState(false)
+  const [loading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredItems, setFilteredItems] = useState<VirtualFile[]>(items)
   const navigate = useNavigate()
-  const [canDelete, setCanDelete] = useState(true)
-  const [canEdit, setCanEdit] = useState(true)
-  const [canCreate, setCanCreate] = useState(true)
-  const [canView, setCanView] = useState(true)
+  const [canDelete] = useState(true)
+  const [canEdit] = useState(true)
+  const [canCreate] = useState(true)
+  const [canView] = useState(true)
 
   useEffect(() => {
     if (!searchTerm.trim()) {

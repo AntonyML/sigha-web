@@ -271,7 +271,7 @@ export interface VirtualFileApiPayload {
   oa_economic_income: number;
   oa_phone_numner: string; // Nota: el API tiene este typo "numner"
   oa_email: string;
-  oa_profile_photo_url: string;
+  oa_profile_photo_url: string | null;
   oa_gender: string;
   oa_blood_type: string;
   program: ApiProgram;
@@ -303,7 +303,7 @@ const VACCINES_MAP: Record<string, number> = {
   vacunaCt: 1,
   vacunaHepB: 2,
   vacunaGripe: 3,
-  vacunaNeumococo: 4
+  vacunaNeumococo: 7 // Actualizado según el ejemplo del JSON
 };
 
 // Mapeo de estados civiles
@@ -322,58 +322,70 @@ export function transformVirtualFileToApiPayload(
     family?: ApiFamily;
     medications?: ApiMedication[];
     observations?: string;
+    programId?: number;
+    vaccineIds?: number[];
+    subProgramId?: number | null;
   } = {}
 ): VirtualFileApiPayload {
-  // Dividir el nombre completo
+  // Dividir el nombre completo en partes
   const nameParts = virtualFile.nombreApellido.trim().split(/\s+/);
   const firstName = nameParts[0] || '';
-  const firstLastName = nameParts[1] || '';
-  const secondLastName = nameParts.slice(2).join(' ') || '';
+  const firstLastName = nameParts[1] || 'Apellido';
+  const secondLastName = nameParts.length >= 3 ? nameParts.slice(2).join(' ') : 'Apellido2';
 
   // Obtener condiciones clínicas activas
   const activeConditions = Object.keys(CLINICAL_CONDITIONS_MAP)
     .filter(condition => (virtualFile as any)[condition] === true)
     .map(condition => ({ id: CLINICAL_CONDITIONS_MAP[condition] }));
 
-  // Obtener vacunas activas
-  const activeVaccines = Object.keys(VACCINES_MAP)
-    .filter(vaccine => (virtualFile as any)[vaccine] === true)
-    .map(vaccine => ({ id: VACCINES_MAP[vaccine] }));
+  // Obtener vacunas activas - usar IDs seleccionados si están disponibles, sino usar el mapeo tradicional
+  const activeVaccines = additionalData.vaccineIds && additionalData.vaccineIds.length > 0
+    ? additionalData.vaccineIds.map(id => ({ id }))
+    : Object.keys(VACCINES_MAP)
+        .filter(vaccine => (virtualFile as any)[vaccine] === true)
+        .map(vaccine => ({ id: VACCINES_MAP[vaccine] }));
 
   // Convertir datos numéricos
   const weight = parseFloat(virtualFile.peso) || 0;
-  const height = parseFloat(virtualFile.talla) / 100 || 0; // convertir cm a metros
+  const height = parseFloat(virtualFile.talla) || 0; // mantener en centímetros como espera el backend
   const imc = parseFloat(virtualFile.imc) || 0;
 
+  // Determinar descripción de trabajo previo
+  const getWorkDescription = (): string => {
+    if (virtualFile.trabajoPrevio === 'otros' && virtualFile.otrasCondiciones) {
+      return virtualFile.otrasCondiciones;
+    }
+    return virtualFile.trabajoPrevio;
+  };
+
   return {
-    oa_identification: virtualFile.cedula,
-    oa_name: firstName,
-    oa_f_last_name: firstLastName,
-    oa_s_last_name: secondLastName,
-    oa_birthdate: virtualFile.fechaNacimiento,
-    oa_marital_status: MARITAL_STATUS_MAP[virtualFile.estadoCivil] || virtualFile.estadoCivil,
-    oa_dwelling: virtualFile.vivienda,
-    oa_years_schooling: virtualFile.anosEscolaridad,
-    oa_previous_work: virtualFile.trabajoPrevio,
+    oa_identification: virtualFile.cedula || '',
+    oa_name: firstName || 'Sin nombre',
+    oa_f_last_name: firstLastName || 'Sin apellido',
+    oa_s_last_name: secondLastName || 'Sin segundo apellido',
+    oa_birthdate: virtualFile.fechaNacimiento || '',
+    oa_marital_status: MARITAL_STATUS_MAP[virtualFile.estadoCivil] || virtualFile.estadoCivil || 'single',
+    oa_dwelling: virtualFile.vivienda || 'No especificado',
+    oa_years_schooling: virtualFile.anosEscolaridad || '0',
+    oa_previous_work: getWorkDescription() || 'No especificado',
     oa_is_retired: virtualFile.trabajoPrevio === 'jubilacion',
     oa_has_pension: virtualFile.trabajoPrevio === 'pension',
     oa_other: virtualFile.trabajoPrevio === 'otros',
-    oa_other_description: virtualFile.trabajoPrevio === 'otros' ? virtualFile.otrasCondiciones : null,
-    oa_area_of_origin: virtualFile.zonaProcedencia || '',
+    oa_other_description: virtualFile.trabajoPrevio === 'otros' ? virtualFile.otrasCondiciones || null : null,
+    oa_area_of_origin: virtualFile.zonaProcedencia || 'No especificado',
     oa_children_count: virtualFile.cantidadHijos || 0,
     oa_status: 'alive',
     oa_death_date: null,
     oa_economic_income: virtualFile.ingresoEconomico || 0,
     oa_phone_numner: virtualFile.telefono || '',
     oa_email: virtualFile.email || '',
-    oa_profile_photo_url: virtualFile.urlFotoPerfil || '',
-    oa_gender: virtualFile.genero || '',
-    oa_blood_type: virtualFile.tipoSangre || '',
+    oa_profile_photo_url: null,
+    oa_gender: virtualFile.genero || 'no_specified',
+    oa_blood_type: virtualFile.tipoSangre || 'unknown',
     
-    // Programa quemado como ID 2
     program: {
-      id: 2,
-      sub_programs: [{ id: 1 }]
+      id: additionalData.programId || 1,
+      sub_programs: additionalData.subProgramId ? [{ id: additionalData.subProgramId }] : []
     },
     
     family: additionalData.family || {
@@ -387,15 +399,15 @@ export function transformVirtualFileToApiPayload(
     },
     
     clinical_history: {
-      ch_frequent_falls: virtualFile.caidasFrecuentes,
-      ch_weight: weight,
-      ch_height: height,
-      ch_imc: imc,
-      ch_blood_pressure: virtualFile.ta,
-      ch_neoplasms: virtualFile.neoplasias,
-      ch_neoplasms_description: virtualFile.neoplasias ? virtualFile.neoplasiasDetalle : null,
-      ch_observations: additionalData.observations || virtualFile.otrasCondiciones,
-      ch_rcvg: virtualFile.rcvg,
+      ch_frequent_falls: virtualFile.caidasFrecuentes || false,
+      ch_weight: weight > 0 ? weight : 50.0,
+      ch_height: height > 0 ? height : 160.0,
+      ch_imc: imc > 0 ? imc : 19.5,
+      ch_blood_pressure: virtualFile.ta || '120/80',
+      ch_neoplasms: virtualFile.neoplasias || false,
+      ch_neoplasms_description: virtualFile.neoplasias && virtualFile.neoplasiasDetalle ? virtualFile.neoplasiasDetalle : null,
+      ch_observations: additionalData.observations || virtualFile.otrasCondiciones || 'Sin observaciones',
+      ch_rcvg: virtualFile.rcvg || '<10%',
       ch_vision_problems: virtualFile.dificultadesVision === 'SI',
       ch_vision_hearing: virtualFile.problemasAudicion === 'SI',
       create_at: new Date().toISOString(),

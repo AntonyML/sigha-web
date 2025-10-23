@@ -4,10 +4,13 @@ import type {
   CreateVirtualFileData,
   UpdateVirtualFileData,
   VirtualFileSearchParams,
-  VirtualFileApiResponse
+  VirtualFileApiResponse,
+  ApiFamily,
+  ApiMedication
 } from '../types/virtualFile';
+import { transformVirtualFileToApiPayload } from '../types/virtualFile';
 
-const API_BASE_URL = import.meta.env.VITE_VIRTUAL_FILE_API_URL ?? 'http://localhost:9999/api';
+const API_BASE_URL = import.meta.env.VITE_VIRTUAL_FILE_API_URL ?? 'http://localhost:3000';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -39,13 +42,79 @@ export const virtualFileService = {
   },
 
 
-  createVirtualFile: async (data: CreateVirtualFileData): Promise<VirtualFile> => {
-    const response = await apiClient.post<VirtualFile>('/virtual-files', data);
-    return response.data;
+  createVirtualFile: async (
+    data: CreateVirtualFileData, 
+    familyInfo?: ApiFamily, 
+    medications?: ApiMedication[],
+    programId?: number,
+    vaccineIds?: number[],
+    subProgramId?: number | null
+  ): Promise<VirtualFile> => {
+    try {
+      // Convertir los datos del formulario al formato esperado por el API
+      const apiPayload = transformVirtualFileToApiPayload(data as VirtualFile, {
+        family: familyInfo,
+        medications: medications || [],
+        observations: data.otrasCondiciones,
+        programId: programId || 1,
+        vaccineIds: vaccineIds || [],
+        subProgramId: subProgramId
+      });
+      
+      console.log('📤 Payload enviado al API:', JSON.stringify(apiPayload, null, 2));
+      
+      // Validar campos requeridos antes de enviar
+      if (!apiPayload.oa_identification) {
+        throw new Error('La cédula es requerida');
+      }
+      if (!apiPayload.oa_name) {
+        throw new Error('El nombre es requerido');
+      }
+      if (!apiPayload.oa_birthdate) {
+        throw new Error('La fecha de nacimiento es requerida');
+      }
+      
+      // Validar que clinical_history tenga valores numéricos válidos
+      if (!apiPayload.clinical_history.ch_weight || apiPayload.clinical_history.ch_weight <= 0) {
+        console.warn('⚠️ Peso inválido, usando valor por defecto');
+      }
+      if (!apiPayload.clinical_history.ch_height || apiPayload.clinical_history.ch_height <= 0) {
+        console.warn('⚠️ Altura inválida, usando valor por defecto');
+      }
+      
+      console.log('✅ Validaciones pasadas, enviando al backend...');
+      
+      const response = await apiClient.post<VirtualFile>('/virtual-records/create', apiPayload);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error en createVirtualFile:', error);
+      if (error.response) {
+        console.error('📄 Respuesta del servidor:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      throw error;
+    }
   },
 
-  updateVirtualFile: async (id: number, data: UpdateVirtualFileData): Promise<VirtualFile> => {
-    const response = await apiClient.put<VirtualFile>(`/virtual-files/${id}`, data);
+  updateVirtualFile: async (
+    id: number, 
+    data: UpdateVirtualFileData,
+    familyInfo?: ApiFamily, 
+    medications?: ApiMedication[]
+  ): Promise<VirtualFile> => {
+    // Convertir los datos del formulario al formato esperado por el API
+    const apiPayload = transformVirtualFileToApiPayload(data as VirtualFile, {
+      family: familyInfo,
+      medications: medications || [],
+      observations: data.otrasCondiciones
+    });
+    
+    console.log('📤 Payload de actualización enviado al API:', JSON.stringify(apiPayload, null, 2));
+    
+    const response = await apiClient.put<VirtualFile>(`/virtual-files/${id}`, apiPayload);
     return response.data;
   },
 
