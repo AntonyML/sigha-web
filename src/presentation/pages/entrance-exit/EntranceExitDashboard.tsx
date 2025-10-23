@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { entranceExitService } from '../../../services/entranceExitService';
 import type { EntranceExitResponse } from '../../../types/entranceExit';
@@ -32,23 +32,23 @@ export default function EntranceExitDashboard() {
 
   const handleFinalizeEntrance = async (id: number) => {
     try {
-      console.log('🔄 Finalizing entrance record:', id);
+      console.log('Finalizing entrance record:', id);
       await entranceExitService.finalizeEntranceRecord(id);
-      console.log('✅ Entrance record finalized successfully');
-      await loadData(); // Recargar datos
+      console.log('Entrance record finalized successfully');
+      await loadData();
     } catch (error) {
-      console.error('❌ Error finalizing entrance record:', error);
+      console.error('Error finalizing entrance record:', error);
     }
   };
 
   const handleFinalizeExit = async (id: number) => {
     try {
-      console.log('🔄 Finalizing exit record:', id);
+      console.log('Finalizing exit record:', id);
       await entranceExitService.finalizeExitRecord(id);
-      console.log('✅ Exit record finalized successfully');
-      await loadData(); // Recargar datos
+      console.log('Exit record finalized successfully');
+      await loadData(); 
     } catch (error) {
-      console.error('❌ Error finalizing exit record:', error);
+      console.error(' Error finalizing exit record:', error);
     }
   };
 

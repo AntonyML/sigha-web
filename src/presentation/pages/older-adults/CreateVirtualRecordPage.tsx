@@ -1,15 +1,67 @@
 import React, { useState, useEffect } from 'react'
-import type { VirtualFile } from '../../../types/virtualFile'
+import type { VirtualFile, ApiFamily, ApiMedication } from '../../../types/virtualFile'
+import type { Program } from '../../../types/program'
+import type { Vaccine } from '../../../types/vaccine'
+import type { ClinicalCondition } from '../../../types/clinicalCondition'
 import { defaultVirtualFile } from '../../../types/virtualFile'
 import { useNavigate } from 'react-router-dom'
+import { virtualFileService } from '../../../services/virtualFileService'
+import { programService } from '../../../services/programService'
+import { vaccineService } from '../../../services/vaccineService'
+import { clinicalConditionService } from '../../../services/clinicalConditionService'
 
 export default function CreateVirtualFile() {
   const [formData, setFormData] = useState<VirtualFile>(defaultVirtualFile)
+  const [availablePrograms, setAvailablePrograms] = useState<Program[]>([])
+  const [availableVaccines, setAvailableVaccines] = useState<Vaccine[]>([])
+  const [availableClinicalConditions, setAvailableClinicalConditions] = useState<ClinicalCondition[]>([])
+  const [selectedProgramId, setSelectedProgramId] = useState<number>(1)
+  const [selectedSubProgramId, setSelectedSubProgramId] = useState<number | null>(null)
+  const [selectedVaccineIds, setSelectedVaccineIds] = useState<number[]>([])
+  const [selectedClinicalConditionIds, setSelectedClinicalConditionIds] = useState<number[]>([])
   const navigate = useNavigate()
+
+  // Obtener los subprogramas del programa seleccionado
+  const currentProgram = availablePrograms.find(p => p.id === selectedProgramId)
+  const availableSubPrograms = currentProgram?.subPrograms || []
 
   function onInputChange(field: keyof VirtualFile, value: string | boolean) {
     setFormData((prev) => ({ ...prev, [field]: value } as VirtualFile))
   }
+
+  // Función para manejar cambio de programa
+  const handleProgramChange = (programId: number) => {
+    setSelectedProgramId(programId)
+    setSelectedSubProgramId(null) // Limpiar subprograma al cambiar de programa
+  }
+
+  // Cargar programas, vacunas y condiciones clínicas disponibles
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [programs, vaccines, clinicalConditions] = await Promise.all([
+          programService.getAllPrograms(),
+          vaccineService.getAllVaccines(),
+          clinicalConditionService.getAllClinicalConditions()
+        ])
+        
+        setAvailablePrograms(programs)
+        setAvailableVaccines(vaccines)
+        setAvailableClinicalConditions(clinicalConditions)
+        
+        // Seleccionar el primer programa por defecto
+        if (programs.length > 0 && programs[0].id) {
+          setSelectedProgramId(programs[0].id)
+        }
+        
+        console.log('📋 Datos cargados:', { programs, vaccines, clinicalConditions })
+      } catch (error) {
+        console.error('❌ Error cargando datos:', error)
+      }
+    }
+    
+    loadData()
+  }, [])
 
   useEffect(() => {
     if (formData.peso && formData.talla) {
@@ -22,10 +74,50 @@ export default function CreateVirtualFile() {
     }
   }, [formData.peso, formData.talla])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    console.log('Formulario enviado:', formData)
-    // Aquí enviar datos al server
+    
+    try {
+      console.log('📤 Enviando formulario:', formData)
+      
+      // Datos de familia de ejemplo (opcional) - basado en el ejemplo del backend
+      const familyInfo: ApiFamily = {
+        pf_identification: '1-9876-5432',
+        pf_name: 'Familiar',
+        pf_f_last_name: 'Apellido1',
+        pf_s_last_name: 'Apellido2',
+        pf_phone_number: '8234-5678',
+        pf_email: 'familiar@email.com',
+        pf_kinship: 'son'
+      };
+      
+      // Medicamentos de ejemplo - estructura específica del backend
+      const medications: ApiMedication[] = [
+        {
+          m_medication: 'Medicamento ejemplo',
+          m_dosage: '1 tableta cada 12 horas',
+          m_treatment_type: 'chronic'
+        }
+      ];
+      
+      // Crear el archivo virtual con programa, subprograma y vacunas seleccionadas
+      const result = await virtualFileService.createVirtualFile(
+        formData,
+        familyInfo,
+        medications,
+        selectedProgramId,
+        selectedVaccineIds,
+        selectedSubProgramId
+      );
+      
+      console.log('✅ Archivo virtual creado:', result);
+      
+      // Navegar de vuelta a la lista
+      navigate('/virtualFiles');
+    } catch (error) {
+      console.error('❌ Error creando archivo virtual:', error);
+      alert('Error al crear el archivo virtual. Por favor, inténtelo de nuevo.');
+    }
   }
 
   return (
@@ -39,21 +131,16 @@ export default function CreateVirtualFile() {
           </button>
         </div>
         <div className="row g-3 mb-4">
-          <div className="col-12 col-md-3">
-            <label htmlFor="fecha" className="form-label">FECHA</label>
-            <input id="fecha" type="date" className="form-control"
-              value={formData.fecha} onChange={(e) => onInputChange('fecha', e.target.value)} />
-          </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="cedula" className="form-label">CÉDULA</label>
             <input id="cedula" className="form-control" value={formData.cedula}
               onChange={(e) => onInputChange('cedula', e.target.value)} placeholder="Número de cédula" />
           </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="edad" className="form-label">EDAD</label>
             <input id="edad" type="text" className="form-control" readOnly value={formData.edad} />
           </div>
-          <div className="col-12 col-md-3">
+          <div className="col-12 col-md-4">
             <label htmlFor="fechaNacimiento" className="form-label">FECHA NACIMIENTO</label>
             <input id="fechaNacimiento" type="date" className="form-control"
               value={formData.fechaNacimiento}
@@ -140,32 +227,43 @@ export default function CreateVirtualFile() {
         <div className="mb-3">
           <h6>Condiciones Médicas</h6>
           <div className="row">
-            {[
-              ['hta', 'HTA'],
-              ['dbt', 'DBT'],
-              ['dislip', 'DISLIP'],
-              ['irc', 'IRC'],
-              ['cardioIsq', 'CARDIO ISQ'],
-              ['acv', 'ACV'],
-              ['amputacion', 'AMPUTACIÓN'],
-              ['tabaquismo', 'TABAQUISMO'],
-              ['alcoholismo', 'ALCOHOLISMO'],
-              ['parkinson', 'PARKINSON'],
-              ['demencia', 'DEMENCIA'],
-              ['prostatismo', 'PROSTATISMO'],
-              ['incontinenciaUrinaria', 'INCONTINENCIA URINARIA'],
-              ['caidasFrecuentes', 'CAÍDAS FRECUENTES'],
-              ['neoplasias', 'NEOPLASIAS']
-            ].map(([key, label]) => (
-              <div className="col-6 col-md-3" key={String(key)}>
+            {availableClinicalConditions.filter(condition => condition.ccName && condition.id).map((condition) => (
+              <div className="col-6 col-md-3" key={condition.id}>
                 <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id={String(key)}
-                    checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof VirtualFile, e.target.checked)} />
-                  <label className="form-check-label" htmlFor={String(key)}>{label}</label>
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`clinical_condition_${condition.id}`}
+                    checked={selectedClinicalConditionIds.includes(condition.id!)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedClinicalConditionIds(prev => [...prev, condition.id!])
+                      } else {
+                        setSelectedClinicalConditionIds(prev => prev.filter(id => id !== condition.id))
+                      }
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor={`clinical_condition_${condition.id}`}>
+                    {condition.ccName}
+                  </label>
                 </div>
               </div>
             ))}
+          </div>
+          <div className="row mt-2">
+            <div className="col-12 d-flex justify-content-between align-items-center">
+              <small className="form-text text-muted">
+                {availableClinicalConditions.length} condición(es) clínica(s) disponible(s)
+              </small>
+              <button
+                type="button"
+                className="btn btn-outline-secondary btn-sm"
+                onClick={() => setSelectedClinicalConditionIds([])}
+              >
+                <i className="bi bi-x-lg me-1"></i>
+                Limpiar selección
+              </button>
+            </div>
           </div>
 
           {(formData as any).neoplasias && (
@@ -203,26 +301,7 @@ export default function CreateVirtualFile() {
           </div>
         </div>
 
-        <div className="mb-4">
-          <h6>VACUNACIÓN</h6>
-          <div className="row">
-            {[
-              ['vacunaCt', 'cT'],
-              ['vacunaHepB', 'Hep B'],
-              ['vacunaGripe', 'Gripe'],
-              ['vacunaNeumococo', 'Neumococo']
-            ].map(([key, label]) => (
-              <div className="col-6 col-md-3" key={String(key)}>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id={String(key)}
-                    checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof VirtualFile, e.target.checked)} />
-                  <label className="form-check-label" htmlFor={String(key)}>{label}</label>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         <div className="mb-4">
           <h6>VISIÓN</h6>
@@ -256,6 +335,107 @@ export default function CreateVirtualFile() {
                 checked={formData.problemasAudicion === 'NO'}
                 onChange={(e) => onInputChange('problemasAudicion', e.target.value)} />
               <label className="form-check-label" htmlFor="audicionNo">NO</label>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <h6>PROGRAMA ASIGNADO</h6>
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label">Programa Principal</label>
+              <select
+                className="form-select"
+                value={selectedProgramId}
+                onChange={(e) => handleProgramChange(parseInt(e.target.value))}
+              >
+                <option value="">Seleccionar programa...</option>
+                {availablePrograms.map((program) => (
+                  <option key={program.id} value={program.id}>
+                    {program.pName}
+                  </option>
+                ))}
+              </select>
+              <small className="form-text text-muted">
+                Seleccione el programa principal al que pertenecerá el residente
+              </small>
+            </div>
+            
+            <div className="col-md-6">
+              <label className="form-label">Subprograma (Opcional)</label>
+              <select
+                className="form-select"
+                value={selectedSubProgramId || ''}
+                onChange={(e) => setSelectedSubProgramId(e.target.value ? parseInt(e.target.value) : null)}
+                disabled={availableSubPrograms.length === 0}
+              >
+                <option value="">Sin subprograma</option>
+                {availableSubPrograms.map((subProgram) => (
+                  <option key={subProgram.id} value={subProgram.id}>
+                    {subProgram.spName}
+                  </option>
+                ))}
+              </select>
+              <small className="form-text text-muted">
+                {availableSubPrograms.length === 0 
+                  ? 'El programa seleccionado no tiene subprogramas disponibles'
+                  : `${availableSubPrograms.length} subprograma(s) disponible(s)`
+                }
+              </small>
+            </div>
+            
+            <div className="col-12">
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={() => window.open('/programs', '_blank')}
+              >
+                <i className="bi bi-plus-lg me-1"></i>
+                Gestionar Programas y Subprogramas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <h6>VACUNAS APLICADAS</h6>
+          <div className="row">
+            {availableVaccines.filter(vaccine => vaccine.vName && vaccine.id).map((vaccine) => (
+              <div className="col-6 col-md-4 col-lg-3" key={vaccine.id}>
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id={`vaccine_${vaccine.id}`}
+                    checked={selectedVaccineIds.includes(vaccine.id!)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedVaccineIds(prev => [...prev, vaccine.id!])
+                      } else {
+                        setSelectedVaccineIds(prev => prev.filter(id => id !== vaccine.id))
+                      }
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor={`vaccine_${vaccine.id}`}>
+                    {vaccine.vName}
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="row mt-2">
+            <div className="col-12 d-flex justify-content-between align-items-center">
+              <small className="form-text text-muted">
+                Marque las vacunas que ya ha recibido el residente
+              </small>
+              <button
+                type="button"
+                className="btn btn-outline-primary btn-sm"
+                onClick={() => window.open('/vaccines', '_blank')}
+              >
+                <i className="bi bi-plus-lg me-1"></i>
+                Gestionar Vacunas
+              </button>
             </div>
           </div>
         </div>
