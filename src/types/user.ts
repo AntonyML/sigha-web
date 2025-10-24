@@ -9,7 +9,7 @@ export interface User {
   uEmail: string;
   uEmailVerified?: boolean;
   uIsActive?: boolean;
-  createAt?: string;
+  createAt?: Date;
   roleId?: number;
   role?: UserRole;
 }
@@ -17,8 +17,6 @@ export interface User {
 export interface UserRole {
   id: number;
   rName: string;
-  rDescription?: string;
-  permissions?: string[];
 }
 
 // ==================== DTOs ====================
