@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { userFlow } from '../../../infrastructure/flows/userFlow';
+
 import type { User, UserRole } from '../../../types/user';
 
 export default function ViewUserPage() {

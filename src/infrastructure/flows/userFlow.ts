@@ -1,87 +1,62 @@
 import { userService } from '../../services/userService';
-import type {
-    User,
-    UserRole,
-    CreateUserData,
-    UpdateUserData,
-    UserChangePasswordData,
-    UserSearchParams,
-} from '../../types/user';
+import type { User, UpdateUserData, UserChangePasswordData } from '../../types/user';
 
 /**
- * Resultado genérico de operaciones de usuario
+ * Resultado del flujo de obtención de perfil
  */
-export interface UserFlowResult {
+export interface GetProfileFlowResult {
+    success: boolean;
+    user?: User;
+    error?: string;
+}
+
+/**
+ * Resultado del flujo de actualización de perfil
+ */
+export interface UpdateProfileFlowResult {
+    success: boolean;
+    user?: User;
+    error?: string;
+}
+
+/**
+ * Resultado del flujo de cambio de contraseña
+ */
+export interface ChangePasswordFlowResult {
     success: boolean;
     message?: string;
     error?: string;
 }
 
 /**
- * Resultado de obtener un usuario
- */
-export interface GetUserFlowResult extends UserFlowResult {
-    user?: User;
-}
-
-/**
- * Resultado de obtener lista de usuarios
- */
-export interface GetUsersFlowResult extends UserFlowResult {
-    users?: User[];
-    total?: number;
-}
-
-/**
- * Resultado de crear un usuario
- */
-export interface CreateUserFlowResult extends UserFlowResult {
-    user?: User;
-}
-
-/**
- * Resultado de actualizar un usuario
- */
-export interface UpdateUserFlowResult extends UserFlowResult {
-    user?: User;
-}
-
-/**
- * Resultado de obtener roles
- */
-export interface GetRolesFlowResult extends UserFlowResult {
-    roles?: UserRole[];
-}
-
-/**
- * UserFlow - Flujo de gestión de usuarios
- * 
- * Encapsula toda la lógica de CRUD de usuarios, validaciones,
- * búsquedas y gestión de contraseñas.
+ * Flujo de operaciones para usuarios normales
+ *
+ * Este flujo maneja las operaciones que un usuario normal puede realizar:
+ * - Obtener su propio perfil
+ * - Actualizar su propio perfil (solo nombre y apellidos)
+ * - Cambiar su propia contraseña
+ *
+ * Todas las operaciones requieren autenticación JWT y solo afectan
+ * al usuario autenticado (no puede modificar otros usuarios).
  */
 export const userFlow = {
     /**
-     * Flujo para obtener todos los usuarios
-     * 
-     * Maneja:
-     * - Obtención de lista de usuarios
-     * - Manejo de errores
-     * - Validación de respuesta
-     * 
-     * @returns GetUsersFlowResult con la lista de usuarios
+     * Obtener perfil del usuario autenticado
+     *
+     * @returns GetProfileFlowResult con los datos del usuario
      */
-    async getAllUsers(): Promise<GetUsersFlowResult> {
+    async getProfile(): Promise<GetProfileFlowResult> {
         try {
-            const users = await userService.getAllUsers();
+            const user = await userService.getProfile();
 
             return {
                 success: true,
-                users,
-                total: users.length,
+                user,
             };
         } catch (error: any) {
-            console.error('Error en userFlow.getAllUsers:', error);
+            console.error('Error en userFlow.getProfile:', error);
 
+            // Manejar diferentes tipos de errores
             if (error.response?.status === 401) {
                 return {
                     success: false,
@@ -92,585 +67,196 @@ export const userFlow = {
             if (error.response?.status === 403) {
                 return {
                     success: false,
-                    error: 'No tienes permisos para ver la lista de usuarios.',
+                    error: 'No tienes permisos para acceder a tu perfil.',
                 };
             }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener usuarios',
-            };
-        }
-    },
-
-    /**
-     * Flujo para obtener un usuario por ID
-     * 
-     * Maneja:
-     * - Validación del ID
-     * - Obtención del usuario
-     * - Manejo de errores 404
-     * 
-     * @param id - ID del usuario
-     * @returns GetUserFlowResult con el usuario encontrado
-     */
-    async getUserById(id: number): Promise<GetUserFlowResult> {
-        try {
-            // Validar ID
-            if (!id || id <= 0) {
-                return {
-                    success: false,
-                    error: 'ID de usuario inválido',
-                };
-            }
-
-            const user = await userService.getUserById(id);
-
-            return {
-                success: true,
-                user,
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.getUserById:', error);
 
             if (error.response?.status === 404) {
                 return {
                     success: false,
-                    error: 'Usuario no encontrado',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
+                    error: 'Tu perfil no fue encontrado.',
                 };
             }
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener usuario',
+                error: 'Error al obtener tu perfil. Inténtalo nuevamente.',
             };
         }
     },
 
     /**
-     * Flujo completo para crear un usuario
-     * 
-     * Maneja:
-     * - Validación de datos requeridos
-     * - Validación de formato de email
-     * - Validación de contraseña
-     * - Creación del usuario
-     * - Manejo de errores (email duplicado, etc.)
-     * 
-     * @param data - Datos del nuevo usuario
-     * @returns CreateUserFlowResult con el usuario creado
+     * Actualizar perfil del usuario autenticado
+     *
+     * Solo permite actualizar: uName, uFLastName, uSLastName
+     * Otros campos son ignorados por el backend
+     *
+     * @param data Datos a actualizar (solo campos permitidos)
+     * @returns UpdateProfileFlowResult con el usuario actualizado
      */
-    async createUser(data: CreateUserData): Promise<CreateUserFlowResult> {
+    async updateProfile(data: Partial<UpdateUserData>): Promise<UpdateProfileFlowResult> {
         try {
-            // Validar datos requeridos
-            if (!data.uIdentification || !data.uName || !data.uFLastName) {
+            // Validación básica del frontend
+            if (!data.uName?.trim()) {
                 return {
                     success: false,
-                    error: 'Identificación, nombre y primer apellido son requeridos',
+                    error: 'El nombre es obligatorio.',
                 };
             }
 
-            if (!data.uEmail || !data.uPassword) {
+            if (!data.uFLastName?.trim()) {
                 return {
                     success: false,
-                    error: 'Email y contraseña son requeridos',
+                    error: 'El primer apellido es obligatorio.',
                 };
             }
 
-            // Validar formato de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.uEmail)) {
-                return {
-                    success: false,
-                    error: 'El formato del email no es válido',
-                };
-            }
-
-            // Validar longitud de contraseña
-            if (data.uPassword.length < 8) {
-                return {
-                    success: false,
-                    error: 'La contraseña debe tener al menos 8 caracteres',
-                };
-            }
-
-            // Validar roleId
-            if (!data.roleId || data.roleId <= 0) {
-                return {
-                    success: false,
-                    error: 'Debe seleccionar un rol válido',
-                };
-            }
-
-            // Crear usuario
-            const user = await userService.createUser(data);
+            const user = await userService.updateProfile(data);
 
             return {
                 success: true,
                 user,
-                message: 'Usuario creado exitosamente',
             };
         } catch (error: any) {
-            console.error('Error en userFlow.createUser:', error);
+            console.error('Error en userFlow.updateProfile:', error);
 
-            if (error.response?.status === 409) {
-                return {
-                    success: false,
-                    error: 'Ya existe un usuario con ese email o identificación',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para crear usuarios.',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al crear usuario',
-            };
-        }
-    },
-
-    /**
-     * Flujo completo para actualizar un usuario
-     * 
-     * Maneja:
-     * - Validación del ID
-     * - Validación de datos (si se proporcionan)
-     * - Actualización del usuario
-     * - Manejo de errores
-     * 
-     * @param id - ID del usuario a actualizar
-     * @param data - Datos a actualizar
-     * @returns UpdateUserFlowResult con el usuario actualizado
-     */
-    async updateUser(id: number, data: UpdateUserData): Promise<UpdateUserFlowResult> {
-        try {
-            // Validar ID
-            if (!id || id <= 0) {
-                return {
-                    success: false,
-                    error: 'ID de usuario inválido',
-                };
-            }
-
-            // Validar que se envíe al menos un campo
-            if (Object.keys(data).length === 0) {
-                return {
-                    success: false,
-                    error: 'Debe proporcionar al menos un campo para actualizar',
-                };
-            }
-
-            // Validar formato de email si se proporciona
-            if (data.uEmail) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(data.uEmail)) {
+            // Manejar diferentes tipos de errores
+            if (error.response?.status === 400) {
+                // Errores de validación
+                const messages = error.response.data?.message;
+                if (Array.isArray(messages)) {
                     return {
                         success: false,
-                        error: 'El formato del email no es válido',
+                        error: messages.join(', '),
                     };
                 }
+                return {
+                    success: false,
+                    error: 'Los datos proporcionados no son válidos.',
+                };
             }
 
-            // Actualizar usuario
-            const user = await userService.updateUser(id, data);
+            if (error.response?.status === 401) {
+                return {
+                    success: false,
+                    error: 'No estás autenticado. Por favor inicia sesión.',
+                };
+            }
 
-            return {
-                success: true,
-                user,
-                message: 'Usuario actualizado exitosamente',
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.updateUser:', error);
+            if (error.response?.status === 403) {
+                return {
+                    success: false,
+                    error: 'No tienes permisos para actualizar tu perfil.',
+                };
+            }
 
             if (error.response?.status === 404) {
                 return {
                     success: false,
-                    error: 'Usuario no encontrado',
+                    error: 'Tu perfil no fue encontrado.',
                 };
             }
 
             if (error.response?.status === 409) {
                 return {
                     success: false,
-                    error: 'Ya existe un usuario con ese email o identificación',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para actualizar usuarios.',
+                    error: 'Ya existe un usuario con esos datos.',
                 };
             }
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al actualizar usuario',
+                error: 'Error al actualizar tu perfil. Inténtalo nuevamente.',
             };
         }
     },
 
     /**
-     * Flujo para eliminar un usuario
-     * 
-     * Maneja:
-     * - Validación del ID
-     * - Confirmación (debe manejarse en la UI)
-     * - Eliminación del usuario
-     * - Manejo de errores
-     * 
-     * @param id - ID del usuario a eliminar
-     * @returns UserFlowResult con el resultado de la operación
+     * Cambiar contraseña del usuario autenticado
+     *
+     * @param data Datos para cambio de contraseña
+     * @returns ChangePasswordFlowResult con resultado de la operación
      */
-    async deleteUser(id: number): Promise<UserFlowResult> {
+    async changePassword(data: UserChangePasswordData): Promise<ChangePasswordFlowResult> {
         try {
-            // Validar ID
-            if (!id || id <= 0) {
+            // Validación básica del frontend
+            if (!data.currentPassword?.trim()) {
                 return {
                     success: false,
-                    error: 'ID de usuario inválido',
+                    error: 'La contraseña actual es obligatoria.',
                 };
             }
 
-            await userService.deleteUser(id);
-
-            return {
-                success: true,
-                message: 'Usuario eliminado exitosamente',
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.deleteUser:', error);
-
-            if (error.response?.status === 404) {
+            if (!data.newPassword?.trim()) {
                 return {
                     success: false,
-                    error: 'Usuario no encontrado',
+                    error: 'La nueva contraseña es obligatoria.',
                 };
             }
 
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para eliminar usuarios.',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al eliminar usuario',
-            };
-        }
-    },
-
-    /**
-     * Flujo para cambiar contraseña de un usuario
-     * 
-     * Maneja:
-     * - Validación de contraseñas
-     * - Verificación de que las contraseñas coincidan
-     * - Cambio de contraseña
-     * - Manejo de errores
-     * 
-     * @param id - ID del usuario
-     * @param data - Contraseñas (actual, nueva, confirmación)
-     * @returns UserFlowResult con el resultado
-     */
-    async changePassword(id: number, data: UserChangePasswordData): Promise<UserFlowResult> {
-        try {
-            // Validar ID
-            if (!id || id <= 0) {
-                return {
-                    success: false,
-                    error: 'ID de usuario inválido',
-                };
-            }
-
-            // Validar que todos los campos estén presentes
-            if (!data.currentPassword || !data.newPassword) {
-                return {
-                    success: false,
-                    error: 'Todos los campos son requeridos',
-                };
-            }
-
-            // Validar longitud de nueva contraseña
             if (data.newPassword.length < 8) {
                 return {
                     success: false,
-                    error: 'La nueva contraseña debe tener al menos 8 caracteres',
+                    error: 'La nueva contraseña debe tener al menos 8 caracteres.',
                 };
             }
 
-            // Validar que la nueva contraseña sea diferente a la actual
+            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.newPassword)) {
+                return {
+                    success: false,
+                    error: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número.',
+                };
+            }
+
             if (data.currentPassword === data.newPassword) {
                 return {
                     success: false,
-                    error: 'La nueva contraseña debe ser diferente a la actual',
+                    error: 'La nueva contraseña debe ser diferente a la actual.',
                 };
             }
 
-            await userService.changeUserPassword(id, data);
+            await userService.changeUserPassword(data);
 
             return {
                 success: true,
-                message: 'Contraseña cambiada exitosamente',
+                message: 'Contraseña cambiada exitosamente.',
             };
         } catch (error: any) {
             console.error('Error en userFlow.changePassword:', error);
 
-            if (error.response?.status === 401) {
+            // Manejar diferentes tipos de errores
+            if (error.response?.status === 400) {
                 return {
                     success: false,
-                    error: 'Contraseña actual incorrecta',
+                    error: 'La contraseña actual es incorrecta.',
                 };
             }
-
-            if (error.response?.status === 404) {
-                return {
-                    success: false,
-                    error: 'Usuario no encontrado',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al cambiar contraseña',
-            };
-        }
-    },
-
-    /**
-     * Flujo para buscar usuarios con filtros
-     * 
-     * Maneja:
-     * - Validación de parámetros de búsqueda
-     * - Búsqueda con filtros
-     * - Manejo de resultados vacíos
-     * - Manejo de errores
-     * 
-     * @param params - Parámetros de búsqueda
-     * @returns GetUsersFlowResult con usuarios encontrados
-     */
-    async searchUsers(params: UserSearchParams): Promise<GetUsersFlowResult> {
-        try {
-            // Validar que se proporcione al menos un parámetro
-            if (Object.keys(params).length === 0) {
-                return {
-                    success: false,
-                    error: 'Debe proporcionar al menos un parámetro de búsqueda',
-                };
-            }
-
-            const users = await userService.searchUsers(params);
-
-            if (users.length === 0) {
-                return {
-                    success: true,
-                    users: [],
-                    total: 0,
-                    message: 'No se encontraron usuarios con los criterios especificados',
-                };
-            }
-
-            return {
-                success: true,
-                users,
-                total: users.length,
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.searchUsers:', error);
 
             if (error.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al buscar usuarios',
-            };
-        }
-    },
-
-    /**
-     * Flujo para obtener todos los roles disponibles
-     * 
-     * Maneja:
-     * - Obtención de roles
-     * - Caché de roles (opcional)
-     * - Manejo de errores
-     * 
-     * @returns GetRolesFlowResult con la lista de roles
-     */
-    async getAllRoles(): Promise<GetRolesFlowResult> {
-        try {
-            const roles = await userService.getAllRoles();
-
-            return {
-                success: true,
-                roles,
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.getAllRoles:', error);
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            return {
-                success: false,
-                error: error.response?.data?.message || 'Error al obtener roles',
-            };
-        }
-    },
-
-    /**
-     * Flujo para activar/desactivar un usuario
-     * 
-     * Maneja:
-     * - Obtención del estado actual
-     * - Toggle del estado
-     * - Actualización del usuario
-     * 
-     * @param id - ID del usuario
-     * @param isActive - Nuevo estado activo/inactivo
-     * @returns UpdateUserFlowResult
-     */
-    async toggleUserStatus(id: number, isActive: boolean): Promise<UpdateUserFlowResult> {
-        try {
-            if (!id || id <= 0) {
-                return {
-                    success: false,
-                    error: 'ID de usuario inválido',
-                };
-            }
-
-            const user = await userService.updateUser(id, { uIsActive: isActive });
-
-            return {
-                success: true,
-                user,
-                message: `Usuario ${isActive ? 'activado' : 'desactivado'} exitosamente`,
-            };
-        } catch (error: any) {
-            console.error('Error en userFlow.toggleUserStatus:', error);
-
-            if (error.response?.status === 404) {
-                return {
-                    success: false,
-                    error: 'Usuario no encontrado',
                 };
             }
 
             if (error.response?.status === 403) {
                 return {
                     success: false,
-                    error: 'No tienes permisos para cambiar el estado de usuarios.',
+                    error: 'No tienes permisos para cambiar tu contraseña.',
+                };
+            }
+
+            if (error.response?.status === 422) {
+                return {
+                    success: false,
+                    error: 'La nueva contraseña debe ser diferente a la actual.',
                 };
             }
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al cambiar estado del usuario',
+                error: 'Error al cambiar tu contraseña. Inténtalo nuevamente.',
             };
         }
-    },
-
-    // ==================== Helpers ====================
-
-    /**
-     * Valida que un email tenga formato correcto
-     */
-    isValidEmail(email: string): boolean {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    },
-
-    /**
-     * Valida que una contraseña cumpla los requisitos mínimos
-     */
-    isValidPassword(password: string): { valid: boolean; error?: string } {
-        if (!password) {
-            return { valid: false, error: 'La contraseña es requerida' };
-        }
-
-        if (password.length < 6) {
-            return { valid: false, error: 'La contraseña debe tener al menos 6 caracteres' };
-        }
-
-
-        return { valid: true };
-    },
-
-    /**
-     * Formatea el nombre completo del usuario
-     */
-    getFullName(user: User): string {
-        const parts = [user.uName, user.uFLastName];
-        if (user.uSLastName) {
-            parts.push(user.uSLastName);
-        }
-        return parts.join(' ');
-    },
-
-    /**
-     * Obtiene las iniciales del usuario
-     */
-    getInitials(user: User): string {
-        const firstInitial = user.uName.charAt(0).toUpperCase();
-        const lastInitial = user.uFLastName.charAt(0).toUpperCase();
-        return `${firstInitial}${lastInitial}`;
-    },
-
-    /**
-     * Verifica si un usuario está activo
-     */
-    isUserActive(user: User): boolean {
-        return user.uIsActive === true;
-    },
-
-    /**
-     * Verifica si el email del usuario está verificado
-     */
-    isEmailVerified(user: User): boolean {
-        return user.uEmailVerified === true;
     },
 };

@@ -252,6 +252,22 @@ npm run start:prod       # Electron production mode
   - Evita intentos erróneos de reconfiguración cuando 2FA ya está activo
 - ✅ Beneficios logrados: Mejor mantenibilidad, reutilización componentes, reducción complejidad
 
+**2025-10-24: Nuevo userFlow.ts creado - Flujo limpio para usuarios normales**
+- ✅ **userFlow.ts completamente reescrito** basado en especificaciones `USUARIO_NORMAL_FLUJO_FUNCIONAL.md`
+- ✅ **3 operaciones principales implementadas:**
+  - `getProfile()` - GET /users/profile con manejo completo de errores HTTP
+  - `updateProfile(data)` - PATCH /users/profile (solo nombre/apellidos) con validaciones frontend
+  - `changePassword(data)` - POST /users/change-password con validaciones de seguridad
+- ✅ **Manejo robusto de errores:** Códigos HTTP 400, 401, 403, 404, 409, 422 con mensajes específicos
+- ✅ **Validaciones del frontend:** Longitud mínima contraseña, campos requeridos, contraseñas diferentes
+- ✅ **Logging de errores:** Console.error para debugging en desarrollo
+- ✅ **Interfaces TypeScript:** GetProfileFlowResult, UpdateProfileFlowResult, ChangePasswordFlowResult
+- ✅ **Arquitectura limpia:** Separación clara entre service (HTTP) y flow (lógica de negocio)
+- ✅ **Correcciones aplicadas del diagnóstico:**
+  - 🔧 Interface `UserRole` actualizada: `name`→`rName`, `description`→`rDescription` (consistencia con backend)
+  - 💡 Validación de complejidad de contraseña agregada: requiere mayúscula, minúscula y número
+- ✅ **Build exitoso:** 0 errores TypeScript, integración perfecta con userService.ts corregido
+
 ---
 
-*Última actualización: 2025-10-23 - Build completamente funcional: errores de TwoFactorPage.tsx corregidos, compilación exitosa (0 errores TypeScript, 516.54 kB bundle)*
+*Última actualización: 2025-10-24 - Recomendaciones del diagnóstico aplicadas: interface UserRole corregida y validación de contraseña mejorada*
