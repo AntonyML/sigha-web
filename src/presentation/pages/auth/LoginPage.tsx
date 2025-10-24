@@ -42,7 +42,7 @@ export default function LoginPage() {
         return
       }
 
-      if (result.requiresTwoFactor && result.tempToken) {
+      if (result.requiresTwoFactor) {
         setRequiresTwoFactor(true)
         setError('')
         return
@@ -93,7 +93,7 @@ export default function LoginPage() {
     setRequiresTwoFactor(false)
     setTwoFactorCode('')
     setError('')
-    localStorage.removeItem('tempToken')
+    authFlow.clearLocalSession()
   }
 
   return (

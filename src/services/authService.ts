@@ -1,10 +1,5 @@
 import axios from 'axios';
-import type {
-  LoginCredentials,
-  LoginResponse,
-  AuthUser,
-} from '../types/auth';
-import type { Verify2FARequest } from '../types/twoFactor';
+import type { AuthUser, LoginResponse } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -49,12 +44,12 @@ export const authService = {
    * Login de usuario
    * Puede retornar accessToken directamente o tempToken si requiere 2FA
    */
-  login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
+  login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
 
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
 
-    // Si requiere 2FA, solo guardamos el tempToken temporalmente
+    // Si requiere 2FA, guardamos el tempToken temporalmente
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
       return response.data;
@@ -72,8 +67,11 @@ export const authService = {
   /**
    * Verifica código 2FA y completa el login
    */
-  verify2FA: async (data: Verify2FARequest): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
+  verify2FA: async (data: { tempToken: string; code: string }): Promise<LoginResponse> => {
+    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', {
+      tempToken: data.tempToken,
+      code: data.code
+    });
 
     const { accessToken, user } = response.data;
 

@@ -1,9 +1,5 @@
 import { authService } from '../../services/authService';
-import type {
-    LoginResponse,
-    AuthUser,
-} from '../../types/auth';
-import type { Verify2FARequest } from '../../types/twoFactor';
+import type { AuthUser, LoginResponse } from '../../types/auth';
 
 /**
  * Resultado del flujo de login
@@ -155,11 +151,18 @@ export const authFlow = {
             }
 
             // Verificar código 2FA
-            const request: Verify2FARequest = {
-                code: cleanCode,
-            };
+            const tempToken = authService.getTempToken();
+            if (!tempToken) {
+                return {
+                    success: false,
+                    error: 'No hay sesión de autenticación pendiente',
+                };
+            }
 
-            const response = await authService.verify2FA(request);
+            const response = await authService.verify2FA({
+                tempToken,
+                code: cleanCode
+            });
 
             if (response.accessToken && response.user) {
                 return {

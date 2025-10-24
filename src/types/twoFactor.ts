@@ -35,3 +35,8 @@ export interface Disable2FAResponse {
     success: boolean;
     message: string;
 }
+
+export interface TwoFactorVerificationRequest {
+    tempToken: string;
+    twoFactorCode: string;
+}
