@@ -238,25 +238,51 @@ export const twoFactorFlow = {
      */
     async get2FAStatus(): Promise<TwoFactorStatusFlowResult> {
         try {
-            // Por ahora simulamos el estado basado en si hay token
-            // En el futuro se puede agregar endpoint GET /auth/2fa/status
-            const isAuthenticated = localStorage.getItem('authToken');
-            
-            if (!isAuthenticated) {
+            // Try to get status from API first
+            try {
+                const response = await twoFactorService.get2FAStatus();
+                return {
+                    success: true,
+                    enabled: response.enabled,
+                    lastUsed: response.lastUsed ? new Date(response.lastUsed) : null,
+                    hasBackupCodes: response.hasBackupCodes,
+                };
+            } catch (statusError: any) {
+                // If status endpoint doesn't exist, try setup endpoint to check if 2FA is already enabled
+                if (statusError.response?.status === 404) {
+                    try {
+                        await twoFactorService.setup2FA();
+                        // If setup succeeds, 2FA is not enabled
+                        return {
+                            success: true,
+                            enabled: false,
+                            lastUsed: null,
+                            hasBackupCodes: false,
+                        };
+                    } catch (setupError: any) {
+                        // If setup fails with 400 and mentions already enabled, then 2FA is enabled
+                        if (setupError.response?.status === 400 &&
+                            setupError.response?.data?.message?.includes('ya está')) {
+                            return {
+                                success: true,
+                                enabled: true,
+                                lastUsed: null, // We don't have this info yet
+                                hasBackupCodes: true, // Assume true if enabled
+                            };
+                        }
+                        // Other setup errors mean we can't determine status
+                        return {
+                            success: false,
+                            error: 'Error al verificar estado de 2FA',
+                        };
+                    }
+                }
+                // Other status endpoint errors
                 return {
                     success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
+                    error: 'Error al obtener estado de 2FA',
                 };
             }
-
-            // Simulamos que no está habilitado por defecto
-            // Esto se puede mejorar cuando se implemente el endpoint
-            return {
-                success: true,
-                enabled: false,
-                lastUsed: null,
-                hasBackupCodes: false,
-            };
         } catch (error: any) {
             console.error('Error en twoFactorFlow.get2FAStatus:', error);
 

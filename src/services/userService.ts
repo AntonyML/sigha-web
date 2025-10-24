@@ -5,7 +5,6 @@ import type {
   CreateUserData,
   UpdateUserData,
   UserChangePasswordData,
-  UserSearchParams,
 } from '../types/user';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -51,10 +50,26 @@ export const userService = {
   },
 
   /**
-   * Actualizar usuario
+   * Actualizar usuario (solo admins)
    */
   updateUser: async (id: number, data: UpdateUserData): Promise<User> => {
-    const response = await apiClient.put<User>(`/users/${id}`, data);
+    const response = await apiClient.patch<User>(`/users/${id}`, data);
+    return response.data;
+  },
+
+  /**
+   * Actualizar perfil propio (campos limitados)
+   */
+  updateProfile: async (data: Partial<UpdateUserData>): Promise<User> => {
+    const response = await apiClient.patch<User>('/users/profile', data);
+    return response.data;
+  },
+
+  /**
+   * Obtener perfil propio
+   */
+  getProfile: async (): Promise<User> => {
+    const response = await apiClient.get<User>('/users/profile');
     return response.data;
   },
 
@@ -66,17 +81,35 @@ export const userService = {
   },
 
   /**
-   * Cambiar contraseña de usuario
+   * Cambiar contraseña propia
    */
-  changeUserPassword: async (id: number, data: UserChangePasswordData): Promise<void> => {
-    await apiClient.patch(`/users/${id}/password`, data);
+  changeUserPassword: async (data: UserChangePasswordData): Promise<void> => {
+    await apiClient.post('/users/change-password', data);
   },
 
   /**
-   * Buscar usuarios (si el endpoint existe en el backend)
+   * Buscar usuarios
    */
-  searchUsers: async (params: UserSearchParams): Promise<User[]> => {
-    const response = await apiClient.get<User[]>('/users/search', { params });
+  searchUsers: async (searchTerm: string): Promise<User[]> => {
+    const response = await apiClient.get<User[]>('/users/search', {
+      params: { term: searchTerm }
+    });
+    return response.data;
+  },
+
+  /**
+   * Obtener usuarios por rol
+   */
+  getUsersByRole: async (roleId: number): Promise<User[]> => {
+    const response = await apiClient.get<User[]>(`/users/by-role/${roleId}`);
+    return response.data;
+  },
+
+  /**
+   * Activar/Desactivar usuario (solo admins)
+   */
+  toggleUserStatus: async (id: number): Promise<User> => {
+    const response = await apiClient.patch<User>(`/users/${id}/toggle-status`);
     return response.data;
   },
 

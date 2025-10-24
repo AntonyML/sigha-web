@@ -4,6 +4,7 @@ import type {
   Enable2FARequest,
   Enable2FAResponse,
   Disable2FAResponse,
+  TwoFactorStatusResponse,
 } from '../types/twoFactor';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -44,6 +45,14 @@ apiClient.interceptors.response.use(
 );
 
 export const twoFactorService = {
+  /**
+   * Obtener estado actual de 2FA
+   */
+  get2FAStatus: async (): Promise<TwoFactorStatusResponse> => {
+    const response = await apiClient.get('/auth/2fa/status');
+    return response.data;
+  },
+
   /**
    * Configurar 2FA - genera QR code y backup codes
    */

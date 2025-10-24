@@ -636,8 +636,6 @@ export const userFlow = {
             return { valid: false, error: 'La contraseña debe tener al menos 6 caracteres' };
         }
 
-        // Puedes agregar más validaciones aquí
-        // Ejemplo: verificar mayúsculas, números, caracteres especiales, etc.
 
         return { valid: true };
     },

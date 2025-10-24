@@ -37,7 +37,7 @@ Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instr
 ## 🎯 Estado Actual
 
 **Build Status:** ✅ Compilación exitosa - 0 errores TypeScript  
-**Última Actualización:** 2025-10-23 - Errores de build corregidos  
+**Última Actualización:** 2025-10-24 - Refactoring TwoFactorPage.tsx completado (802→389 líneas)  
 **Próximo Objetivo:** Testing responsive en dispositivos reales
 
 ### Arquitectura
@@ -228,6 +228,29 @@ npm run start:prod       # Electron production mode
   - Conversión de fecha lastUsed corregida con type assertion
 - ✅ Verificación Node.js: v20.18.0 (Vite requiere 20.19+ pero compila correctamente)
 - ✅ Advertencia de chunks grandes (516 kB) identificada para futuras optimizaciones
+
+**2025-10-24: Refactoring TwoFactorPage.tsx completado**
+- ✅ Refactoring completado: TwoFactorPage.tsx reducido de 802 a 389 líneas (-413 líneas, ~51% reducción)
+- ✅ Componentes creados siguiendo principios atómicos:
+  - LoadingSpinner (átomo) - Spinner con mensaje de carga
+  - AlertMessage (molécula) - Alertas dismissibles con iconos
+  - PageHeader (molécula) - Título con botón de retorno
+  - TwoFactorStatusCard (organismo) - Estado 2FA con acciones
+  - TwoFactorInfoCard (organismo) - Información sobre 2FA
+  - QRCodeCard (organismo) - Generación QR con código secreto
+  - BackupCodesCard (organismo) - Gestión códigos de respaldo
+  - VerificationCard (organismo) - Verificación código 2FA
+  - SuccessCard (organismo) - Confirmación éxito configuración
+  - BackupCodesModal (organismo) - Modal códigos regenerados
+- ✅ Integración completada: Todos los componentes integrados en TwoFactorPage.tsx
+- ✅ Limpieza código: Estados y funciones no utilizadas eliminadas
+- ✅ Build exitoso: 0 errores TypeScript, funcionalidad preservada
+- ✅ **Fix 2FA Status Detection**: Corregido flujo que no detectaba estado real de 2FA
+  - Agregado método `get2FAStatus` al servicio 2FA
+  - Implementada lógica fallback: si endpoint status no existe, intenta setup y detecta error "ya habilitado"
+  - Ahora correctamente muestra interfaz de gestión cuando 2FA está habilitado
+  - Evita intentos erróneos de reconfiguración cuando 2FA ya está activo
+- ✅ Beneficios logrados: Mejor mantenibilidad, reutilización componentes, reducción complejidad
 
 ---
 
