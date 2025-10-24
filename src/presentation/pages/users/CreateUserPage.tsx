@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { userFlow } from '../../../infrastructure/flows/userFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
+import { roleFlow } from '../../../infrastructure/flows/roleFlow';
 import { auditService } from '../../../services/auditService';
 import type { UserRole, CreateUserData } from '../../../types/user';
 
@@ -39,7 +40,7 @@ export default function CreateUserPage() {
     }, []);
 
     const loadRoles = async () => {
-        const result = await userFlow.getAllRoles();
+        const result = await roleFlow.getAllRoles();
         if (result.success && result.roles) {
             setRoles(result.roles);
         } else {
@@ -88,11 +89,11 @@ export default function CreateUserPage() {
             roleId: formData.roleId
         };
 
-        const result = await userFlow.createUser(createData);
+        const result = await userManagementFlow.createUser(createData);
 
         if (result.success && result.user) {
             // Registrar creación de usuario en auditoría
-            const roleName = roles.find(r => r.id === formData.roleId)?.name || 'Desconocido';
+            const roleName = roles.find(r => r.id === formData.roleId)?.rName || 'Desconocido';
             await auditService.logCreate(
                 'users',
                 result.user.id,
@@ -281,7 +282,7 @@ export default function CreateUserPage() {
                                                 <option value={0}>Seleccionar rol...</option>
                                                 {roles.map(role => (
                                                     <option key={role.id} value={role.id}>
-                                                        {role.name}
+                                                        {role.rName}
                                                     </option>
                                                 ))}
                                             </select>

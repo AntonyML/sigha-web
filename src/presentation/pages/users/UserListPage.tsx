@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { userFlow } from '../../../infrastructure/flows/userFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
+import { getFullName } from '../../../utils/userUtils';
 import type { User } from '../../../types/user';
 
 export default function UserListPage() {
@@ -22,7 +23,7 @@ export default function UserListPage() {
         setError('');
 
         try {
-            const result = await userFlow.getAllUsers();
+            const result = await userManagementFlow.getAllUsers();
 
             if (result.success && result.users) {
                 setUsers(result.users);
@@ -72,12 +73,12 @@ export default function UserListPage() {
     };
 
     const handleDeleteClick = async (user: User) => {
-        const fullName = userFlow.getFullName(user);
+        const fullName = getFullName(user);
         const ok = window.confirm(`¿Estás seguro que deseas eliminar al usuario "${fullName}"?`);
         if (!ok) return;
 
         setLoading(true);
-        const result = await userFlow.deleteUser(user.id);
+        const result = await userManagementFlow.deleteUser(user.id);
 
         if (result.success) {
             // Recargar la lista de usuarios
@@ -92,13 +93,13 @@ export default function UserListPage() {
     const handleToggleStatus = async (user: User) => {
         const newStatus = !user.uIsActive;
         const action = newStatus ? 'activar' : 'desactivar';
-        const fullName = userFlow.getFullName(user);
+        const fullName = getFullName(user);
 
         const ok = window.confirm(`¿Deseas ${action} al usuario "${fullName}"?`);
         if (!ok) return;
 
         setLoading(true);
-        const result = await userFlow.toggleUserStatus(user.id, newStatus);
+        const result = await userManagementFlow.toggleUserStatus(user.id);
 
         if (result.success) {
             await loadUsers();
@@ -275,7 +276,7 @@ export default function UserListPage() {
                                                                     <i className="bi bi-person-fill text-primary"></i>
                                                                 </div>
                                                                 <div>
-                                                                    <div className="fw-medium">{userFlow.getFullName(user)}</div>
+                                                                    <div className="fw-medium">{getFullName(user)}</div>
                                                                 </div>
                                                             </div>
                                                         </td>

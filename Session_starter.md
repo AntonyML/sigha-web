@@ -8,7 +8,7 @@ Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instr
 
 **Proyecto:** ASOPOGUA - Sistema de gestión para hogar de ancianos  
 **Tipo:** React + TypeScript + Electron Desktop App  
-**Estado:** ✅ Desarrollo activo - LoginPage migrado a Tailwind CSS + shadcn/ui
+**Estado:** ✅ Desarrollo activo - Arquitectura modular implementada (Opción A)
 
 ### Stack Tecnológico
 
@@ -37,7 +37,7 @@ Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instr
 ## 🎯 Estado Actual
 
 **Build Status:** ✅ Compilación exitosa - 0 errores TypeScript  
-**Última Actualización:** 2025-10-24 - Refactoring TwoFactorPage.tsx completado (802→389 líneas)  
+**Última Actualización:** 2025-01-XX - Limpieza completa páginas usuario completada (ViewUserPage migrado)  
 **Próximo Objetivo:** Testing responsive en dispositivos reales
 
 ### Arquitectura
@@ -45,9 +45,9 @@ Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instr
 ```
 src/
 ├── types/          # Interfaces TypeScript (sincronizadas con backend)
-├── services/       # HTTP client wrappers (Axios)
+├── services/       # APIs separadas por dominio
 ├── infrastructure/
-│   ├── flows/      # Lógica de negocio (authFlow, userFlow, etc.)
+├── flows/      # Lógica de negocio separada por dominio
 │   └── storage/    # LocalStorage management
 └── presentation/
     ├── components/ # Atomic Design (atoms, molecules, organisms)
@@ -277,4 +277,27 @@ npm run start:prod       # Electron production mode
 
 ---
 
-*Última actualización: 2025-10-24 - Testing completo implementado: 21 tests unitarios + 9 E2E + Playwright configurado*
+*Última actualización: 2025-01-XX - Arquitectura modular Opción A implementada: separación completa por responsabilidades*
+
+---
+
+## 📝 Update Log
+
+**2025-01-XX | Limpieza completa de páginas usuario - Solo flows implementado**
+- ✅ **ViewUserPage.tsx actualizado**: Migrado de userFlow → userManagementFlow + roleFlow
+- ✅ **Verificación completa**: Todas las páginas usuario usan solo flows (sin servicios directos)
+- ✅ **auditService preservado**: Uso correcto en EditUserPage y CreateUserPage (módulo auditoría)
+- ✅ **Arquitectura validada**: Pages → Flows → Services (separación completa)
+- ✅ **Build exitoso**: 0 errores TypeScript, compilación limpia
+- 🎯 **Estado final**: Arquitectura modular completamente implementada y validada
+
+**2025-01-XX | Separación completa de responsabilidades - Opción A implementada**
+- ✅ **roleService.ts** + **roleFlow.ts**: Gestión de roles (getAllRoles)
+- ✅ **profileService.ts** + **profileFlow.ts**: Perfil propio + contraseña (getProfile, updateProfile, changePassword)
+- ✅ **userManagementService.ts** + **userManagementFlow.ts**: CRUD admin usuarios (7 funciones)
+- ✅ **userUtils.ts**: Utilidad getFullName() para formateo de nombres
+- ✅ **Imports actualizados**: UserListPage, EditUserPage, CreateUserPage, ViewUserPage
+- ✅ **Archivos eliminados**: userFlow.ts, userService.ts (reemplazados por módulos separados)
+- ✅ **Build exitoso**: 0 errores TypeScript, arquitectura completamente modular
+- ✅ **Alineación backend**: 1:1 con módulos NestJS (UsersModule, RolesModule, AuthModule)
+- 🎯 **Arquitectura final**: Servicios y flows separados por dominio de negocio

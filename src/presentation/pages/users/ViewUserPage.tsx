@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
+import { getFullName } from '../../../utils/userUtils';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
+import { roleFlow } from '../../../infrastructure/flows/roleFlow';
 import type { User, UserRole } from '../../../types/user';
 
 export default function ViewUserPage() {
@@ -23,8 +25,8 @@ export default function ViewUserPage() {
 
             try {
                 const [userResult, rolesResult] = await Promise.all([
-                    userFlow.getUserById(Number(id)),
-                    userFlow.getAllRoles()
+                    userManagementFlow.getUserById(Number(id)),
+                    roleFlow.getAllRoles()
                 ]);
 
                 if (userResult.success && userResult.user) {
@@ -50,12 +52,12 @@ export default function ViewUserPage() {
     const getRoleName = (roleId?: number): string => {
         if (!roleId) return 'No asignado';
         const role = roles.find(r => r.id === roleId);
-        return role ? role.name : 'No asignado';
+        return role ? role.rName : 'No asignado';
     };
 
-    const getFullName = (): string => {
+    const getUserFullName = (): string => {
         if (!user) return '';
-        return userFlow.getFullName(user);
+        return getFullName(user);
     };
 
     if (!id) {
@@ -114,7 +116,7 @@ export default function ViewUserPage() {
         );
     }
 
-    const fullName = getFullName();
+    const fullName = getUserFullName();
 
     return (
         <div className="min-vh-100 bg-light">

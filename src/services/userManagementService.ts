@@ -1,10 +1,8 @@
 import axios from 'axios';
 import type {
   User,
-  UserRole,
   CreateUserData,
-  UpdateUserData,
-  UserChangePasswordData,
+  UpdateUserData
 } from '../types/user';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -24,7 +22,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export const userService = {
+export const userManagementService = {
   /**
    * Obtener todos los usuarios
    */
@@ -58,33 +56,10 @@ export const userService = {
   },
 
   /**
-   * Actualizar perfil propio (campos limitados)
-   */
-  updateProfile: async (data: Partial<UpdateUserData>): Promise<User> => {
-    const response = await apiClient.patch<User>('/users/profile', data);
-    return response.data;
-  },
-
-  /**
-   * Obtener perfil propio
-   */
-  getProfile: async (): Promise<User> => {
-    const response = await apiClient.get<User>('/users/profile');
-    return response.data;
-  },
-
-  /**
    * Eliminar usuario
    */
   deleteUser: async (id: number): Promise<void> => {
     await apiClient.delete(`/users/${id}`);
-  },
-
-  /**
-   * Cambiar contraseña propia
-   */
-  changeUserPassword: async (data: UserChangePasswordData): Promise<void> => {
-    await apiClient.post('/users/change-password', data);
   },
 
   /**
@@ -110,14 +85,6 @@ export const userService = {
    */
   toggleUserStatus: async (id: number): Promise<User> => {
     const response = await apiClient.patch<User>(`/users/${id}/toggle-status`);
-    return response.data;
-  },
-
-  /**
-   * Obtener todos los roles (desde el módulo de roles)
-   */
-  getAllRoles: async (): Promise<UserRole[]> => {
-    const response = await apiClient.get<UserRole[]>('/roles');
     return response.data;
   },
 };

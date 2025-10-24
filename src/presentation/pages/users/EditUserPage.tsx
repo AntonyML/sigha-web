@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { userFlow } from '../../../infrastructure/flows/userFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
+import { roleFlow } from '../../../infrastructure/flows/roleFlow';
 import { auditService } from '../../../services/auditService';
+import { getFullName } from '../../../utils/userUtils';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -52,8 +54,8 @@ export default function EditUserPage() {
 
         try {
             const [userResult, rolesResult] = await Promise.all([
-                userFlow.getUserById(Number(id)),
-                userFlow.getAllRoles()
+                userManagementFlow.getUserById(Number(id)),
+                roleFlow.getAllRoles()
             ]);
 
             if (userResult.success && userResult.user) {
@@ -128,13 +130,13 @@ export default function EditUserPage() {
             return;
         }
 
-        const result = await userFlow.updateUser(Number(id), updateData);
+        const result = await userManagementFlow.updateUser(Number(id), updateData);
 
         if (result.success) {
             // Registrar cambio de rol si aplica
             if (updateData.roleId && originalUser) {
-                const oldRole = roles.find(r => r.id === originalUser.roleId)?.name || 'Desconocido';
-                const newRole = roles.find(r => r.id === updateData.roleId)?.name || 'Desconocido';
+                const oldRole = roles.find(r => r.id === originalUser.roleId)?.rName || 'Desconocido';
+                const newRole = roles.find(r => r.id === updateData.roleId)?.rName || 'Desconocido';
                 
                 await auditService.logRoleChange(
                     Number(id),
@@ -225,7 +227,7 @@ export default function EditUserPage() {
                         <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                             <div>
                                 <h1 className="h3 fw-bold mb-1">Editar Usuario</h1>
-                                <p className="text-muted mb-0">{originalUser ? userFlow.getFullName(originalUser) : `#${id}`}</p>
+                                <p className="text-muted mb-0">{originalUser ? getFullName(originalUser) : `#${id}`}</p>
                             </div>
                             <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/users')} disabled={saving}>
                                 <i className="bi bi-arrow-left"></i>
@@ -382,7 +384,7 @@ export default function EditUserPage() {
                                                 <option value={0}>Seleccionar rol...</option>
                                                 {roles.map(role => (
                                                     <option key={role.id} value={role.id}>
-                                                        {role.name}
+                                                        {role.rName}
                                                     </option>
                                                 ))}
                                             </select>
