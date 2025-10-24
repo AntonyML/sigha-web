@@ -59,7 +59,7 @@ export const twoFactorService = {
    * Configurar 2FA - genera QR code y backup codes
    */
   setup2FA: async (): Promise<Setup2FAResponse> => {
-    const response = await apiClient.post<Setup2FAResponse>('/auth/2fa/setup');
+    const response = await apiClient.post<Setup2FAResponse>('/auth/setup-2fa');
     return response.data;
   },
 
@@ -67,7 +67,7 @@ export const twoFactorService = {
    * Habilitar 2FA después de verificar el código
    */
   enable2FA: async (data: Enable2FARequest): Promise<Enable2FAResponse> => {
-    const response = await apiClient.post<Enable2FAResponse>('/auth/2fa/enable', data);
+    const response = await apiClient.post<Enable2FAResponse>('/auth/enable-2fa', data);
     return response.data;
   },
 
@@ -75,7 +75,7 @@ export const twoFactorService = {
    * Verificar código 2FA durante login
    */
   verify2FA: async (data: Verify2FARequest): Promise<Verify2FAResponse> => {
-    const response = await apiClient.post<Verify2FAResponse>('/auth/2fa/verify', data);
+    const response = await apiClient.post<Verify2FAResponse>('/auth/verify-2fa', data);
     return response.data;
   },
 
@@ -83,7 +83,7 @@ export const twoFactorService = {
    * Deshabilitar 2FA
    */
   disable2FA: async (data: { code: string }): Promise<Disable2FAResponse> => {
-    const response = await apiClient.post<Disable2FAResponse>('/auth/2fa/disable', data);
+    const response = await apiClient.post<Disable2FAResponse>('/auth/disable-2fa', data);
     return response.data;
   },
 

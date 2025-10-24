@@ -15,7 +15,7 @@ import {
 } from '../../components/organisms';
 
 // Tipo para el estado del flujo de configuración
-type SetupStep = 'status' | 'generate' | 'verify' | 'success';
+type SetupStep = 'status' | 'setup' | 'verify' | 'success';
 
 export default function TwoFactorPage() {
     const navigate = useNavigate();
@@ -36,8 +36,8 @@ export default function TwoFactorPage() {
     const [qrCode, setQrCode] = useState('');
     const [secret, setSecret] = useState('');
     const [backupCodes, setBackupCodes] = useState<string[]>([]);
-    const [instructions, setInstructions] = useState<string[]>([]);
     const [verificationCode, setVerificationCode] = useState('');
+    const [disableCode, setDisableCode] = useState('');
 
     // Estados UI
     const [showBackupCodes, setShowBackupCodes] = useState(false);
@@ -48,18 +48,18 @@ export default function TwoFactorPage() {
     }, []);
 
     /**
-     * Cargar el estado actual de 2FA
+     * Cargar el estado actual de 2FA usando el flow
      */
     const loadStatus = async () => {
         setLoading(true);
         setError('');
 
-        const result = await twoFactorFlow.get2FAStatus();
+        const result = await twoFactorFlow.getStatus();
 
         if (result.success) {
-            setIs2FAEnabled(result.enabled || false);
+            setIs2FAEnabled(result.enabled);
             setLastUsed(result.lastUsed || null);
-            setHasBackupCodes(result.hasBackupCodes || false);
+            setHasBackupCodes(result.hasBackupCodes);
             setCurrentStep('status');
         } else {
             setError(result.error || 'Error al cargar el estado de 2FA');
@@ -69,44 +69,42 @@ export default function TwoFactorPage() {
     };
 
     /**
-     * Iniciar el proceso de configuración de 2FA
+     * Iniciar el proceso de configuración de 2FA usando el flow
      */
     const handleStartSetup = async () => {
         setProcessing(true);
         setError('');
         setSuccessMessage('');
 
-        const result = await twoFactorFlow.generate2FA();
+        const result = await twoFactorFlow.setup();
 
         if (result.success) {
             setQrCode(result.qrCode || '');
             setSecret(result.secret || '');
             setBackupCodes(result.backupCodes || []);
-            setInstructions(result.instructions || []);
-            setCurrentStep('generate');
+            setCurrentStep('setup');
         } else {
-            setError(result.error || 'Error al generar configuración de 2FA');
+            setError(result.error || 'Error al configurar 2FA');
         }
 
         setProcessing(false);
     };
 
     /**
-     * Verificar el código y habilitar 2FA
+     * Verificar el código y habilitar 2FA usando el flow
      */
     const handleVerifyAndEnable = async () => {
-        if (verificationCode.length !== 6) {
-            setError('El código debe tener 6 dígitos');
-            return;
-        }
-
         setProcessing(true);
         setError('');
 
-        const result = await twoFactorFlow.enable2FA(verificationCode);
+        const result = await twoFactorFlow.enable({ code: verificationCode });
 
         if (result.success) {
             setSuccessMessage(result.message || '¡2FA habilitado exitosamente!');
+            // Actualizar códigos de respaldo si se retornaron (por ejemplo, si se usó uno)
+            if (result.backupCodes) {
+                setBackupCodes(result.backupCodes);
+            }
             setCurrentStep('success');
             // Recargar estado después de 2 segundos
             setTimeout(() => {
@@ -121,23 +119,22 @@ export default function TwoFactorPage() {
     };
 
     /**
-     * Deshabilitar 2FA
+     * Deshabilitar 2FA usando el flow
      */
     const handleDisable2FA = async () => {
-        const confirmed = window.confirm(
-            '¿Estás seguro de que deseas deshabilitar la autenticación de dos factores?\n\n' +
-            'Esto reducirá la seguridad de tu cuenta.'
-        );
-
-        if (!confirmed) return;
+        if (!disableCode) {
+            setError('Ingresa el código de verificación para deshabilitar 2FA');
+            return;
+        }
 
         setProcessing(true);
         setError('');
 
-        const result = await twoFactorFlow.disable2FA();
+        const result = await twoFactorFlow.disable(disableCode);
 
         if (result.success) {
             setSuccessMessage(result.message || '2FA deshabilitado correctamente');
+            setDisableCode('');
             await loadStatus();
         } else {
             setError(result.error || 'Error al deshabilitar 2FA');
@@ -147,33 +144,11 @@ export default function TwoFactorPage() {
     };
 
     /**
-     * Regenerar códigos de respaldo
+     * Placeholder para regenerar códigos de respaldo (no implementado en flow)
      */
     const handleRegenerateBackupCodes = async () => {
-        const confirmed = window.confirm(
-            '¿Deseas generar nuevos códigos de respaldo?\n\n' +
-            'Los códigos anteriores dejarán de funcionar.'
-        );
-
-        if (!confirmed) return;
-
-        setProcessing(true);
-        setError('');
-
-        const result = await twoFactorFlow.regenerateBackupCodes();
-
-        if (result.success) {
-            setBackupCodes(result.backupCodes || []);
-            setShowBackupCodes(true);
-            setSuccessMessage('Códigos de respaldo regenerados exitosamente');
-        } else {
-            setError(result.error || 'Error al regenerar códigos de respaldo');
-        }
-
-        setProcessing(false);
+        setError('Funcionalidad de regenerar códigos de respaldo no disponible');
     };
-
-
 
     /**
      * Cancelar configuración
@@ -184,6 +159,7 @@ export default function TwoFactorPage() {
         setSecret('');
         setBackupCodes([]);
         setVerificationCode('');
+        setDisableCode('');
         setError('');
         setSuccessMessage('');
     };
@@ -222,21 +198,27 @@ export default function TwoFactorPage() {
                                     <i className="bi bi-check-circle me-2"></i>
                                     2FA está habilitado en tu cuenta.
                                 </div>
+                                <div className="mb-3">
+                                    <label htmlFor="disableCode" className="form-label">
+                                        Código de verificación para deshabilitar
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        id="disableCode"
+                                        value={disableCode}
+                                        onChange={(e) => setDisableCode(e.target.value)}
+                                        placeholder="Ingresa código de 6 dígitos"
+                                        disabled={processing}
+                                    />
+                                </div>
                                 <button
                                     className="btn btn-danger me-2"
                                     onClick={handleDisable2FA}
-                                    disabled={processing}
+                                    disabled={processing || !disableCode}
                                 >
                                     <i className="bi bi-x-circle me-2"></i>
                                     Deshabilitar 2FA
-                                </button>
-                                <button
-                                    className="btn btn-outline-secondary"
-                                    onClick={handleRegenerateBackupCodes}
-                                    disabled={processing || !hasBackupCodes}
-                                >
-                                    <i className="bi bi-key me-2"></i>
-                                    Regenerar códigos de respaldo
                                 </button>
                             </>
                         ) : (
@@ -258,8 +240,6 @@ export default function TwoFactorPage() {
                     </div>
                 </div>
             )}
-
-            {/* ...existing code... */}
 
             {/* Alertas */}
             {error && (
@@ -290,21 +270,19 @@ export default function TwoFactorPage() {
                             onDisable2FA={handleDisable2FA}
                             onRegenerateBackupCodes={handleRegenerateBackupCodes}
                             onStartSetup={handleStartSetup}
-                        />
-
-                        <TwoFactorInfoCard />
+                        />                        <TwoFactorInfoCard />
                     </div>
                 </div>
             )}
 
-            {/* Paso 2: Generar y escanear QR */}
-            {currentStep === 'generate' && (
+            {/* Paso de configuración: Generar y escanear QR */}
+            {currentStep === 'setup' && (
                 <div className="row">
                     <div className="col-lg-8 mx-auto">
                         <QRCodeCard
                             qrCode={qrCode}
                             secret={secret}
-                            instructions={instructions}
+                            instructions={[]}
                             onCancel={handleCancelSetup}
                             onContinue={() => setCurrentStep('verify')}
                             processing={processing}
@@ -318,7 +296,7 @@ export default function TwoFactorPage() {
                 </div>
             )}
 
-            {/* Paso 3: Verificar código */}
+            {/* Paso de verificación: Verificar código */}
             {currentStep === 'verify' && (
                 <div className="row">
                     <div className="col-lg-6 mx-auto">
@@ -326,14 +304,14 @@ export default function TwoFactorPage() {
                             verificationCode={verificationCode}
                             onCodeChange={setVerificationCode}
                             onVerify={handleVerifyAndEnable}
-                            onBack={() => setCurrentStep('generate')}
+                            onBack={() => setCurrentStep('setup')}
                             processing={processing}
                         />
                     </div>
                 </div>
             )}
 
-            {/* Paso 4: Éxito */}
+            {/* Paso de éxito */}
             {currentStep === 'success' && (
                 <div className="row">
                     <div className="col-lg-6 mx-auto">
@@ -344,7 +322,7 @@ export default function TwoFactorPage() {
                 </div>
             )}
 
-            {/* Modal para mostrar códigos de respaldo regenerados */}
+            {/* Modal para mostrar códigos de respaldo */}
             <BackupCodesModal
                 backupCodes={backupCodes}
                 isOpen={showBackupCodes}

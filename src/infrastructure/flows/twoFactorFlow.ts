@@ -25,7 +25,7 @@ export interface Get2FAStatusFlowResult {
  */
 export interface Setup2FAFlowResult {
     success: boolean;
-    qrCodeUrl?: string;
+    qrCode?: string;
     secret?: string;
     backupCodes?: string[];
     error?: string;
@@ -37,6 +37,7 @@ export interface Setup2FAFlowResult {
 export interface Enable2FAFlowResult {
     success: boolean;
     message?: string;
+    backupCodes?: string[];
     error?: string;
 }
 
@@ -103,7 +104,7 @@ export const twoFactorFlow = {
             
             return {
                 success: true,
-                qrCodeUrl: setup.qrCodeUrl,
+                qrCode: setup.qrCode,
                 secret: setup.secret,
                 backupCodes: setup.backupCodes,
             };
@@ -135,6 +136,7 @@ export const twoFactorFlow = {
             return {
                 success: true,
                 message: result.message,
+                backupCodes: result.backupCodes,
             };
         } catch (error: any) {
             console.error('Error enabling 2FA:', error);

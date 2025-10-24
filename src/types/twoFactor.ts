@@ -1,7 +1,7 @@
 // ==================== Two-Factor Authentication Types ====================
 
 export interface Setup2FAResponse {
-    qrCodeUrl: string;
+    qrCode: string;
     backupCodes: string[];
     secret: string;
 }
@@ -14,6 +14,7 @@ export interface Enable2FARequest {
 export interface Enable2FAResponse {
     success: boolean;
     message: string;
+    backupCodes: string[];
 }
 
 export interface Verify2FARequest {
