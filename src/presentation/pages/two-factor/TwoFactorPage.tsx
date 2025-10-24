@@ -154,7 +154,7 @@ export default function TwoFactorPage() {
         if (result.success) {
             setBackupCodes(result.backupCodes || []);
             setShowBackupCodes(true);
-            setSuccessMessage(result.message || 'Códigos de respaldo regenerados');
+            setSuccessMessage('Códigos de respaldo regenerados exitosamente');
         } else {
             setError(result.error || 'Error al regenerar códigos de respaldo');
         }
@@ -238,6 +238,56 @@ export default function TwoFactorPage() {
                 </button>
             </div>
 
+            {/* Estado actual de 2FA */}
+            {currentStep === 'status' && (
+                <div className="card mb-4">
+                    <div className="card-body">
+                        <h5 className="card-title mb-3">Estado actual</h5>
+                        {is2FAEnabled ? (
+                            <>
+                                <div className="alert alert-success d-flex align-items-center" role="alert">
+                                    <i className="bi bi-check-circle me-2"></i>
+                                    2FA está habilitado en tu cuenta.
+                                </div>
+                                <button
+                                    className="btn btn-danger me-2"
+                                    onClick={handleDisable2FA}
+                                    disabled={processing}
+                                >
+                                    <i className="bi bi-x-circle me-2"></i>
+                                    Deshabilitar 2FA
+                                </button>
+                                <button
+                                    className="btn btn-outline-secondary"
+                                    onClick={handleRegenerateBackupCodes}
+                                    disabled={processing || !hasBackupCodes}
+                                >
+                                    <i className="bi bi-key me-2"></i>
+                                    Regenerar códigos de respaldo
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="alert alert-warning d-flex align-items-center" role="alert">
+                                    <i className="bi bi-exclamation-triangle me-2"></i>
+                                    2FA no está habilitado en tu cuenta.
+                                </div>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={handleStartSetup}
+                                    disabled={processing}
+                                >
+                                    <i className="bi bi-shield-plus me-2"></i>
+                                    Habilitar 2FA
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ...existing code... */}
+
             {/* Alertas */}
             {error && (
                 <div className="alert alert-danger alert-dismissible fade show" role="alert">
@@ -290,7 +340,7 @@ export default function TwoFactorPage() {
                                                 <small className="text-muted d-block">Último uso</small>
                                                 <strong>
                                                     {lastUsed
-                                                        ? new Date(lastUsed).toLocaleString()
+                                                        ? (lastUsed as Date).toLocaleString()
                                                         : 'Nunca usado'
                                                     }
                                                 </strong>
