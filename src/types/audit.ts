@@ -83,9 +83,35 @@ export interface LogAuditResponse {
 }
 
 /**
+ * Reporte de auditoría - Sincronizado con tabla audit_report del backend
+ * Estructura ACTUALIZADA que mapea directamente con la tabla audit_report
+ */
+export interface AuditReport {
+  id: number;
+  ar_audit_number?: string;
+  ar_type: string;                    // login_attempts, role_changes, older_adult_updates, etc.
+  ar_entity_name: string;             // users, older_adults, medications, etc.
+  ar_entity_id?: number;
+  ar_action: string;                  // login, logout, create, update, delete, view, export
+  ar_old_value?: string;              // JSON string del valor anterior
+  ar_new_value?: string;              // JSON string del valor nuevo
+  ar_observations?: string;           // Descripción del cambio
+  ar_start_date?: string;
+  ar_end_date?: string;
+  ar_duration_seconds?: number;
+  ar_ip_address?: string;
+  ar_user_agent?: string;
+  create_at: string;
+  id_generator?: number;
+  // Campos adicionales del usuario (si el backend los incluye con JOIN)
+  user_name?: string;
+  user_email?: string;
+}
+
+/**
  * Registro de auditoría digital (Digital Record) - LEGACY
  * Mapea a tabla digital_record en DB
- * @deprecated Usar LogAuditRequest para nuevos registros
+ * @deprecated Usar AuditReport para consultas y LogAuditRequest para registros nuevos
  */
 export interface DigitalRecord {
   id: number;
@@ -112,8 +138,23 @@ export interface CreateDigitalRecordDto {
 }
 
 /**
- * Parámetros de búsqueda de registros digitales
- * Sincronizado con SearchDigitalRecordsDto del backend
+ * Parámetros de búsqueda de reportes de auditoría
+ * Sincronizado con backend para tabla audit_report
+ */
+export interface SearchAuditReportsDto {
+  type?: string;           // ar_type: login_attempts, role_changes, etc.
+  entityName?: string;     // ar_entity_name: users, older_adults, etc.
+  entityId?: number;       // ar_entity_id
+  action?: string;         // ar_action: login, logout, create, update, delete
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Parámetros de búsqueda de registros digitales - LEGACY
+ * @deprecated Usar SearchAuditReportsDto
  */
 export interface SearchDigitalRecordsDto {
   userId?: number;
@@ -127,8 +168,20 @@ export interface SearchDigitalRecordsDto {
 }
 
 /**
- * Respuesta paginada de registros digitales
- * Sincronizado con PaginatedDigitalRecordsResponse del backend
+ * Respuesta paginada de reportes de auditoría
+ * Sincronizado con backend para tabla audit_report
+ */
+export interface PaginatedAuditReportsResponse {
+  records: AuditReport[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
+ * Respuesta paginada de registros digitales - LEGACY
+ * @deprecated Usar PaginatedAuditReportsResponse
  */
 export interface PaginatedDigitalRecordsResponse {
   records: DigitalRecord[];

@@ -155,6 +155,14 @@ npm run start:prod       # Electron production mode
 - ✅ Flujos de autenticación refactorizados (authFlow, twoFactorFlow, userFlow)
 - ✅ Páginas CRUD actualizadas con mejores prácticas UX (orden lógico campos)
 
+**2025-10-23:**
+- ✅ Sistema de auditoría actualizado a nueva estructura audit_report
+- ✅ Tipos actualizados: AuditReport interface (ar_type, ar_action, ar_entity_name, ar_observations, ar_old_value, ar_new_value, ar_ip_address, ar_user_agent)
+- ✅ Servicios actualizados: searchAuditReports(), getAuditReportById(), getAuditReportsByEntity()
+- ✅ AuditListPage renovado: filtros por tipo/acción/entidad, tabla expandible con old_value/new_value, paginación
+- ✅ ViewAuditPage renovado: cards de información general/técnica, comparación de valores, duración, IP, user agent
+- ✅ Build exitoso: 0 errores TypeScript, 523.86 kB bundle
+
 ---
 
 ## 🚀 Próximas Tareas
@@ -165,7 +173,12 @@ npm run start:prod       # Electron production mode
 - [ ] Documentar patrones de diseño (UX_PATTERNS.md)
 - [ ] Integración completa login → 2FA → dashboard con backend
 - [ ] Migrar páginas restantes a Tailwind CSS (dashboard, users, etc.)
-- [ ] Testing de integración módulo Auditoría con backend NestJS (endpoints /audit/digital-records)
+
+### Auditoría
+- [ ] Actualizar AuditDashboardPage con nuevas estadísticas por ar_type
+- [ ] Testing de endpoints GET /audits/reports con backend NestJS
+- [ ] Implementar gráficos de auditoría por tipo (login_attempts, role_changes, etc.)
+- [ ] Agregar filtros avanzados (rango de duración, IP específica, user agent)
 
 ---
 
@@ -182,6 +195,10 @@ npm run start:prod       # Electron production mode
 - `Session_starter.md` - Memoria del proyecto (este archivo)
 - `ADAPTACION_AUDITORIA_RESUMEN.md` - Plan sincronización backend NestJS
 - `src/presentation/pages/auth/LoginPageNew.tsx` - Login mobile-first
+- `src/presentation/pages/audit/AuditListPage.tsx` - Lista auditoría con nueva estructura
+- `src/presentation/pages/audit/ViewAuditPage.tsx` - Vista detalle auditoría
+- `src/types/audit.ts` - Interfaces AuditReport, SearchAuditReportsDto
+- `src/services/auditService.ts` - Cliente HTTP con métodos nuevos
 - `electron/main.ts` - Configuración Electron
 - `scripts/watch-electron.js` - Workflow TypeScript → .cjs
 - `tailwind.config.js` - Configuración Tailwind (breakpoints, tema)
@@ -191,8 +208,11 @@ npm run start:prod       # Electron production mode
 - Tokens en localStorage (authToken, tempToken, user)
 - 2FA requiere QR code con authenticator app
 - Electron requiere archivos .cjs (CommonJS) no .js
-- **Auditoría backend:** Endpoints `/audit/digital-records/*`, `/audit/statistics`, response key `records`, fields sin prefijo `a`, actions lowercase, tableName string directo
+- **Auditoría backend:** Endpoints `/audits/reports`, `/audits/reports/:id`, `/audits/reports/entity/:entityName/:entityId`
+- **Estructura audit_report:** ar_type, ar_action, ar_entity_name, ar_entity_id, ar_old_value (JSON string), ar_new_value (JSON string), ar_observations, ar_ip_address, ar_user_agent, ar_duration_seconds, create_at, id_generator
+- **Tipos audit:** LOGIN_ATTEMPTS, ROLE_CHANGES, OLDER_ADULT_UPDATES, SYSTEM_ACCESS, CLINICAL_RECORD_CHANGES, PASSWORD_RESETS, NOTIFICATIONS, GENERAL_ACTIONS, OTHER
+- **Acciones audit:** CREATE, UPDATE, DELETE, VIEW, LOGIN, LOGOUT, EXPORT, OTHER
 
 ---
 
-*Última actualización: 2025-10-23 - Módulo auditoría 100% sincronizado con backend NestJS (core + UI, 0 errores TypeScript)*
+*Última actualización: 2025-10-23 - Sistema de auditoría completamente actualizado a nueva estructura audit_report con vistas renovadas (0 errores TypeScript, 523.86 kB bundle)*

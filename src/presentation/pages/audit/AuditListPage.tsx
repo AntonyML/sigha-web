@@ -1,44 +1,51 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/auditFlow';
-import type { DigitalRecord, AuditAction, SearchDigitalRecordsDto } from '../../../types/audit';
+import { auditService } from '../../../services/auditService';
+import type { AuditReport, SearchAuditReportsDto } from '../../../types/audit';
+import { AuditReportType, AuditAction } from '../../../types/audit';
 
 export default function AuditListPage() {
-    const [records, setRecords] = useState<DigitalRecord[]>([]);
+    const [records, setRecords] = useState<AuditReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterAction, setFilterAction] = useState<AuditAction | 'ALL'>('ALL');
-    const [filterTable, setFilterTable] = useState<string | 'ALL'>('ALL');
+    const [filterType, setFilterType] = useState<string>('ALL');
+    const [filterAction, setFilterAction] = useState<string>('ALL');
+    const [filterEntity, setFilterEntity] = useState<string>('ALL');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalRecords, setTotalRecords] = useState(0);
     const [pageSize, setPageSize] = useState(25);
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const navigate = useNavigate();
 
     // Cargar registros al montar el componente o cuando cambien los filtros
     useEffect(() => {
         loadRecords();
-    }, [currentPage, pageSize, filterAction, filterTable, startDate, endDate]);
+    }, [currentPage, pageSize, filterType, filterAction, filterEntity, startDate, endDate]);
 
     const loadRecords = async () => {
         setLoading(true);
         setError('');
 
         try {
-            const params: SearchDigitalRecordsDto = {
+            const params: SearchAuditReportsDto = {
                 page: currentPage,
                 limit: pageSize,
             };
+
+            if (filterType !== 'ALL') {
+                params.type = filterType;
+            }
 
             if (filterAction !== 'ALL') {
                 params.action = filterAction;
             }
 
-            if (filterTable !== 'ALL') {
-                params.tableName = filterTable;
+            if (filterEntity !== 'ALL') {
+                params.entityName = filterEntity;
             }
 
             if (startDate) {
@@ -49,15 +56,10 @@ export default function AuditListPage() {
                 params.endDate = endDate;
             }
 
-            const result = await auditFlow.searchDigitalRecords(params);
-
-            if (result.success && result.records) {
-                setRecords(result.records);
-                setTotalRecords(result.total || 0);
-                setTotalPages(result.totalPages || 1);
-            } else {
-                setError(result.error || 'Error al cargar registros de auditoría');
-            }
+            const result = await auditService.searchAuditReports(params);
+            setRecords(result.records);
+            setTotalRecords(result.total || 0);
+            setTotalPages(result.totalPages || 1);
         } catch (err) {
             console.error('Error cargando auditorías:', err);
             setError('Error inesperado al cargar auditorías');
@@ -72,38 +74,133 @@ export default function AuditListPage() {
 
         const term = searchTerm.toLowerCase();
         return (
-            (record.description || '').toLowerCase().includes(term) ||
-            record.userName.toLowerCase().includes(term) ||
-            record.action.toLowerCase().includes(term) ||
-            (record.tableName || '').toLowerCase().includes(term)
+            (record.ar_observations || '').toLowerCase().includes(term) ||
+            (record.user_name || '').toLowerCase().includes(term) ||
+            (record.user_email || '').toLowerCase().includes(term) ||
+            record.ar_action.toLowerCase().includes(term) ||
+            record.ar_entity_name.toLowerCase().includes(term) ||
+            (record.ar_type || '').toLowerCase().includes(term)
         );
     });
 
-    const handleView = (record: DigitalRecord) => {
+    const toggleRowExpansion = (recordId: number) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(recordId)) {
+                newSet.delete(recordId);
+            } else {
+                newSet.add(recordId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleView = (record: AuditReport) => {
         navigate(`/audits/view/${record.id}`);
     };
 
-    const handleExport = async () => {
-        const params: SearchDigitalRecordsDto = {
-            action: filterAction !== 'ALL' ? filterAction : undefined,
-            tableName: filterTable !== 'ALL' ? filterTable : undefined,
-            startDate: startDate || undefined,
-            endDate: endDate || undefined,
+    const parseJsonValue = (jsonString?: string): any => {
+        if (!jsonString) return null;
+        try {
+            return JSON.parse(jsonString);
+        } catch {
+            return jsonString;
+        }
+    };
+
+    const formatDateTime = (dateString: string) => {
+        return new Date(dateString).toLocaleString('es-CR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    };
+
+    const getTypeLabel = (type: string): string => {
+        const labels: Record<string, string> = {
+            [AuditReportType.LOGIN_ATTEMPTS]: 'Intentos de Acceso',
+            [AuditReportType.ROLE_CHANGES]: 'Cambios de Rol',
+            [AuditReportType.OLDER_ADULT_UPDATES]: 'Actualizaciones Adultos Mayores',
+            [AuditReportType.SYSTEM_ACCESS]: 'Acceso al Sistema',
+            [AuditReportType.CLINICAL_RECORD_CHANGES]: 'Cambios Registros Clínicos',
+            [AuditReportType.PASSWORD_RESETS]: 'Restablecimientos Contraseña',
+            [AuditReportType.NOTIFICATIONS]: 'Notificaciones',
+            [AuditReportType.GENERAL_ACTIONS]: 'Acciones Generales',
+            [AuditReportType.OTHER]: 'Otros'
         };
+        return labels[type] || type;
+    };
 
-        const result = await auditFlow.exportDigitalRecords(params, 'auditorias.csv');
+    const getActionLabel = (action: string): string => {
+        const labels: Record<string, string> = {
+            [AuditAction.CREATE]: 'Crear',
+            [AuditAction.UPDATE]: 'Actualizar',
+            [AuditAction.DELETE]: 'Eliminar',
+            [AuditAction.VIEW]: 'Ver',
+            [AuditAction.LOGIN]: 'Login',
+            [AuditAction.LOGOUT]: 'Logout',
+            [AuditAction.EXPORT]: 'Exportar',
+            [AuditAction.OTHER]: 'Otro'
+        };
+        return labels[action] || action;
+    };
 
-        if (result.success) {
-            alert(result.message || 'Auditorías exportadas exitosamente');
-        } else {
-            alert(result.error || 'Error al exportar auditorías');
+    const handleExport = async () => {
+        try {
+            const params: SearchAuditReportsDto = {
+                type: filterType !== 'ALL' ? filterType : undefined,
+                action: filterAction !== 'ALL' ? filterAction : undefined,
+                entityName: filterEntity !== 'ALL' ? filterEntity : undefined,
+                startDate: startDate || undefined,
+                endDate: endDate || undefined,
+                limit: 10000
+            };
+
+            const result = await auditService.searchAuditReports(params);
+            
+            // Generar CSV
+            const headers = ['ID', 'Tipo', 'Acción', 'Entidad', 'ID Entidad', 'Usuario', 'Email', 'Observaciones', 'Fecha', 'IP'];
+            const rows = result.records.map(record => [
+                record.id,
+                getTypeLabel(record.ar_type),
+                getActionLabel(record.ar_action),
+                record.ar_entity_name,
+                record.ar_entity_id || 'N/A',
+                record.user_name || 'N/A',
+                record.user_email || 'N/A',
+                record.ar_observations || 'N/A',
+                formatDateTime(record.create_at),
+                record.ar_ip_address || 'N/A'
+            ]);
+            
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `auditorias_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            alert('Auditorías exportadas exitosamente');
+        } catch (err) {
+            console.error('Error exportando auditorías:', err);
+            alert('Error al exportar auditorías');
         }
     };
 
     const handleClearFilters = () => {
         setSearchTerm('');
         setFilterAction('ALL');
-        setFilterTable('ALL');
+        setFilterType('ALL');
+        setFilterEntity('ALL');
         setStartDate('');
         setEndDate('');
         setCurrentPage(1);
@@ -211,11 +308,32 @@ export default function AuditListPage() {
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Buscar por descripción, usuario..."
+                                    placeholder="Buscar por observaciones, usuario, email..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
+                        </div>
+
+                        {/* Filtro por Tipo */}
+                        <div className="col-md-2">
+                            <label className="form-label">Tipo</label>
+                            <select
+                                className="form-select"
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value)}
+                            >
+                                <option value="ALL">Todos</option>
+                                <option value={AuditReportType.LOGIN_ATTEMPTS}>Intentos de Acceso</option>
+                                <option value={AuditReportType.ROLE_CHANGES}>Cambios de Rol</option>
+                                <option value={AuditReportType.OLDER_ADULT_UPDATES}>Adultos Mayores</option>
+                                <option value={AuditReportType.CLINICAL_RECORD_CHANGES}>Registros Clínicos</option>
+                                <option value={AuditReportType.SYSTEM_ACCESS}>Acceso Sistema</option>
+                                <option value={AuditReportType.PASSWORD_RESETS}>Contraseñas</option>
+                                <option value={AuditReportType.NOTIFICATIONS}>Notificaciones</option>
+                                <option value={AuditReportType.GENERAL_ACTIONS}>Acciones Generales</option>
+                                <option value={AuditReportType.OTHER}>Otros</option>
+                            </select>
                         </div>
 
                         {/* Filtro por Acción */}
@@ -224,34 +342,36 @@ export default function AuditListPage() {
                             <select
                                 className="form-select"
                                 value={filterAction}
-                                onChange={(e) => setFilterAction(e.target.value as AuditAction | 'ALL')}
+                                onChange={(e) => setFilterAction(e.target.value)}
                             >
                                 <option value="ALL">Todas</option>
-                                <option value="login">Inicio sesión</option>
-                                <option value="logout">Cierre sesión</option>
-                                <option value="create">Creación</option>
-                                <option value="update">Actualización</option>
-                                <option value="delete">Eliminación</option>
-                                <option value="view">Visualización</option>
-                                <option value="export">Exportación</option>
-                                <option value="other">Otra</option>
+                                <option value={AuditAction.LOGIN}>Login</option>
+                                <option value={AuditAction.LOGOUT}>Logout</option>
+                                <option value={AuditAction.CREATE}>Crear</option>
+                                <option value={AuditAction.UPDATE}>Actualizar</option>
+                                <option value={AuditAction.DELETE}>Eliminar</option>
+                                <option value={AuditAction.VIEW}>Ver</option>
+                                <option value={AuditAction.EXPORT}>Exportar</option>
+                                <option value={AuditAction.OTHER}>Otro</option>
                             </select>
                         </div>
 
-                        {/* Filtro por Tabla */}
+                        {/* Filtro por Entidad */}
                         <div className="col-md-2">
-                            <label className="form-label">Tabla</label>
+                            <label className="form-label">Entidad</label>
                             <select
                                 className="form-select"
-                                value={filterTable}
-                                onChange={(e) => setFilterTable(e.target.value)}
+                                value={filterEntity}
+                                onChange={(e) => setFilterEntity(e.target.value)}
                             >
                                 <option value="ALL">Todas</option>
                                 <option value="users">Usuarios</option>
                                 <option value="roles">Roles</option>
-                                <option value="older_adult">Adultos Mayores</option>
+                                <option value="older_adults">Adultos Mayores</option>
                                 <option value="older_adult_family">Familiares</option>
                                 <option value="programs">Programas</option>
+                                <option value="medications">Medicamentos</option>
+                                <option value="clinical_records">Registros Clínicos</option>
                                 <option value="clinical_history">Historia Clínica</option>
                                 <option value="entrances_exits">Entradas/Salidas</option>
                                 <option value="specialized_area">Áreas Especializadas</option>
@@ -330,69 +450,144 @@ export default function AuditListPage() {
                             <table className="table table-hover table-striped mb-0">
                                 <thead className="table-light">
                                     <tr>
-                                        <th style={{ width: '80px' }}>ID</th>
-                                        <th style={{ width: '150px' }}>Fecha</th>
-                                        <th style={{ width: '120px' }}>Acción</th>
-                                        <th style={{ width: '150px' }}>Tabla</th>
-                                        <th style={{ width: '100px' }}>ID Registro</th>
+                                        <th style={{ width: '60px' }}>ID</th>
+                                        <th style={{ width: '140px' }}>Fecha</th>
+                                        <th style={{ width: '150px' }}>Tipo</th>
+                                        <th style={{ width: '100px' }}>Acción</th>
+                                        <th style={{ width: '120px' }}>Entidad</th>
                                         <th style={{ width: '150px' }}>Usuario</th>
-                                        <th>Descripción</th>
-                                        <th style={{ width: '100px' }} className="text-center">Acciones</th>
+                                        <th>Observaciones</th>
+                                        <th style={{ width: '120px' }} className="text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredRecords.map((record) => (
-                                        <tr key={record.id}>
-                                            <td>
-                                                <code>#{record.id}</code>
-                                            </td>
-                                            <td>
-                                                <small>{auditFlow.formatAuditDate(record.timestamp)}</small>
-                                            </td>
-                                            <td>
-                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)}`}>
-                                                    {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span className="badge bg-secondary">
-                                                    {auditFlow.getTableLabel(record.tableName)}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {record.recordId ? (
-                                                    <code className="text-primary">#{record.recordId}</code>
-                                                ) : (
-                                                    <span className="text-muted">—</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span>
-                                                    <i className="bi bi-person-circle me-1"></i>
-                                                    {record.userName}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div className="text-truncate" style={{ maxWidth: '300px' }}>
-                                                    {record.description || <span className="text-muted">Sin descripción</span>}
-                                                </div>
-                                                {auditFlow.isCriticalAudit(record) && (
-                                                    <span className="badge bg-warning text-dark ms-2">
-                                                        <i className="bi bi-exclamation-triangle me-1"></i>
-                                                        Crítico
+                                        <>
+                                            <tr key={record.id} className={expandedRows.has(record.id) ? 'table-active' : ''}>
+                                                <td>
+                                                    <code>#{record.id}</code>
+                                                </td>
+                                                <td>
+                                                    <small>{formatDateTime(record.create_at)}</small>
+                                                </td>
+                                                <td>
+                                                    <span className="badge bg-info text-dark">
+                                                        {getTypeLabel(record.ar_type)}
                                                     </span>
-                                                )}
-                                            </td>
-                                            <td className="text-center">
-                                                <button
-                                                    className="btn btn-sm btn-outline-primary"
-                                                    onClick={() => handleView(record)}
-                                                    title="Ver detalles"
-                                                >
-                                                    <i className="bi bi-eye"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td>
+                                                    <span className={`badge ${
+                                                        record.ar_action === AuditAction.CREATE ? 'bg-success' :
+                                                        record.ar_action === AuditAction.UPDATE ? 'bg-warning text-dark' :
+                                                        record.ar_action === AuditAction.DELETE ? 'bg-danger' :
+                                                        record.ar_action === AuditAction.LOGIN ? 'bg-primary' :
+                                                        'bg-secondary'
+                                                    }`}>
+                                                        {getActionLabel(record.ar_action)}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span className="badge bg-secondary">
+                                                        {record.ar_entity_name}
+                                                        {record.ar_entity_id && (
+                                                            <span className="ms-1">#{record.ar_entity_id}</span>
+                                                        )}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <i className="bi bi-person-circle me-1"></i>
+                                                        {record.user_name || 'N/A'}
+                                                    </div>
+                                                    {record.user_email && (
+                                                        <small className="text-muted">{record.user_email}</small>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    <div className="text-truncate" style={{ maxWidth: '250px' }}>
+                                                        {record.ar_observations || <span className="text-muted">Sin observaciones</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="text-center">
+                                                    <button
+                                                        className="btn btn-sm btn-outline-info me-1"
+                                                        onClick={() => toggleRowExpansion(record.id)}
+                                                        title={expandedRows.has(record.id) ? 'Ocultar detalles' : 'Ver detalles'}
+                                                    >
+                                                        <i className={`bi bi-chevron-${expandedRows.has(record.id) ? 'up' : 'down'}`}></i>
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-sm btn-outline-primary"
+                                                        onClick={() => handleView(record)}
+                                                        title="Ver completo"
+                                                    >
+                                                        <i className="bi bi-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            {/* Fila expandida con detalles */}
+                                            {expandedRows.has(record.id) && (
+                                                <tr key={`${record.id}-expanded`} className="table-active">
+                                                    <td colSpan={8}>
+                                                        <div className="p-3">
+                                                            <div className="row g-3">
+                                                                {/* Valor Anterior */}
+                                                                {record.ar_old_value && (
+                                                                    <div className="col-md-6">
+                                                                        <h6 className="text-danger">
+                                                                            <i className="bi bi-file-earmark-minus me-1"></i>
+                                                                            Valor Anterior
+                                                                        </h6>
+                                                                        <pre className="bg-light p-2 rounded" style={{ maxHeight: '150px', overflow: 'auto', fontSize: '0.85rem' }}>
+                                                                            {JSON.stringify(parseJsonValue(record.ar_old_value), null, 2)}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
+                                                                {/* Valor Nuevo */}
+                                                                {record.ar_new_value && (
+                                                                    <div className="col-md-6">
+                                                                        <h6 className="text-success">
+                                                                            <i className="bi bi-file-earmark-plus me-1"></i>
+                                                                            Valor Nuevo
+                                                                        </h6>
+                                                                        <pre className="bg-light p-2 rounded" style={{ maxHeight: '150px', overflow: 'auto', fontSize: '0.85rem' }}>
+                                                                            {JSON.stringify(parseJsonValue(record.ar_new_value), null, 2)}
+                                                                        </pre>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            {/* Info técnica */}
+                                                            <div className="row mt-3 g-2">
+                                                                {record.ar_ip_address && (
+                                                                    <div className="col-auto">
+                                                                        <span className="badge bg-light text-dark">
+                                                                            <i className="bi bi-geo-alt me-1"></i>
+                                                                            IP: {record.ar_ip_address}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {record.ar_duration_seconds && (
+                                                                    <div className="col-auto">
+                                                                        <span className="badge bg-light text-dark">
+                                                                            <i className="bi bi-clock me-1"></i>
+                                                                            Duración: {record.ar_duration_seconds}s
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                {record.ar_user_agent && (
+                                                                    <div className="col-12 mt-2">
+                                                                        <small className="text-muted">
+                                                                            <i className="bi bi-laptop me-1"></i>
+                                                                            <strong>User Agent:</strong> {record.ar_user_agent}
+                                                                        </small>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </>
                                     ))}
                                 </tbody>
                             </table>

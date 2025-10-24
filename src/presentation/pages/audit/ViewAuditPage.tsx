@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/auditFlow';
-import type { DigitalRecord } from '../../../types/audit';
+import { auditService } from '../../../services/auditService';
+import type { AuditReport } from '../../../types/audit';
+import { AuditReportType, AuditAction } from '../../../types/audit';
 
 export default function ViewAuditPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [record, setRecord] = useState<DigitalRecord | null>(null);
+    const [record, setRecord] = useState<AuditReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -21,13 +22,8 @@ export default function ViewAuditPage() {
             setError('');
 
             try {
-                const result = await auditFlow.getDigitalRecordById(Number(id));
-
-                if (result.success && result.record) {
-                    setRecord(result.record);
-                } else {
-                    setError(result.error || 'Error al cargar registro de auditoría');
-                }
+                const result = await auditService.getAuditReportById(Number(id));
+                setRecord(result);
             } catch (err) {
                 console.error('Error cargando auditoría:', err);
                 setError('Error inesperado al cargar el registro');
@@ -39,18 +35,86 @@ export default function ViewAuditPage() {
         loadData();
     }, [id]);
 
+    const parseJsonValue = (jsonString?: string): any => {
+        if (!jsonString) return null;
+        try {
+            return JSON.parse(jsonString);
+        } catch {
+            return jsonString;
+        }
+    };
+
+    const formatDateTime = (dateString: string) => {
+        return new Date(dateString).toLocaleString('es-CR', {
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+    };
+
+    const getTypeLabel = (type: string): string => {
+        const labels: Record<string, string> = {
+            [AuditReportType.LOGIN_ATTEMPTS]: 'Intentos de Acceso',
+            [AuditReportType.ROLE_CHANGES]: 'Cambios de Rol',
+            [AuditReportType.OLDER_ADULT_UPDATES]: 'Actualizaciones Adultos Mayores',
+            [AuditReportType.SYSTEM_ACCESS]: 'Acceso al Sistema',
+            [AuditReportType.CLINICAL_RECORD_CHANGES]: 'Cambios Registros Clínicos',
+            [AuditReportType.PASSWORD_RESETS]: 'Restablecimientos Contraseña',
+            [AuditReportType.NOTIFICATIONS]: 'Notificaciones',
+            [AuditReportType.GENERAL_ACTIONS]: 'Acciones Generales',
+            [AuditReportType.OTHER]: 'Otros'
+        };
+        return labels[type] || type;
+    };
+
+    const getActionLabel = (action: string): string => {
+        const labels: Record<string, string> = {
+            [AuditAction.CREATE]: 'Crear',
+            [AuditAction.UPDATE]: 'Actualizar',
+            [AuditAction.DELETE]: 'Eliminar',
+            [AuditAction.VIEW]: 'Ver',
+            [AuditAction.LOGIN]: 'Login',
+            [AuditAction.LOGOUT]: 'Logout',
+            [AuditAction.EXPORT]: 'Exportar',
+            [AuditAction.OTHER]: 'Otro'
+        };
+        return labels[action] || action;
+    };
+
     const handleExportSingle = async () => {
         if (!record) return;
 
-        const result = await auditFlow.exportDigitalRecords(
-            { recordId: record.id },
-            `auditoria_${record.id}.csv`
-        );
+        try {
+            const csvContent = [
+                ['Campo', 'Valor'].join(','),
+                ['ID', record.id].join(','),
+                ['Tipo', getTypeLabel(record.ar_type)].join(','),
+                ['Acción', getActionLabel(record.ar_action)].join(','),
+                ['Entidad', record.ar_entity_name].join(','),
+                ['ID Entidad', record.ar_entity_id || 'N/A'].join(','),
+                ['Usuario', record.user_name || 'N/A'].join(','),
+                ['Email', record.user_email || 'N/A'].join(','),
+                ['Observaciones', `"${record.ar_observations || 'N/A'}"`].join(','),
+                ['IP', record.ar_ip_address || 'N/A'].join(','),
+                ['Fecha', formatDateTime(record.create_at)].join(','),
+            ].join('\n');
 
-        if (result.success) {
-            alert(result.message || 'Registro exportado exitosamente');
-        } else {
-            alert(result.error || 'Error al exportar registro');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `auditoria_${record.id}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            alert('Registro exportado exitosamente');
+        } catch (err) {
+            console.error('Error exportando registro:', err);
+            alert('Error al exportar registro');
         }
     };
 
@@ -110,8 +174,6 @@ export default function ViewAuditPage() {
         );
     }
 
-    const isCritical = auditFlow.isCriticalAudit(record);
-
     return (
         <div className="min-vh-100 bg-light">
             <div className="container-fluid py-4">
@@ -127,8 +189,8 @@ export default function ViewAuditPage() {
                                     <div>
                                         <h1 className="h3 fw-bold mb-1">Registro de Auditoría #{record.id}</h1>
                                         <p className="text-muted mb-0">
-                                            {auditFlow.formatAuditDate(record.timestamp)}
-                                            {isCritical && (
+                                            {formatDateTime(record.create_at)}
+                                            {(record.ar_action === AuditAction.DELETE || record.ar_type === AuditReportType.PASSWORD_RESETS) && (
                                                 <span className="badge bg-warning text-dark ms-2">
                                                     <i className="bi bi-exclamation-triangle me-1"></i>
                                                     Crítico
@@ -175,22 +237,36 @@ export default function ViewAuditPage() {
                                         </p>
                                     </div>
                                     <div className="col-12">
-                                        <label className="text-muted small fw-semibold">Acción</label>
+                                        <label className="text-muted small fw-semibold">Tipo de Auditoría</label>
                                         <p className="mb-0">
-                                            <span className={`badge ${auditFlow.getActionBadgeClass(record.action)} fs-6`}>
-                                                {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
+                                            <span className="badge bg-info text-dark fs-6">
+                                                {getTypeLabel(record.ar_type)}
                                             </span>
                                         </p>
                                     </div>
                                     <div className="col-12">
-                                        <label className="text-muted small fw-semibold">Tabla Afectada</label>
+                                        <label className="text-muted small fw-semibold">Acción</label>
+                                        <p className="mb-0">
+                                            <span className={`badge fs-6 ${
+                                                record.ar_action === AuditAction.CREATE ? 'bg-success' :
+                                                record.ar_action === AuditAction.UPDATE ? 'bg-warning text-dark' :
+                                                record.ar_action === AuditAction.DELETE ? 'bg-danger' :
+                                                record.ar_action === AuditAction.LOGIN ? 'bg-primary' :
+                                                'bg-secondary'
+                                            }`}>
+                                                {getActionLabel(record.ar_action)}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div className="col-12">
+                                        <label className="text-muted small fw-semibold">Entidad Afectada</label>
                                         <p className="mb-0">
                                             <span className="badge bg-secondary fs-6">
-                                                {auditFlow.getTableLabel(record.tableName)}
+                                                {record.ar_entity_name}
                                             </span>
-                                            {record.recordId && (
+                                            {record.ar_entity_id && (
                                                 <span className="ms-2 text-muted">
-                                                    (ID Registro: <code>#{record.recordId}</code>)
+                                                    (ID: <code>#{record.ar_entity_id}</code>)
                                                 </span>
                                             )}
                                         </p>
@@ -200,31 +276,132 @@ export default function ViewAuditPage() {
                                         <p className="mb-0">
                                             <span>
                                                 <i className="bi bi-person-circle me-2"></i>
-                                                {record.userName}
+                                                {record.user_name || 'N/A'}
                                             </span>
-                                            <br />
-                                            <small className="text-muted">{record.userEmail}</small>
+                                            {record.user_email && (
+                                                <>
+                                                    <br />
+                                                    <small className="text-muted">{record.user_email}</small>
+                                                </>
+                                            )}
                                         </p>
                                     </div>
                                     <div className="col-12">
-                                        <label className="text-muted small fw-semibold">Descripción</label>
+                                        <label className="text-muted small fw-semibold">Observaciones</label>
                                         <p className="mb-0">
-                                            {record.description || <span className="text-muted fst-italic">Sin descripción</span>}
+                                            {record.ar_observations || <span className="text-muted fst-italic">Sin observaciones</span>}
                                         </p>
                                     </div>
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Fecha y Hora</label>
                                         <p className="mb-0">
                                             <i className="bi bi-calendar-event me-2"></i>
-                                            {auditFlow.formatAuditDate(record.timestamp)}
+                                            {formatDateTime(record.create_at)}
                                         </p>
                                     </div>
+                                    {record.ar_duration_seconds && (
+                                        <div className="col-12">
+                                            <label className="text-muted small fw-semibold">Duración</label>
+                                            <p className="mb-0">
+                                                <i className="bi bi-clock me-2"></i>
+                                                {record.ar_duration_seconds} segundos
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* No hay valores antiguos ni nuevos en el backend - esta información no se captura */}
+                    {/* Card 2: Información Técnica */}
+                    <div className="col-12 col-lg-6">
+                        <div className="card shadow-sm border-0 h-100">
+                            <div className="card-header bg-white border-bottom">
+                                <h5 className="mb-0">
+                                    <i className="bi bi-gear me-2"></i>
+                                    Información Técnica
+                                </h5>
+                            </div>
+                            <div className="card-body">
+                                <div className="row g-3">
+                                    {record.ar_ip_address && (
+                                        <div className="col-12">
+                                            <label className="text-muted small fw-semibold">Dirección IP</label>
+                                            <p className="mb-0">
+                                                <i className="bi bi-geo-alt me-2"></i>
+                                                <code>{record.ar_ip_address}</code>
+                                            </p>
+                                        </div>
+                                    )}
+                                    {record.ar_user_agent && (
+                                        <div className="col-12">
+                                            <label className="text-muted small fw-semibold">User Agent</label>
+                                            <p className="mb-0 text-break">
+                                                <i className="bi bi-laptop me-2"></i>
+                                                <small className="text-muted">{record.ar_user_agent}</small>
+                                            </p>
+                                        </div>
+                                    )}
+                                    {record.ar_audit_number && (
+                                        <div className="col-12">
+                                            <label className="text-muted small fw-semibold">Número de Auditoría</label>
+                                            <p className="mb-0">
+                                                <code>{record.ar_audit_number}</code>
+                                            </p>
+                                        </div>
+                                    )}
+                                    {record.id_generator && (
+                                        <div className="col-12">
+                                            <label className="text-muted small fw-semibold">ID Generador</label>
+                                            <p className="mb-0">
+                                                <code>{record.id_generator}</code>
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card 3: Cambios Realizados (Valor Anterior vs Nuevo) */}
+                    {(record.ar_old_value || record.ar_new_value) && (
+                        <div className="col-12">
+                            <div className="card shadow-sm border-0">
+                                <div className="card-header bg-white border-bottom">
+                                    <h5 className="mb-0">
+                                        <i className="bi bi-arrow-left-right me-2"></i>
+                                        Cambios Realizados
+                                    </h5>
+                                </div>
+                                <div className="card-body">
+                                    <div className="row g-4">
+                                        {record.ar_old_value && (
+                                            <div className="col-12 col-md-6">
+                                                <h6 className="text-danger mb-3">
+                                                    <i className="bi bi-file-earmark-minus me-2"></i>
+                                                    Valor Anterior
+                                                </h6>
+                                                <pre className="bg-light p-3 rounded border" style={{ maxHeight: '300px', overflow: 'auto', fontSize: '0.85rem' }}>
+                                                    {JSON.stringify(parseJsonValue(record.ar_old_value), null, 2)}
+                                                </pre>
+                                            </div>
+                                        )}
+                                        {record.ar_new_value && (
+                                            <div className="col-12 col-md-6">
+                                                <h6 className="text-success mb-3">
+                                                    <i className="bi bi-file-earmark-plus me-2"></i>
+                                                    Valor Nuevo
+                                                </h6>
+                                                <pre className="bg-light p-3 rounded border" style={{ maxHeight: '300px', overflow: 'auto', fontSize: '0.85rem' }}>
+                                                    {JSON.stringify(parseJsonValue(record.ar_new_value), null, 2)}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -11,6 +11,9 @@ import type {
   AuditStatistics,
   LogAuditRequest,
   LogAuditResponse,
+  AuditReport,
+  SearchAuditReportsDto,
+  PaginatedAuditReportsResponse,
 } from '../types/audit';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
@@ -306,12 +309,50 @@ export const auditService = {
     });
   },
 
+  // ==================== MÉTODOS NUEVOS (audit_report) ====================
+  /**
+   * Buscar reportes de auditoría con filtros (NUEVO)
+   * Backend: searchAuditReports()
+   * Endpoint: GET /audits/reports
+   * Consulta tabla audit_report con todos los campos completos
+   */
+  searchAuditReports: async (
+    params?: SearchAuditReportsDto
+  ): Promise<PaginatedAuditReportsResponse> => {
+    const response = await apiClient.get<PaginatedAuditReportsResponse>(
+      '/audits/reports',
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * Obtener un reporte de auditoría por ID (NUEVO)
+   * Backend: getAuditReportById()
+   * Endpoint: GET /audits/reports/:id
+   * Retorna estructura AuditReport con todos los campos
+   */
+  getAuditReportById: async (id: number): Promise<AuditReport> => {
+    const response = await apiClient.get<AuditReport>(`/audits/reports/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Obtener reportes de auditoría por entidad (NUEVO)
+   * Backend: getAuditReportsByEntity()
+   * Endpoint: GET /audits/reports/entity/:entityName/:entityId
+   */
+  getAuditReportsByEntity: async (entityName: string, entityId: number): Promise<AuditReport[]> => {
+    const response = await apiClient.get<AuditReport[]>(`/audits/reports/entity/${entityName}/${entityId}`);
+    return response.data;
+  },
+
   // ==================== MÉTODOS LEGACY (mantener para búsqueda) ====================
   /**
    * Buscar registros digitales con filtros (LEGACY)
    * Backend: searchDigitalRecords()
    * Endpoint: GET /audits/search
-   * @deprecated Mantener solo para consultas. Para registrar use logAudit()
+   * @deprecated Usar searchAuditReports() para la nueva estructura
    */
   searchDigitalRecords: async (
     params?: SearchDigitalRecordsDto
