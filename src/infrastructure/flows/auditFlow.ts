@@ -405,9 +405,10 @@ export const auditFlow = {
    * Endpoint: GET /audits/user/:userId
    * 
    * @param userId - ID del usuario
+   * @param params - Parámetros adicionales de búsqueda (opcional)
    * @returns GetDigitalRecordsFlowResult con los registros del usuario
    */
-  async getAuditsByUser(userId: number): Promise<GetDigitalRecordsFlowResult> {
+  async getAuditsByUser(userId: number, params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
     try {
       if (!userId || userId <= 0) {
         return {
@@ -416,14 +417,14 @@ export const auditFlow = {
         };
       }
 
-      const records = await auditService.getAuditsByUser(userId);
+      const response = await auditService.getAuditsByUser(userId, params);
 
       return {
         success: true,
-        records,
-        total: records.length,
-        page: 1,
-        totalPages: 1,
+        records: response.records || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 1,
       };
     } catch (error: any) {
       console.error('Error en auditFlow.getAuditsByUser:', error);
@@ -441,9 +442,10 @@ export const auditFlow = {
    * 
    * @param entity - Nombre de la tabla (users, older_adult, etc.)
    * @param entityId - ID del registro
+   * @param params - Parámetros adicionales de búsqueda (opcional)
    * @returns GetDigitalRecordsFlowResult con los registros de la entidad
    */
-  async getAuditsByEntity(entity: string, entityId: number): Promise<GetDigitalRecordsFlowResult> {
+  async getAuditsByEntity(entity: string, entityId: number, params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
     try {
       if (!entity || !entityId || entityId <= 0) {
         return {
@@ -452,20 +454,243 @@ export const auditFlow = {
         };
       }
 
-      const records = await auditService.getAuditsByEntity(entity, entityId);
+      const response = await auditService.getAuditsByEntity(entity, entityId, params);
 
       return {
         success: true,
-        records,
-        total: records.length,
-        page: 1,
-        totalPages: 1,
+        records: response.records || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 1,
       };
     } catch (error: any) {
       console.error('Error en auditFlow.getAuditsByEntity:', error);
       return {
         success: false,
         error: error.response?.data?.message || 'Error al obtener auditorías de la entidad',
+      };
+    }
+  },
+
+  /**
+   * Flujo para obtener todos los registros de auditoría
+   * Backend: getAllAudits()
+   * Endpoint: GET /audits
+   * 
+   * @param params - Parámetros de búsqueda (opcional)
+   * @returns GetDigitalRecordsFlowResult con todos los registros
+   */
+  async getAllAudits(params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
+    try {
+      const response = await auditService.getAllAudits(params);
+
+      return {
+        success: true,
+        records: response.records || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 1,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getAllAudits:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener registros de auditoría',
+      };
+    }
+  },
+
+  /**
+   * Flujo para obtener reportes de auditoría generados
+   * Backend: getAuditReports()
+   * Endpoint: GET /audits/reports
+   * 
+   * @param params - Filtros de reportes (opcional)
+   * @returns Resultado con reportes generados
+   */
+  async getAuditReports(params?: any): Promise<any> {
+    try {
+      const response = await auditService.getAuditReports(params);
+
+      return {
+        success: true,
+        reports: response.records || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 1,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getAuditReports:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener reportes de auditoría',
+      };
+    }
+  },
+
+  /**
+   * Flujo para obtener detalle de un reporte específico
+   * Backend: getAuditReportDetail()
+   * Endpoint: GET /audits/reports/:id
+   * 
+   * @param id - ID del reporte
+   * @returns Resultado con detalle del reporte
+   */
+  async getAuditReportById(id: number): Promise<any> {
+    try {
+      if (!id || id <= 0) {
+        return {
+          success: false,
+          error: 'ID de reporte inválido',
+        };
+      }
+
+      const report = await auditService.getAuditReportById(id);
+
+      return {
+        success: true,
+        report,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getAuditReportById:', error);
+
+      if (error.response?.status === 404) {
+        return {
+          success: false,
+          error: 'Reporte de auditoría no encontrado',
+        };
+      }
+
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener el reporte de auditoría',
+      };
+    }
+  },
+
+  /**
+   * Flujo para generar un nuevo reporte de auditoría
+   * Backend: generateAuditReport()
+   * Endpoint: POST /audits/reports
+   * 
+   * @param generateDto - Datos para generar el reporte
+   * @returns Resultado con reporte generado
+   */
+  async generateAuditReport(generateDto: any): Promise<any> {
+    try {
+      const report = await auditService.generateAuditReport(generateDto);
+
+      return {
+        success: true,
+        report,
+        message: 'Reporte de auditoría generado exitosamente',
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.generateAuditReport:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al generar reporte de auditoría',
+      };
+    }
+  },
+
+  /**
+   * Flujo para eliminar un reporte de auditoría
+   * Backend: deleteAuditReport()
+   * Endpoint: DELETE /audits/reports/:id
+   * 
+   * @param id - ID del reporte
+   * @returns Resultado de la operación
+   */
+  async deleteAuditReport(id: number): Promise<AuditFlowResult> {
+    try {
+      if (!id || id <= 0) {
+        return {
+          success: false,
+          error: 'ID de reporte inválido',
+        };
+      }
+
+      await auditService.deleteAuditReport(id);
+
+      return {
+        success: true,
+        message: 'Reporte de auditoría eliminado exitosamente',
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.deleteAuditReport:', error);
+
+      if (error.response?.status === 404) {
+        return {
+          success: false,
+          error: 'Reporte de auditoría no encontrado',
+        };
+      }
+
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al eliminar el reporte de auditoría',
+      };
+    }
+  },
+
+  /**
+   * Flujo para obtener historial de un registro digital
+   * Backend: getDigitalRecordHistory()
+   * Endpoint: GET /audits/digital-records/:recordId/history
+   * 
+   * @param recordId - ID del registro digital
+   * @param queryDto - Parámetros de consulta (opcional)
+   * @returns Resultado con historial del registro
+   */
+  async getDigitalRecordHistory(recordId: string, queryDto?: any): Promise<any> {
+    try {
+      if (!recordId) {
+        return {
+          success: false,
+          error: 'ID de registro inválido',
+        };
+      }
+
+      const response = await auditService.getDigitalRecordHistory(recordId, queryDto);
+
+      return {
+        success: true,
+        data: response.data || {},
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.getDigitalRecordHistory:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al obtener historial del registro',
+      };
+    }
+  },
+
+  /**
+   * Flujo para buscar actualizaciones de adultos mayores
+   * Backend: searchOlderAdultUpdates()
+   * Endpoint: GET /audits/older-adult-updates
+   * 
+   * @param params - Parámetros de búsqueda (opcional)
+   * @returns Resultado con actualizaciones encontradas
+   */
+  async searchOlderAdultUpdates(params?: any): Promise<any> {
+    try {
+      const response = await auditService.searchOlderAdultUpdates(params);
+
+      return {
+        success: true,
+        updates: response.records || [],
+        total: response.total || 0,
+        page: response.page || 1,
+        totalPages: response.totalPages || 1,
+      };
+    } catch (error: any) {
+      console.error('Error en auditFlow.searchOlderAdultUpdates:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Error al buscar actualizaciones de adultos mayores',
       };
     }
   },

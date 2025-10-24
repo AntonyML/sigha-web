@@ -309,14 +309,17 @@ export const auditService = {
     });
   },
 
-  // ==================== MÉTODOS NUEVOS (audit_report) ====================
+  // ==================== ENDPOINTS REALES DEL BACKEND ====================
+  
   /**
-   * Buscar reportes de auditoría con filtros (NUEVO)
-   * Backend: searchAuditReports()
-   * Endpoint: GET /audits/reports
-   * Consulta tabla audit_report con todos los campos completos
+   * 📊 Obtener todos los reportes de auditoría generados
+   * Backend: getAuditReports()
+   * Endpoint: GET /audits/reports (con filtros opcionales)
+   * 
+   * IMPORTANTE: Este endpoint devuelve REPORTES GENERADOS, no registros individuales
+   * Para registros individuales, usar searchDigitalRecords() o getAllAudits()
    */
-  searchAuditReports: async (
+  getAuditReports: async (
     params?: SearchAuditReportsDto
   ): Promise<PaginatedAuditReportsResponse> => {
     const response = await apiClient.get<PaginatedAuditReportsResponse>(
@@ -327,10 +330,9 @@ export const auditService = {
   },
 
   /**
-   * Obtener un reporte de auditoría por ID (NUEVO)
-   * Backend: getAuditReportById()
+   * 📄 Obtener detalles de un reporte de auditoría específico
+   * Backend: getAuditReportDetail()
    * Endpoint: GET /audits/reports/:id
-   * Retorna estructura AuditReport con todos los campos
    */
   getAuditReportById: async (id: number): Promise<AuditReport> => {
     const response = await apiClient.get<AuditReport>(`/audits/reports/${id}`);
@@ -338,21 +340,73 @@ export const auditService = {
   },
 
   /**
-   * Obtener reportes de auditoría por entidad (NUEVO)
-   * Backend: getAuditReportsByEntity()
-   * Endpoint: GET /audits/reports/entity/:entityName/:entityId
+   * 📝 Generar un nuevo reporte de auditoría
+   * Backend: generateAuditReport()
+   * Endpoint: POST /audits/reports
    */
-  getAuditReportsByEntity: async (entityName: string, entityId: number): Promise<AuditReport[]> => {
-    const response = await apiClient.get<AuditReport[]>(`/audits/reports/entity/${entityName}/${entityId}`);
+  generateAuditReport: async (generateDto: any): Promise<any> => {
+    const response = await apiClient.post('/audits/reports', generateDto);
     return response.data;
   },
 
-  // ==================== MÉTODOS LEGACY (mantener para búsqueda) ====================
   /**
-   * Buscar registros digitales con filtros (LEGACY)
-   * Backend: searchDigitalRecords()
+   * 🗑️ Eliminar un reporte de auditoría (solo super admin)
+   * Backend: deleteAuditReport()
+   * Endpoint: DELETE /audits/reports/:id
+   */
+  deleteAuditReport: async (id: number): Promise<void> => {
+    await apiClient.delete(`/audits/reports/${id}`);
+  },
+
+  /**
+   * 📋 Obtener todos los registros de auditoría (digital records)
+   * Backend: getAllAudits()
+   * Endpoint: GET /audits
+   * 
+   * Este es el endpoint correcto para listar registros de auditoría individuales
+   */
+  getAllAudits: async (
+    params?: SearchDigitalRecordsDto
+  ): Promise<PaginatedDigitalRecordsResponse> => {
+    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
+      '/audits',
+      { params }
+    );
+    return response.data;
+  },
+
+  /**
+   * 📜 Obtener historial de auditoría para un registro digital específico
+   * Backend: getDigitalRecordHistory()
+   * Endpoint: GET /audits/digital-records/:recordId/history
+   */
+  getDigitalRecordHistory: async (
+    recordId: string,
+    queryDto?: any
+  ): Promise<any> => {
+    const response = await apiClient.get(
+      `/audits/digital-records/${recordId}/history`,
+      { params: queryDto }
+    );
+    return response.data;
+  },
+
+  /**
+   * 👴 Buscar actualizaciones de adultos mayores
+   * Backend: searchOlderAdultUpdates()
+   * Endpoint: GET /audits/older-adult-updates
+   */
+  searchOlderAdultUpdates: async (params?: any): Promise<any> => {
+    const response = await apiClient.get('/audits/older-adult-updates', { params });
+    return response.data;
+  },
+
+  // ==================== MÉTODOS DE BÚSQUEDA Y CONSULTA ====================
+  
+  /**
+   * 🔍 Buscar registros digitales con filtros
+   * Backend: searchAudits() / searchDigitalRecords()
    * Endpoint: GET /audits/search
-   * @deprecated Usar searchAuditReports() para la nueva estructura
    */
   searchDigitalRecords: async (
     params?: SearchDigitalRecordsDto
@@ -365,8 +419,8 @@ export const auditService = {
   },
 
   /**
-   * Obtener un registro digital por ID (LEGACY)
-   * Backend: getDigitalRecordById()
+   * 🔎 Obtener un registro digital por ID
+   * Backend: getAuditById()
    * Endpoint: GET /audits/:id
    */
   getDigitalRecordById: async (id: number): Promise<DigitalRecord> => {
@@ -375,23 +429,21 @@ export const auditService = {
   },
 
   /**
-   * Crear un nuevo registro digital (auditoría) - LEGACY
-   * @deprecated Usar logAudit() en su lugar
-   * Backend: createDigitalRecord()
+   * ➕ Crear un nuevo registro digital (auditoría manual)
+   * Backend: createAudit()
    * Endpoint: POST /audits
    * Nota: Backend obtiene userId del token JWT automáticamente
    */
   createDigitalRecord: async (
     data: CreateDigitalRecordDto
   ): Promise<DigitalRecord> => {
-    console.warn('⚠️ createDigitalRecord está deprecado. Use logAudit() en su lugar.');
     const response = await apiClient.post<DigitalRecord>('/audits', data);
     return response.data;
   },
 
   /**
-   * Obtener estadísticas de auditoría
-   * Backend: getAuditStatistics()
+   * 📊 Obtener estadísticas de auditoría
+   * Backend: getAuditStats()
    * Endpoint: GET /audits/stats
    */
   getAuditStatistics: async (startDate?: string, endDate?: string): Promise<AuditStatistics> => {
@@ -402,22 +454,35 @@ export const auditService = {
   },
 
   /**
-   * Obtener auditorías por usuario
+   * 👤 Obtener auditorías por usuario
    * Backend: getAuditsByUser()
    * Endpoint: GET /audits/user/:userId
    */
-  getAuditsByUser: async (userId: number): Promise<DigitalRecord[]> => {
-    const response = await apiClient.get<DigitalRecord[]>(`/audits/user/${userId}`);
+  getAuditsByUser: async (
+    userId: number,
+    params?: SearchDigitalRecordsDto
+  ): Promise<PaginatedDigitalRecordsResponse> => {
+    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
+      `/audits/user/${userId}`,
+      { params }
+    );
     return response.data;
   },
 
   /**
-   * Obtener auditorías por entidad
+   * 🏢 Obtener auditorías por entidad
    * Backend: getAuditsByEntity()
    * Endpoint: GET /audits/entity/:entity/:entityId
    */
-  getAuditsByEntity: async (entity: string, entityId: number): Promise<DigitalRecord[]> => {
-    const response = await apiClient.get<DigitalRecord[]>(`/audits/entity/${entity}/${entityId}`);
+  getAuditsByEntity: async (
+    entity: string,
+    entityId: number,
+    params?: SearchDigitalRecordsDto
+  ): Promise<PaginatedDigitalRecordsResponse> => {
+    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
+      `/audits/entity/${entity}/${entityId}`,
+      { params }
+    );
     return response.data;
   },
 

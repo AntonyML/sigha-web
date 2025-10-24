@@ -81,7 +81,7 @@ export default function Breadcrumbs() {
             const isHome = index === 0;
 
             return (
-              <li key={item.path} className="flex items-center space-x-2 whitespace-nowrap">
+              <li key={`${item.path}-${index}`} className="flex items-center space-x-2 whitespace-nowrap">
                 {index > 0 && (
                   <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 )}
