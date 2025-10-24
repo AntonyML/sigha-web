@@ -67,7 +67,8 @@ export const twoFactorService = {
    * Habilitar 2FA después de verificar el código
    */
   enable2FA: async (data: Enable2FARequest): Promise<Enable2FAResponse> => {
-    const response = await apiClient.post<Enable2FAResponse>('/auth/enable-2fa', data);
+    const requestBody = { verificationCode: data.code };
+    const response = await apiClient.post<Enable2FAResponse>('/auth/enable-2fa', requestBody);
     return response.data;
   },
 

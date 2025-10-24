@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface VerificationCardProps {
   verificationCode: string;
@@ -8,6 +8,8 @@ interface VerificationCardProps {
   processing: boolean;
 }
 
+type VerificationMethod = 'totp' | 'backup';
+
 export const VerificationCard: React.FC<VerificationCardProps> = ({
   verificationCode,
   onCodeChange,
@@ -15,10 +17,18 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
   onBack,
   processing
 }) => {
+  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>('backup');
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-    onCodeChange(value);
+    const value = e.target.value.replace(/\D/g, '');
+    const maxLength = verificationMethod === 'totp' ? 6 : 8;
+    const cleanValue = value.slice(0, maxLength);
+    onCodeChange(cleanValue);
   };
+
+  const isCodeValid = verificationMethod === 'totp' 
+    ? verificationCode.length === 6 
+    : verificationCode.length === 8;
 
   return (
     <div className="card shadow-sm">
@@ -30,13 +40,56 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
       </div>
       <div className="card-body p-4">
         <p className="mb-4">
-          Ingresa el código de 6 dígitos que aparece en tu aplicación autenticadora
-          para completar la configuración.
+          Elige cómo quieres verificar tu identidad para completar la configuración de 2FA.
         </p>
 
+        {/* Método de verificación */}
+        <div className="mb-4">
+          <label className="form-label fw-bold">Método de verificación:</label>
+          <div className="d-flex gap-3">
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="verificationMethod"
+                id="backupCode"
+                value="backup"
+                checked={verificationMethod === 'backup'}
+                onChange={(e) => {
+                  setVerificationMethod(e.target.value as VerificationMethod);
+                  onCodeChange(''); // Limpiar código al cambiar método
+                }}
+                disabled={processing}
+              />
+              <label className="form-check-label" htmlFor="backupCode">
+                Código de respaldo (8 dígitos)
+              </label>
+            </div>
+            <div className="form-check">
+              <input
+                className="form-check-input"
+                type="radio"
+                name="verificationMethod"
+                id="totpCode"
+                value="totp"
+                checked={verificationMethod === 'totp'}
+                onChange={(e) => {
+                  setVerificationMethod(e.target.value as VerificationMethod);
+                  onCodeChange(''); // Limpiar código al cambiar método
+                }}
+                disabled={processing}
+              />
+              <label className="form-check-label" htmlFor="totpCode">
+                Código TOTP (6 dígitos)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Input del código */}
         <div className="mb-4">
           <label htmlFor="verificationCode" className="form-label fw-bold">
-            Código de verificación
+            {verificationMethod === 'backup' ? 'Código de respaldo' : 'Código TOTP'}
           </label>
           <input
             type="text"
@@ -44,13 +97,16 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
             id="verificationCode"
             value={verificationCode}
             onChange={handleInputChange}
-            placeholder="000000"
-            maxLength={6}
+            placeholder={verificationMethod === 'backup' ? '00000000' : '000000'}
+            maxLength={verificationMethod === 'backup' ? 8 : 6}
             disabled={processing}
             autoFocus
           />
           <small className="text-muted">
-            Ingresa los 6 dígitos sin espacios
+            {verificationMethod === 'backup' 
+              ? 'Ingresa uno de los códigos de respaldo que se mostraron anteriormente'
+              : 'Ingresa el código de 6 dígitos que aparece en tu aplicación autenticadora'
+            }
           </small>
         </div>
 
@@ -71,7 +127,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
           <button
             className="btn btn-primary flex-grow-1"
             onClick={onVerify}
-            disabled={processing || verificationCode.length !== 6}
+            disabled={processing || !isCodeValid}
           >
             {processing ? (
               <>

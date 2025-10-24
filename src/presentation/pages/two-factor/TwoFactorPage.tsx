@@ -97,6 +97,7 @@ export default function TwoFactorPage() {
         setProcessing(true);
         setError('');
 
+        console.log('DEBUG: verificationCode before sending:', verificationCode);
         const result = await twoFactorFlow.enable({ code: verificationCode });
 
         if (result.success) {
