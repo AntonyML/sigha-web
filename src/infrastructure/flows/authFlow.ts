@@ -1,10 +1,9 @@
 import { authService } from '../../services/authService';
 import type {
-    LoginCredentials,
     LoginResponse,
     AuthUser,
 } from '../../types/auth';
-import type { TwoFactorVerificationRequest } from '../../types/twoFactor';
+import type { Verify2FARequest } from '../../types/twoFactor';
 
 /**
  * Resultado del flujo de login
@@ -13,7 +12,6 @@ export interface LoginFlowResult {
     success: boolean;
     requiresTwoFactor: boolean;
     user?: AuthUser;
-    tempToken?: string;
     error?: string;
 }
 
@@ -43,15 +41,15 @@ export interface LogoutFlowResult {
 export const authFlow = {
     /**
      * Flujo completo de login
-     * 
+     *
      * Maneja:
      * - Validación de credenciales
      * - Login normal (sin 2FA)
-     * - Login con 2FA (retorna tempToken)
+     * - Login con 2FA (indica que requiere verificación)
      * - Almacenamiento de tokens y usuario
      * - Manejo de errores
-     * 
-     * @param credentials - uEmail y uPassword del usuario
+     *
+     * @param credentials - email y password del usuario
      * @returns LoginFlowResult con el estado del login
      */
     async login(credentials: { email: string; password: string }): Promise<LoginFlowResult> {
@@ -75,21 +73,17 @@ export const authFlow = {
                 };
             }
 
-            // Convertir credenciales al formato del backend
-            const loginCredentials: LoginCredentials = {
+            // Intentar login
+            const response: LoginResponse = await authService.login({
                 uEmail: credentials.email,
                 uPassword: credentials.password
-            };
-
-            // Intentar login
-            const response: LoginResponse = await authService.login(loginCredentials);
+            });
 
             // Caso 1: Requiere 2FA
-            if (response.requiresTwoFactor && response.tempToken) {
+            if (response.requiresTwoFactor) {
                 return {
                     success: true,
                     requiresTwoFactor: true,
-                    tempToken: response.tempToken,
                 };
             }
 
@@ -160,19 +154,9 @@ export const authFlow = {
                 };
             }
 
-            // Obtener tempToken
-            const tempToken = authService.getTempToken();
-            if (!tempToken) {
-                return {
-                    success: false,
-                    error: 'No hay sesión de autenticación pendiente',
-                };
-            }
-
             // Verificar código 2FA
-            const request: TwoFactorVerificationRequest = {
-                tempToken: tempToken,
-                twoFactorCode: cleanCode,
+            const request: Verify2FARequest = {
+                code: cleanCode,
             };
 
             const response = await authService.verify2FA(request);
@@ -255,13 +239,6 @@ export const authFlow = {
      */
     getToken(): string | null {
         return authService.getToken();
-    },
-
-    /**
-     * Obtiene el tempToken (para flujo 2FA)
-     */
-    getTempToken(): string | null {
-        return authService.getTempToken();
     },
 
     /**

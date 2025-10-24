@@ -4,7 +4,7 @@ import type {
   LoginResponse,
   AuthUser,
 } from '../types/auth';
-import type { TwoFactorVerificationRequest } from '../types/twoFactor';
+import type { Verify2FARequest } from '../types/twoFactor';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -72,7 +72,7 @@ export const authService = {
   /**
    * Verifica código 2FA y completa el login
    */
-  verify2FA: async (data: TwoFactorVerificationRequest): Promise<LoginResponse> => {
+  verify2FA: async (data: Verify2FARequest): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
 
     const { accessToken, user } = response.data;
