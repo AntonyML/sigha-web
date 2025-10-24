@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/auditFlow';
-import type { AuditStatistics, DigitalRecord } from '../../../types/audit';
+import { auditService } from '../../../services/auditService';
+import type { AuditReport } from '../../../types/audit';
+import { AuditReportType, AuditAction } from '../../../types/audit';
+
+interface AuditTypeStats {
+    type: string;
+    count: number;
+    percentage: number;
+}
+
+interface AuditActionStats {
+    action: string;
+    count: number;
+    percentage: number;
+}
+
+interface DashboardStats {
+    totalRecords: number;
+    typeBreakdown: AuditTypeStats[];
+    actionBreakdown: AuditActionStats[];
+    topUsers: { userId: number; userName: string; count: number }[];
+    topEntities: { entityName: string; count: number }[];
+}
 
 export default function AuditDashboardPage() {
-    const [stats, setStats] = useState<AuditStatistics | null>(null);
-    const [recentRecords, setRecentRecords] = useState<DigitalRecord[]>([]);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [recentRecords, setRecentRecords] = useState<AuditReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [dateRange, setDateRange] = useState({
@@ -23,20 +44,67 @@ export default function AuditDashboardPage() {
         setError('');
 
         try {
-            const [statsResult, recordsResult] = await Promise.all([
-                auditFlow.getAuditStatistics(dateRange.start, dateRange.end),
-                auditFlow.searchDigitalRecords({ page: 1, limit: 10 })
-            ]);
+            // Obtener todos los registros del período
+            const result = await auditService.searchAuditReports({
+                startDate: dateRange.start,
+                endDate: dateRange.end,
+                limit: 10000 // Obtener todos para calcular estadísticas
+            });
 
-            if (statsResult.success && statsResult.stats) {
-                setStats(statsResult.stats);
-            } else {
-                setError(statsResult.error || 'Error al cargar estadísticas');
-            }
+            // Calcular estadísticas
+            const totalRecords = result.records.length;
 
-            if (recordsResult.success && recordsResult.records) {
-                setRecentRecords(recordsResult.records);
-            }
+            // Contar por tipo
+            const typeCounts = result.records.reduce((acc, record) => {
+                acc[record.ar_type] = (acc[record.ar_type] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            const typeBreakdown: AuditTypeStats[] = Object.entries(typeCounts).map(([type, count]) => ({
+                type,
+                count,
+                percentage: Math.round((count / totalRecords) * 100)
+            })).sort((a, b) => b.count - a.count);
+
+            // Contar por acción
+            const actionCounts = result.records.reduce((acc, record) => {
+                acc[record.ar_action] = (acc[record.ar_action] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            const actionBreakdown: AuditActionStats[] = Object.entries(actionCounts).map(([action, count]) => ({
+                action,
+                count,
+                percentage: Math.round((count / totalRecords) * 100)
+            })).sort((a, b) => b.count - a.count);
+
+            // Top entidades
+            const entityCounts = result.records.reduce((acc, record) => {
+                acc[record.ar_entity_name] = (acc[record.ar_entity_name] || 0) + 1;
+                return acc;
+            }, {} as Record<string, number>);
+
+            const topEntities = Object.entries(entityCounts)
+                .map(([entityName, count]) => ({ entityName, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
+
+            // Top usuarios (simulado - backend debe incluir esto)
+            const topUsers = [
+                { userId: 0, userName: 'Pendiente backend', count: 0 }
+            ];
+
+            setStats({
+                totalRecords,
+                typeBreakdown,
+                actionBreakdown,
+                topUsers,
+                topEntities
+            });
+
+            // Registros recientes (primeros 10)
+            setRecentRecords(result.records.slice(0, 10));
+
         } catch (err) {
             console.error('Error cargando dashboard:', err);
             setError('Error inesperado al cargar datos del dashboard');
@@ -52,6 +120,45 @@ export default function AuditDashboardPage() {
     const calculatePercentage = (value: number, total: number): number => {
         if (total === 0) return 0;
         return Math.round((value / total) * 100);
+    };
+
+    const getTypeLabel = (type: string): string => {
+        const labels: Record<string, string> = {
+            [AuditReportType.LOGIN_ATTEMPTS]: 'Intentos de Acceso',
+            [AuditReportType.ROLE_CHANGES]: 'Cambios de Rol',
+            [AuditReportType.OLDER_ADULT_UPDATES]: 'Actualizaciones Adultos Mayores',
+            [AuditReportType.SYSTEM_ACCESS]: 'Acceso al Sistema',
+            [AuditReportType.CLINICAL_RECORD_CHANGES]: 'Cambios Registros Clínicos',
+            [AuditReportType.PASSWORD_RESETS]: 'Restablecimientos Contraseña',
+            [AuditReportType.NOTIFICATIONS]: 'Notificaciones',
+            [AuditReportType.GENERAL_ACTIONS]: 'Acciones Generales',
+            [AuditReportType.OTHER]: 'Otros'
+        };
+        return labels[type] || type;
+    };
+
+    const getActionLabel = (action: string): string => {
+        const labels: Record<string, string> = {
+            [AuditAction.CREATE]: 'Crear',
+            [AuditAction.UPDATE]: 'Actualizar',
+            [AuditAction.DELETE]: 'Eliminar',
+            [AuditAction.VIEW]: 'Ver',
+            [AuditAction.LOGIN]: 'Login',
+            [AuditAction.LOGOUT]: 'Logout',
+            [AuditAction.EXPORT]: 'Exportar',
+            [AuditAction.OTHER]: 'Otro'
+        };
+        return labels[action] || action;
+    };
+
+    const formatDateTime = (dateString: string) => {
+        return new Date(dateString).toLocaleString('es-CR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     if (loading) {
@@ -180,14 +287,14 @@ export default function AuditDashboardPage() {
                 <>
                     {/* Cards de Resumen */}
                     <div className="row g-3 mb-4">
-                        {/* Total de Acciones */}
+                        {/* Total de Registros */}
                         <div className="col-12 col-md-6 col-xl-3">
                             <div className="card shadow-sm border-0 h-100">
                                 <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 className="text-muted mb-2">Total de Acciones</h6>
-                                            <h2 className="mb-0">{stats.totalActions}</h2>
+                                            <h6 className="text-muted mb-2">Total de Registros</h6>
+                                            <h2 className="mb-0">{stats.totalRecords}</h2>
                                         </div>
                                         <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
                                             <i className="bi bi-activity text-primary fs-3"></i>
@@ -214,17 +321,17 @@ export default function AuditDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Tipos de Acciones */}
+                        {/* Tipos de Auditoría */}
                         <div className="col-12 col-md-6 col-xl-3">
                             <div className="card shadow-sm border-0 h-100">
                                 <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 className="text-muted mb-2">Tipos de Acciones</h6>
-                                            <h2 className="mb-0">{Object.keys(stats.actionsByType).length}</h2>
+                                            <h6 className="text-muted mb-2">Tipos de Auditoría</h6>
+                                            <h2 className="mb-0">{stats.typeBreakdown.length}</h2>
                                         </div>
                                         <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                                            <i className="bi bi-exclamation-triangle text-warning fs-3"></i>
+                                            <i className="bi bi-folder text-warning fs-3"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -238,10 +345,10 @@ export default function AuditDashboardPage() {
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 className="text-muted mb-2">Entidades Afectadas</h6>
-                                            <h2 className="mb-0">{Object.keys(stats.actionsByEntity).length}</h2>
+                                            <h2 className="mb-0">{stats.topEntities.length}</h2>
                                         </div>
                                         <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                                            <i className="bi bi-calendar-check text-info fs-3"></i>
+                                            <i className="bi bi-database text-info fs-3"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -251,42 +358,40 @@ export default function AuditDashboardPage() {
 
                     {/* Gráficos y Tablas */}
                     <div className="row g-4">
-                        {/* Acciones por Tipo */}
+                        {/* Distribución por Tipo de Auditoría */}
                         <div className="col-12 col-xl-6">
                             <div className="card shadow-sm border-0 h-100">
                                 <div className="card-header bg-white">
                                     <h5 className="mb-0">
-                                        <i className="bi bi-bar-chart me-2"></i>
-                                        Acciones por Tipo
+                                        <i className="bi bi-pie-chart me-2"></i>
+                                        Distribución por Tipo de Auditoría
                                     </h5>
                                 </div>
                                 <div className="card-body">
-                                    {stats.actionsByType && Object.keys(stats.actionsByType).length > 0 ? (
+                                    {stats.typeBreakdown.length > 0 ? (
                                         <div className="d-flex flex-column gap-3">
-                                            {Object.entries(stats.actionsByType)
-                                                .sort(([, a], [, b]) => b - a)
-                                                .map(([action, count]) => (
-                                                    <div key={action}>
-                                                        <div className="d-flex justify-content-between mb-1">
-                                                            <span className={`badge ${auditFlow.getActionBadgeClass(action as any)}`}>
-                                                                {auditFlow.getActionLabel(action as any)}
-                                                            </span>
-                                                            <strong>{count}</strong>
-                                                        </div>
-                                                        <div className="progress" style={{ height: '10px' }}>
-                                                            <div
-                                                                className="progress-bar"
-                                                                role="progressbar"
-                                                                style={{ width: `${calculatePercentage(count, stats.totalActions)}%` }}
-                                                                aria-valuenow={calculatePercentage(count, stats.totalActions)}
-                                                                aria-valuemin={0}
-                                                                aria-valuemax={100}
-                                                            >
-                                                                {calculatePercentage(count, stats.totalActions)}%
-                                                            </div>
+                                            {stats.typeBreakdown.map((item) => (
+                                                <div key={item.type}>
+                                                    <div className="d-flex justify-content-between mb-1">
+                                                        <span className="badge bg-info text-dark">
+                                                            {getTypeLabel(item.type)}
+                                                        </span>
+                                                        <strong>{item.count}</strong>
+                                                    </div>
+                                                    <div className="progress" style={{ height: '10px' }}>
+                                                        <div
+                                                            className="progress-bar bg-info"
+                                                            role="progressbar"
+                                                            style={{ width: `${item.percentage}%` }}
+                                                            aria-valuenow={item.percentage}
+                                                            aria-valuemin={0}
+                                                            aria-valuemax={100}
+                                                        >
+                                                            {item.percentage}%
                                                         </div>
                                                     </div>
-                                                ))}
+                                                </div>
+                                            ))}
                                         </div>
                                     ) : (
                                         <p className="text-muted text-center">No hay datos disponibles</p>
@@ -295,42 +400,95 @@ export default function AuditDashboardPage() {
                             </div>
                         </div>
 
-                        {/* Acciones por Entidad */}
+                        {/* Distribución por Acción */}
                         <div className="col-12 col-xl-6">
                             <div className="card shadow-sm border-0 h-100">
                                 <div className="card-header bg-white">
                                     <h5 className="mb-0">
-                                        <i className="bi bi-diagram-3 me-2"></i>
-                                        Acciones por Entidad
+                                        <i className="bi bi-bar-chart me-2"></i>
+                                        Distribución por Acción
                                     </h5>
                                 </div>
                                 <div className="card-body">
-                                    {stats.actionsByEntity && Object.keys(stats.actionsByEntity).length > 0 ? (
+                                    {stats.actionBreakdown.length > 0 ? (
                                         <div className="d-flex flex-column gap-3">
-                                            {Object.entries(stats.actionsByEntity)
-                                                .sort(([, a], [, b]) => b - a)
-                                                .map(([tableName, count]) => (
-                                                    <div key={tableName}>
-                                                        <div className="d-flex justify-content-between mb-1">
-                                                            <span className="badge bg-secondary">
-                                                                {auditFlow.getTableLabel(tableName)}
-                                                            </span>
-                                                            <strong>{count}</strong>
-                                                        </div>
-                                                        <div className="progress" style={{ height: '10px' }}>
-                                                            <div
-                                                                className="progress-bar bg-secondary"
-                                                                role="progressbar"
-                                                                style={{ width: `${calculatePercentage(count, stats.totalActions)}%` }}
-                                                                aria-valuenow={calculatePercentage(count, stats.totalActions)}
-                                                                aria-valuemin={0}
-                                                                aria-valuemax={100}
-                                                            >
-                                                                {calculatePercentage(count, stats.totalActions)}%
-                                                            </div>
+                                            {stats.actionBreakdown.map((item) => (
+                                                <div key={item.action}>
+                                                    <div className="d-flex justify-content-between mb-1">
+                                                        <span className={`badge ${
+                                                            item.action === AuditAction.CREATE ? 'bg-success' :
+                                                            item.action === AuditAction.UPDATE ? 'bg-warning text-dark' :
+                                                            item.action === AuditAction.DELETE ? 'bg-danger' :
+                                                            item.action === AuditAction.LOGIN ? 'bg-primary' :
+                                                            'bg-secondary'
+                                                        }`}>
+                                                            {getActionLabel(item.action)}
+                                                        </span>
+                                                        <strong>{item.count}</strong>
+                                                    </div>
+                                                    <div className="progress" style={{ height: '10px' }}>
+                                                        <div
+                                                            className={`progress-bar ${
+                                                                item.action === AuditAction.CREATE ? 'bg-success' :
+                                                                item.action === AuditAction.UPDATE ? 'bg-warning' :
+                                                                item.action === AuditAction.DELETE ? 'bg-danger' :
+                                                                item.action === AuditAction.LOGIN ? 'bg-primary' :
+                                                                'bg-secondary'
+                                                            }`}
+                                                            role="progressbar"
+                                                            style={{ width: `${item.percentage}%` }}
+                                                            aria-valuenow={item.percentage}
+                                                            aria-valuemin={0}
+                                                            aria-valuemax={100}
+                                                        >
+                                                            {item.percentage}%
                                                         </div>
                                                     </div>
-                                                ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-muted text-center">No hay datos disponibles</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Top Entidades Afectadas */}
+                        <div className="col-12 col-xl-6">
+                            <div className="card shadow-sm border-0 h-100">
+                                <div className="card-header bg-white">
+                                    <h5 className="mb-0">
+                                        <i className="bi bi-database me-2"></i>
+                                        Top 5 Entidades Afectadas
+                                    </h5>
+                                </div>
+                                <div className="card-body">
+                                    {stats.topEntities.length > 0 ? (
+                                        <div className="d-flex flex-column gap-3">
+                                            {stats.topEntities.map((item, index) => (
+                                                <div key={item.entityName}>
+                                                    <div className="d-flex justify-content-between mb-1">
+                                                        <span>
+                                                            <span className="badge bg-secondary me-2">#{index + 1}</span>
+                                                            {item.entityName}
+                                                        </span>
+                                                        <strong>{item.count}</strong>
+                                                    </div>
+                                                    <div className="progress" style={{ height: '10px' }}>
+                                                        <div
+                                                            className="progress-bar bg-secondary"
+                                                            role="progressbar"
+                                                            style={{ width: `${calculatePercentage(item.count, stats.totalRecords)}%` }}
+                                                            aria-valuenow={calculatePercentage(item.count, stats.totalRecords)}
+                                                            aria-valuemin={0}
+                                                            aria-valuemax={100}
+                                                        >
+                                                            {calculatePercentage(item.count, stats.totalRecords)}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     ) : (
                                         <p className="text-muted text-center">No hay datos disponibles</p>
@@ -370,10 +528,10 @@ export default function AuditDashboardPage() {
                                                             </td>
                                                             <td>
                                                                 <i className="bi bi-person-circle me-2"></i>
-                                                                {user.username}
+                                                                {user.userName}
                                                             </td>
                                                             <td className="text-end">
-                                                                <strong>{user.actionCount}</strong>
+                                                                <strong>{user.count}</strong>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -382,7 +540,7 @@ export default function AuditDashboardPage() {
                                         </div>
                                     ) : (
                                         <div className="text-center py-5">
-                                            <p className="text-muted">No hay datos disponibles</p>
+                                            <p className="text-muted">No hay datos disponibles (Backend pendiente)</p>
                                         </div>
                                     )}
                                 </div>
@@ -411,23 +569,32 @@ export default function AuditDashboardPage() {
                                                     <div className="d-flex w-100 justify-content-between align-items-start">
                                                         <div className="flex-grow-1">
                                                             <div className="mb-1">
-                                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)} me-2`}>
-                                                                    {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
+                                                                <span className={`badge me-2 ${
+                                                                    record.ar_action === AuditAction.CREATE ? 'bg-success' :
+                                                                    record.ar_action === AuditAction.UPDATE ? 'bg-warning text-dark' :
+                                                                    record.ar_action === AuditAction.DELETE ? 'bg-danger' :
+                                                                    record.ar_action === AuditAction.LOGIN ? 'bg-primary' :
+                                                                    'bg-secondary'
+                                                                }`}>
+                                                                    {getActionLabel(record.ar_action)}
                                                                 </span>
-                                                                <span className="badge bg-secondary">
-                                                                    {auditFlow.getTableLabel(record.tableName)}
+                                                                <span className="badge bg-info text-dark">
+                                                                    {getTypeLabel(record.ar_type)}
+                                                                </span>
+                                                                <span className="badge bg-secondary ms-1">
+                                                                    {record.ar_entity_name}
                                                                 </span>
                                                             </div>
                                                             <p className="mb-1 text-truncate" style={{ maxWidth: '300px' }}>
-                                                                {record.description || <span className="text-muted fst-italic">Sin descripción</span>}
+                                                                {record.ar_observations || <span className="text-muted fst-italic">Sin observaciones</span>}
                                                             </p>
                                                             <small className="text-muted">
                                                                 <i className="bi bi-person-circle me-1"></i>
-                                                                {record.userName}
+                                                                {record.user_name || 'N/A'}
                                                             </small>
                                                         </div>
                                                         <small className="text-muted text-end">
-                                                            {auditFlow.formatAuditDate(record.timestamp)}
+                                                            {formatDateTime(record.create_at)}
                                                         </small>
                                                     </div>
                                                 </div>

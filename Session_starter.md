@@ -161,7 +161,8 @@ npm run start:prod       # Electron production mode
 - ✅ Servicios actualizados: searchAuditReports(), getAuditReportById(), getAuditReportsByEntity()
 - ✅ AuditListPage renovado: filtros por tipo/acción/entidad, tabla expandible con old_value/new_value, paginación
 - ✅ ViewAuditPage renovado: cards de información general/técnica, comparación de valores, duración, IP, user agent
-- ✅ Build exitoso: 0 errores TypeScript, 523.86 kB bundle
+- ✅ AuditDashboardPage renovado: estadísticas por ar_type, gráficos de distribución, top 5 entidades, actividad reciente
+- ✅ Build exitoso: 0 errores TypeScript, 521.49 kB bundle
 
 ---
 
@@ -175,10 +176,11 @@ npm run start:prod       # Electron production mode
 - [ ] Migrar páginas restantes a Tailwind CSS (dashboard, users, etc.)
 
 ### Auditoría
-- [ ] Actualizar AuditDashboardPage con nuevas estadísticas por ar_type
+- [x] Actualizar AuditDashboardPage con nuevas estadísticas por ar_type
 - [ ] Testing de endpoints GET /audits/reports con backend NestJS
 - [ ] Implementar gráficos de auditoría por tipo (login_attempts, role_changes, etc.)
 - [ ] Agregar filtros avanzados (rango de duración, IP específica, user agent)
+- [ ] Backend: Implementar JOIN con tabla users para poblar user_name y user_email
 
 ---
 
@@ -197,6 +199,7 @@ npm run start:prod       # Electron production mode
 - `src/presentation/pages/auth/LoginPageNew.tsx` - Login mobile-first
 - `src/presentation/pages/audit/AuditListPage.tsx` - Lista auditoría con nueva estructura
 - `src/presentation/pages/audit/ViewAuditPage.tsx` - Vista detalle auditoría
+- `src/presentation/pages/audit/AuditDashboardPage.tsx` - Dashboard estadísticas auditoría
 - `src/types/audit.ts` - Interfaces AuditReport, SearchAuditReportsDto
 - `src/services/auditService.ts` - Cliente HTTP con métodos nuevos
 - `electron/main.ts` - Configuración Electron
@@ -215,4 +218,4 @@ npm run start:prod       # Electron production mode
 
 ---
 
-*Última actualización: 2025-10-23 - Sistema de auditoría completamente actualizado a nueva estructura audit_report con vistas renovadas (0 errores TypeScript, 523.86 kB bundle)*
+*Última actualización: 2025-10-23 - Sistema de auditoría 100% completo con vistas renovadas: AuditListPage, ViewAuditPage, AuditDashboardPage (0 errores TypeScript, 521.49 kB bundle)*
