@@ -1,6 +1,6 @@
 export interface VirtualFile {
   id?: number;
-  // Datos Personales
+  // Personal Data
   fecha: string;
   cedula: string;
   edad: string;
@@ -11,7 +11,7 @@ export interface VirtualFile {
   anosEscolaridad: string;
   trabajoPrevio: string;
 
-  // Datos adicionales para el API
+  // Additional data for API
   zonaProcedencia?: string;
   cantidadHijos?: number;
   ingresoEconomico?: number;
@@ -21,19 +21,19 @@ export interface VirtualFile {
   tipoSangre?: string;
   urlFotoPerfil?: string;
 
-  // Antecedentes Clínicos
-  ta: string; // Tensión Arterial
+  // Clinical Background
+  ta: string; // Blood Pressure
   peso: string;
   talla: string;
-  imc: string; // Índice de Masa Corporal
+  imc: string; // Body Mass Index
 
-  // Condiciones médicas (checkboxes)
-  hta: boolean; // Hipertensión Arterial
+  // Medical conditions (checkboxes)
+  hta: boolean; // Arterial Hypertension
   dbt: boolean; // Diabetes
-  dislip: boolean; // Dislipidemia
-  irc: boolean; // Insuficiencia Renal Crónica
-  cardioIsq: boolean; // Cardiopatía Isquémica
-  acv: boolean; // Accidente Cerebrovascular
+  dislip: boolean; // Dyslipidemia
+  irc: boolean; // Chronic Renal Insufficiency
+  cardioIsq: boolean; // Ischemic Heart Disease
+  acv: boolean; // Cerebrovascular Accident
   amputacion: boolean;
   tabaquismo: boolean;
   alcoholismo: boolean;
@@ -46,26 +46,26 @@ export interface VirtualFile {
   neoplasiasDetalle: string;
   otrasCondiciones: string;
 
-  // RCVG (Riesgo Cardiovascular Global)
+  // RCVG (Global Cardiovascular Risk)
   rcvg: string;
 
-  // Vacunación
+  // Vaccination
   vacunaCt: boolean; // cT
   vacunaHepB: boolean; // Hepatitis B
   vacunaGripe: boolean;
   vacunaNeumococo: boolean;
 
-  // Visión y Audición
+  // Vision and Hearing
   dificultadesVision: string; // 'SI' | 'NO'
   problemasAudicion: string; // 'SI' | 'NO'
 
-  // Campos de control
+  // Control fields
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CreateVirtualFileData {
-  // Datos Personales
+  // Personal Data
   fecha: string;
   cedula: string;
   edad: string;
@@ -76,13 +76,13 @@ export interface CreateVirtualFileData {
   anosEscolaridad: string;
   trabajoPrevio: string;
 
-  // Antecedentes Clínicos
+  // Clinical Background
   ta: string;
   peso: string;
   talla: string;
   imc: string;
 
-  // Condiciones médicas
+  // Medical conditions
   hta: boolean;
   dbt: boolean;
   dislip: boolean;
@@ -104,13 +104,13 @@ export interface CreateVirtualFileData {
   // RCVG
   rcvg: string;
 
-  // Vacunación
+  // Vaccination
   vacunaCt: boolean;
   vacunaHepB: boolean;
   vacunaGripe: boolean;
   vacunaNeumococo: boolean;
 
-  // Visión y Audición
+  // Vision and Hearing
   dificultadesVision: string;
   problemasAudicion: string;
 }
@@ -279,7 +279,7 @@ export interface VirtualFileApiPayload {
   clinical_history: ApiClinicalHistory;
 }
 
-// Mapeos de condiciones médicas a IDs del API
+// Clinical conditions mapping to API IDs
 const CLINICAL_CONDITIONS_MAP: Record<string, number> = {
   hta: 1,
   dbt: 2,
@@ -298,7 +298,7 @@ const CLINICAL_CONDITIONS_MAP: Record<string, number> = {
   neoplasias: 15
 };
 
-// Mapeos de vacunas a IDs del API
+// Vaccines mapping to API IDs
 const VACCINES_MAP: Record<string, number> = {
   vacunaCt: 1,
   vacunaHepB: 2,
@@ -306,7 +306,7 @@ const VACCINES_MAP: Record<string, number> = {
   vacunaNeumococo: 7 // Actualizado según el ejemplo del JSON
 };
 
-// Mapeo de estados civiles
+// Marital status mapping
 const MARITAL_STATUS_MAP: Record<string, string> = {
   soltero: 'single',
   casado: 'married',
@@ -315,7 +315,6 @@ const MARITAL_STATUS_MAP: Record<string, string> = {
   'union-libre': 'common-law'
 };
 
-// Función para transformar VirtualFile a VirtualFileApiPayload
 export function transformVirtualFileToApiPayload(
   virtualFile: VirtualFile,
   additionalData: {

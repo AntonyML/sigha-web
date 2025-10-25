@@ -1,16 +1,22 @@
 import axios from 'axios';
 import type { AuthUser, LoginResponse } from '../types/auth';
+import { config } from '../config/app.config';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
-
+/**
+ * Axios instance configured for authentication API calls
+ * Includes interceptors for token management and error handling
+ */
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para agregar token a las peticiones
+/**
+ * Request interceptor to automatically add authentication token to requests
+ * Retrieves token from localStorage and adds it to Authorization header
+ */
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
@@ -24,28 +30,33 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar errores 401
+/**
+ * Response interceptor to handle authentication errors globally
+ * Automatically redirects to login page on 401 errors (except during login/2FA flow)
+ */
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || '';
       const currentPath = window.location.pathname;
-      console.log('Interceptor 401 activado para URL:', requestUrl);
-      console.log('Path actual:', currentPath);
-      console.log('¿Incluye /auth/verify-2fa?:', requestUrl.includes('/auth/verify-2fa'));
-      console.log('¿Está en página de login?:', currentPath === '/login');
 
-      // No redirigir si estamos en la página de login o si es verify-2fa
+      // Debug logging for troubleshooting authentication issues
+      console.log('401 Interceptor triggered for URL:', requestUrl);
+      console.log('Current path:', currentPath);
+      console.log('Is verify-2fa request:', requestUrl.includes('/auth/verify-2fa'));
+      console.log('Is on login page:', currentPath === '/login');
+
+      // Prevent redirect during login flow or 2FA verification to avoid interrupting user experience
       if (!requestUrl.includes('/auth/verify-2fa') && currentPath !== '/login') {
-        console.log('Redirigiendo a /login');
-        // Limpiar tokens y redirigir a login solo para otros endpoints
+        console.log('Redirecting to login page');
+        // Clear all authentication data and redirect to login for other endpoints
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         localStorage.removeItem('tempToken');
         window.location.href = '/login';
       } else {
-        console.log('NO redirigiendo porque es verify-2fa o estamos en login');
+        console.log('Skipping redirect for login/2FA flow');
       }
     }
     return Promise.reject(error);
@@ -54,21 +65,23 @@ apiClient.interceptors.response.use(
 
 export const authService = {
   /**
-   * Login de usuario
-   * Puede retornar accessToken directamente o tempToken si requiere 2FA
+   * Authenticates user with email and password
+   * Returns access token directly or temp token if 2FA is required
+   * @param credentials User login credentials
+   * @returns Login response with tokens and user data
    */
   login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
 
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
 
-    // Si requiere 2FA, guardamos el tempToken temporalmente
+    // Store temporary token for 2FA verification if required
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
       return response.data;
     }
 
-    // Si no requiere 2FA, guardamos el token y usuario
+    // Store permanent tokens and user data if no 2FA required
     if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
@@ -78,15 +91,18 @@ export const authService = {
   },
 
   /**
-   * Verifica código 2FA y completa el login
+   * Verifies 2FA code and completes the login process
+   * Exchanges temporary token for permanent access token
+   * @param data Temporary token and 2FA verification code
+   * @returns Complete login response with access tokens
    */
   verify2FA: async (data: { tempToken: string; code: string }): Promise<LoginResponse> => {
-    console.log('Iniciando authService.verify2FA con data:', data);
+    console.log('Starting authService.verify2FA with data:', data);
 
     try {
-      console.log('Enviando POST request a /auth/verify-2fa');
+      console.log('Sending POST request to /auth/verify-2fa');
       const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
-      console.log('Respuesta completa del servidor:', response);
+      console.log('Complete server response:', response);
       console.log('Respuesta data:', response.data);
       console.log('Respuesta status:', response.status);
 

@@ -1,36 +1,36 @@
 /**
- * Configuración centralizada de la aplicación
- * Todas las configuraciones se centralizan aquí
+ * Centralized application configuration
+ * All configurations are centralized here for easy management and environment switching
  *
- * PARA CAMBIAR LA URL DEL API:
- * 1. Modifica api.baseUrl con la URL de tu backend
- * 2. Para backend en otra PC: 'http://192.168.1.XXX:3000'
- * 3. Para producción: 'https://tu-dominio.com'
+ * TO CHANGE API URL:
+ * 1. Modify api.baseUrl with your backend URL
+ * 2. For backend on another PC: 'http://192.168.1.XXX:3000'
+ * 3. For production: 'https://your-domain.com'
  */
 
+export const ipv4Localhost = 'http://localhost:3000';
+export const localhost = 'http://192.168.1.2:3000';
+
 export const config = {
-    // API Configuration
     api: {
-        baseUrl: 'http://localhost:3000', // ← CAMBIA ESTA URL SEGÚN TU ENTORNO
+        baseUrl: ipv4Localhost,
         timeout: 10000,
     },
 
-    // App Configuration
     app: {
         name: 'Hogar de Ancianos',
         version: '1.0.0',
         environment: 'development' as 'development' | 'production' | 'test',
     },
 
-    // Feature Flags
     features: {
-        enableDebugLogs: true, // Cambia a false en producción
+        enableDebugLogs: true,
         enableMockData: false,
     },
 } as const;
 
 /**
- * Utilidades para configuración
+ * Configuration utilities
  */
 export const getApiUrl = (endpoint: string): string => {
     const baseUrl = config.api.baseUrl;

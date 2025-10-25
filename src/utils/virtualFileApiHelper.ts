@@ -1,9 +1,6 @@
 import type { VirtualFile, VirtualFileApiPayload, ApiFamily, ApiMedication } from '../types/virtualFile';
 import { transformVirtualFileToApiPayload } from '../types/virtualFile';
 
-// Ejemplo de uso de la función de transformación
-
-// Ejemplo de datos de un VirtualFile (coincide con el JSON del backend)
 const exampleVirtualFile: VirtualFile = {
   fecha: '2024-01-15T11:00:00.000Z',
   cedula: '1-1234-5678',
@@ -14,8 +11,8 @@ const exampleVirtualFile: VirtualFile = {
   vivienda: 'Casa propia en San José, Barrio Escalante',
   anosEscolaridad: 'complete primary',
   trabajoPrevio: 'otros',
-  
-  // Datos adicionales
+
+  // Additional data
   zonaProcedencia: 'Cartago, Costa Rica',
   cantidadHijos: 3,
   ingresoEconomico: 250000.00,
@@ -24,14 +21,14 @@ const exampleVirtualFile: VirtualFile = {
   genero: 'female',
   tipoSangre: 'O+',
   urlFotoPerfil: 'https://example.com/photos/maria_gonzalez.jpg',
-  
-  // Antecedentes clínicos
+
+  // Clinical background
   ta: '140/90',
   peso: '68.5',
   talla: '162',
   imc: '26.1',
-  
-  // Condiciones médicas (corresponden a IDs 1, 5, 8 en el JSON)
+
+  // Medical conditions (correspond to IDs 1, 5, 8 in the JSON)
   hta: true,           // ID 1
   dbt: false,
   dislip: false,
@@ -50,21 +47,20 @@ const exampleVirtualFile: VirtualFile = {
   neoplasiasDetalle: '',
   otrasCondiciones: 'Costurera y ama de casa',
   
-  // RCVG
+  // RCVG (Cardiovascular Risk)
   rcvg: 'e /20y30%',
   
-  // Vacunación (corresponden a IDs 1, 3, 7 en el JSON)
+  // Vaccination (correspond to IDs 1, 3, 7 in the JSON)
   vacunaCt: true,          // ID 1
   vacunaHepB: false,
   vacunaGripe: true,       // ID 3
   vacunaNeumococo: true,   // ID 7
   
-  // Visión y audición
+  // Vision and hearing
   dificultadesVision: 'SI',
   problemasAudicion: 'NO'
 };
 
-// Ejemplo de datos de familia (coincide con el JSON del backend)
 const familyData: ApiFamily = {
   pf_identification: '1-9876-5432',
   pf_name: 'Carlos Alberto',
@@ -75,7 +71,6 @@ const familyData: ApiFamily = {
   pf_kinship: 'son'
 };
 
-// Ejemplo de medicamentos
 const medications: ApiMedication[] = [
   {
     m_medication: 'Losartán 50mg',
@@ -94,7 +89,11 @@ const medications: ApiMedication[] = [
   }
 ];
 
-// Función para generar el JSON del API
+/**
+ * Generates the API payload from a VirtualFile object
+ * @param virtualFile - The virtual file data to transform
+ * @returns The formatted API payload
+ */
 export function generateApiPayload(virtualFile: VirtualFile): VirtualFileApiPayload {
   return transformVirtualFileToApiPayload(virtualFile, {
     family: familyData,
@@ -103,7 +102,6 @@ export function generateApiPayload(virtualFile: VirtualFile): VirtualFileApiPayl
   });
 }
 
-// Ejemplo de uso
 export function exampleUsage() {
   const apiPayload = generateApiPayload(exampleVirtualFile);
   
@@ -112,7 +110,13 @@ export function exampleUsage() {
   return apiPayload;
 }
 
-// Función para usar en CreateVirtualRecordPage
+/**
+ * Creates a payload from form data for use in CreateVirtualRecordPage
+ * @param formData - The form data from the virtual file form
+ * @param familyInfo - Optional family information
+ * @param medicationList - Optional list of medications
+ * @returns The formatted API payload
+ */
 export function createPayloadFromForm(formData: VirtualFile, familyInfo?: ApiFamily, medicationList?: ApiMedication[]) {
   return transformVirtualFileToApiPayload(formData, {
     family: familyInfo,
