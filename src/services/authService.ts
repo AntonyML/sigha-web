@@ -29,11 +29,24 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Limpiar tokens y redirigir a login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tempToken');
-      window.location.href = '/login';
+      const requestUrl = error.config?.url || '';
+      const currentPath = window.location.pathname;
+      console.log('Interceptor 401 activado para URL:', requestUrl);
+      console.log('Path actual:', currentPath);
+      console.log('¿Incluye /auth/verify-2fa?:', requestUrl.includes('/auth/verify-2fa'));
+      console.log('¿Está en página de login?:', currentPath === '/login');
+
+      // No redirigir si estamos en la página de login o si es verify-2fa
+      if (!requestUrl.includes('/auth/verify-2fa') && currentPath !== '/login') {
+        console.log('Redirigiendo a /login');
+        // Limpiar tokens y redirigir a login solo para otros endpoints
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('tempToken');
+        window.location.href = '/login';
+      } else {
+        console.log('NO redirigiendo porque es verify-2fa o estamos en login');
+      }
     }
     return Promise.reject(error);
   }
@@ -68,20 +81,36 @@ export const authService = {
    * Verifica código 2FA y completa el login
    */
   verify2FA: async (data: { tempToken: string; code: string }): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', {
-      tempToken: data.tempToken,
-      code: data.code
-    });
+    console.log('Iniciando authService.verify2FA con data:', data);
 
-    const { accessToken, user } = response.data;
+    try {
+      console.log('Enviando POST request a /auth/verify-2fa');
+      const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
+      console.log('Respuesta completa del servidor:', response);
+      console.log('Respuesta data:', response.data);
+      console.log('Respuesta status:', response.status);
 
-    if (accessToken && user) {
-      localStorage.setItem('authToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.removeItem('tempToken');
+      const { accessToken, user } = response.data;
+      console.log('AccessToken recibido:', accessToken);
+      console.log('User recibido:', user);
+
+      if (accessToken && user) {
+        console.log('Guardando tokens en localStorage');
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.removeItem('tempToken');
+        console.log('Tokens guardados correctamente');
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Error en authService.verify2FA:', error);
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
+      console.error('Error message:', error.message);
+      throw error;
     }
-
-    return response.data;
   },
 
   /**

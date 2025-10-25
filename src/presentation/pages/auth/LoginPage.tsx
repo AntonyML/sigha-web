@@ -64,7 +64,12 @@ export default function LoginPage() {
     setError('')
 
     if (!twoFactorCode) {
-      setError('Por favor ingrese el código de 6 dígitos')
+      setError('Por favor ingrese el código de 6 u 8 dígitos')
+      return
+    }
+
+    if (twoFactorCode.length !== 6 && twoFactorCode.length !== 8) {
+      setError('El código debe tener 6 dígitos (TOTP) u 8 dígitos (código de respaldo)')
       return
     }
 
@@ -72,14 +77,20 @@ export default function LoginPage() {
 
     try {
       const result = await authFlow.verify2FA(twoFactorCode)
+      console.log('Resultado de verify2FA:', result)
 
       if (!result.success) {
+        console.log('Verificación fallida:', result.error)
         setError(result.error || 'Código 2FA inválido')
         return
       }
 
       if (result.user) {
+        console.log('Usuario verificado, navegando al menú:', result.user)
         navigate('/main-menu')
+      } else {
+        console.log('Verificación exitosa pero sin usuario')
+        setError('Verificación exitosa pero no se recibió información del usuario')
       }
     } catch (err: any) {
       console.error('Error en verificación 2FA:', err)
@@ -209,7 +220,7 @@ export default function LoginPage() {
               >
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm font-medium">
-                  Ingrese el código de 6 dígitos de su aplicación 2FAS o autenticador
+                  Ingrese el código de 6 dígitos (TOTP) de su app autenticadora o un código de respaldo de 8 dígitos
                 </p>
               </div>
 
@@ -225,12 +236,12 @@ export default function LoginPage() {
                   value={twoFactorCode}
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
-                    if (value.length <= 6) {
+                    if (value.length <= 8) {
                       setTwoFactorCode(value);
                     }
                   }}
-                  placeholder="123456"
-                  maxLength={6}
+                  placeholder="12345678"
+                  maxLength={8}
                   disabled={loading}
                   autoFocus
                   required
@@ -240,14 +251,14 @@ export default function LoginPage() {
                   className="text-center text-2xl tracking-widest font-mono font-semibold tabular-nums"
                 />
                 <p id="code-hint" className="text-sm text-muted-foreground text-center">
-                  Ingrese el código que aparece en su app autenticadora
+                  Ingrese el código de 6 dígitos (TOTP) o 8 dígitos (código de respaldo)
                 </p>
               </div>
 
               <div className="space-y-3">
                 <Button
                   type="submit"
-                  disabled={loading || twoFactorCode.length !== 6}
+                  disabled={loading || twoFactorCode.length < 6 || twoFactorCode.length > 8}
                   className="w-full h-12 text-base font-semibold"
                   size="lg"
                 >

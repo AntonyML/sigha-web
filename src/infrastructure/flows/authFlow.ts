@@ -1,4 +1,5 @@
 import { authService } from '../../services/authService';
+import { twoFactorService } from '../../services/twoFactorService';
 import type { AuthUser, LoginResponse } from '../../types/auth';
 
 /**
@@ -141,48 +142,73 @@ export const authFlow = {
      */
     async verify2FA(code: string): Promise<Verify2FAFlowResult> {
         try {
-            // Validar que el código tenga el formato correcto
+            console.log('Iniciando verify2FA con código:', code);
+
+            // Validar que el código tenga el formato correcto (6 dígitos TOTP o 8 dígitos backup)
             const cleanCode = code.replace(/[\s-]/g, '');
-            if (!/^\d{6}$/.test(cleanCode)) {
+            console.log('Código limpiado:', cleanCode);
+
+            if (!twoFactorService.isValidTOTPFormat(cleanCode) && !twoFactorService.isValidBackupCodeFormat(cleanCode)) {
+                console.log('Código con formato inválido');
                 return {
                     success: false,
-                    error: 'El código debe tener 6 dígitos',
+                    error: 'El código debe tener 6 dígitos (TOTP) u 8 dígitos (código de respaldo)',
                 };
             }
 
             // Verificar código 2FA
             const tempToken = authService.getTempToken();
+            console.log('TempToken obtenido:', tempToken);
+
             if (!tempToken) {
+                console.log('No hay tempToken disponible');
                 return {
                     success: false,
                     error: 'No hay sesión de autenticación pendiente',
                 };
             }
 
+            console.log('Enviando request a authService.verify2FA');
             const response = await authService.verify2FA({
                 tempToken,
                 code: cleanCode
             });
+            console.log('Respuesta de authService.verify2FA:', response);
 
             if (response.accessToken && response.user) {
+                console.log('Verificación exitosa, retornando usuario');
                 return {
                     success: true,
                     user: response.user,
                 };
             }
 
+            console.log('Respuesta inesperada del servidor');
             return {
                 success: false,
                 error: 'Respuesta inesperada del servidor',
             };
         } catch (error: any) {
             console.error('Error en authFlow.verify2FA:', error);
+            console.error('Error response:', error.response);
+            console.error('Error response data:', error.response?.data);
+            console.error('Error response status:', error.response?.status);
+            console.error('Error message:', error.message);
 
             if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'Código 2FA inválido o expirado',
-                };
+                // Distinguir entre código inválido y token expirado
+                const errorMessage = error.response?.data?.message || '';
+                if (errorMessage.includes('Token temporal') || errorMessage.includes('expirado')) {
+                    return {
+                        success: false,
+                        error: 'El tiempo para verificar el código ha expirado (5 minutos desde el login inicial). La hora del servidor puede estar desincronizada. Por favor, inicia sesión nuevamente.',
+                    };
+                } else {
+                    return {
+                        success: false,
+                        error: 'Código 2FA inválido. Verifica que el código sea correcto.',
+                    };
+                }
             }
 
             return {
