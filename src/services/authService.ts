@@ -48,7 +48,7 @@ apiClient.interceptors.response.use(
       console.log('Is on login page:', currentPath === '/login');
 
       // Prevent redirect during login flow or 2FA verification to avoid interrupting user experience
-      if (!requestUrl.includes('/auth/verify-2fa') && currentPath !== '/login') {
+      if (!requestUrl.includes('/auth/login') && currentPath !== '/login') {
         console.log('Redirecting to login page');
         // Clear all authentication data and redirect to login for other endpoints
         localStorage.removeItem('authToken');
@@ -71,6 +71,9 @@ export const authService = {
    * @returns Login response with tokens and user data
    */
   login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
+    // Clear any existing invalid tokens before login
+    localStorage.removeItem('tempToken');
+
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
 
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
@@ -78,6 +81,11 @@ export const authService = {
     // Store temporary token for 2FA verification if required
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
+      // Store credentials for 2FA verification
+      localStorage.setItem('tempCredentials', JSON.stringify({
+        uEmail: credentials.uEmail,
+        uPassword: credentials.uPassword
+      }));
       return response.data;
     }
 
@@ -92,29 +100,43 @@ export const authService = {
 
   /**
    * Verifies 2FA code and completes the login process
-   * Exchanges temporary token for permanent access token
-   * @param data Temporary token and 2FA verification code
+   * Uses the direct login flow with twoFactorCode included
+   * @param twoFactorCode The 2FA verification code
    * @returns Complete login response with access tokens
    */
-  verify2FA: async (data: { tempToken: string; code: string }): Promise<LoginResponse> => {
-    console.log('Starting authService.verify2FA with data:', data);
+  verify2FA: async (twoFactorCode: string): Promise<LoginResponse> => {
+    console.log('Starting authService.verify2FA with code:', twoFactorCode.replace(/[\s-]/g, ''));
+
+    // Get stored credentials
+    const tempCredentials = authService.getTempCredentials();
+    if (!tempCredentials) {
+      throw new Error('No se encontraron credenciales temporales. Inicia sesión nuevamente.');
+    }
 
     try {
-      console.log('Sending POST request to /auth/verify-2fa');
-      const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', data);
+      console.log('Sending POST request to /auth/login with 2FA code');
+      const response = await apiClient.post<LoginResponse>('/auth/login', {
+        uEmail: tempCredentials.uEmail,
+        uPassword: tempCredentials.uPassword,
+        twoFactorCode: twoFactorCode.replace(/[\s-]/g, '') // Clean the code
+      });
       console.log('Complete server response:', response);
       console.log('Respuesta data:', response.data);
       console.log('Respuesta status:', response.status);
 
-      const { accessToken, user } = response.data;
-      console.log('AccessToken recibido:', accessToken);
+      const { accessToken, refreshToken, user } = response.data;
+      console.log('AccessToken recibido:', accessToken ? 'PRESENT' : 'MISSING');
+      console.log('RefreshToken recibido:', refreshToken ? 'PRESENT' : 'MISSING');
       console.log('User recibido:', user);
 
-      if (accessToken && user) {
+      if (accessToken && refreshToken && user) {
         console.log('Guardando tokens en localStorage');
         localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(user));
+        // Clean up temporary data
         localStorage.removeItem('tempToken');
+        localStorage.removeItem('tempCredentials');
         console.log('Tokens guardados correctamente');
       }
 
@@ -175,6 +197,14 @@ export const authService = {
    */
   getTempToken: (): string | null => {
     return localStorage.getItem('tempToken');
+  },
+
+  /**
+   * Obtener credenciales temporales almacenadas (para 2FA)
+   */
+  getTempCredentials: (): { uEmail: string; uPassword: string } | null => {
+    const creds = localStorage.getItem('tempCredentials');
+    return creds ? JSON.parse(creds) : null;
   },
 
   /**

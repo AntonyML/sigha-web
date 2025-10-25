@@ -35,3 +35,5 @@ npm run build            # Production build
 **2025-01-XX:** Alcance definido - Solo Login/Usuarios + Auditoría
 **2025-01-XX:** APIs centralizadas @ 192.168.1.2:3000
 **2025-01-XX:** Arquitectura modular implementada
+**2025-10-25:** Icon component enhanced with 500+ Material Symbols from Google Fonts, JSON-based icon management, variant support (outlined/filled/sharp)
+**2025-10-25:** Updated entrance/exit menu icon to 'transfer_within_a_station' for better semantic representation

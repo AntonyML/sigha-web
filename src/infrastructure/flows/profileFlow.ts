@@ -4,6 +4,11 @@ import type {
   UpdateUserData,
   UserChangePasswordData
 } from '../../types/user';
+import {
+  validateUpdateProfileData,
+  validateChangePasswordData,
+  getProfileErrorMessage
+} from './validation/profileValidations';
 
 /**
  * Resultado del flujo de obtención de perfil
@@ -56,32 +61,9 @@ export const profileFlow = {
             };
         } catch (error: any) {
             console.error('Error en profileFlow.getProfile:', error);
-
-            // Manejar diferentes tipos de errores
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para acceder a tu perfil.',
-                };
-            }
-
-            if (error.response?.status === 404) {
-                return {
-                    success: false,
-                    error: 'Tu perfil no fue encontrado.',
-                };
-            }
-
             return {
                 success: false,
-                error: 'Error al obtener tu perfil. Inténtalo nuevamente.',
+                error: getProfileErrorMessage(error),
             };
         }
     },
@@ -95,14 +77,12 @@ export const profileFlow = {
     async updateProfile(data: Partial<UpdateUserData>): Promise<UpdateProfileFlowResult> {
         try {
             // Validaciones del frontend
-            if (data.uEmail) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(data.uEmail)) {
-                    return {
-                        success: false,
-                        error: 'El formato del email no es válido.',
-                    };
-                }
+            const validationError = validateUpdateProfileData(data);
+            if (validationError) {
+                return {
+                    success: false,
+                    error: validationError,
+                };
             }
 
             const user = await profileService.updateProfile(data);
@@ -113,45 +93,9 @@ export const profileFlow = {
             };
         } catch (error: any) {
             console.error('Error en profileFlow.updateProfile:', error);
-
-            if (error.response?.status === 400) {
-                const messages = error.response.data?.message;
-                if (Array.isArray(messages)) {
-                    return {
-                        success: false,
-                        error: messages.join(', '),
-                    };
-                }
-                return {
-                    success: false,
-                    error: 'Los datos proporcionados no son válidos.',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para actualizar tu perfil.',
-                };
-            }
-
-            if (error.response?.status === 409) {
-                return {
-                    success: false,
-                    error: 'El email ya está en uso por otro usuario.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al actualizar tu perfil.',
+                error: getProfileErrorMessage(error),
             };
         }
     },
@@ -165,38 +109,11 @@ export const profileFlow = {
     async changePassword(data: UserChangePasswordData): Promise<ChangePasswordFlowResult> {
         try {
             // Validaciones del frontend
-            if (!data.currentPassword?.trim()) {
+            const validationError = validateChangePasswordData(data);
+            if (validationError) {
                 return {
                     success: false,
-                    error: 'La contraseña actual es obligatoria.',
-                };
-            }
-
-            if (!data.newPassword?.trim()) {
-                return {
-                    success: false,
-                    error: 'La nueva contraseña es obligatoria.',
-                };
-            }
-
-            if (data.newPassword.length < 8) {
-                return {
-                    success: false,
-                    error: 'La nueva contraseña debe tener al menos 8 caracteres.',
-                };
-            }
-
-            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.newPassword)) {
-                return {
-                    success: false,
-                    error: 'La nueva contraseña debe contener al menos una mayúscula, una minúscula y un número.',
-                };
-            }
-
-            if (data.currentPassword === data.newPassword) {
-                return {
-                    success: false,
-                    error: 'La nueva contraseña debe ser diferente a la actual.',
+                    error: validationError,
                 };
             }
 
@@ -208,38 +125,9 @@ export const profileFlow = {
             };
         } catch (error: any) {
             console.error('Error en profileFlow.changePassword:', error);
-
-            if (error.response?.status === 400) {
-                const messages = error.response.data?.message;
-                if (Array.isArray(messages)) {
-                    return {
-                        success: false,
-                        error: messages.join(', '),
-                    };
-                }
-                return {
-                    success: false,
-                    error: 'Los datos proporcionados no son válidos.',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para cambiar tu contraseña.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al cambiar la contraseña.',
+                error: getProfileErrorMessage(error),
             };
         }
     },

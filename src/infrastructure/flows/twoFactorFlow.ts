@@ -8,6 +8,11 @@ import type {
     TwoFactorStatusResponse,
     Disable2FAResponse,
 } from '../../types/twoFactor';
+import {
+  validateEnable2FAData,
+  validateVerify2FAData,
+  getTwoFactorErrorMessage
+} from './validation/twoFactorValidations';
 
 /**
  * Resultado del flujo de obtención de estado 2FA
@@ -90,7 +95,7 @@ export const twoFactorFlow = {
                 success: false,
                 enabled: false,
                 hasBackupCodes: false,
-                error: error.response?.data?.message || 'Error al obtener estado de 2FA',
+                error: getTwoFactorErrorMessage(error),
             };
         }
     },
@@ -113,7 +118,10 @@ export const twoFactorFlow = {
             
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al configurar 2FA',
+                secret: '',
+                qrCode: '',
+                backupCodes: [],
+                error: getTwoFactorErrorMessage(error),
             };
         }
     },
@@ -124,10 +132,11 @@ export const twoFactorFlow = {
     enable: async (data: Enable2FARequest): Promise<Enable2FAFlowResult> => {
         try {
             // Validar código antes de enviar
-            if (!twoFactorService.isValidTOTPFormat(data.code) && !twoFactorService.isValidBackupCodeFormat(data.code)) {
+            const validationError = validateEnable2FAData(data);
+            if (validationError) {
                 return {
                     success: false,
-                    error: 'El código debe tener 6 dígitos (TOTP) u 8 dígitos (código de respaldo)',
+                    error: validationError,
                 };
             }
 
@@ -141,26 +150,10 @@ export const twoFactorFlow = {
             };
         } catch (error: any) {
             console.error('Error enabling 2FA:', error);
-            console.error('Error response:', error.response);
-            console.error('Error response data:', error.response?.data);
-            console.error('Error response status:', error.response?.status);
-            console.error('Error message:', error.message);
-            console.error('Full error object:', JSON.stringify(error, null, 2));
-            
-            let errorMessage = 'Error al habilitar 2FA';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.status === 400) {
-                errorMessage = 'Código inválido o expirado';
-            } else if (error.response?.status === 401) {
-                errorMessage = 'Sesión expirada, por favor inicia sesión nuevamente';
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
             
             return {
                 success: false,
-                error: errorMessage,
+                error: getTwoFactorErrorMessage(error),
             };
         }
     },
@@ -171,13 +164,11 @@ export const twoFactorFlow = {
     verify: async (data: Verify2FARequest): Promise<Verify2FAFlowResult> => {
         try {
             // Validar formato del código
-            const isTOTP = twoFactorService.isValidTOTPFormat(data.code);
-            const isBackupCode = twoFactorService.isValidBackupCodeFormat(data.code);
-            
-            if (!isTOTP && !isBackupCode) {
+            const validationError = validateVerify2FAData(data);
+            if (validationError) {
                 return {
                     success: false,
-                    error: 'Formato de código inválido',
+                    error: validationError,
                 };
             }
 
@@ -195,16 +186,9 @@ export const twoFactorFlow = {
         } catch (error: any) {
             console.error('Error verifying 2FA:', error);
             
-            let errorMessage = 'Error al verificar código 2FA';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.status === 400) {
-                errorMessage = 'Código inválido o expirado';
-            }
-            
             return {
                 success: false,
-                error: errorMessage,
+                error: getTwoFactorErrorMessage(error),
             };
         }
     },
@@ -231,16 +215,9 @@ export const twoFactorFlow = {
         } catch (error: any) {
             console.error('Error disabling 2FA:', error);
             
-            let errorMessage = 'Error al deshabilitar 2FA';
-            if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            } else if (error.response?.status === 400) {
-                errorMessage = 'Código inválido o expirado';
-            }
-            
             return {
                 success: false,
-                error: errorMessage,
+                error: getTwoFactorErrorMessage(error),
             };
         }
     },

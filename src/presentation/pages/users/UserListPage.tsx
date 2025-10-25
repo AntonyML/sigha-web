@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
 import { getFullName } from '../../../utils/userUtils';
+import { Icon } from '../../components/atoms';
 import type { User } from '../../../types/user';
 
 export default function UserListPage() {
@@ -158,14 +159,14 @@ export default function UserListPage() {
                                     className="btn btn-outline-secondary d-flex align-items-center gap-2"
                                     onClick={() => navigate('/main-menu')}
                                 >
-                                    <i className="bi bi-arrow-left"></i>
+                                    <Icon name="arrow_back" size="sm" />
                                     Regresar
                                 </button>
                                 <button
                                     className="btn btn-primary d-flex align-items-center gap-2"
                                     onClick={() => navigate('/users/create')}
                                 >
-                                    <i className="bi bi-plus-lg"></i>
+                                    <Icon name="add" size="sm" />
                                     Nuevo Usuario
                                 </button>
                             </div>
@@ -181,7 +182,7 @@ export default function UserListPage() {
                                     <div className="col-12 col-lg-6">
                                         <div className="input-group input-group-lg">
                                             <span className="input-group-text bg-white border-end-0">
-                                                <i className="bi bi-search text-muted"></i>
+                                                <Icon name="search" size="sm" className="text-muted" />
                                             </span>
                                             <input
                                                 type="text"
@@ -196,7 +197,7 @@ export default function UserListPage() {
                                                     type="button"
                                                     onClick={handleClearSearch}
                                                 >
-                                                    <i className="bi bi-x-lg"></i>
+                                                    <Icon name="close" size="sm" />
                                                 </button>
                                             )}
                                         </div>
@@ -215,7 +216,7 @@ export default function UserListPage() {
                                     <div className="col-12 col-lg-3">
                                         <div className="d-flex align-items-center h-100">
                                             <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6">
-                                                <i className="bi bi-people-fill me-2"></i>
+                                                <Icon name="group" size="sm" className="me-2" />
                                                 {filteredUsers.length} usuarios
                                             </span>
                                         </div>
@@ -232,19 +233,19 @@ export default function UserListPage() {
                             <div className="card-body p-0">
                                 {filteredUsers.length === 0 && searchTerm ? (
                                     <div className="text-center py-5">
-                                        <i className="bi bi-search display-4 text-muted mb-3 d-block"></i>
+                                        <Icon name="search" size="xl" className="display-4 text-muted mb-3 d-block" />
                                         <h5 className="text-muted">No se encontraron resultados</h5>
                                         <p className="text-muted">Intenta con otros términos de búsqueda</p>
                                     </div>
                                 ) : filteredUsers.length === 0 ? (
                                     <div className="text-center py-5">
-                                        <i className="bi bi-person-plus display-4 text-muted mb-3 d-block"></i>
+                                        <Icon name="person" size="xl" className="display-4 text-muted mb-3 d-block" />
                                         <h5 className="text-muted mb-3">No hay usuarios registrados</h5>
                                         <button 
                                             className="btn btn-primary"
                                             onClick={() => navigate('/users/create')}
                                         >
-                                            <i className="bi bi-plus-circle me-2"></i>
+                                            <Icon name="add" size="sm" className="me-2" />
                                             Crear primer usuario
                                         </button>
                                     </div>
@@ -273,7 +274,7 @@ export default function UserListPage() {
                                                         <td className="py-3">
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                                    <i className="bi bi-person-fill text-primary"></i>
+                                                                    <Icon name="person" size="md" className="text-primary" />
                                                                 </div>
                                                                 <div>
                                                                     <div className="fw-medium">{getFullName(user)}</div>
@@ -282,18 +283,18 @@ export default function UserListPage() {
                                                         </td>
                                                         <td className="py-3">
                                                             <div className="d-flex align-items-center gap-2">
-                                                                <i className="bi bi-envelope text-muted"></i>
+                                                                <Icon name="email" size="sm" className="text-muted" />
                                                                 <span>{user.uEmail}</span>
                                                                 {user.uEmailVerified && (
                                                                     <span className="badge bg-info bg-opacity-10 text-info" title="Email verificado">
-                                                                        <i className="bi bi-patch-check-fill"></i>
+                                                                        <Icon name="verified" size="sm" />
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         </td>
                                                         <td className="py-3">
                                                             <span className={`badge ${user.uIsActive ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${user.uIsActive ? 'success' : 'secondary'} px-3 py-2`}>
-                                                                <i className={`bi ${user.uIsActive ? 'bi-check-circle-fill' : 'bi-x-circle-fill'} me-1`}></i>
+                                                                <Icon name={user.uIsActive ? 'check_circle' : 'cancel'} size="sm" className="me-1" />
                                                                 {user.uIsActive ? 'Activo' : 'Inactivo'}
                                                             </span>
                                                         </td>
@@ -304,28 +305,28 @@ export default function UserListPage() {
                                                                     onClick={() => handleView(user)}
                                                                     title="Ver detalles"
                                                                 >
-                                                                    <i className="bi bi-eye"></i>
+                                                                    <Icon name="visibility" size="sm" />
                                                                 </button>
                                                                 <button
                                                                     className="btn btn-sm btn-light"
                                                                     onClick={() => handleEdit(user)}
                                                                     title="Editar"
                                                                 >
-                                                                    <i className="bi bi-pencil"></i>
+                                                                    <Icon name="edit" size="sm" />
                                                                 </button>
                                                                 <button
                                                                     className={`btn btn-sm ${user.uIsActive ? 'btn-warning' : 'btn-success'}`}
                                                                     onClick={() => handleToggleStatus(user)}
                                                                     title={user.uIsActive ? 'Desactivar' : 'Activar'}
                                                                 >
-                                                                    <i className={`bi ${user.uIsActive ? 'bi-toggle-on' : 'bi-toggle-off'}`}></i>
+                                                                    <Icon name={user.uIsActive ? 'toggle_on' : 'toggle_off'} size="sm" />
                                                                 </button>
                                                                 <button
                                                                     className="btn btn-sm btn-danger"
                                                                     onClick={() => handleDeleteClick(user)}
                                                                     title="Eliminar"
                                                                 >
-                                                                    <i className="bi bi-trash"></i>
+                                                                    <Icon name="delete" size="sm" />
                                                                 </button>
                                                             </div>
                                                         </td>

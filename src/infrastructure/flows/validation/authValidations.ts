@@ -1,4 +1,4 @@
-// authFlowValidations.ts
+// authValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación
 
 

@@ -4,6 +4,7 @@ import { twoFactorFlow } from '../../../infrastructure/flows/twoFactorFlow';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { PageHeader } from '../../components/molecules/PageHeader/PageHeader';
+import { Icon } from '../../components/atoms';
 import {
   TwoFactorStatusCard,
   TwoFactorInfoCard,
@@ -184,7 +185,7 @@ export default function TwoFactorPage() {
                     text: "Regresar",
                     onClick: () => navigate('/main-menu'),
                     disabled: processing,
-                    icon: "bi-arrow-left"
+                    icon: "arrow_back"
                 }}
             />
 
@@ -196,7 +197,7 @@ export default function TwoFactorPage() {
                         {is2FAEnabled ? (
                             <>
                                 <div className="alert alert-success d-flex align-items-center" role="alert">
-                                    <i className="bi bi-check-circle me-2"></i>
+                                    <Icon name="check_circle" size="sm" className="me-2" />
                                     2FA está habilitado en tu cuenta.
                                 </div>
                                 <div className="mb-3">
@@ -218,14 +219,14 @@ export default function TwoFactorPage() {
                                     onClick={handleDisable2FA}
                                     disabled={processing || !disableCode}
                                 >
-                                    <i className="bi bi-x-circle me-2"></i>
+                                    <Icon name="cancel" size="sm" className="me-2" />
                                     Deshabilitar 2FA
                                 </button>
                             </>
                         ) : (
                             <>
                                 <div className="alert alert-warning d-flex align-items-center" role="alert">
-                                    <i className="bi bi-exclamation-triangle me-2"></i>
+                                    <Icon name="warning" size="sm" className="me-2" />
                                     2FA no está habilitado en tu cuenta.
                                 </div>
                                 <button
@@ -233,7 +234,7 @@ export default function TwoFactorPage() {
                                     onClick={handleStartSetup}
                                     disabled={processing}
                                 >
-                                    <i className="bi bi-shield-plus me-2"></i>
+                                    <Icon name="shield" size="sm" className="me-2" />
                                     Habilitar 2FA
                                 </button>
                             </>

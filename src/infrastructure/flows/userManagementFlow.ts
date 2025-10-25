@@ -5,6 +5,12 @@ import type {
   UpdateUserData,
   UserSearchParams
 } from '../../types/user';
+import {
+  validateCreateUserData,
+  validateUpdateUserData,
+  validateUserSearchParams,
+  getUserManagementErrorMessage
+} from './validation/userValidations';
 
 /**
  * Resultado del flujo de obtención de usuarios
@@ -183,74 +189,11 @@ export const userManagementFlow = {
     async createUser(data: CreateUserData): Promise<CreateUserFlowResult> {
         try {
             // Validaciones del frontend
-            if (!data.uIdentification?.trim()) {
+            const validationError = validateCreateUserData(data);
+            if (validationError) {
                 return {
                     success: false,
-                    error: 'La identificación es obligatoria.',
-                };
-            }
-
-            if (!/^\d+$/.test(data.uIdentification)) {
-                return {
-                    success: false,
-                    error: 'La identificación debe contener solo números.',
-                };
-            }
-
-            if (!data.uName?.trim()) {
-                return {
-                    success: false,
-                    error: 'El nombre es obligatorio.',
-                };
-            }
-
-            if (!data.uFLastName?.trim()) {
-                return {
-                    success: false,
-                    error: 'El primer apellido es obligatorio.',
-                };
-            }
-
-            if (!data.uEmail?.trim()) {
-                return {
-                    success: false,
-                    error: 'El email es obligatorio.',
-                };
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(data.uEmail)) {
-                return {
-                    success: false,
-                    error: 'El formato del email no es válido.',
-                };
-            }
-
-            if (!data.uPassword?.trim()) {
-                return {
-                    success: false,
-                    error: 'La contraseña es obligatoria.',
-                };
-            }
-
-            if (data.uPassword.length < 8) {
-                return {
-                    success: false,
-                    error: 'La contraseña debe tener al menos 8 caracteres.',
-                };
-            }
-
-            if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(data.uPassword)) {
-                return {
-                    success: false,
-                    error: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número.',
-                };
-            }
-
-            if (!data.roleId || data.roleId <= 0) {
-                return {
-                    success: false,
-                    error: 'Debe seleccionar un rol válido.',
+                    error: validationError,
                 };
             }
 
@@ -263,45 +206,9 @@ export const userManagementFlow = {
             };
         } catch (error: any) {
             console.error('Error en userManagementFlow.createUser:', error);
-
-            if (error.response?.status === 400) {
-                const messages = error.response.data?.message;
-                if (Array.isArray(messages)) {
-                    return {
-                        success: false,
-                        error: messages.join(', '),
-                    };
-                }
-                return {
-                    success: false,
-                    error: 'Los datos proporcionados no son válidos.',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para crear usuarios.',
-                };
-            }
-
-            if (error.response?.status === 409) {
-                return {
-                    success: false,
-                    error: 'Ya existe un usuario con esa identificación o email.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al crear usuario.',
+                error: getUserManagementErrorMessage(error),
             };
         }
     },
@@ -323,20 +230,11 @@ export const userManagementFlow = {
             }
 
             // Validaciones del frontend
-            if (data.uEmail) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(data.uEmail)) {
-                    return {
-                        success: false,
-                        error: 'El formato del email no es válido.',
-                        };
-                }
-            }
-
-            if (data.roleId && data.roleId <= 0) {
+            const validationError = validateUpdateUserData(data);
+            if (validationError) {
                 return {
                     success: false,
-                    error: 'Debe seleccionar un rol válido.',
+                    error: validationError,
                 };
             }
 
@@ -349,52 +247,9 @@ export const userManagementFlow = {
             };
         } catch (error: any) {
             console.error('Error en userManagementFlow.updateUser:', error);
-
-            if (error.response?.status === 400) {
-                const messages = error.response.data?.message;
-                if (Array.isArray(messages)) {
-                    return {
-                        success: false,
-                        error: messages.join(', '),
-                    };
-                }
-                return {
-                    success: false,
-                    error: 'Los datos proporcionados no son válidos.',
-                };
-            }
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para actualizar usuarios.',
-                };
-            }
-
-            if (error.response?.status === 404) {
-                return {
-                    success: false,
-                    error: 'Usuario no encontrado.',
-                };
-            }
-
-            if (error.response?.status === 409) {
-                return {
-                    success: false,
-                    error: 'Ya existe un usuario con esos datos.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al actualizar usuario.',
+                error: getUserManagementErrorMessage(error),
             };
         }
     },
@@ -474,24 +329,9 @@ export const userManagementFlow = {
             };
         } catch (error: any) {
             console.error('Error en userManagementFlow.searchUsers:', error);
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para buscar usuarios.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al buscar usuarios.',
+                error: getUserManagementErrorMessage(error),
             };
         }
     },
@@ -606,6 +446,15 @@ export const userManagementFlow = {
     async searchUsersAdvanced(params: UserSearchParams): Promise<GetUsersFlowResult> {
         try {
             // Validar parámetros
+            const validationError = validateUserSearchParams(params);
+            if (validationError) {
+                return {
+                    success: false,
+                    error: validationError,
+                };
+            }
+
+            // Verificar que al menos un parámetro de búsqueda esté presente
             if (!params.term?.trim() && !params.roleId) {
                 return {
                     success: false,
@@ -630,24 +479,9 @@ export const userManagementFlow = {
             };
         } catch (error: any) {
             console.error('Error en userManagementFlow.searchUsersAdvanced:', error);
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (error.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para buscar usuarios.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error en la búsqueda avanzada.',
+                error: getUserManagementErrorMessage(error),
             };
         }
     },

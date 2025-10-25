@@ -1,5 +1,6 @@
 import { roleService } from '../../services/roleService';
 import type { UserRole } from '../../types/user';
+import { getRoleErrorMessage } from './validation/roleValidations';
 
 /**
  * Resultado del flujo de obtención de roles
@@ -31,17 +32,9 @@ export const roleFlow = {
             };
         } catch (error: any) {
             console.error('Error en roleFlow.getAllRoles:', error);
-
-            if (error.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener roles.',
+                error: getRoleErrorMessage(error),
             };
         }
     },

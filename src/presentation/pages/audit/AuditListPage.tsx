@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/auditFlow';
+import { Icon } from '../../components/atoms';
 import type { DigitalRecord, SearchDigitalRecordsDto, AuditActionType } from '../../../types/audit';
 import { AuditAction } from '../../../types/audit';
 
@@ -106,19 +107,22 @@ export default function AuditListPage() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2>
-                        <i className="bi bi-shield-check me-2"></i>
+                        <Icon name="shield" size="lg" className="me-2" />
                         Auditoría del Sistema
                     </h2>
                 </div>
                 <div>
                     <button className="btn btn-outline-secondary me-2" onClick={() => navigate('/audits')}>
-                        <i className="bi bi-arrow-left me-2"></i>Volver
+                        <Icon name="arrow_back" size="sm" className="me-2" />
+                        Volver
                     </button>
                     <button className="btn btn-primary me-2" onClick={() => navigate('/audits/dashboard')}>
-                        <i className="bi bi-graph-up me-2"></i>Dashboard
+                        <Icon name="dashboard" size="sm" className="me-2" />
+                        Dashboard
                     </button>
                     <button className="btn btn-success" onClick={handleExport}>
-                        <i className="bi bi-download me-2"></i>Exportar CSV
+                        <Icon name="download" size="sm" className="me-2" />
+                        Exportar CSV
                     </button>
                 </div>
             </div>
@@ -134,7 +138,7 @@ export default function AuditListPage() {
             {/* Filtros */}
             <div className="card mb-4">
                 <div className="card-header">
-                    <i className="bi bi-funnel me-2"></i>
+                    <Icon name="filter_list" size="sm" className="me-2" />
                     Filtros de Búsqueda
                 </div>
                 <div className="card-body">
@@ -178,7 +182,8 @@ export default function AuditListPage() {
                     </div>
                     <div className="mt-3">
                         <button className="btn btn-secondary btn-sm" onClick={handleClearFilters}>
-                            <i className="bi bi-x-circle me-2"></i>Limpiar
+                            <Icon name="close" size="sm" className="me-2" />
+                            Limpiar
                         </button>
                         <span className="ms-3 text-muted">{totalRecords} registros encontrados</span>
                     </div>
@@ -188,7 +193,7 @@ export default function AuditListPage() {
             {/* Tabla */}
             <div className="card">
                 <div className="card-header d-flex justify-content-between">
-                    <span><i className="bi bi-list-ul me-2"></i>Registros de Auditoría</span>
+                    <span><Icon name="list" size="sm" className="me-2" />Registros de Auditoría</span>
                     <select className="form-select form-select-sm w-auto" value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}>
                         <option value={10}>10</option>
                         <option value={25}>25</option>
@@ -199,7 +204,7 @@ export default function AuditListPage() {
                 <div className="card-body p-0">
                     {filteredRecords.length === 0 ? (
                         <div className="text-center py-5">
-                            <i className="bi bi-inbox display-1 text-muted"></i>
+                            <Icon name="inbox" size="xl" className="display-1 text-muted" />
                             <p className="mt-3 text-muted">No se encontraron registros</p>
                         </div>
                     ) : (
@@ -228,13 +233,13 @@ export default function AuditListPage() {
                                             </td>
                                             <td><span className="badge bg-secondary">{auditFlow.getTableLabel(record.tableName)}</span></td>
                                             <td>
-                                                <div><i className="bi bi-person-circle me-1"></i>{record.userName}</div>
+                                                <div><Icon name="person" size="sm" className="me-1" />{record.userName}</div>
                                                 {record.userEmail && <small className="text-muted">{record.userEmail}</small>}
                                             </td>
                                             <td><div className="text-truncate" style={{ maxWidth: '300px' }}>{record.description || 'Sin descripción'}</div></td>
                                             <td>
                                                 <button className="btn btn-sm btn-outline-primary" onClick={() => handleView(record)}>
-                                                    <i className="bi bi-eye"></i>
+                                                    <Icon name="visibility" size="sm" />
                                                 </button>
                                             </td>
                                         </tr>
@@ -252,7 +257,7 @@ export default function AuditListPage() {
                             <ul className="pagination pagination-sm mb-0 justify-content-center">
                                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                                     <button className="page-link" onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>
-                                        <i className="bi bi-chevron-left"></i>
+                                        <Icon name="chevron_left" size="sm" />
                                     </button>
                                 </li>
                                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -270,7 +275,7 @@ export default function AuditListPage() {
                                 })}
                                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
                                     <button className="page-link" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>
-                                        <i className="bi bi-chevron-right"></i>
+                                        <Icon name="chevron_right" size="sm" />
                                     </button>
                                 </li>
                             </ul>

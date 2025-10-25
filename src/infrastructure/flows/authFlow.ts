@@ -5,7 +5,7 @@ import {
     getLoginErrorMessage,
     validate2FACode,
     get2FAErrorMessage
-} from './authFlowValidations';
+} from './validation/authValidations';
 
 /**
  * Resultado del flujo de login
@@ -129,19 +129,8 @@ export const authFlow = {
                 };
             }
 
-            // Verificar código 2FA
-            const tempToken = authService.getTempToken();
-            if (!tempToken) {
-                return {
-                    success: false,
-                    error: 'No hay sesión de autenticación pendiente',
-                };
-            }
-
-            const response = await authService.verify2FA({
-                tempToken,
-                code: code.replace(/[\s-]/g, '')
-            });
+            // Verificar código 2FA usando flujo directo
+            const response = await authService.verify2FA(code.replace(/[\s-]/g, ''));
 
             if (response.accessToken && response.user) {
                 return {

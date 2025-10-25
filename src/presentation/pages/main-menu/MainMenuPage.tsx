@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import { Icon } from '../../components/atoms';
 import './style.css';
 
 interface MenuOption {
     id: string;
     title: string;
     description: string;
-    image: string;
+    icon: string;
     route: string;
 }
 
@@ -17,35 +18,35 @@ export default function MainMenuPage() {
             id: '1',
             title: 'Fichas Virtuales',
             description: 'Gestionar y visualizar todas las fichas virtuales de pacientes',
-            image: '📋',
+            icon: 'assignment',
             route: '/virtualFiles'
         },
         {
             id: '2',
             title: 'Usuarios',
             description: 'Administrar usuarios del sistema y sus permisos',
-            image: '👥',
+            icon: 'group',
             route: '/users'
         },
         {
             id: '3',
             title: 'Configuración 2FA',
             description: 'Configurar autenticación de dos factores para mayor seguridad',
-            image: '🔐',
+            icon: 'lock',
             route: '/two-factor'
         },
         {
             id: '4',
             title: 'Entradas y Salidas',
             description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
-            image: '➡️',
+            icon: 'transfer_within_a_station',
             route: '/entrance-exit'
         },
         {
             id: '5',
             title: 'Auditoría',
             description: 'Revisar registros de auditoría y actividad del sistema',
-            image: '🛡️',
+            icon: 'shield',
             route: '/audits'
         }
     ];
@@ -78,7 +79,7 @@ export default function MainMenuPage() {
                                         className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center"
                                         style={{ width: '80px', height: '80px' }}
                                     >
-                                        <span style={{ fontSize: '2rem' }}>{option.image}</span>
+                                        <Icon name={option.icon as any} size="xl" className="text-primary" />
                                     </div>
                                 </div>
 

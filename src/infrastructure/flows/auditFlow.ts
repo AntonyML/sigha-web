@@ -7,6 +7,11 @@ import type {
   AuditStatistics,
   AuditAction,
 } from '../../types/audit';
+import {
+  validateLogAuditRequest,
+  validateSearchAuditReportsDto,
+  getAuditErrorMessage
+} from './validation/auditValidations';
 
 /**
  * Resultado genérico de operaciones de auditoría
@@ -77,6 +82,17 @@ export const auditFlow = {
    */
   async searchDigitalRecords(params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
     try {
+      // Validar parámetros de búsqueda si se proporcionan
+      if (params) {
+        const validationError = validateSearchAuditReportsDto(params as any);
+        if (validationError) {
+          return {
+            success: false,
+            error: validationError,
+          };
+        }
+      }
+
       // Validar fechas si se proporcionan
       if (params?.startDate && params?.endDate) {
         const start = new Date(params.startDate);
@@ -121,7 +137,7 @@ export const auditFlow = {
       console.error('Error en auditFlow.searchDigitalRecords:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Error al buscar registros de auditoría',
+        error: getAuditErrorMessage(error),
       };
     }
   },
@@ -205,7 +221,7 @@ export const auditFlow = {
       console.error('Error en auditFlow.createDigitalRecord:', error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Error al crear el registro de auditoría',
+        error: getAuditErrorMessage(error),
       };
     }
   },
