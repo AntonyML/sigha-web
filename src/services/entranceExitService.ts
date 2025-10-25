@@ -7,11 +7,10 @@ import type {
   EntranceExitListResponse,
   EntranceExitSearchParams
 } from '../types/entranceExitApi';
-
-const API_BASE_URL = 'http://localhost:3000';
+import { config } from '../config/app.config';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

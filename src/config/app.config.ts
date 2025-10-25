@@ -8,8 +8,8 @@
  * 3. For production: 'https://your-domain.com'
  */
 
-export const ipv4Localhost = 'http://localhost:3000';
-export const localhost = 'http://192.168.1.2:3000';
+export const ipv4Localhost = 'http://192.168.1.2:3000'; // esta es la ip de mi pc portatil donde corro el backend
+export const localhost = 'http://localhost:3000';
 
 export const config = {
     api: {

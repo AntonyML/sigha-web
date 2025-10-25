@@ -4,11 +4,10 @@ import type {
   UpdateUserData,
   UserChangePasswordData
 } from '../types/user';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { config } from '../config/app.config';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

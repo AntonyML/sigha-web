@@ -15,15 +15,14 @@ import type {
   SearchAuditReportsDto,
   PaginatedAuditReportsResponse,
 } from '../types/audit';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+import { config } from '../config/app.config';
 
 /**
  * Cliente HTTP para el módulo de auditoría
  * Sincronizado con backend NestJS audit.service.ts
  */
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

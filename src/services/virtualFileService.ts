@@ -9,11 +9,10 @@ import type {
   ApiMedication
 } from '../types/virtualFile';
 import { transformVirtualFileToApiPayload } from '../types/virtualFile';
-
-const API_BASE_URL = import.meta.env.VITE_VIRTUAL_FILE_API_URL ?? 'http://localhost:3000';
+import { config } from '../config/app.config';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

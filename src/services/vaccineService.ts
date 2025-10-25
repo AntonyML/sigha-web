@@ -6,11 +6,10 @@ import type {
   VaccineSearchParams,
   VaccineApiResponse
 } from '../types/vaccine';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+import { config } from '../config/app.config';
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
