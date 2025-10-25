@@ -24,7 +24,7 @@ Memoria del proyecto para continuidad de sesión AI. Auto-referenciado por instr
 - TypeScript → CommonJS (.cjs) via scripts/watch-electron.js
 
 **Backend Integration:**
-- NestJS API: http://localhost:3000
+- NestJS API: http://192.168.1.2:3000 (configuración centralizada)
 - JWT + 2FA (QR code authenticator)
 - Endpoints: /auth/login, /auth/verify-2fa, /auth/profile
 
@@ -282,6 +282,24 @@ npm run start:prod       # Electron production mode
 ---
 
 ## 📝 Update Log
+
+**2025-01-XX | Configuración centralizada de APIs completada - Todos los servicios actualizados**
+- ✅ **Configuración centralizada**: app.config.ts con backend en 192.168.1.2:3000
+- ✅ **roleService.ts actualizado**: Import corregido (UserRole desde user.ts), configuración centralizada
+- ✅ **profileService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **programService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **subProgramService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **entranceExitService.ts actualizado**: URL hardcodeada reemplazada por configuración centralizada
+- ✅ **clinicalConditionService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **auditService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **vaccineService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **virtualFileService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **userManagementService.ts actualizado**: Configuración centralizada aplicada
+- ✅ **twoFactorService.ts actualizado**: Ya corregido anteriormente
+- ✅ **authService.ts**: Ya usando configuración centralizada
+- ✅ **Build exitoso**: 0 errores TypeScript, todas las APIs apuntan correctamente a 192.168.1.2:3000
+- 🎯 **Problema resuelto**: ERR_CONNECTION_REFUSED en 2FA eliminado, conectividad backend completa
+- 🎯 **Arquitectura validada**: Configuración centralizada previene futuros problemas de conectividad
 
 **2025-01-XX | Limpieza completa de páginas usuario - Solo flows implementado**
 - ✅ **ViewUserPage.tsx actualizado**: Migrado de userFlow → userManagementFlow + roleFlow
