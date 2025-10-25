@@ -79,7 +79,7 @@ export default function MainMenuPage() {
                                         className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center"
                                         style={{ width: '80px', height: '80px' }}
                                     >
-                                        <Icon name={option.icon as any} size="xl" className="text-primary" />
+                                        <Icon name={option.icon} size="xl" className="text-primary" />
                                     </div>
                                 </div>
 

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { Icon } from '../../components/atoms';
 
 interface AuditMenuOption {
     id: string;
@@ -17,7 +18,7 @@ export default function AuditMenuPage() {
             id: '1',
             title: 'Registros de Auditoría',
             description: 'Consultar, filtrar y exportar todos los registros de auditoría del sistema',
-            icon: 'bi-list-ul',
+            icon: 'list',
             route: '/audits/list',
             color: 'primary'
         },
@@ -25,7 +26,7 @@ export default function AuditMenuPage() {
             id: '2',
             title: 'Dashboard de Auditoría',
             description: 'Visualizar estadísticas, gráficos y análisis de actividad del sistema',
-            icon: 'bi-graph-up',
+            icon: 'dashboard',
             route: '/audits/dashboard',
             color: 'success'
         },
@@ -33,7 +34,7 @@ export default function AuditMenuPage() {
             id: '3',
             title: 'Actividad por Usuario',
             description: 'Consultar registros de auditoría filtrados por usuario específico',
-            icon: 'bi-person-check',
+            icon: 'person',
             route: '/audits/list?filterType=user',
             color: 'info'
         }
@@ -50,11 +51,10 @@ export default function AuditMenuPage() {
     return (
         <div className="min-vh-100 bg-light">
             <div className="container py-4">
-                {/* Header con botón de volver */}
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h1 className="display-5 fw-bold text-dark mb-2">
-                            <i className="bi bi-shield-check text-primary me-3"></i>
+                            <Icon name="shield" size="lg" className="text-primary me-3" />
                             Módulo de Auditoría
                         </h1>
                         <p className="lead text-muted mb-0">
@@ -65,12 +65,11 @@ export default function AuditMenuPage() {
                         className="btn btn-outline-secondary d-flex align-items-center gap-2"
                         onClick={handleBack}
                     >
-                        <i className="bi bi-arrow-left"></i>
+                        <Icon name="arrow_back" size="sm" />
                         Volver al Menú
                     </button>
                 </div>
 
-                {/* Grid de opciones de auditoría */}
                 <div className="row g-4 mt-2">
                     {auditOptions.map((option) => (
                         <div key={option.id} className="col-12 col-md-6 col-lg-4">
@@ -92,31 +91,27 @@ export default function AuditMenuPage() {
                                 }}
                             >
                                 <div className="card-body p-4 d-flex flex-column">
-                                    {/* Icono */}
                                     <div className="mb-3">
                                         <div
                                             className={`rounded-circle bg-${option.color} bg-opacity-10 d-inline-flex align-items-center justify-content-center`}
                                             style={{ width: '70px', height: '70px' }}
                                         >
-                                            <i className={`${option.icon} fs-1 text-${option.color}`}></i>
+                                            <Icon name={option.icon} size="xl" className={`text-${option.color}`} />
                                         </div>
                                     </div>
 
-                                    {/* Título */}
                                     <h5 className="card-title fw-bold text-dark mb-3">
                                         {option.title}
                                     </h5>
 
-                                    {/* Descripción */}
                                     <p className="card-text text-muted flex-grow-1 mb-4">
                                         {option.description}
                                     </p>
 
-                                    {/* Indicador de acción */}
                                     <div className="mt-auto">
                                         <span className={`text-${option.color} fw-semibold d-flex align-items-center`}>
                                             Acceder
-                                            <i className="bi bi-arrow-right ms-2"></i>
+                                            <Icon name="arrow_forward" size="sm" className="ms-2" />
                                         </span>
                                     </div>
                                 </div>
@@ -125,14 +120,13 @@ export default function AuditMenuPage() {
                     ))}
                 </div>
 
-                {/* Información adicional */}
                 <div className="row mt-5">
                     <div className="col-12">
                         <div className="card border-0 shadow-sm bg-primary bg-opacity-10">
                             <div className="card-body p-4">
                                 <div className="d-flex align-items-start gap-3">
                                     <div className="flex-shrink-0">
-                                        <i className="bi bi-info-circle fs-2 text-primary"></i>
+                                        <Icon name="info" size="lg" className="text-primary" />
                                     </div>
                                     <div className="flex-grow-1">
                                         <h5 className="fw-bold text-dark mb-2">
@@ -147,19 +141,19 @@ export default function AuditMenuPage() {
                                         <div className="row g-2">
                                             <div className="col-12 col-md-4">
                                                 <div className="d-flex align-items-center gap-2">
-                                                    <i className="bi bi-check-circle-fill text-success"></i>
+                                                    <Icon name="check_circle" size="sm" className="text-success" />
                                                     <small className="text-muted">Trazabilidad completa</small>
                                                 </div>
                                             </div>
                                             <div className="col-12 col-md-4">
                                                 <div className="d-flex align-items-center gap-2">
-                                                    <i className="bi bi-check-circle-fill text-success"></i>
+                                                    <Icon name="check_circle" size="sm" className="text-success" />
                                                     <small className="text-muted">Detección de anomalías</small>
                                                 </div>
                                             </div>
                                             <div className="col-12 col-md-4">
                                                 <div className="d-flex align-items-center gap-2">
-                                                    <i className="bi bi-check-circle-fill text-success"></i>
+                                                    <Icon name="check_circle" size="sm" className="text-success" />
                                                     <small className="text-muted">Cumplimiento normativo</small>
                                                 </div>
                                             </div>
@@ -177,7 +171,7 @@ export default function AuditMenuPage() {
                         <div className="card border-0 shadow-sm">
                             <div className="card-header bg-white border-bottom">
                                 <h6 className="mb-0 fw-bold">
-                                    <i className="bi bi-lightning-charge-fill text-warning me-2"></i>
+                                    <Icon name="bolt" size="sm" className="text-warning me-2" />
                                     Accesos Rápidos
                                 </h6>
                             </div>
@@ -189,10 +183,10 @@ export default function AuditMenuPage() {
                                             onClick={() => navigate('/audits/list?filterAction=CREATE')}
                                         >
                                             <span>
-                                                <i className="bi bi-plus-circle me-2"></i>
+                                                <Icon name="add" size="sm" className="me-2" />
                                                 Creaciones
                                             </span>
-                                            <i className="bi bi-chevron-right"></i>
+                                            <Icon name="chevron_right" size="sm" />
                                         </button>
                                     </div>
                                     <div className="col-12 col-md-6 col-lg-3">
@@ -201,10 +195,10 @@ export default function AuditMenuPage() {
                                             onClick={() => navigate('/audits/list?filterAction=DELETE')}
                                         >
                                             <span>
-                                                <i className="bi bi-trash me-2"></i>
+                                                <Icon name="delete" size="sm" className="me-2" />
                                                 Eliminaciones
                                             </span>
-                                            <i className="bi bi-chevron-right"></i>
+                                            <Icon name="chevron_right" size="sm" />
                                         </button>
                                     </div>
                                     <div className="col-12 col-md-6 col-lg-3">
@@ -213,10 +207,10 @@ export default function AuditMenuPage() {
                                             onClick={() => navigate('/audits/list?filterAction=LOGIN')}
                                         >
                                             <span>
-                                                <i className="bi bi-box-arrow-in-right me-2"></i>
+                                                <Icon name="arrow_right_circle" size="sm" className="me-2" />
                                                 Inicios de Sesión
                                             </span>
-                                            <i className="bi bi-chevron-right"></i>
+                                            <Icon name="chevron_right" size="sm" />
                                         </button>
                                     </div>
                                     <div className="col-12 col-md-6 col-lg-3">
@@ -225,10 +219,10 @@ export default function AuditMenuPage() {
                                             onClick={() => navigate('/audits/list?filterAction=LOGIN_FAILED')}
                                         >
                                             <span>
-                                                <i className="bi bi-shield-exclamation me-2"></i>
+                                                <Icon name="exclamation_triangle" size="sm" className="me-2" />
                                                 Intentos Fallidos
                                             </span>
-                                            <i className="bi bi-chevron-right"></i>
+                                            <Icon name="chevron_right" size="sm" />
                                         </button>
                                     </div>
                                 </div>

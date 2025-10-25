@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/auditFlow';
+import { Icon } from '../../components/atoms';
 import type { DigitalRecord } from '../../../types/audit';
 
 export default function ViewAuditPage() {
@@ -61,7 +62,7 @@ export default function ViewAuditPage() {
         return (
             <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
                 <div className="text-center">
-                    <i className="bi bi-exclamation-triangle display-1 text-warning mb-3 d-block"></i>
+                    <Icon name="exclamation-triangle" size="lg" className="text-warning mb-3 d-block" />
                     <h3 className="mb-3">ID no proporcionado</h3>
                     <p className="text-muted mb-4">No se encontró el identificador del registro.</p>
                     <button className="btn btn-primary" onClick={() => navigate('/audits')}>
@@ -93,7 +94,7 @@ export default function ViewAuditPage() {
                         <div className="col-12 col-md-6">
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-5 text-center">
-                                    <i className="bi bi-exclamation-circle display-1 text-danger mb-3 d-block"></i>
+                                    <Icon name="exclamation-circle" size="lg" className="text-danger mb-3 d-block" />
                                     <h4 className="mb-3">Error al cargar registro</h4>
                                     <p className="text-muted mb-4">{error || 'No se pudo cargar la información del registro'}</p>
                                     <div className="d-flex gap-2 justify-content-center">
@@ -123,7 +124,7 @@ export default function ViewAuditPage() {
                             <div>
                                 <div className="d-flex align-items-center gap-3 mb-2">
                                     <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                                        <i className="bi bi-shield-check text-primary fs-3"></i>
+                                        <Icon name="shield-check" className="text-primary fs-3" />
                                     </div>
                                     <div>
                                         <h1 className="h3 fw-bold mb-1">Registro de Auditoría #{record.id}</h1>
@@ -131,7 +132,7 @@ export default function ViewAuditPage() {
                                             {auditFlow.formatAuditDate(record.timestamp)}
                                             {auditFlow.isCriticalAudit(record) && (
                                                 <span className="badge bg-warning text-dark ms-2">
-                                                    <i className="bi bi-exclamation-triangle me-1"></i>
+                                                    <Icon name="exclamation-triangle" className="me-1" />
                                                     Crítico
                                                 </span>
                                             )}
@@ -141,15 +142,15 @@ export default function ViewAuditPage() {
                             </div>
                             <div className="d-flex gap-2">
                                 <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/audits/list')}>
-                                    <i className="bi bi-arrow-left"></i>
+                                    <Icon name="arrow-left" />
                                     Volver a Lista
                                 </button>
                                 <button className="btn btn-outline-primary d-flex align-items-center gap-2" onClick={() => navigate('/audits')}>
-                                    <i className="bi bi-menu-button"></i>
+                                    <Icon name="bars-3" />
                                     Menú Auditoría
                                 </button>
                                 <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleExportSingle}>
-                                    <i className="bi bi-download"></i>
+                                    <Icon name="arrow-down-tray" />
                                     Exportar
                                 </button>
                             </div>
@@ -163,7 +164,7 @@ export default function ViewAuditPage() {
                         <div className="card shadow-sm border-0 h-100">
                             <div className="card-header bg-white border-bottom">
                                 <h5 className="mb-0">
-                                    <i className="bi bi-info-circle me-2"></i>
+                                    <Icon name="information-circle" className="me-2" />
                                     Información General
                                 </h5>
                             </div>
@@ -200,7 +201,7 @@ export default function ViewAuditPage() {
                                         <label className="text-muted small fw-semibold">Usuario</label>
                                         <p className="mb-0">
                                             <span>
-                                                <i className="bi bi-person-circle me-2"></i>
+                                                <Icon name="user-circle" className="me-2" />
                                                 {record.userName || 'N/A'}
                                             </span>
                                             {record.userEmail && (
@@ -220,7 +221,7 @@ export default function ViewAuditPage() {
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Fecha y Hora</label>
                                         <p className="mb-0">
-                                            <i className="bi bi-calendar-event me-2"></i>
+                                            <Icon name="calendar-days" className="me-2" />
                                             {auditFlow.formatAuditDate(record.timestamp)}
                                         </p>
                                     </div>
@@ -234,7 +235,7 @@ export default function ViewAuditPage() {
                         <div className="card shadow-sm border-0 h-100">
                             <div className="card-header bg-white border-bottom">
                                 <h5 className="mb-0">
-                                    <i className="bi bi-gear me-2"></i>
+                                    <Icon name="cog-6-tooth" className="me-2" />
                                     Información Técnica
                                 </h5>
                             </div>

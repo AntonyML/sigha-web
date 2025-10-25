@@ -129,13 +129,12 @@ export default function AuditListPage() {
 
             {error && (
                 <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <Icon name="exclamation-triangle" className="me-2" />
                     {error}
                     <button type="button" className="btn-close" onClick={() => setError('')}></button>
                 </div>
             )}
 
-            {/* Filtros */}
             <div className="card mb-4">
                 <div className="card-header">
                     <Icon name="filter_list" size="sm" className="me-2" />
@@ -190,7 +189,6 @@ export default function AuditListPage() {
                 </div>
             </div>
 
-            {/* Tabla */}
             <div className="card">
                 <div className="card-header d-flex justify-content-between">
                     <span><Icon name="list" size="sm" className="me-2" />Registros de Auditoría</span>
@@ -250,7 +248,6 @@ export default function AuditListPage() {
                     )}
                 </div>
 
-                {/* Paginación */}
                 {totalPages > 1 && (
                     <div className="card-footer">
                         <nav>

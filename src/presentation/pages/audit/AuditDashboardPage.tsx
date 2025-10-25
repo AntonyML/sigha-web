@@ -136,16 +136,6 @@ export default function AuditDashboardPage() {
                         <i className="bi bi-graph-up me-2"></i>
                         Dashboard de Auditoría
                     </h2>
-                    <nav aria-label="breadcrumb">
-                        <ol className="breadcrumb mb-0">
-                            <li className="breadcrumb-item">
-                                <a href="#" onClick={(e) => { e.preventDefault(); navigate('/audits'); }}>
-                                    Auditoría
-                                </a>
-                            </li>
-                            <li className="breadcrumb-item active">Dashboard</li>
-                        </ol>
-                    </nav>
                 </div>
                 <div>
                     <button className="btn btn-outline-secondary me-2" onClick={() => navigate('/audits')}>
@@ -178,20 +168,20 @@ export default function AuditDashboardPage() {
                     <div className="row g-3">
                         <div className="col-md-4">
                             <label className="form-label">Fecha inicio</label>
-                            <input 
-                                type="date" 
-                                className="form-control" 
-                                value={dateRange.start} 
-                                onChange={(e) => setDateRange({...dateRange, start: e.target.value})} 
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={dateRange.start}
+                                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
                             />
                         </div>
                         <div className="col-md-4">
                             <label className="form-label">Fecha fin</label>
-                            <input 
-                                type="date" 
-                                className="form-control" 
-                                value={dateRange.end} 
-                                onChange={(e) => setDateRange({...dateRange, end: e.target.value})} 
+                            <input
+                                type="date"
+                                className="form-control"
+                                value={dateRange.end}
+                                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
                             />
                         </div>
                         <div className="col-md-4 d-flex align-items-end">
@@ -266,9 +256,9 @@ export default function AuditDashboardPage() {
                                                 </span>
                                             </div>
                                             <div className="progress" style={{ height: '10px' }}>
-                                                <div 
-                                                    className="progress-bar" 
-                                                    role="progressbar" 
+                                                <div
+                                                    className="progress-bar"
+                                                    role="progressbar"
                                                     style={{ width: `${item.percentage}%` }}
                                                     aria-valuenow={item.percentage}
                                                     aria-valuemin={0}
@@ -300,9 +290,9 @@ export default function AuditDashboardPage() {
                                                 </span>
                                             </div>
                                             <div className="progress" style={{ height: '10px' }}>
-                                                <div 
-                                                    className="progress-bar bg-secondary" 
-                                                    role="progressbar" 
+                                                <div
+                                                    className="progress-bar bg-secondary"
+                                                    role="progressbar"
                                                     style={{ width: `${item.percentage}%` }}
                                                     aria-valuenow={item.percentage}
                                                     aria-valuemin={0}
@@ -404,8 +394,8 @@ export default function AuditDashboardPage() {
                                                                 {record.userName || 'N/A'} • {auditFlow.formatAuditDate(record.timestamp)}
                                                             </small>
                                                         </div>
-                                                        <button 
-                                                            className="btn btn-sm btn-outline-primary ms-2" 
+                                                        <button
+                                                            className="btn btn-sm btn-outline-primary ms-2"
                                                             onClick={() => navigate(`/audits/view/${record.id}`)}
                                                         >
                                                             <i className="bi bi-eye"></i>
