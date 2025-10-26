@@ -1,4 +1,4 @@
-import { auditService } from '../../services/auditService';
+import { auditService } from '../../../services/auditService';
 import type {
   DigitalRecord,
   CreateDigitalRecordDto,
@@ -6,12 +6,12 @@ import type {
   PaginatedDigitalRecordsResponse,
   AuditStatistics,
   AuditAction,
-} from '../../types/audit';
+} from '../../../types/audit';
 import {
   validateLogAuditRequest,
   validateSearchAuditReportsDto,
   getAuditErrorMessage
-} from './validation/auditValidations';
+} from '../validation/auditValidations';
 
 /**
  * Resultado genérico de operaciones de auditoría

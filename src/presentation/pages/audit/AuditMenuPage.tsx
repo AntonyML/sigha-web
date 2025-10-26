@@ -16,27 +16,43 @@ export default function AuditMenuPage() {
     const auditOptions: AuditMenuOption[] = [
         {
             id: '1',
-            title: 'Registros de Auditoría',
-            description: 'Consultar, filtrar y exportar todos los registros de auditoría del sistema',
-            icon: 'list',
-            route: '/audits/list',
+            title: 'Dashboard de Auditoría',
+            description: 'Vista general rápida para detectar anomalías con estadísticas resumidas, actividad reciente y gráficos simples',
+            icon: 'dashboard',
+            route: '/audits/dashboard',
             color: 'primary'
         },
         {
             id: '2',
-            title: 'Dashboard de Auditoría',
-            description: 'Visualizar estadísticas, gráficos y análisis de actividad del sistema',
-            icon: 'dashboard',
-            route: '/audits/dashboard',
+            title: 'Registros de Auditoría',
+            description: 'Lista y búsqueda de historial completo con filtros avanzados y exportación a CSV/PDF',
+            icon: 'list',
+            route: '/audits/list',
             color: 'success'
         },
         {
             id: '3',
-            title: 'Actividad por Usuario',
-            description: 'Consultar registros de auditoría filtrados por usuario específico',
+            title: 'Historial de Adultos Mayores',
+            description: 'Cambios en datos de pacientes con vista comparativa y notificaciones de modificaciones recientes',
             icon: 'person',
-            route: '/audits/list?filterType=user',
+            route: '/audits/older-adult-updates',
             color: 'info'
+        },
+        {
+            id: '4',
+            title: 'Reportes de Auditoría',
+            description: 'Generación y consulta de reportes formales con datos tabulados y opciones de exportación',
+            icon: 'clipboard_document',
+            route: '/audits/reports',
+            color: 'warning'
+        },
+        {
+            id: '5',
+            title: 'Historial de Registros Digitales',
+            description: 'Cambios en documentos específicos con vista timeline y diffs detallados por registro',
+            icon: 'document',
+            route: '/audits/digital-records',
+            color: 'secondary'
         }
     ];
 

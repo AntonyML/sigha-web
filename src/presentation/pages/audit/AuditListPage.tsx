@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/auditFlow';
+import { auditFlow } from '../../../infrastructure/flows/audit/auditFlow';
 import { Icon } from '../../components/atoms';
 import type { DigitalRecord, SearchDigitalRecordsDto, AuditActionType } from '../../../types/audit';
 import { AuditAction } from '../../../types/audit';
@@ -113,15 +113,14 @@ export default function AuditListPage() {
                 </div>
                 <div>
                     <button className="btn btn-outline-secondary me-2" onClick={() => navigate('/audits')}>
-                        <Icon name="arrow_back" size="sm" className="me-2" />
-                        Volver
+                        <i className="bi bi-arrow-left me-2"></i>Volver
                     </button>
                     <button className="btn btn-primary me-2" onClick={() => navigate('/audits/dashboard')}>
-                        <Icon name="dashboard" size="sm" className="me-2" />
+                        <i className="bi bi-graph-up me-2"></i>
                         Dashboard
                     </button>
                     <button className="btn btn-success" onClick={handleExport}>
-                        <Icon name="download" size="sm" className="me-2" />
+                        <i className="bi bi-download me-2"></i>
                         Exportar CSV
                     </button>
                 </div>

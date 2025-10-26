@@ -10,7 +10,7 @@
 
 export const ipv4Localhost = 'http://192.168.1.2:3000'; // esta es la ip de mi pc portatil donde corro el backend
 export const localhost = 'http://localhost:3000';
-
+export const tunnelHost = 'http://localhost:3000'; // por si creo un tunel con cloudflare mas adelante
 export const config = {
     api: {
         baseUrl: ipv4Localhost,

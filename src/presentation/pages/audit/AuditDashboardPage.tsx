@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/auditFlow';
+import { auditFlow } from '../../../infrastructure/flows/audit/auditFlow';
 import type { DigitalRecord } from '../../../types/audit';
 
 interface AuditActionStats {
@@ -139,7 +139,8 @@ export default function AuditDashboardPage() {
                 </div>
                 <div>
                     <button className="btn btn-outline-secondary me-2" onClick={() => navigate('/audits')}>
-                        <i className="bi bi-arrow-left me-2"></i>Volver
+                        <i className="bi bi-arrow-left me-2"></i>
+                        Volver
                     </button>
                     <button className="btn btn-primary me-2" onClick={() => navigate('/audits/list')}>
                         <i className="bi bi-list-ul me-2"></i>Ver Lista
