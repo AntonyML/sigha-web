@@ -215,8 +215,8 @@ export default function UserListPage() {
                                     </div>
                                     <div className="col-12 col-lg-3">
                                         <div className="d-flex align-items-center h-100">
-                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6">
-                                                <Icon name="group" size="sm" className="me-2" />
+                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6 d-inline-flex align-items-center">
+                                                <Icon name="users" size="sm" className="me-2" />
                                                 {filteredUsers.length} usuarios
                                             </span>
                                         </div>
@@ -293,7 +293,7 @@ export default function UserListPage() {
                                                             </div>
                                                         </td>
                                                         <td className="py-3">
-                                                            <span className={`badge ${user.uIsActive ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${user.uIsActive ? 'success' : 'secondary'} px-3 py-2`}>
+                                                            <span className={`badge ${user.uIsActive ? 'bg-success' : 'bg-secondary'} bg-opacity-10 text-${user.uIsActive ? 'success' : 'secondary'} px-3 py-2 d-inline-flex align-items-center`}>
                                                                 <Icon name={user.uIsActive ? 'check_circle' : 'cancel'} size="sm" className="me-1" />
                                                                 {user.uIsActive ? 'Activo' : 'Inactivo'}
                                                             </span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface SuccessCardProps {
   title?: string;
@@ -6,6 +6,7 @@ interface SuccessCardProps {
   onContinue: () => void;
   buttonText?: string;
   buttonIcon?: string;
+  autoHideDelay?: number; // in milliseconds, default 5000 (5 seconds)
 }
 
 export const SuccessCard: React.FC<SuccessCardProps> = ({
@@ -13,8 +14,27 @@ export const SuccessCard: React.FC<SuccessCardProps> = ({
   message = "Tu cuenta ahora está protegida con autenticación de dos factores. A partir de ahora, necesitarás tu contraseña y un código de tu aplicación autenticadora para iniciar sesión.",
   onContinue,
   buttonText = "Volver al Inicio",
-  buttonIcon = "bi-house-door"
+  buttonIcon = "bi-house-door",
+  autoHideDelay = 6000
 }) => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(false);
+      onContinue();
+    }, autoHideDelay);
+
+    return () => clearTimeout(timer);
+  }, [autoHideDelay, onContinue]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    onContinue();
+  };
+
+  if (!isVisible) return null;
+
   return (
     <div className="card shadow-sm border-success">
       <div className="card-body p-5 text-center">
@@ -39,13 +59,22 @@ export const SuccessCard: React.FC<SuccessCardProps> = ({
           </ul>
         </div>
 
-        <button
-          className="btn btn-primary btn-lg"
-          onClick={onContinue}
-        >
-          <i className={`bi ${buttonIcon} me-2`}></i>
-          {buttonText}
-        </button>
+        <div className="d-flex gap-2 justify-content-center">
+          <button
+            className="btn btn-primary btn-lg"
+            onClick={handleClose}
+          >
+            <i className={`bi ${buttonIcon} me-2`}></i>
+            {buttonText}
+          </button>
+          <button
+            className="btn btn-outline-secondary"
+            onClick={handleClose}
+            title="Cerrar mensaje"
+          >
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
       </div>
     </div>
   );

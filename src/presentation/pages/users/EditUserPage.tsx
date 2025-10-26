@@ -468,7 +468,7 @@ export default function EditUserPage() {
                                     <div className="d-flex flex-column flex-sm-row gap-3">
                                         <button 
                                             type="submit" 
-                                            className="btn btn-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" 
+                                            className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" 
                                             disabled={saving}
                                         >
                                             {saving ? (
@@ -494,7 +494,7 @@ export default function EditUserPage() {
                                         </button>
                                         <button
                                             type="button"
-                                            className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
+                                            className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2 btn-outline-info-white-hover"
                                             onClick={() => navigate(`/users/view/${id}`)}
                                             disabled={saving}
                                         >

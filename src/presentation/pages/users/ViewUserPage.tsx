@@ -345,12 +345,6 @@ export default function ViewUserPage() {
                                 <div className="row g-4">
                                     <div className="col-12 col-md-6">
                                         <div className="d-flex flex-column">
-                                            <small className="text-muted text-uppercase fw-semibold mb-2">ID de Usuario</small>
-                                            <span className="badge bg-light text-dark">{user.id}</span>
-                                        </div>
-                                    </div>
-                                    <div className="col-12 col-md-6">
-                                        <div className="d-flex flex-column">
                                             <small className="text-muted text-uppercase fw-semibold mb-2">Fecha de Creación</small>
                                             <span className="fs-5">
                                                 <i className="bi bi-calendar3 text-muted me-2"></i>
