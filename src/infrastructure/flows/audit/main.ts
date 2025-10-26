@@ -6,9 +6,12 @@ import type {
   AuditStatistics,
 } from '../../../types/audit';
 import {
-  validateSearchAuditReportsDto,
   getAuditErrorMessage
 } from './validation/auditValidations';
+import {
+  validateSearchParams,
+  validateDigitalRecordId
+} from './validation/mainValidations';
 import type {
   AuditFlowResult,
   GetDigitalRecordFlowResult,
@@ -34,24 +37,11 @@ export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Pr
   try {
     // Validar parámetros de búsqueda si se proporcionan
     if (params) {
-      const validationError = validateSearchAuditReportsDto(params as any);
+      const validationError = validateSearchParams(params);
       if (validationError) {
         return {
           success: false,
           error: validationError,
-        };
-      }
-    }
-
-    // Validar fechas si se proporcionan
-    if (params?.startDate && params?.endDate) {
-      const start = new Date(params.startDate);
-      const end = new Date(params.endDate);
-
-      if (start > end) {
-        return {
-          success: false,
-          error: 'La fecha de inicio no puede ser mayor que la fecha de fin',
         };
       }
     }
@@ -106,10 +96,11 @@ export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Pr
  */
 export async function getDigitalRecordById(id: number): Promise<GetDigitalRecordFlowResult> {
   try {
-    if (!id || id <= 0) {
+    const validationError = validateDigitalRecordId(id);
+    if (validationError) {
       return {
         success: false,
-        error: 'ID de auditoría inválido',
+        error: validationError,
       };
     }
 

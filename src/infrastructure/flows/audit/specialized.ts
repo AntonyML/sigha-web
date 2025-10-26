@@ -1,6 +1,11 @@
 import { auditService } from '../../../services/auditService';
 import type { SearchDigitalRecordsDto } from '../../../types/audit';
 import type { GetDigitalRecordsFlowResult } from './interfaces';
+import {
+  validateUserId,
+  validateEntityParams,
+  validateRecordId
+} from './validation/specializedValidations';
 
 /**
  * Flujo para obtener auditorías de un usuario específico
@@ -13,10 +18,11 @@ import type { GetDigitalRecordsFlowResult } from './interfaces';
  */
 export async function getAuditsByUser(userId: number, params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
   try {
-    if (!userId || userId <= 0) {
+    const validationError = validateUserId(userId);
+    if (validationError) {
       return {
         success: false,
-        error: 'ID de usuario inválido',
+        error: validationError,
       };
     }
 
@@ -50,10 +56,11 @@ export async function getAuditsByUser(userId: number, params?: SearchDigitalReco
  */
 export async function getAuditsByEntity(entity: string, entityId: number, params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
   try {
-    if (!entity || !entityId || entityId <= 0) {
+    const validationError = validateEntityParams(entity, entityId);
+    if (validationError) {
       return {
         success: false,
-        error: 'Entidad o ID inválido',
+        error: validationError,
       };
     }
 
@@ -114,10 +121,11 @@ export async function getAllAudits(params?: SearchDigitalRecordsDto): Promise<Ge
  */
 export async function getDigitalRecordHistory(recordId: string, queryDto?: any): Promise<any> {
   try {
-    if (!recordId) {
+    const validationError = validateRecordId(recordId);
+    if (validationError) {
       return {
         success: false,
-        error: 'ID de registro inválido',
+        error: validationError,
       };
     }
 

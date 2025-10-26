@@ -1,5 +1,6 @@
 import { auditService } from '../../../services/auditService';
 import type { AuditFlowResult } from './interfaces';
+import { validateAuditReportId } from './validation/reportsValidations';
 
 /**
  * Flujo para obtener reportes de auditoría generados
@@ -39,10 +40,11 @@ export async function getAuditReports(params?: any): Promise<any> {
  */
 export async function getAuditReportById(id: number): Promise<any> {
   try {
-    if (!id || id <= 0) {
+    const validationError = validateAuditReportId(id);
+    if (validationError) {
       return {
         success: false,
-        error: 'ID de reporte inválido',
+        error: validationError,
       };
     }
 
