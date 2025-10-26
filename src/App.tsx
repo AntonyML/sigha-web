@@ -18,6 +18,7 @@ import ListUser from './presentation/pages/users/UserListPage'
 import CreateUser from './presentation/pages/users/CreateUserPage'
 import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
+import DeletedUsersPage from './presentation/pages/users/DeletedUsersPage'
 
 //Programs
 import ProgramListPage from './presentation/pages/programs/ProgramListPage'
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/users/create" element={<CreateUser />} />
         <Route path="/users/view/:id" element={<ViewUserPage />} />
         <Route path="/users/edit/:id" element={<EditUserPage />} />
+        <Route path="/users/deleted" element={<DeletedUsersPage />} />
 
         <Route path="/programs" element={<ProgramListPage />} />
         <Route path="/programs/create" element={<CreateProgramPage />} />

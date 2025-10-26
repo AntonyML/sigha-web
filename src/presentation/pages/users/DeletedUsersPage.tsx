@@ -5,21 +5,20 @@ import { getFullName } from '../../../utils/userUtils';
 import { Icon } from '../../components/atoms';
 import type { User } from '../../../types/user';
 
-export default function UserListPage() {
+export default function DeletedUsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-    const [filterStatus, setFilterStatus] = useState<'all' | 'active'>('active');
     const navigate = useNavigate();
 
-    // Cargar usuarios al montar el componente
+    // Cargar usuarios eliminados al montar el componente
     useEffect(() => {
-        loadUsers();
+        loadDeletedUsers();
     }, []);
 
-    const loadUsers = async () => {
+    const loadDeletedUsers = async () => {
         setLoading(true);
         setError('');
 
@@ -27,14 +26,16 @@ export default function UserListPage() {
             const result = await userManagementFlow.getAllUsers();
 
             if (result.success && result.users) {
-                setUsers(result.users);
-                setFilteredUsers(result.users);
+                // Filtrar solo usuarios eliminados (inactivos por soft delete)
+                const deletedUsers = result.users.filter(user => user.uIsActive === false);
+                setUsers(deletedUsers);
+                setFilteredUsers(deletedUsers);
             } else {
-                setError(result.error || 'Error al cargar usuarios');
+                setError(result.error || 'Error al cargar usuarios eliminados');
             }
         } catch (err) {
-            console.error('Error cargando usuarios:', err);
-            setError('Error inesperado al cargar usuarios');
+            console.error('Error cargando usuarios eliminados:', err);
+            setError('Error inesperado al cargar usuarios eliminados');
         } finally {
             setLoading(false);
         }
@@ -42,12 +43,6 @@ export default function UserListPage() {
 
     useEffect(() => {
         let filtered = users;
-
-        if (filterStatus !== 'all') {
-            filtered = filtered.filter(user =>
-                user.uIsActive === true
-            );
-        }
 
         if (searchTerm.trim()) {
             filtered = filtered.filter(user =>
@@ -58,35 +53,27 @@ export default function UserListPage() {
         }
 
         setFilteredUsers(filtered);
-    }, [users, searchTerm, filterStatus]);
+    }, [users, searchTerm]);
 
     // Función para limpiar la búsqueda
     const handleClearSearch = () => {
         setSearchTerm('');
     };
 
-    const handleView = (user: User) => {
-        navigate(`/users/view/${user.id}`);
-    };
-
-    const handleEdit = (user: User) => {
-        navigate(`/users/edit/${user.id}`);
-    };
-
-    const handleDeleteClick = async (user: User) => {
+    const handleRestoreClick = async (user: User) => {
         const fullName = getFullName(user);
-        const ok = window.confirm(`¿Estás seguro que deseas eliminar al usuario "${fullName}"?`);
+        const ok = window.confirm(`¿Estás seguro que deseas recuperar al usuario "${fullName}"?`);
         if (!ok) return;
 
         setLoading(true);
-        const result = await userManagementFlow.deleteUser(user.id);
+        const result = await userManagementFlow.toggleUserStatus(user.id);
 
         if (result.success) {
-            // Recargar la lista de usuarios
-            await loadUsers();
-            alert(result.message || 'Usuario eliminado exitosamente');
+            // Recargar la lista de usuarios eliminados
+            await loadDeletedUsers();
+            alert(result.message || 'Usuario recuperado exitosamente');
         } else {
-            alert(result.error || 'Error al eliminar usuario');
+            alert(result.error || 'Error al recuperar usuario');
         }
         setLoading(false);
     };
@@ -98,7 +85,7 @@ export default function UserListPage() {
                     <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
                         <span className="visually-hidden">Cargando...</span>
                     </div>
-                    <p className="text-muted fw-medium">Cargando usuarios...</p>
+                    <p className="text-muted fw-medium">Cargando usuarios eliminados...</p>
                 </div>
             </div>
         );
@@ -112,10 +99,10 @@ export default function UserListPage() {
                     <p>{error}</p>
                     <hr />
                     <div className="d-flex gap-2">
-                        <button className="btn btn-secondary" onClick={() => navigate('/main-menu')}>
-                            Volver al menú
+                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
+                            Volver a la lista
                         </button>
-                        <button className="btn btn-primary" onClick={loadUsers}>
+                        <button className="btn btn-primary" onClick={loadDeletedUsers}>
                             Reintentar
                         </button>
                     </div>
@@ -131,31 +118,16 @@ export default function UserListPage() {
                     <div className="col-12">
                         <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                             <div>
-                                <h1 className="h3 fw-bold mb-1">Gestión de Usuarios</h1>
-                                <p className="text-muted mb-0">Administra los usuarios del sistema</p>
+                                <h1 className="h3 fw-bold mb-1">Usuarios Eliminados</h1>
+                                <p className="text-muted mb-0">Recupera usuarios que han sido eliminados del sistema</p>
                             </div>
                             <div className="d-flex gap-2">
                                 <button
                                     className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                                    onClick={() => navigate('/main-menu')}
+                                    onClick={() => navigate('/users')}
                                 >
                                     <Icon name="arrow_back" size="sm" />
-                                    Regresar
-                                </button>
-                                <button
-                                    className="btn btn-outline-warning d-inline-flex align-items-center gap-2"
-                                    onClick={() => navigate('/users/deleted')}
-                                    
-                                >
-                                    <Icon name="refresh" size="sm" />
-                                    Recuperar Eliminados
-                                </button>
-                                <button
-                                    className="btn btn-primary d-flex align-items-center gap-2"
-                                    onClick={() => navigate('/users/create')}
-                                >
-                                    <Icon name="add" size="sm" />
-                                    Nuevo Usuario
+                                    Volver a usuarios
                                 </button>
                             </div>
                         </div>
@@ -190,21 +162,11 @@ export default function UserListPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="col-12 col-lg-3">
-                                        <select
-                                            className="form-select form-select-lg"
-                                            value={filterStatus}
-                                            onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active')}
-                                        >
-                                            <option value="all">Todos los usuarios</option>
-                                            <option value="active">Solo activos</option>
-                                        </select>
-                                    </div>
-                                    <div className="col-12 col-lg-3">
+                                    <div className="col-12 col-lg-6">
                                         <div className="d-flex align-items-center h-100">
-                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6 d-inline-flex align-items-center">
-                                                <Icon name="users" size="sm" className="me-2" />
-                                                {filteredUsers.length} usuarios
+                                            <span className="badge bg-danger bg-opacity-10 text-danger px-3 py-2 fs-6 d-inline-flex align-items-center">
+                                                <Icon name="trash" size="sm" className="me-2" />
+                                                {filteredUsers.length} usuarios eliminados
                                             </span>
                                         </div>
                                     </div>
@@ -226,14 +188,15 @@ export default function UserListPage() {
                                     </div>
                                 ) : filteredUsers.length === 0 ? (
                                     <div className="text-center py-5">
-                                        <Icon name="person" size="xl" className="display-4 text-muted mb-3 d-block" />
-                                        <h5 className="text-muted mb-3">No hay usuarios registrados</h5>
+                                        <Icon name="trash" size="xl" className="display-4 text-muted mb-3 d-block" />
+                                        <h5 className="text-muted mb-3">No hay usuarios eliminados</h5>
+                                        <p className="text-muted">Todos los usuarios están activos en el sistema</p>
                                         <button
-                                            className="btn btn-primary"
-                                            onClick={() => navigate('/users/create')}
+                                            className="btn btn-primary mt-3"
+                                            onClick={() => navigate('/users')}
                                         >
-                                            <Icon name="add" size="sm" className="me-2" />
-                                            Crear primer usuario
+                                            <Icon name="arrow_back" size="sm" className="me-2" />
+                                            Volver a usuarios
                                         </button>
                                     </div>
                                 ) : (
@@ -245,12 +208,13 @@ export default function UserListPage() {
                                                     <th className="py-3 fw-semibold text-muted text-uppercase small">Identificación</th>
                                                     <th className="py-3 fw-semibold text-muted text-uppercase small">Nombre Completo</th>
                                                     <th className="py-3 fw-semibold text-muted text-uppercase small">Email</th>
+                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Estado</th>
                                                     <th className="pe-4 py-3 fw-semibold text-muted text-uppercase small text-end">Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {filteredUsers.map((user, index) => (
-                                                    <tr key={user.id} className="border-bottom">
+                                                    <tr key={user.id} className="border-bottom table-secondary opacity-75">
                                                         <td className="ps-4 py-3">
                                                             <span className="badge bg-light text-dark">{index + 1}</span>
                                                         </td>
@@ -259,8 +223,8 @@ export default function UserListPage() {
                                                         </td>
                                                         <td className="py-3">
                                                             <div className="d-flex align-items-center gap-2">
-                                                                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                                    <Icon name="person" size="md" className="text-primary" />
+                                                                <div className="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                                                                    <Icon name="person" size="md" className="text-secondary" />
                                                                 </div>
                                                                 <div>
                                                                     <div className="fw-medium">{getFullName(user)}</div>
@@ -271,35 +235,22 @@ export default function UserListPage() {
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <Icon name="email" size="sm" className="text-muted" />
                                                                 <span>{user.uEmail}</span>
-                                                                {user.uEmailVerified && (
-                                                                    <span className="badge bg-info bg-opacity-10 text-info" title="Email verificado">
-                                                                        <Icon name="verified" size="sm" />
-                                                                    </span>
-                                                                )}
                                                             </div>
+                                                        </td>
+                                                        <td className="py-3">
+                                                            <span className="badge bg-danger bg-opacity-10 text-danger px-3 py-2 d-inline-flex align-items-center">
+                                                                <Icon name="trash" size="sm" className="me-1" />
+                                                                Eliminado
+                                                            </span>
                                                         </td>
                                                         <td className="pe-4 py-3">
                                                             <div className="d-flex justify-content-end gap-2">
                                                                 <button
-                                                                    className="btn btn-sm btn-light"
-                                                                    onClick={() => handleView(user)}
-                                                                    title="Ver detalles"
+                                                                    className="btn btn-sm btn-success"
+                                                                    onClick={() => handleRestoreClick(user)}
+                                                                    title="Recuperar usuario"
                                                                 >
-                                                                    <Icon name="visibility" size="sm" />
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-light"
-                                                                    onClick={() => handleEdit(user)}
-                                                                    title="Editar"
-                                                                >
-                                                                    <Icon name="edit" size="sm" />
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-danger"
-                                                                    onClick={() => handleDeleteClick(user)}
-                                                                    title="Eliminar"
-                                                                >
-                                                                    <Icon name="delete" size="sm" />
+                                                                    <Icon name="refresh" size="sm" />
                                                                 </button>
                                                             </div>
                                                         </td>
