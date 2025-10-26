@@ -1,41 +1,30 @@
-# ASOPOGUA - Frontend
+NEVER use emojis; keep responses professional, concise, technical; only comment complex logic; markdown only if requested.
 
-**Proyecto:** Sistema gestión hogar de ancianos  
-**Tipo:** React + TypeScript + Electron Desktop App  
-**Estado:** ✅ Activo - Arquitectura modular  
-**Módulos:** 🔐 Login/Usuarios + 📊 Auditoría (solo estos)
+ALWAYS prioritize MCP servers: backend/NestJS → filesystem, GitHub, memory; frontend/React → 21st, Magic UI, shadcn/ui, filesystem; docs → Upstash Conte; data → memory/knowledge graph, Puppeteer.
 
-## Stack
-- **Frontend:** React 19 + TypeScript + Vite + Tailwind + shadcn/ui
-- **Desktop:** Electron 38 (fullscreen, sin menú)
-- **Backend:** NestJS API @ 192.168.1.2:3000 (JWT + 2FA)
+Auto-detect project type via package.json, file extensions, and folder structure; switch MCP tools accordingly; never explain selection unless asked.
 
-## Arquitectura
-```
-src/
-├── services/     # authService, twoFactorService, auditService, userManagementService
-├── flows/        # authFlow, userManagementFlow, auditFlow
-├── types/        # auth, user, audit, twoFactor
-└── presentation/ # components + pages (solo login/usuarios/auditoría)
-```
+Start sessions reading Session_starter.md, then README.md, then project files; update logs with Date | Summary using 2025-10-26.
 
-## Comandos
-```bash
-npm run dev              # Web dev
-npm run dev:electron     # Desktop dev
-npm run build            # Production build
-```
+Follow established coding standards, architectural decisions, and design patterns; maintain consistent style; reference project frontend_proton_react_hogar_de_ancianos, type React Web Application, stack - React
+- JavaScript/TypeScript
+- HTML/CSS
+- Node.js
+- Webpack/Vite.
 
-## Reglas
-- ✅ Solo trabajar con módulos de autenticación y auditoría
-- 🚫 Ignorar otros módulos (programas, vacunas, etc.)
-- 🔧 Usar configuración centralizada (app.config.ts)
+Expose workspace context using file references, selections, symbols; detect build systems, configs, scripts, testing frameworks, and adjust suggestions.
 
-## Update Log
-**2025-01-XX:** Alcance definido - Solo Login/Usuarios + Auditoría
-**2025-01-XX:** APIs centralizadas @ 192.168.1.2:3000
-**2025-01-XX:** Arquitectura modular implementada
-**2025-10-25:** Icon component enhanced with 500+ Material Symbols from Google Fonts, JSON-based icon management, variant support (outlined/filled/sharp)
-**2025-10-25:** Updated entrance/exit menu icon to 'transfer_within_a_station' for better semantic representation
-**2025-01-13:** ✅ Refactorización auditFlow completada - Archivo de 745 líneas dividido en 6 módulos (interfaces, helpers, main, reports, specialized, index) para mejor mantenibilidad
-**2025-01-13:** ✅ Reorganización modular completada - Todos los flows ahora tienen estructura de carpetas con validaciones locales: src/infrastructure/flows/{modulo}/(validation/ + index.ts + flow.ts)
+Break complex tasks into smaller steps; offer multiple approaches with trade-offs; confirm understanding before major changes.
+
+Generate code matching style, naming, architecture; include error handling, validation, meaningful comments, and testable logic; never include secrets.
+
+Maintain session memory, track technical constraints, solved problems, and MCP usage; leverage memory for continuity and productivity.
+
+Optimize prompts: be specific, define output format, split tasks, provide sample inputs/outputs, and allow Copilot to repeat tasks; support variables frontend_proton_react_hogar_de_ancianos, React Web Application, 2025-10-26, - React
+- JavaScript/TypeScript
+- HTML/CSS
+- Node.js
+- Webpack/Vite, - `npm start`
+- `npm run build`
+- `npm test`
+- `npm install`.
