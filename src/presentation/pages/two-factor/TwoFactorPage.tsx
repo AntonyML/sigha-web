@@ -4,7 +4,6 @@ import { twoFactorFlow } from '../../../infrastructure/flows/twoFactor';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { PageHeader } from '../../components/molecules/PageHeader/PageHeader';
-import { Icon } from '../../components/atoms';
 import {
   TwoFactorStatusCard,
   TwoFactorInfoCard,
@@ -189,60 +188,7 @@ export default function TwoFactorPage() {
                 }}
             />
 
-            {/* Estado actual de 2FA */}
-            {currentStep === 'status' && (
-                <div className="card mb-4">
-                    <div className="card-body">
-                        <h5 className="card-title mb-3">Estado actual</h5>
-                        {is2FAEnabled ? (
-                            <>
-                                <div className="alert alert-success d-flex align-items-center" role="alert">
-                                    <Icon name="check_circle" size="sm" className="me-2" />
-                                    2FA está habilitado en tu cuenta.
-                                </div>
-                                <div className="mb-3">
-                                    <label htmlFor="disableCode" className="form-label">
-                                        Código de verificación para deshabilitar
-                                    </label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        id="disableCode"
-                                        value={disableCode}
-                                        onChange={(e) => setDisableCode(e.target.value)}
-                                        placeholder="Ingresa código de 6 dígitos"
-                                        disabled={processing}
-                                    />
-                                </div>
-                                <button
-                                    className="btn btn-danger me-2"
-                                    onClick={handleDisable2FA}
-                                    disabled={processing || !disableCode}
-                                >
-                                    <Icon name="cancel" size="sm" className="me-2" />
-                                    Deshabilitar 2FA
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="alert alert-warning d-flex align-items-center" role="alert">
-                                    <Icon name="warning" size="sm" className="me-2" />
-                                    2FA no está habilitado en tu cuenta.
-                                </div>
-                                <button
-                                    className="btn btn-primary"
-                                    onClick={handleStartSetup}
-                                    disabled={processing}
-                                >
-                                    <Icon name="shield" size="sm" className="me-2" />
-                                    Habilitar 2FA
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-
+ 
             {/* Alertas */}
             {error && (
                 <AlertMessage
@@ -272,6 +218,8 @@ export default function TwoFactorPage() {
                             onDisable2FA={handleDisable2FA}
                             onRegenerateBackupCodes={handleRegenerateBackupCodes}
                             onStartSetup={handleStartSetup}
+                            disableCode={disableCode}
+                            setDisableCode={setDisableCode}
                         />                        <TwoFactorInfoCard />
                     </div>
                 </div>

@@ -8,6 +8,8 @@ interface TwoFactorStatusCardProps {
   onDisable2FA: () => void;
   onRegenerateBackupCodes: () => void;
   onStartSetup: () => void;
+  disableCode: string;
+  setDisableCode: (code: string) => void;
 }
 
 export const TwoFactorStatusCard: React.FC<TwoFactorStatusCardProps> = ({
@@ -17,7 +19,9 @@ export const TwoFactorStatusCard: React.FC<TwoFactorStatusCardProps> = ({
   processing,
   onDisable2FA,
   onRegenerateBackupCodes,
-  onStartSetup
+  onStartSetup,
+  disableCode,
+  setDisableCode
 }) => {
   return (
     <div className="card shadow-sm mb-4">
@@ -77,24 +81,41 @@ export const TwoFactorStatusCard: React.FC<TwoFactorStatusCardProps> = ({
 
         <div className="border-top pt-3 mt-3">
           {is2FAEnabled ? (
-            <div className="d-grid gap-2 d-md-flex justify-content-md-end">
-              <button
-                className="btn btn-danger me-md-2"
-                onClick={onDisable2FA}
-                disabled={processing}
-              >
-                <i className="bi bi-x-circle me-2"></i>
-                Deshabilitar 2FA
-              </button>
-              <button
-                className="btn btn-outline-secondary"
-                onClick={onRegenerateBackupCodes}
-                disabled={processing || !hasBackupCodes}
-              >
-                <i className="bi bi-key me-2"></i>
-                Regenerar códigos de respaldo
-              </button>
-            </div>
+            <>
+              <div className="mb-3">
+                <label htmlFor="disableCode" className="form-label">
+                  Código de verificación para deshabilitar 2FA
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  id="disableCode"
+                  value={disableCode}
+                  onChange={(e) => setDisableCode(e.target.value)}
+                  placeholder="Ingresa código de 6 dígitos"
+                  disabled={processing}
+                />
+              </div>
+              <div className="d-grid gap-2 d-md-flex justify-content-md-end">
+
+                <button
+                  className="btn btn-danger me-md-2"
+                  onClick={onDisable2FA}
+                  disabled={processing}
+                >
+                  <i className="bi bi-x-circle me-2"></i>
+                  Deshabilitar 2FA
+                </button>
+                <button
+                  className="btn btn-outline-secondary"
+                  onClick={onRegenerateBackupCodes}
+                  disabled={processing || !hasBackupCodes}
+                >
+                  <i className="bi bi-key me-2"></i>
+                  Regenerar códigos de respaldo
+                </button>
+              </div>
+            </>
           ) : (
             <div className="text-center">
               <button

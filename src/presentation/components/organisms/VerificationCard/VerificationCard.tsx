@@ -17,7 +17,7 @@ export const VerificationCard: React.FC<VerificationCardProps> = ({
   onBack,
   processing
 }) => {
-  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>('backup');
+  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>('totp');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '');
