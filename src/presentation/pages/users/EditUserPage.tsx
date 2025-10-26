@@ -14,7 +14,6 @@ interface UserFormData {
     uEmail: string;
     uPassword?: string;
     roleId: number;
-    isActive: boolean;
 }
 
 const defaultUserFormData: UserFormData = {
@@ -24,8 +23,7 @@ const defaultUserFormData: UserFormData = {
     uSLastName: '',
     uEmail: '',
     uPassword: '',
-    roleId: 0,
-    isActive: true
+    roleId: 0
 };
 
 export default function EditUserPage() {
@@ -68,8 +66,7 @@ export default function EditUserPage() {
                     uSLastName: user.uSLastName || '',
                     uEmail: user.uEmail || '',
                     uPassword: '',
-                    roleId: user.roleId || 0,
-                    isActive: user.uIsActive === undefined ? true : user.uIsActive
+                    roleId: user.roleId || 0
                 });
             } else {
                 setError(userResult.error || 'Error al cargar usuario');
@@ -119,9 +116,9 @@ export default function EditUserPage() {
         if (formData.roleId !== originalUser?.roleId) {
             updateData.roleId = formData.roleId;
         }
-        if (formData.isActive !== originalUser?.uIsActive) {
-            updateData.uIsActive = formData.isActive;
-        }
+
+        // Asegurar que el usuario se mantenga activo al editar
+        updateData.uIsActive = true;
 
         // Verificar si hay cambios
         if (Object.keys(updateData).length === 0) {
@@ -369,7 +366,7 @@ export default function EditUserPage() {
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
-                                        <div className="col-12 col-md-6">
+                                        <div className="col-12">
                                             <label htmlFor="roleId" className="form-label fw-semibold">
                                                 Asignar Rol <span className="text-danger">*</span>
                                             </label>
@@ -392,40 +389,6 @@ export default function EditUserPage() {
                                                 <i className="bi bi-info-circle me-1"></i>
                                                 Los permisos se definen según el rol asignado
                                             </small>
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="isActive" className="form-label fw-semibold">
-                                                Estado de Cuenta <span className="text-danger">*</span>
-                                            </label>
-                                            <div className="btn-group w-100" role="group" aria-label="Estado de la cuenta">
-                                                <input
-                                                    type="radio"
-                                                    className="btn-check"
-                                                    id="activeTrue"
-                                                    name="isActive"
-                                                    checked={formData.isActive === true}
-                                                    onChange={() => onInputChange('isActive', true)}
-                                                    disabled={saving}
-                                                />
-                                                <label className="btn btn-outline-success" htmlFor="activeTrue">
-                                                    <i className="bi bi-check-circle me-1"></i>
-                                                    Activo
-                                                </label>
-
-                                                <input
-                                                    type="radio"
-                                                    className="btn-check"
-                                                    id="activeFalse"
-                                                    name="isActive"
-                                                    checked={formData.isActive === false}
-                                                    onChange={() => onInputChange('isActive', false)}
-                                                    disabled={saving}
-                                                />
-                                                <label className="btn btn-outline-secondary" htmlFor="activeFalse">
-                                                    <i className="bi bi-x-circle me-1"></i>
-                                                    Inactivo
-                                                </label>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
