@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Loader2, Shield } from 'lucide-react'
 import Logo from '../../../assets/images/asopogua.png'
-import { authFlow } from '../../../infrastructure/flows/authFlow'
+import { authFlow } from '../../../infrastructure/flows/auth'
 import { 
   ButtonNew as Button, 
   InputNew as Input, 

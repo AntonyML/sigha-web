@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { twoFactorFlow } from '../../../infrastructure/flows/twoFactorFlow';
+import { twoFactorFlow } from '../../../infrastructure/flows/twoFactor';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { PageHeader } from '../../components/molecules/PageHeader/PageHeader';

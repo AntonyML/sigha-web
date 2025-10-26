@@ -1,5 +1,5 @@
-import { roleService } from '../../services/roleService';
-import type { UserRole } from '../../types/user';
+import { roleService } from '../../../services/roleService';
+import type { UserRole } from '../../../types/user';
 import { getRoleErrorMessage } from './validation/roleValidations';
 
 /**

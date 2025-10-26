@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
-import { roleFlow } from '../../../infrastructure/flows/roleFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
+import { roleFlow } from '../../../infrastructure/flows/role';
 import { auditService } from '../../../services/auditService';
 import { getFullName } from '../../../utils/userUtils';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';

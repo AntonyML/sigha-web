@@ -1,8 +1,8 @@
 // auditValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de auditoría
 
-import type { LogAuditRequest, SearchAuditReportsDto } from '../../../types/audit';
-import { AuditReportType, AuditAction } from '../../../types/audit';
+import type { LogAuditRequest, SearchAuditReportsDto } from '../../../../types/audit';
+import { AuditReportType, AuditAction } from '../../../../types/audit';
 
 
 // Validaciones de negocio para registrar auditoría

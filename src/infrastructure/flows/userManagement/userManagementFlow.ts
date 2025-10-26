@@ -1,10 +1,10 @@
-import { userManagementService } from '../../services/userManagementService';
+import { userManagementService } from '../../../services/userManagementService';
 import type {
   User,
   CreateUserData,
   UpdateUserData,
   UserSearchParams
-} from '../../types/user';
+} from '../../../types/user';
 import {
   validateCreateUserData,
   validateUpdateUserData,

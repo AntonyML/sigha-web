@@ -1,4 +1,4 @@
-import { twoFactorService } from '../../services/twoFactorService';
+import { twoFactorService } from '../../../services/twoFactorService';
 import type {
     Setup2FAResponse,
     Enable2FARequest,
@@ -7,7 +7,7 @@ import type {
     Verify2FAResponse,
     TwoFactorStatusResponse,
     Disable2FAResponse,
-} from '../../types/twoFactor';
+} from '../../../types/twoFactor';
 import {
   validateEnable2FAData,
   validateVerify2FAData,

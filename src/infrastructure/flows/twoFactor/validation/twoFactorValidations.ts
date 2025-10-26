@@ -1,7 +1,7 @@
 // twoFactorValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación de dos factores
 
-import type { Enable2FARequest, Verify2FARequest } from '../../../types/twoFactor';
+import type { Enable2FARequest, Verify2FARequest } from '../../../../types/twoFactor';
 
 
 // Validaciones de negocio para códigos TOTP

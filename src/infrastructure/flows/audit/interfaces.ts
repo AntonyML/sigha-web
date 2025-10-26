@@ -1,10 +1,6 @@
 import type {
   DigitalRecord,
-  CreateDigitalRecordDto,
-  SearchDigitalRecordsDto,
-  PaginatedDigitalRecordsResponse,
   AuditStatistics,
-  AuditAction,
 } from '../../../types/audit';
 
 /**

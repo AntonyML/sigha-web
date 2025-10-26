@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { getFullName } from '../../../utils/userUtils';
 import { Icon } from '../../components/atoms';
 import type { User } from '../../../types/user';

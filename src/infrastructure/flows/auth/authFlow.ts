@@ -1,5 +1,5 @@
-import { authService } from '../../services/authService';
-import type { AuthUser, LoginResponse } from '../../types/auth';
+import { authService } from '../../../services/authService';
+import type { AuthUser, LoginResponse } from '../../../types/auth';
 import {
     validateLoginCredentials,
     getLoginErrorMessage,

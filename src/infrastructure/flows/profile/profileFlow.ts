@@ -1,9 +1,9 @@
-import { profileService } from '../../services/profileService';
+import { profileService } from '../../../services/profileService';
 import type {
   User,
   UpdateUserData,
   UserChangePasswordData
-} from '../../types/user';
+} from '../../../types/user';
 import {
   validateUpdateProfileData,
   validateChangePasswordData,

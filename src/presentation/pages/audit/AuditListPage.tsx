@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auditFlow } from '../../../infrastructure/flows/audit/auditFlow';
+import { auditFlow } from '../../../infrastructure/flows/audit';
 import { Icon } from '../../components/atoms';
 import type { DigitalRecord, SearchDigitalRecordsDto, AuditActionType } from '../../../types/audit';
 import { AuditAction } from '../../../types/audit';

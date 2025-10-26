@@ -1,7 +1,7 @@
 // profileValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de perfil de usuario
 
-import type { UpdateUserData, UserChangePasswordData } from '../../../types/user';
+import type { UpdateUserData, UserChangePasswordData } from '../../../../types/user';
 
 
 // Validaciones de negocio para actualizar perfil

@@ -37,3 +37,5 @@ npm run build            # Production build
 **2025-01-XX:** Arquitectura modular implementada
 **2025-10-25:** Icon component enhanced with 500+ Material Symbols from Google Fonts, JSON-based icon management, variant support (outlined/filled/sharp)
 **2025-10-25:** Updated entrance/exit menu icon to 'transfer_within_a_station' for better semantic representation
+**2025-01-13:** ✅ Refactorización auditFlow completada - Archivo de 745 líneas dividido en 6 módulos (interfaces, helpers, main, reports, specialized, index) para mejor mantenibilidad
+**2025-01-13:** ✅ Reorganización modular completada - Todos los flows ahora tienen estructura de carpetas con validaciones locales: src/infrastructure/flows/{modulo}/(validation/ + index.ts + flow.ts)

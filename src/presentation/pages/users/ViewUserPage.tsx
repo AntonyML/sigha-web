@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFullName } from '../../../utils/userUtils';
-import { userManagementFlow } from '../../../infrastructure/flows/userManagementFlow';
-import { roleFlow } from '../../../infrastructure/flows/roleFlow';
+import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
+import { roleFlow } from '../../../infrastructure/flows/role';
 import type { User, UserRole } from '../../../types/user';
 
 export default function ViewUserPage() {
