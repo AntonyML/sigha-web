@@ -32,6 +32,7 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData {
+  uIdentification?: string;
   uName?: string;
   uFLastName?: string;
   uSLastName?: string;

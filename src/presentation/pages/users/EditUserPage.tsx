@@ -101,6 +101,9 @@ export default function EditUserPage() {
         // Construir objeto de actualización solo con campos modificados
         const updateData: UpdateUserData = {};
 
+        if (formData.uIdentification !== (originalUser?.uIdentification || '')) {
+            updateData.uIdentification = formData.uIdentification;
+        }
         if (formData.uName !== originalUser?.uName) {
             updateData.uName = formData.uName;
         }
@@ -268,13 +271,15 @@ export default function EditUserPage() {
                                                 className="form-control form-control-lg"
                                                 value={formData.uIdentification}
                                                 onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: 1234567890"
+                                                placeholder="Ej: ABC123, user-name_01, id.test"
                                                 required
                                                 disabled={saving}
+                                                pattern="^[A-Za-z0-9._-]+$"
+                                                title="Solo letras, números y los caracteres: - _ ."
                                             />
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Número único de identificación
+                                                Identificador único (letras, números, guiones, puntos y guiones bajos)
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">

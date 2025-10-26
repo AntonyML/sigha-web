@@ -169,13 +169,15 @@ export default function CreateUserPage() {
                                                 className="form-control form-control-lg"
                                                 value={formData.uIdentification}
                                                 onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: 1234567890"
+                                                placeholder="Ej: C14887, usuario-tony_01, 14887.ucr"
                                                 required
                                                 disabled={loading}
+                                                pattern="^[A-Za-z0-9._-]+$"
+                                                title="Solo letras, números y los caracteres: - _ ."
                                             />
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Número único de identificación
+                                                Identificador único (letras, números, guiones, puntos y guiones bajos)
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">

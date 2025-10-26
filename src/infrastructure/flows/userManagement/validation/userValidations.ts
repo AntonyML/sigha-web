@@ -23,8 +23,8 @@ export function validateCreateUserData(data: CreateUserData): string | null {
   if (data.uIdentification.length > 20) {
     return 'La identificación no puede tener más de 20 caracteres.';
   }
-  if (!/^[a-zA-Z0-9-_]+$/.test(data.uIdentification)) {
-    return 'La identificación solo puede contener letras, números, guiones y guiones bajos.';
+  if (!/^[a-zA-Z0-9-_.]+$/.test(data.uIdentification)) {
+    return 'La identificación solo puede contener letras, números, guiones, puntos y guiones bajos.';
   }
 
   // Validar nombre
