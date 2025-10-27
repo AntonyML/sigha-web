@@ -51,7 +51,7 @@ export default function LoginPage() {
       if (result.user) {
         navigate('/main-menu')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error en login:', err)
       setError('Error inesperado al iniciar sesión')
     } finally {
@@ -92,7 +92,7 @@ export default function LoginPage() {
         console.log('Verificación exitosa pero sin usuario')
         setError('Verificación exitosa pero no se recibió información del usuario')
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error en verificación 2FA:', err)
       setError('Error inesperado al verificar código')
     } finally {
@@ -109,19 +109,18 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 tablet:p-6">
-      <Card className="w-full max-w-[400px] tablet:max-w-[420px] shadow-2xl border-2 animate-fade-in">
-        <CardHeader className="text-center space-y-4 pb-4">
+      <Card className="w-full max-w-[500px] tablet:max-w-[550px] shadow-2xl border-2 animate-fade-in">
+        <CardHeader className="text-center space-y-2 pb-3">
           <img
             src={Logo}
             alt="Logo Hogar de Ancianos"
-            className="w-32 h-32 mx-auto tablet:w-36 tablet:h-36 object-contain"
+            className="w-24 h-24 mx-auto tablet:w-28 tablet:h-28 object-contain"
           />
           <div className="space-y-1">
-            <CardTitle className="text-2xl tablet:text-3xl font-bold text-primary">
+            <CardTitle className={`font-bold text-primary ${requiresTwoFactor ? 'text-lg tablet:text-xl' : 'text-2xl tablet:text-3xl'}`}>
               {requiresTwoFactor ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Shield className="w-6 h-6" />
-                  Verificación 2FA
+                <span className="flex items-center justify-center gap-1">
+                  Verificar Código
                 </span>
               ) : (
                 'Iniciar Sesión'
@@ -139,7 +138,7 @@ export default function LoginPage() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Error Alert */}
           {error && (
             <div 
@@ -154,7 +153,7 @@ export default function LoginPage() {
 
           {/* Login Form */}
           {!requiresTwoFactor && (
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-base font-semibold">
                   Correo Electrónico
@@ -213,7 +212,7 @@ export default function LoginPage() {
 
           {/* 2FA Verification Form */}
           {requiresTwoFactor && (
-            <form onSubmit={handleVerify2FA} className="space-y-5 animate-slide-in">
+            <form onSubmit={handleVerify2FA} className="space-y-4 animate-slide-in">
               <div 
                 className="flex items-start gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20 text-primary"
                 role="status"
@@ -255,11 +254,21 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={cancelTwoFactor}
+                  disabled={loading}
+                  className="flex-1 h-12 text-base font-semibold"
+                  size="lg"
+                >
+                  Cancelar
+                </Button>
                 <Button
                   type="submit"
                   disabled={loading || twoFactorCode.length < 6 || twoFactorCode.length > 8}
-                  className="w-full h-12 text-base font-semibold"
+                  className="flex-1 h-12 text-base font-semibold"
                   size="lg"
                 >
                   {loading ? (
@@ -270,17 +279,6 @@ export default function LoginPage() {
                   ) : (
                     'Verificar Código'
                   )}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={cancelTwoFactor}
-                  disabled={loading}
-                  className="w-full h-12 text-base font-semibold"
-                  size="lg"
-                >
-                  Cancelar
                 </Button>
               </div>
             </form>
