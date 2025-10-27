@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 
 import { AppLayout } from './presentation/components/organisms'
 
-import LoginForm from './presentation/pages/auth/LoginPage'
+import LoginForm from './presentation/pages/login/LoginPage'
 
 import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
 
