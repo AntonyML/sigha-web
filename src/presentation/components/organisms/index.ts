@@ -1,6 +1,7 @@
 export { default as r } from './Navbar/Navbar';
 export { default as Breadcrumbs } from './Breadcrumbs/Breadcrumbs';
 export { default as AppLayout } from './AppLayout/AppLayout';
+export { default as Sidebar } from './Sidebar/Sidebar';
 export { TwoFactorStatusCard } from './TwoFactorStatusCard/TwoFactorStatusCard';
 export { TwoFactorInfoCard } from './TwoFactorInfoCard/TwoFactorInfoCard';
 export { QRCodeCard } from './QRCodeCard/QRCodeCard';

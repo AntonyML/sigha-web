@@ -57,12 +57,7 @@ export default function MainMenuPage() {
 
     return (
         <div className="container py-4">
-            {/* Título del menú */}
-            <div className="text-center mb-5">
-                <h1 className="display-4 fw-bold text-primary">Menú Principal</h1>
-                <p className="lead text-muted">Selecciona una opción para continuar</p>
-            </div>
-
+           
             {/* Grid de opciones del menú */}
             <div className="row g-4">
                 {menuOptions.map((option) => (

@@ -73,7 +73,7 @@ export default function Breadcrumbs() {
   }
 
   return (
-    <nav className="bg-gray-50 border-b border-gray-200 px-4 py-3 md:px-6 lg:px-8">
+    <nav className="sticky top-14 md:top-16 z-40 bg-gray-50 border-b border-gray-200 px-4 py-3 md:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <ol className="flex items-center space-x-2 text-sm overflow-x-auto scrollbar-hide">
           {breadcrumbs.map((item, index) => {
