@@ -12,3 +12,5 @@ export * from './formData';
 export * from './clinicalCondition';
 
 export * from './audit';
+
+export * from './notifuse';

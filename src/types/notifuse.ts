@@ -37,7 +37,7 @@ export interface BackupCodesData {
   fecha_hora: string;
 }
 
-export interface Notification<T extends Record<string, unknown> = Record<string, unknown>> {
+export interface Notification<T = Record<string, unknown>> {
   id: string;
   contact: Contact;
   data: T;
