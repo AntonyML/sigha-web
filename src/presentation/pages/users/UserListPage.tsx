@@ -11,7 +11,7 @@ export default function UserListPage() {
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-    const [filterStatus, setFilterStatus] = useState<'all' | 'active'>('active');
+    const [filterStatus] = useState<'all' | 'active'>('active');
     const navigate = useNavigate();
 
     // Cargar usuarios al montar el componente
@@ -190,16 +190,7 @@ export default function UserListPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="col-12 col-lg-3">
-                                        <select
-                                            className="form-select form-select-lg"
-                                            value={filterStatus}
-                                            onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active')}
-                                        >
-                                            <option value="all">Todos los usuarios</option>
-                                            <option value="active">Solo activos</option>
-                                        </select>
-                                    </div>
+                                
                                     <div className="col-12 col-lg-3">
                                         <div className="d-flex align-items-center h-100">
                                             <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6 d-inline-flex align-items-center">

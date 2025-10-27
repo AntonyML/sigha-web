@@ -220,7 +220,7 @@ export default function LoginPage() {
               >
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm font-medium">
-                  Ingrese el código de 6 dígitos (TOTP) de su app autenticadora o un código de respaldo de 8 dígitos
+                  Ingrese el código de 6 dígitos de su app autenticadora o un código de respaldo de 8 dígitos
                 </p>
               </div>
 
@@ -251,7 +251,7 @@ export default function LoginPage() {
                   className="text-center text-2xl tracking-widest font-mono font-semibold tabular-nums"
                 />
                 <p id="code-hint" className="text-sm text-muted-foreground text-center">
-                  Ingrese el código de 6 dígitos (TOTP) o 8 dígitos (código de respaldo)
+                  Los codigos de 8 dígitos solo se utilizan una vez.
                 </p>
               </div>
 
