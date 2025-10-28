@@ -141,12 +141,13 @@ export const authService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      console.error('Error en authService.verify2FA:', error);
-      console.error('Error response:', error.response);
-      console.error('Error response data:', error.response?.data);
-      console.error('Error response status:', error.response?.status);
-      console.error('Error message:', error.message);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: unknown; status?: number }; message?: string };
+      console.error('Error en authService.verify2FA:', err);
+      console.error('Error response:', err.response);
+      console.error('Error response data:', err.response?.data);
+      console.error('Error response status:', err.response?.status);
+      console.error('Error message:', err.message);
       throw error;
     }
   },
@@ -160,18 +161,37 @@ export const authService = {
   },
 
   /**
-   * Logout
+   * Solicitar recuperación de contraseña
+   * Envía código de recuperación al email (NO requiere autenticación)
    */
-  logout: async (): Promise<void> => {
-    try {
-      await apiClient.post('/auth/logout');
-    } catch (error) {
-      console.error('Error durante logout:', error);
-    } finally {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tempToken');
-    }
+  forgotPassword: async (email: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${config.api.baseUrl}/auth/forgot-password`,
+      { email },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Resetear contraseña usando token de recuperación
+   * (NO requiere autenticación)
+   */
+  resetPassword: async (token: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await axios.post<{ message: string }>(
+      `${config.api.baseUrl}/auth/reset-password`,
+      { token, newPassword },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
   },
 
   // ==================== Helpers ====================
