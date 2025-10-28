@@ -201,7 +201,7 @@ export type EstadoCivil = 'soltero' | 'casado' | 'viudo' | 'divorciado' | 'union
 export type TrabajoPrevio = 'jubilacion' | 'pension' | 'otros';
 
 // Tipo para los valores de RCVG
-export type RCVG = '<10%' | 'e/10 y 20%' | 'e/20 y 30%' | 'e/30 y 40%' | '>40%';
+export type RCVG = '< 10%' | 'e /10y20%' | 'e /20y30%' | 'e /40y40%' | '> 40%' | 'UNKNOWN';
 
 // Tipo para respuestas Si/No
 export type SiNo = 'SI' | 'NO';
@@ -306,13 +306,36 @@ const VACCINES_MAP: Record<string, number> = {
   vacunaNeumococo: 7 // Actualizado según el ejemplo del JSON
 };
 
+// Years of schooling mapping to BD ENUM values
+const YEARS_SCHOOLING_MAP: Record<string, string> = {
+  '0': 'no schooling',
+  '1': 'incomplete primary',
+  '2': 'incomplete primary', 
+  '3': 'incomplete primary',
+  '4': 'incomplete primary',
+  '5': 'incomplete primary',
+  '6': 'complete primary',
+  '7': 'incomplete secondary',
+  '8': 'incomplete secondary',
+  '9': 'incomplete secondary',
+  '10': 'incomplete secondary',
+  '11': 'complete secondary',
+  '12': 'complete secondary',
+  '13': 'incomplete university',
+  '14': 'incomplete university',
+  '15': 'complete university',
+  '16': 'complete university',
+  '17': 'postgraduate',
+  '18': 'postgraduate'
+};
+
 // Marital status mapping
 const MARITAL_STATUS_MAP: Record<string, string> = {
   soltero: 'single',
   casado: 'married',
   viudo: 'widowed',
   divorciado: 'divorced',
-  'union-libre': 'common-law'
+  'union-libre': 'common law union' // Corregido para coincidir con BD
 };
 
 export function transformVirtualFileToApiPayload(
@@ -344,10 +367,12 @@ export function transformVirtualFileToApiPayload(
         .filter(vaccine => (virtualFile as any)[vaccine] === true)
         .map(vaccine => ({ id: VACCINES_MAP[vaccine] }));
 
-  // Convertir datos numéricos
-  const weight = parseFloat(virtualFile.peso) || 0;
-  const height = parseFloat(virtualFile.talla) || 0; // mantener en centímetros como espera el backend
-  const imc = parseFloat(virtualFile.imc) || 0;
+  // Convertir datos numéricos con validaciones de rango
+  const weight = Math.min(parseFloat(virtualFile.peso) || 0, 999.99); // Max DECIMAL(5,2)
+  const heightCm = parseFloat(virtualFile.talla) || 0;
+  const height = Math.min(heightCm / 100, 99.99); // Max DECIMAL(4,2) y convertir cm a metros
+  const imcRaw = parseFloat(virtualFile.imc) || 0;
+  const imc = Math.min(Math.round(imcRaw * 10) / 10, 999.9); // Max DECIMAL(4,1) con 1 decimal
 
   // Determinar descripción de trabajo previo
   const getWorkDescription = (): string => {
@@ -363,9 +388,9 @@ export function transformVirtualFileToApiPayload(
     oa_f_last_name: firstLastName || 'Sin apellido',
     oa_s_last_name: secondLastName || 'Sin segundo apellido',
     oa_birthdate: virtualFile.fechaNacimiento || '',
-    oa_marital_status: MARITAL_STATUS_MAP[virtualFile.estadoCivil] || virtualFile.estadoCivil || 'single',
+    oa_marital_status: MARITAL_STATUS_MAP[virtualFile.estadoCivil] || virtualFile.estadoCivil || 'not specified',
     oa_dwelling: virtualFile.vivienda || 'No especificado',
-    oa_years_schooling: virtualFile.anosEscolaridad || '0',
+    oa_years_schooling: YEARS_SCHOOLING_MAP[virtualFile.anosEscolaridad] || 'not specified',
     oa_previous_work: getWorkDescription() || 'No especificado',
     oa_is_retired: virtualFile.trabajoPrevio === 'jubilacion',
     oa_has_pension: virtualFile.trabajoPrevio === 'pension',
@@ -379,8 +404,8 @@ export function transformVirtualFileToApiPayload(
     oa_phone_numner: virtualFile.telefono || '',
     oa_email: virtualFile.email || '',
     oa_profile_photo_url: null,
-    oa_gender: virtualFile.genero || 'no_specified',
-    oa_blood_type: virtualFile.tipoSangre || 'unknown',
+    oa_gender: virtualFile.genero || 'not specified',
+    oa_blood_type: virtualFile.tipoSangre || 'UNKNOWN',
     
     program: {
       id: additionalData.programId || 1,
@@ -394,19 +419,19 @@ export function transformVirtualFileToApiPayload(
       pf_s_last_name: '',
       pf_phone_number: '',
       pf_email: '',
-      pf_kinship: ''
+      pf_kinship: 'not specified' // Valor por defecto según ENUM de BD
     },
     
     clinical_history: {
       ch_frequent_falls: virtualFile.caidasFrecuentes || false,
-      ch_weight: weight > 0 ? weight : 50.0,
-      ch_height: height > 0 ? height : 160.0,
-      ch_imc: imc > 0 ? imc : 19.5,
+      ch_weight: weight > 0 ? weight : 50.0, // DECIMAL(5,2) - max 999.99
+      ch_height: height > 0 ? height : 1.60, // DECIMAL(4,2) - max 99.99 metros
+      ch_imc: imc > 0 ? imc : 19.5, // DECIMAL(4,1) - max 999.9 con 1 decimal
       ch_blood_pressure: virtualFile.ta || '120/80',
       ch_neoplasms: virtualFile.neoplasias || false,
       ch_neoplasms_description: virtualFile.neoplasias && virtualFile.neoplasiasDetalle ? virtualFile.neoplasiasDetalle : null,
       ch_observations: additionalData.observations || virtualFile.otrasCondiciones || 'Sin observaciones',
-      ch_rcvg: virtualFile.rcvg || '<10%',
+      ch_rcvg: virtualFile.rcvg || 'UNKNOWN',
       ch_vision_problems: virtualFile.dificultadesVision === 'SI',
       ch_vision_hearing: virtualFile.problemasAudicion === 'SI',
       create_at: new Date().toISOString(),

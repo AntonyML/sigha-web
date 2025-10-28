@@ -13,7 +13,7 @@ export const localhost = 'http://localhost:3000';
 export const tunnelHost = 'http://localhost:3000'; // por si creo un tunel con cloudflare mas adelante
 export const config = {
     api: {
-        baseUrl: ipv4Localhost,
+        baseUrl: localhost, // Cambiado para usar localhost
         timeout: 10000,
     },
 
