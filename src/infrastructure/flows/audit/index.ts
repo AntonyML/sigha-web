@@ -29,6 +29,8 @@ export {
   getActionBadgeClass,
   isCriticalAudit,
   getActionIcon,
+  getAuditDescription,
+  getAuditTechnicalInfo,
 } from './helpers';
 
 // Main operations
@@ -65,6 +67,8 @@ import {
   getActionBadgeClass,
   isCriticalAudit,
   getActionIcon,
+  getAuditDescription,
+  getAuditTechnicalInfo,
 } from './helpers';
 
 /**
@@ -98,4 +102,6 @@ export const auditFlow = {
   getActionBadgeClass,
   isCriticalAudit,
   getActionIcon,
+  getAuditDescription,
+  getAuditTechnicalInfo,
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/audit';
 import { Icon } from '../../components/atoms';
@@ -20,11 +20,7 @@ export default function AuditListPage() {
     const [pageSize, setPageSize] = useState(25);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadRecords();
-    }, [currentPage, pageSize, filterAction, filterTable, startDate, endDate]);
-
-    const loadRecords = async () => {
+    const loadRecords = useCallback(async () => {
         setLoading(true);
         setError('');
 
@@ -37,8 +33,13 @@ export default function AuditListPage() {
             endDate: endDate || undefined,
         };
 
+        console.log('Filtros aplicados:', { filterAction, filterTable, startDate, endDate, currentPage, pageSize });
+        console.log('Parametros enviados:', params);
+
         const result = await auditFlow.searchDigitalRecords(params);
         
+        console.log('Respuesta del backend:', result);
+
         if (result.success) {
             setRecords(result.records || []);
             setTotalRecords(result.total || 0);
@@ -49,13 +50,19 @@ export default function AuditListPage() {
         }
         
         setLoading(false);
-    };
+    }, [currentPage, pageSize, filterAction, filterTable, startDate, endDate]);
+
+    useEffect(() => {
+        loadRecords();
+    }, [loadRecords]);
 
     const filteredRecords = records.filter(record => {
         if (!searchTerm.trim()) return true;
         const term = searchTerm.toLowerCase();
+        const auditDesc = auditFlow.getAuditDescription(record);
         return (
             (record.description || '').toLowerCase().includes(term) ||
+            auditDesc.userFriendly.toLowerCase().includes(term) ||
             (record.userName || '').toLowerCase().includes(term) ||
             (record.userEmail || '').toLowerCase().includes(term) ||
             record.action.toLowerCase().includes(term) ||
@@ -147,7 +154,7 @@ export default function AuditListPage() {
                         </div>
                         <div className="col-md-2">
                             <label className="form-label">Acción</label>
-                            <select className="form-select" value={filterAction} onChange={(e) => setFilterAction(e.target.value as AuditAction | 'ALL')}>
+                            <select className="form-select" value={filterAction} onChange={(e) => { setFilterAction(e.target.value as AuditAction | 'ALL'); setCurrentPage(1); }}>
                                 <option value="ALL">Todas</option>
                                 <option value={AuditAction.LOGIN}>Login</option>
                                 <option value={AuditAction.LOGOUT}>Logout</option>
@@ -160,7 +167,7 @@ export default function AuditListPage() {
                         </div>
                         <div className="col-md-2">
                             <label className="form-label">Tabla</label>
-                            <select className="form-select" value={filterTable} onChange={(e) => setFilterTable(e.target.value)}>
+                            <select className="form-select" value={filterTable} onChange={(e) => { setFilterTable(e.target.value); setCurrentPage(1); }}>
                                 <option value="ALL">Todas</option>
                                 <option value="users">Usuarios</option>
                                 <option value="roles">Roles</option>
@@ -171,11 +178,11 @@ export default function AuditListPage() {
                         </div>
                         <div className="col-md-2">
                             <label className="form-label">Fecha inicio</label>
-                            <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                            <input type="date" className="form-control" value={startDate} onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }} />
                         </div>
                         <div className="col-md-2">
                             <label className="form-label">Fecha fin</label>
-                            <input type="date" className="form-control" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                            <input type="date" className="form-control" value={endDate} onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }} />
                         </div>
                     </div>
                     <div className="mt-3">
@@ -224,8 +231,9 @@ export default function AuditListPage() {
                                             <td><code>#{record.id}</code></td>
                                             <td><small>{auditFlow.formatAuditDate(record.timestamp)}</small></td>
                                             <td>
-                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)}`}>
-                                                    {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
+                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)} d-inline-flex align-items-center`}>
+                                                    <Icon name={auditFlow.getActionIcon(record.action)} size="sm" className="me-1" />
+                                                    {auditFlow.getActionLabel(record.action)}
                                                 </span>
                                             </td>
                                             <td><span className="badge bg-secondary">{auditFlow.getTableLabel(record.tableName)}</span></td>
@@ -233,7 +241,7 @@ export default function AuditListPage() {
                                                 <div><Icon name="person" size="sm" className="me-1" />{record.userName}</div>
                                                 {record.userEmail && <small className="text-muted">{record.userEmail}</small>}
                                             </td>
-                                            <td><div className="text-truncate" style={{ maxWidth: '300px' }}>{record.description || 'Sin descripción'}</div></td>
+                                            <td><div className="text-truncate" style={{ maxWidth: '300px' }}>{auditFlow.getAuditDescription(record).userFriendly}</div></td>
                                             <td>
                                                 <button className="btn btn-sm btn-outline-primary" onClick={() => handleView(record)}>
                                                     <Icon name="visibility" size="sm" />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/audit';
 import type { DigitalRecord } from '../../../types/audit';
@@ -29,22 +29,18 @@ export default function AuditDashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [dateRange, setDateRange] = useState({
-        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0]
+        start: '',
+        end: ''
     });
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadDashboardData();
-    }, [dateRange]);
-
-    const loadDashboardData = async () => {
+    const loadDashboardData = useCallback(async () => {
         setLoading(true);
         setError('');
 
         const result = await auditFlow.searchDigitalRecords({
-            startDate: dateRange.start,
-            endDate: dateRange.end,
+            startDate: dateRange.start || undefined,
+            endDate: dateRange.end || undefined,
             limit: 10000
         });
 
@@ -102,13 +98,21 @@ export default function AuditDashboardPage() {
                 topTables
             });
 
-            setRecentRecords(result.records.slice(0, 10));
+            // Ordenar por timestamp descendente (más recientes primero) y tomar los 10 más recientes
+            const sortedRecords = result.records.sort((a, b) => 
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+            setRecentRecords(sortedRecords.slice(0, 10));
         } else {
             setError(result.error || 'Error al cargar estadísticas');
         }
 
         setLoading(false);
-    };
+    }, [dateRange.start, dateRange.end]);
+
+    useEffect(() => {
+        loadDashboardData();
+    }, [loadDashboardData]);
 
     const handleRefresh = () => {
         loadDashboardData();
@@ -388,7 +392,7 @@ export default function AuditDashboardPage() {
                                                                 )}
                                                             </div>
                                                             <p className="mb-1">
-                                                                {record.description || <span className="text-muted fst-italic">Sin descripción</span>}
+                                                                {auditFlow.getAuditDescription(record).userFriendly}
                                                             </p>
                                                             <small className="text-muted">
                                                                 <i className="bi bi-person-circle me-1"></i>

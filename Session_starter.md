@@ -1,4 +1,6 @@
-NEVER use emojis; keep responses professional, concise, technical; only comment complex logic; markdown only if requested.
+2025-10-27 | Investigated audit table filter issue. Frontend sends correct tableName parameters but backend returns 0 records. Added debug logs to AuditListPage.tsx to track filter parameters and backend responses. Issue appears to be empty digital_record table or incorrect tableName values in database.
+
+2025-10-26 | Fixed audit list filters to properly reset pagination when Action, Table, Start Date, and End Date filters change. Updated AuditListPage.tsx onChange handlers to set currentPage to 1. Build and tests pass successfully.
 
 ALWAYS prioritize MCP servers: backend/NestJS → filesystem, GitHub, memory; frontend/React → 21st, Magic UI, shadcn/ui, filesystem; docs → Upstash Conte; data → memory/knowledge graph, Puppeteer.
 

@@ -102,19 +102,127 @@ export function isCriticalAudit(record: DigitalRecord): boolean {
 }
 
 /**
+ * Obtiene una descripción amigable y explicativa del registro de auditoría
+ * Convierte información técnica en lenguaje natural para usuarios finales
+ */
+export function getAuditDescription(record: DigitalRecord): {
+  userFriendly: string;
+  technical?: string;
+} {
+  const { action, tableName, description, recordId } = record;
+  const tableLabel = getTableLabel(tableName || '');
+
+  // Descripciones específicas para casos comunes
+  if (description) {
+    // Casos de envío de códigos de verificación
+    if (description.includes('Send code_verify') && description.includes('code_verifiy_email')) {
+      return {
+        userFriendly: `Se envió un código de verificación al correo electrónico para ${action === 'create' ? 'registro' : 'recuperación'} de cuenta`,
+        technical: `Send code_verify id=code_verifiy_email (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    // Casos de envío de códigos 2FA
+    if (description.includes('Send 6_codes_2fa') && description.includes('6_codes_2fa_email')) {
+      return {
+        userFriendly: 'Se enviaron 6 códigos de autenticación de dos factores al correo electrónico',
+        technical: `Send 6_codes_2fa id=6_codes_2fa_email (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    if (description.includes('Send 8_codes_2fa') && description.includes('8_codes_2fa_email')) {
+      return {
+        userFriendly: 'Se enviaron 8 códigos de autenticación de dos factores al correo electrónico',
+        technical: `Send 8_codes_2fa id=8_codes_2fa_email (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    // Casos de login/logout
+    if (action === 'login' && tableName === 'users') {
+      return {
+        userFriendly: 'Inicio de sesión exitoso en el sistema',
+        technical: description
+      };
+    }
+
+    if (action === 'logout' && tableName === 'users') {
+      return {
+        userFriendly: 'Cierre de sesión del sistema',
+        technical: description
+      };
+    }
+
+    // Casos de creación/edición/eliminación de registros
+    if (action === 'create' && tableName) {
+      return {
+        userFriendly: `Se creó un nuevo registro en ${tableLabel}`,
+        technical: `${description} (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    if (action === 'update' && tableName) {
+      return {
+        userFriendly: `Se actualizó un registro en ${tableLabel}`,
+        technical: `${description} (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    if (action === 'delete' && tableName) {
+      return {
+        userFriendly: `Se eliminó un registro de ${tableLabel}`,
+        technical: `${description} (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    if (action === 'view' && tableName) {
+      return {
+        userFriendly: `Se consultó información de ${tableLabel}`,
+        technical: `${description} (ID: ${recordId || 'N/A'})`
+      };
+    }
+
+    if (action === 'export' && tableName) {
+      return {
+        userFriendly: `Se exportaron datos de ${tableLabel}`,
+        technical: `${description} (ID: ${recordId || 'N/A'})`
+      };
+    }
+  }
+
+  // Descripción por defecto si no hay casos específicos
+  const actionLabel = getActionLabel(action);
+  const baseDescription = tableName
+    ? `${actionLabel} en ${tableLabel}${recordId ? ` (ID: ${recordId})` : ''}`
+    : `${actionLabel}${recordId ? ` (ID: ${recordId})` : ''}`;
+
+  return {
+    userFriendly: baseDescription,
+    technical: description || undefined
+  };
+}
+
+/**
+ * Obtiene información adicional técnica del registro (opcional)
+ */
+export function getAuditTechnicalInfo(record: DigitalRecord): string | null {
+  const description = getAuditDescription(record);
+  return description.technical || null;
+}
+
+/**
  * Obtiene icono para la acción
  */
 export function getActionIcon(action: AuditAction): string {
   const icons: Record<AuditAction, string> = {
-    login: '🔓',
-    logout: '🔒',
-    create: '➕',
-    update: '✏️',
-    delete: '🗑️',
-    view: '👁️',
-    export: '📤',
-    other: '📋',
+    login: 'arrow_right_circle',
+    logout: 'arrow_left_circle',
+    create: 'plus',
+    update: 'pencil',
+    delete: 'trash',
+    view: 'eye',
+    export: 'arrow_down_tray',
+    other: 'document',
   };
 
-  return icons[action] || '📋';
+  return icons[action] || 'document';
 }

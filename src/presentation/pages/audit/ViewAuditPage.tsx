@@ -62,7 +62,7 @@ export default function ViewAuditPage() {
         return (
             <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
                 <div className="text-center">
-                    <Icon name="exclamation-triangle" size="lg" className="text-warning mb-3 d-block" />
+                    <Icon name="exclamation_triangle" size="lg" className="text-warning mb-3 d-block" />
                     <h3 className="mb-3">ID no proporcionado</h3>
                     <p className="text-muted mb-4">No se encontró el identificador del registro.</p>
                     <button className="btn btn-primary" onClick={() => navigate('/audits')}>
@@ -94,7 +94,7 @@ export default function ViewAuditPage() {
                         <div className="col-12 col-md-6">
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-5 text-center">
-                                    <Icon name="exclamation-circle" size="lg" className="text-danger mb-3 d-block" />
+                                    <Icon name="exclamation_circle" size="lg" className="text-danger mb-3 d-block" />
                                     <h4 className="mb-3">Error al cargar registro</h4>
                                     <p className="text-muted mb-4">{error || 'No se pudo cargar la información del registro'}</p>
                                     <div className="d-flex gap-2 justify-content-center">
@@ -124,7 +124,7 @@ export default function ViewAuditPage() {
                             <div>
                                 <div className="d-flex align-items-center gap-3 mb-2">
                                     <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
-                                        <Icon name="shield-check" className="text-primary fs-3" />
+                                        <Icon name="shield_check" className="text-primary fs-3" />
                                     </div>
                                     <div>
                                         <h1 className="h3 fw-bold mb-1">Registro de Auditoría #{record.id}</h1>
@@ -132,7 +132,7 @@ export default function ViewAuditPage() {
                                             {auditFlow.formatAuditDate(record.timestamp)}
                                             {auditFlow.isCriticalAudit(record) && (
                                                 <span className="badge bg-warning text-dark ms-2">
-                                                    <Icon name="exclamation-triangle" className="me-1" />
+                                                    <Icon name="exclamation_triangle" className="me-1" />
                                                     Crítico
                                                 </span>
                                             )}
@@ -142,15 +142,15 @@ export default function ViewAuditPage() {
                             </div>
                             <div className="d-flex gap-2">
                                 <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/audits/list')}>
-                                    <Icon name="arrow-left" />
+                                    <Icon name="arrow_left" />
                                     Volver a Lista
                                 </button>
                                 <button className="btn btn-outline-primary d-flex align-items-center gap-2" onClick={() => navigate('/audits')}>
-                                    <Icon name="bars-3" />
+                                    <Icon name="bars_3" />
                                     Menú Auditoría
                                 </button>
                                 <button className="btn btn-success d-flex align-items-center gap-2" onClick={handleExportSingle}>
-                                    <Icon name="arrow-down-tray" />
+                                    <Icon name="arrow_down_tray" />
                                     Exportar
                                 </button>
                             </div>
@@ -164,7 +164,7 @@ export default function ViewAuditPage() {
                         <div className="card shadow-sm border-0 h-100">
                             <div className="card-header bg-white border-bottom">
                                 <h5 className="mb-0">
-                                    <Icon name="information-circle" className="me-2" />
+                                    <Icon name="information_circle" className="me-2" />
                                     Información General
                                 </h5>
                             </div>
@@ -179,8 +179,9 @@ export default function ViewAuditPage() {
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Acción</label>
                                         <p className="mb-0">
-                                            <span className={`badge fs-6 ${auditFlow.getActionBadgeClass(record.action)}`}>
-                                                {auditFlow.getActionIcon(record.action)} {auditFlow.getActionLabel(record.action)}
+                                            <span className={`badge fs-6 ${auditFlow.getActionBadgeClass(record.action)} d-inline-flex align-items-center`}>
+                                                <Icon name={auditFlow.getActionIcon(record.action)} size="sm" className="me-1" />
+                                                {auditFlow.getActionLabel(record.action)}
                                             </span>
                                         </p>
                                     </div>
@@ -201,7 +202,7 @@ export default function ViewAuditPage() {
                                         <label className="text-muted small fw-semibold">Usuario</label>
                                         <p className="mb-0">
                                             <span>
-                                                <Icon name="user-circle" className="me-2" />
+                                                <Icon name="user_circle" className="me-2" />
                                                 {record.userName || 'N/A'}
                                             </span>
                                             {record.userEmail && (
@@ -214,14 +215,21 @@ export default function ViewAuditPage() {
                                     </div>
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Descripción</label>
-                                        <p className="mb-0">
-                                            {record.description || <span className="text-muted fst-italic">Sin descripción</span>}
+                                        <p className="mb-2">
+                                            {auditFlow.getAuditDescription(record).userFriendly}
                                         </p>
+                                        {auditFlow.getAuditTechnicalInfo(record) && (
+                                            <div className="mt-2">
+                                                <small className="text-muted">
+                                                    <strong>Detalles técnicos:</strong> {auditFlow.getAuditTechnicalInfo(record)}
+                                                </small>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Fecha y Hora</label>
                                         <p className="mb-0">
-                                            <Icon name="calendar-days" className="me-2" />
+                                            <Icon name="calendar_days" className="me-2" />
                                             {auditFlow.formatAuditDate(record.timestamp)}
                                         </p>
                                     </div>
@@ -235,7 +243,7 @@ export default function ViewAuditPage() {
                         <div className="card shadow-sm border-0 h-100">
                             <div className="card-header bg-white border-bottom">
                                 <h5 className="mb-0">
-                                    <Icon name="cog-6-tooth" className="me-2" />
+                                    <Icon name="cog_6_tooth" className="me-2" />
                                     Información Técnica
                                 </h5>
                             </div>
