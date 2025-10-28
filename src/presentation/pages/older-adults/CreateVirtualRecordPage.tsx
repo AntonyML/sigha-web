@@ -20,14 +20,29 @@ export default function CreateVirtualFile() {
   const [selectedSubProgramId, setSelectedSubProgramId] = useState<number | null>(null)
   const [selectedVaccineIds, setSelectedVaccineIds] = useState<number[]>([])
   const [selectedClinicalConditionIds, setSelectedClinicalConditionIds] = useState<number[]>([])
+  
+  const [familyData, setFamilyData] = useState<ApiFamily>({
+    pf_identification: '',
+    pf_name: '',
+    pf_f_last_name: '',
+    pf_s_last_name: '',
+    pf_phone_number: '',
+    pf_email: '',
+    pf_kinship: ''
+  })
+  
   const navigate = useNavigate()
 
-  // Obtener los subprogramas del programa seleccionado
   const currentProgram = availablePrograms.find(p => p.id === selectedProgramId)
   const availableSubPrograms = currentProgram?.subPrograms || []
 
-  function onInputChange(field: keyof VirtualFile, value: string | boolean) {
+  function onInputChange(field: keyof VirtualFile, value: string | boolean | number) {
     setFormData((prev) => ({ ...prev, [field]: value } as VirtualFile))
+  }
+
+  // Función para manejar cambios del familiar responsable
+  function onFamilyChange(field: keyof ApiFamily, value: string) {
+    setFamilyData((prev) => ({ ...prev, [field]: value }))
   }
 
   // Función para manejar cambio de programa
@@ -67,9 +82,11 @@ export default function CreateVirtualFile() {
   useEffect(() => {
     if (formData.peso && formData.talla) {
       const peso = parseFloat(formData.peso)
-      const talla = parseFloat(formData.talla) / 100 
-      if (!isNaN(peso) && !isNaN(talla) && talla > 0) {
-        const imc = (peso / (talla * talla)).toFixed(2)
+      const tallaCm = parseFloat(formData.talla)
+      if (!isNaN(peso) && !isNaN(tallaCm) && tallaCm > 0) {
+        // Convertir altura a metros SOLO para cálculo de IMC
+        const tallaMetros = tallaCm / 100
+        const imc = (peso / (tallaMetros * tallaMetros)).toFixed(1) // Solo 1 decimal para BD DECIMAL(4,1)
         setFormData(prev => ({ ...prev, imc }))
       }
     }
@@ -80,17 +97,7 @@ export default function CreateVirtualFile() {
     
     try {
       console.log('📤 Enviando formulario:', formData)
-      
-      // Datos de familia de ejemplo (opcional) - basado en el ejemplo del backend
-      const familyInfo: ApiFamily = {
-        pf_identification: '1-9876-5432',
-        pf_name: 'Familiar',
-        pf_f_last_name: 'Apellido1',
-        pf_s_last_name: 'Apellido2',
-        pf_phone_number: '8234-5678',
-        pf_email: 'familiar@email.com',
-        pf_kinship: 'son'
-      };
+      console.log('👨‍👩‍👧‍👦 Datos del familiar:', familyData)
       
       // Medicamentos de ejemplo - estructura específica del backend
       const medications: ApiMedication[] = [
@@ -104,7 +111,7 @@ export default function CreateVirtualFile() {
       // Crear el archivo virtual con programa, subprograma y vacunas seleccionadas
       const result = await virtualFileService.createVirtualFile(
         formData,
-        familyInfo,
+        familyData, // Usar datos del formulario en lugar de datos quemados
         medications,
         selectedProgramId,
         selectedVaccineIds,
@@ -194,16 +201,37 @@ export default function CreateVirtualFile() {
         </div>
 
         <div className="row g-3 mb-4">
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-3">
             <label className="form-label">VIVIENDA</label>
             <input className="form-control" value={formData.vivienda} onChange={(e) => onInputChange('vivienda', e.target.value)} />
           </div>
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-3">
             <label className="form-label">AÑOS DE ESCOLARIDAD</label>
-            <input type="number" className="form-control" value={formData.anosEscolaridad}
-              onChange={(e) => onInputChange('anosEscolaridad', e.target.value)} />
+            <select className="form-select" value={formData.anosEscolaridad} 
+              onChange={(e) => onInputChange('anosEscolaridad', e.target.value)}>
+              <option value="">Seleccionar</option>
+              <option value="0">Sin escolaridad</option>
+              <option value="1">Primaria incompleta (1 año)</option>
+              <option value="2">Primaria incompleta (2 años)</option>
+              <option value="3">Primaria incompleta (3 años)</option>
+              <option value="4">Primaria incompleta (4 años)</option>
+              <option value="5">Primaria incompleta (5 años)</option>
+              <option value="6">Primaria completa</option>
+              <option value="7">Secundaria incompleta (1 año)</option>
+              <option value="8">Secundaria incompleta (2 años)</option>
+              <option value="9">Secundaria incompleta (3 años)</option>
+              <option value="10">Secundaria incompleta (4 años)</option>
+              <option value="11">Secundaria completa</option>
+              <option value="12">Secundaria completa</option>
+              <option value="13">Universidad incompleta</option>
+              <option value="14">Universidad incompleta</option>
+              <option value="15">Universidad completa</option>
+              <option value="16">Universidad completa</option>
+              <option value="17">Posgrado</option>
+              <option value="18">Posgrado</option>
+            </select>
           </div>
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-3">
             <label className="form-label">TRABAJO PREVIO</label>
             <select className="form-select" value={formData.trabajoPrevio} onChange={(e) => onInputChange('trabajoPrevio', e.target.value)}>
               <option value="">Seleccionar</option>
@@ -211,6 +239,162 @@ export default function CreateVirtualFile() {
               <option value="pension">Pensión</option>
               <option value="otros">Otros</option>
             </select>
+          </div>
+        </div>
+
+        <hr />
+
+        <h3 className="mb-3">FAMILIAR RESPONSABLE</h3>
+        
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-6">
+            <label className="form-label">CÉDULA DEL FAMILIAR</label>
+            <input 
+              className="form-control" 
+              value={familyData.pf_identification}
+              onChange={(e) => onFamilyChange('pf_identification', e.target.value)} 
+              placeholder="1-1234-5678"
+            />
+          </div>
+          <div className="col-12 col-md-6">
+            <label className="form-label">PARENTESCO</label>
+            <select 
+              className="form-select" 
+              value={familyData.pf_kinship}
+              onChange={(e) => onFamilyChange('pf_kinship', e.target.value)}
+            >
+              <option value="">Seleccionar parentesco</option>
+              <option value="son">Hijo</option>
+              <option value="daughter">Hija</option>
+              <option value="grandson">Nieto</option>
+              <option value="granddaughter">Nieta</option>
+              <option value="brother">Hermano</option>
+              <option value="sister">Hermana</option>
+              <option value="nephew">Sobrino</option>
+              <option value="niece">Sobrina</option>
+              <option value="husband">Esposo</option>
+              <option value="wife">Esposa</option>
+              <option value="legal guardian">Tutor Legal</option>
+              <option value="other">Otro</option>
+              <option value="not specified">No especificado</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-4">
+            <label className="form-label">NOMBRE</label>
+            <input 
+              className="form-control" 
+              value={familyData.pf_name}
+              onChange={(e) => onFamilyChange('pf_name', e.target.value)} 
+              placeholder="Nombre del familiar"
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <label className="form-label">PRIMER APELLIDO</label>
+            <input 
+              className="form-control" 
+              value={familyData.pf_f_last_name}
+              onChange={(e) => onFamilyChange('pf_f_last_name', e.target.value)} 
+              placeholder="Primer apellido"
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <label className="form-label">SEGUNDO APELLIDO</label>
+            <input 
+              className="form-control" 
+              value={familyData.pf_s_last_name}
+              onChange={(e) => onFamilyChange('pf_s_last_name', e.target.value)} 
+              placeholder="Segundo apellido"
+            />
+          </div>
+        </div>
+
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-6">
+            <label className="form-label">TELÉFONO</label>
+            <input 
+              className="form-control" 
+              value={familyData.pf_phone_number}
+              onChange={(e) => onFamilyChange('pf_phone_number', e.target.value)} 
+              placeholder="2234-5678 o 8234-5678"
+            />
+          </div>
+          <div className="col-12 col-md-6">
+            <label className="form-label">EMAIL</label>
+            <input 
+              type="email"
+              className="form-control" 
+              value={familyData.pf_email}
+              onChange={(e) => onFamilyChange('pf_email', e.target.value)} 
+              placeholder="familiar@email.com"
+            />
+          </div>
+        </div>
+
+        <hr />
+
+        <h3 className="mb-3">INFORMACIÓN ADICIONAL</h3>
+        
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-3">
+            <label className="form-label">GÉNERO</label>
+            <select className="form-select" value={formData.genero || ''} 
+              onChange={(e) => onInputChange('genero', e.target.value)}>
+              <option value="">Seleccionar</option>
+              <option value="male">Masculino</option>
+              <option value="female">Femenino</option>
+              <option value="not specified">No especificado</option>
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="form-label">TIPO DE SANGRE</label>
+            <select className="form-select" value={formData.tipoSangre || ''} 
+              onChange={(e) => onInputChange('tipoSangre', e.target.value)}>
+              <option value="">Seleccionar</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="UNKNOWN">Desconocido</option>
+            </select>
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="form-label">TELÉFONO</label>
+            <input className="form-control" value={formData.telefono || ''} 
+              onChange={(e) => onInputChange('telefono', e.target.value)} 
+              placeholder="2234-5678 o 8234-5678" />
+          </div>
+          <div className="col-12 col-md-3">
+            <label className="form-label">EMAIL</label>
+            <input type="email" className="form-control" value={formData.email || ''} 
+              onChange={(e) => onInputChange('email', e.target.value)} 
+              placeholder="usuario@email.com" />
+          </div>
+        </div>
+
+        <div className="row g-3 mb-4">
+          <div className="col-12 col-md-4">
+            <label className="form-label">ZONA DE PROCEDENCIA</label>
+            <input className="form-control" value={formData.zonaProcedencia || ''} 
+              onChange={(e) => onInputChange('zonaProcedencia', e.target.value)} 
+              placeholder="Ej: San José, Costa Rica" />
+          </div>
+          <div className="col-12 col-md-4">
+            <label className="form-label">CANTIDAD DE HIJOS</label>
+            <input type="number" min="0" className="form-control" value={formData.cantidadHijos || 0} 
+              onChange={(e) => onInputChange('cantidadHijos', parseInt(e.target.value) || 0)} />
+          </div>
+          <div className="col-12 col-md-4">
+            <label className="form-label">INGRESO ECONÓMICO (₡)</label>
+            <input type="number" min="0" step="0.01" className="form-control" value={formData.ingresoEconomico || 0} 
+              onChange={(e) => onInputChange('ingresoEconomico', parseFloat(e.target.value) || 0)} 
+              placeholder="250000.00" />
           </div>
         </div>
 
@@ -300,11 +484,12 @@ export default function CreateVirtualFile() {
           <h6>RCVG</h6>
           <div className="d-flex flex-wrap gap-3">
             {[
-              ['<10%', 'Menos de 10%'],
-              ['e/10 y 20%', 'Entre 10 y 20%'],
-              ['e/20 y 30%', 'Entre 20 y 30%'],
-              ['e/30 y 40%', 'Entre 30 y 40%'],
-              ['>40%', 'Más de 40%']
+              ['< 10%', 'Menos de 10%'],
+              ['e /10y20%', 'Entre 10 y 20%'],
+              ['e /20y30%', 'Entre 20 y 30%'],
+              ['e /40y40%', 'Entre 30 y 40%'],
+              ['> 40%', 'Más de 40%'],
+              ['UNKNOWN', 'No especificado']
             ].map(([value, label]) => (
               <div className="form-check me-3" key={String(value)}>
                 <input className="form-check-input" type="radio" name="rcvg" id={`rcvg_${String(value)}`}
