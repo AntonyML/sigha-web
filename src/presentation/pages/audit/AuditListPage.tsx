@@ -39,6 +39,9 @@ export default function AuditListPage() {
         const result = await auditFlow.searchAuditReports(params);
         
         console.log('Respuesta del backend:', result);
+        console.log('Estado de éxito:', result.success);
+        console.log('Total de registros:', result.total);
+        console.log('Número de registros devueltos:', result.records?.length);
 
         if (result.success) {
             console.log('Datos del backend (primeros 3):', result.records?.slice(0, 3)); // Ver primeros 3 registros
@@ -51,6 +54,7 @@ export default function AuditListPage() {
             setTotalRecords(result.total || 0);
             setTotalPages(result.totalPages || 1);
         } else {
+            console.error('Error en la respuesta:', result.error);
             setError(result.error || 'Error al cargar auditorías');
             setRecords([]);
         }

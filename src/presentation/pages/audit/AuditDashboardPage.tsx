@@ -106,7 +106,8 @@ export default function AuditDashboardPage() {
 
             // ✅ Procesar registros recientes para "Actividad Reciente"
             if (recentResult.success && recentResult.records) {
-                console.log('Registros recientes:', recentResult.records.slice(0, 3));
+                console.log('Registros recientes - Total:', recentResult.records.length);
+                console.log('Registros recientes - Datos:', recentResult.records);
                 
                 const records = recentResult.records as AuditReport[];
                 
@@ -124,22 +125,29 @@ export default function AuditDashboardPage() {
                         create_at: firstRecord.create_at,
                         ar_observations: firstRecord.ar_observations
                     });
+                } else {
+                    console.log('No hay registros recientes para mostrar');
                 }
-
+                
                 // Ordenar por timestamp descendente (más recientes primero)
                 const sortedRecords = records
                     .filter(record => record.create_at)
                     .sort((a, b) => {
                         try {
-                            return new Date(b.create_at).getTime() - new Date(a.create_at).getTime();
-                        } catch {
+                            const dateA = new Date(a.create_at);
+                            const dateB = new Date(b.create_at);
+                            return dateB.getTime() - dateA.getTime();
+                        } catch (error) {
+                            console.error('Error ordenando fechas:', error, { a: a.create_at, b: b.create_at });
                             return 0;
                         }
                     });
                 
+                console.log('Registros ordenados:', sortedRecords.slice(0, 5));
                 setRecentRecords(sortedRecords.slice(0, 10));
             } else {
-                console.error('Error obteniendo registros recientes:', recentResult.error);
+                console.log('Error obteniendo registros recientes:', recentResult.error);
+                console.log('Resultado completo:', recentResult);
                 setRecentRecords([]);
             }
         } catch (error) {

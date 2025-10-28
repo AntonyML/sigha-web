@@ -277,15 +277,15 @@ export default function EditUserPage() {
                                                 className="form-control form-control-lg"
                                                 value={formData.uIdentification}
                                                 onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: ABC123, user-name_01, id.test"
+                                                placeholder="Ej: 123456789, 208890123"
                                                 required
                                                 disabled={saving}
-                                                pattern="^[A-Za-z0-9._-]+$"
-                                                title="Solo letras, números y los caracteres: - _ ."
+                                                pattern="^[0-9]+$"
+                                                title="Solo números (cédula o identificación)"
                                             />
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Identificador único (letras, números, guiones, puntos y guiones bajos)
+                                                Identificador único (solo números, sin letras ni caracteres especiales)
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">

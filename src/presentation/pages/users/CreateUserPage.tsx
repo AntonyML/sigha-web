@@ -86,6 +86,17 @@ export default function CreateUserPage() {
             return;
         }
 
+        // Validar identificación (solo números según backend)
+        if (!formData.uIdentification.trim()) {
+            feedback.error('Por favor ingresa la identificación del usuario');
+            return;
+        }
+
+        if (!/^[0-9]+$/.test(formData.uIdentification.trim())) {
+            feedback.error('La identificación debe contener solo números');
+            return;
+        }
+
         if (!passwordsMatch) {
             feedback.error('Las contraseñas no coinciden');
             return;
@@ -100,14 +111,21 @@ export default function CreateUserPage() {
 
         // Crear el objeto de datos para enviar
         const createData: CreateUserData = {
-            uIdentification: formData.uIdentification,
-            uName: formData.uName,
-            uFLastName: formData.uFLastName,
-            uSLastName: formData.uSLastName || undefined,
-            uEmail: formData.uEmail,
+            uIdentification: formData.uIdentification.trim(),
+            uName: formData.uName.trim(),
+            uFLastName: formData.uFLastName.trim(),
+            uEmail: formData.uEmail.trim(),
             uPassword: formData.uPassword,
-            roleId: formData.roleId
+            roleId: Number(formData.roleId)
         };
+
+        // Solo incluir uSLastName si tiene valor
+        if (formData.uSLastName && formData.uSLastName.trim()) {
+            createData.uSLastName = formData.uSLastName.trim();
+        }
+
+        console.log('Datos a enviar:', createData);
+        console.log('Token de autenticación presente:', !!localStorage.getItem('authToken'));
 
         const result = await userManagementFlow.createUser(createData);
 
@@ -184,15 +202,15 @@ export default function CreateUserPage() {
                                                 className="form-control form-control-lg"
                                                 value={formData.uIdentification}
                                                 onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: C14887, usuario-tony_01, 14887.ucr"
+                                                placeholder="Ej: 123456789, 208890123"
                                                 required
                                                 disabled={loading}
-                                                pattern="^[A-Za-z0-9._-]+$"
-                                                title="Solo letras, números y los caracteres: - _ ."
+                                                pattern="^[0-9]+$"
+                                                title="Solo números (cédula o identificación)"
                                             />
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Identificador único (letras, números, guiones, puntos y guiones bajos)
+                                                Identificador único (solo números, sin letras ni caracteres especiales)
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">

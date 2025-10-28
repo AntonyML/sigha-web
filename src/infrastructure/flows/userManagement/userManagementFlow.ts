@@ -206,6 +206,8 @@ export const userManagementFlow = {
             };
         } catch (error: any) {
             console.error('Error en userManagementFlow.createUser:', error);
+            console.error('Error response:', error.response?.data);
+            console.error('Error status:', error.response?.status);
             return {
                 success: false,
                 error: getUserManagementErrorMessage(error),

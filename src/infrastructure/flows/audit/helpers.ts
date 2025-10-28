@@ -3,10 +3,21 @@ import type {  AuditReport } from '../../../types/audit';
 
 /**
  * Formatea la fecha de un registro de auditoría
+ * Maneja múltiples formatos de fecha del backend
  */
-export function formatAuditDate(dateString: string): string {
+export function formatAuditDate(dateString: string | undefined | null): string {
+  if (!dateString) return 'Fecha no disponible';
+
   try {
+    // Intentar parsear como fecha ISO
     const date = new Date(dateString);
+
+    // Verificar si la fecha es válida
+    if (isNaN(date.getTime())) {
+      console.warn('Fecha inválida:', dateString);
+      return 'Fecha inválida';
+    }
+
     return date.toLocaleString('es-CR', {
       year: 'numeric',
       month: 'long',
@@ -14,8 +25,9 @@ export function formatAuditDate(dateString: string): string {
       hour: '2-digit',
       minute: '2-digit',
     });
-  } catch {
-    return dateString;
+  } catch (error) {
+    console.error('Error formateando fecha:', dateString, error);
+    return dateString || 'Fecha no disponible';
   }
 }
 

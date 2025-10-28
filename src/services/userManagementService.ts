@@ -42,7 +42,19 @@ export const userManagementService = {
    * Crear nuevo usuario
    */
   createUser: async (data: CreateUserData): Promise<User> => {
-    const response = await apiClient.post<User>('/users', data);
+    // El backend espera camelCase, no snake_case
+    const backendData = {
+      uIdentification: data.uIdentification,
+      uName: data.uName,
+      uFLastName: data.uFLastName,
+      uSLastName: data.uSLastName || undefined,
+      uEmail: data.uEmail,
+      uPassword: data.uPassword,
+      roleId: data.roleId
+    };
+
+    console.log('Enviando datos al backend (camelCase):', backendData);
+    const response = await apiClient.post<User>('/users', backendData);
     return response.data;
   },
 

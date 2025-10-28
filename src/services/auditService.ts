@@ -8,6 +8,34 @@ import type {
 import { config } from '../config/app.config';
 
 /**
+ * Respuesta del backend para registros digitales de auditoría
+ */
+interface DigitalRecordResponse {
+  id: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  action: string;
+  tableName?: string;
+  recordId?: number;
+  description?: string;
+  timestamp: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+/**
+ * Respuesta paginada del backend para registros digitales
+ */
+interface PaginatedDigitalRecordsResponse {
+  records: DigitalRecordResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
  * Cliente HTTP para el módulo de auditoría
  * Sincronizado con backend NestJS audit.service.ts
  */
@@ -41,7 +69,36 @@ apiClient.interceptors.response.use(
   }
 );
 
-// ==================== Helper Functions ====================
+/**
+ * DTO para generar reportes de auditoría
+ */
+interface GenerateAuditReportDto {
+  type: string;
+  startDate: string;
+  endDate: string;
+}
+
+/**
+ * Respuesta de generación de reporte de auditoría
+ */
+interface GenerateAuditReportResponse {
+  success: boolean;
+  message: string;
+  report: {
+    id: number;
+    auditNumber: number;
+    type: string;
+    startDate: string;
+    endDate: string;
+    createdAt: string;
+    generatedBy: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  };
+  dataCount: number;
+}
 
 
 
@@ -91,8 +148,8 @@ export const auditService = {
    * Backend: generateAuditReport()
    * Endpoint: POST /audits/reports
    */
-  generateAuditReport: async (generateDto: any): Promise<any> => {
-    const response = await apiClient.post('/audits/reports', generateDto);
+  generateAuditReport: async (generateDto: GenerateAuditReportDto): Promise<GenerateAuditReportResponse> => {
+    const response = await apiClient.post<GenerateAuditReportResponse>('/audits/reports', generateDto);
     return response.data;
   },
 
@@ -107,8 +164,10 @@ export const auditService = {
 
   /**
    * � Buscar reportes de auditoría con filtros unificados
-   * Backend: getAuditReports() -> Cambiado a /audits/search para paginación
+   * Backend: searchDigitalRecords() -> GET /audits/search
    * Endpoint: GET /audits/search (con paginación y filtros)
+   * 
+   * Mapea la respuesta del backend (DigitalRecordResponse) al formato esperado por el frontend (AuditReport)
    */
   searchAuditReports: async (
     params?: SearchAuditReportsDto
@@ -124,22 +183,57 @@ export const auditService = {
       });
     }
 
-    const response = await apiClient.get<PaginatedAuditReportsResponse>(
-      '/audits/search', // Cambiado de /audits/reports a /audits/search
-      { params: queryParams }
-    );
-    return response.data;
+    console.log('Llamando a /audits/search con parámetros:', queryParams);
+
+    const response = await apiClient.get<PaginatedDigitalRecordsResponse>('/audits/search', { params: queryParams });
+    const backendData = response.data;
+
+    console.log('Respuesta cruda del backend:', backendData);
+
+    // Mapear la respuesta del backend al formato esperado por el frontend
+    const mappedRecords: AuditReport[] = (backendData.records || []).map((record: DigitalRecordResponse) => ({
+      id: record.id,
+      ar_audit_number: record.id.toString(), // Usar ID como número de auditoría
+      ar_type: 'general_actions', // Tipo por defecto para registros individuales
+      ar_entity_name: record.tableName || 'unknown', // Mapear tableName a ar_entity_name
+      ar_entity_id: record.recordId,
+      ar_action: record.action, // Mapear action a ar_action
+      ar_old_value: undefined, // No disponible en digital records
+      ar_new_value: undefined, // No disponible en digital records
+      ar_observations: record.description, // Mapear description a ar_observations
+      ar_start_date: undefined,
+      ar_end_date: undefined,
+      ar_duration_seconds: undefined,
+      ar_ip_address: record.ipAddress,
+      ar_user_agent: record.userAgent,
+      create_at: record.timestamp, // Mapear timestamp a create_at
+      id_generator: record.userId,
+      user_name: record.userName, // Mapear userName a user_name
+      user_email: record.userEmail, // Mapear userEmail a user_email
+    }));
+
+    console.log('Registros mapeados (primeros 3):', mappedRecords.slice(0, 3));
+
+    return {
+      records: mappedRecords,
+      total: backendData.total || 0,
+      page: backendData.page || 1,
+      limit: backendData.limit || 25,
+      totalPages: backendData.totalPages || 1,
+    };
   },
 
   /**
-   *  Obtener estadísticas de auditoría
-   * Backend: getAuditStats()
+   * 📊 Obtener estadísticas de auditoría
+   * Backend: getAuditStatistics()
    * Endpoint: GET /audits/stats
    */
   getAuditStatistics: async (startDate?: string, endDate?: string): Promise<AuditStatistics> => {
+    console.log('Llamando a getAuditStatistics con:', { startDate, endDate });
     const response = await apiClient.get<AuditStatistics>('/audits/stats', {
       params: { startDate, endDate },
     });
+    console.log('Respuesta de estadísticas:', response.data);
     return response.data;
   },
 
