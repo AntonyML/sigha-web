@@ -30,30 +30,30 @@ export default function AuditMenuPage() {
             route: '/audits/list',
             color: 'success'
         },
-        {
-            id: '3',
-            title: 'Historial de Adultos Mayores',
-            description: 'Cambios en datos de pacientes con vista comparativa y notificaciones de modificaciones recientes',
-            icon: 'person',
-            route: '/audits/older-adult-updates',
-            color: 'info'
-        },
-        {
-            id: '4',
-            title: 'Reportes de Auditoría',
-            description: 'Generación y consulta de reportes formales con datos tabulados y opciones de exportación',
-            icon: 'clipboard_document',
-            route: '/audits/reports',
-            color: 'warning'
-        },
-        {
-            id: '5',
-            title: 'Historial de Registros Digitales',
-            description: 'Cambios en documentos específicos con vista timeline y diffs detallados por registro',
-            icon: 'document',
-            route: '/audits/digital-records',
-            color: 'secondary'
-        }
+        // {
+        //     id: '3',
+        //     title: 'Historial de Adultos Mayores',
+        //     description: 'Cambios en datos de pacientes con vista comparativa y notificaciones de modificaciones recientes',
+        //     icon: 'person',
+        //     route: '/audits/older-adult-updates',
+        //     color: 'info'
+        // },
+        // {
+        //     id: '4',
+        //     title: 'Reportes de Auditoría',
+        //     description: 'Generación y consulta de reportes formales con datos tabulados y opciones de exportación',
+        //     icon: 'clipboard_document',
+        //     route: '/audits/reports',
+        //     color: 'warning'
+        // },
+        // {
+        //     id: '5',
+        //     title: 'Historial de Registros Digitales',
+        //     description: 'Cambios en documentos específicos con vista timeline y diffs detallados por registro',
+        //     icon: 'document',
+        //     route: '/audits/digital-records',
+        //     color: 'secondary'
+        // }
     ];
 
     const handleOptionClick = (route: string) => {

@@ -2,8 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
+import { permissionService } from '../../../services/permissionService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UpdateRoleData } from '../../../types/user';
+import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
+import { PermissionModule } from '../../../types/permissions';
+import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
+import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 
 interface RoleFormData {
     rName: string;
@@ -36,6 +41,9 @@ export default function EditRolePage() {
     const [error, setError] = useState('');
     const [hasChanges, setHasChanges] = useState(false);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [permissions, setPermissions] = useState<Permission[]>([]);
+    const [originalPermissions, setOriginalPermissions] = useState<Permission[]>([]);
+    const [permissionsLoading, setPermissionsLoading] = useState(false);
 
     // Verificar permisos y cargar datos del rol al montar el componente
     useEffect(() => {
@@ -72,6 +80,13 @@ export default function EditRolePage() {
                     };
                     setFormData(roleData);
                     setOriginalData(roleData);
+
+                    // Cargar permisos del rol
+                    setPermissionsLoading(true);
+                    const rolePermissions = permissionService.getRolePermissionsByName(result.role.rName);
+                    setPermissions(rolePermissions);
+                    setOriginalPermissions(JSON.parse(JSON.stringify(rolePermissions))); // Deep copy
+                    setPermissionsLoading(false);
                 } else {
                     setError(result.error || 'Error al cargar rol');
                 }
@@ -87,13 +102,22 @@ export default function EditRolePage() {
     }, [id]);
 
     useEffect(() => {
-        // Verificar si hay cambios
-        const changes = JSON.stringify(formData) !== JSON.stringify(originalData);
-        setHasChanges(changes);
-    }, [formData, originalData]);
+        // Verificar si hay cambios en formData o permisos
+        const formChanges = JSON.stringify(formData) !== JSON.stringify(originalData);
+        const permissionChanges = JSON.stringify(permissions) !== JSON.stringify(originalPermissions);
+        setHasChanges(formChanges || permissionChanges);
+    }, [formData, originalData, permissions, originalPermissions]);
 
     function onInputChange(field: keyof RoleFormData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    }
+
+    function handlePermissionChange(module: PermissionModuleType, action: PermissionActionType, enabled: boolean) {
+        setPermissions(prev => prev.map(permission =>
+            permission.module === module && permission.action === action
+                ? { ...permission, enabled }
+                : permission
+        ));
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -147,6 +171,17 @@ export default function EditRolePage() {
             const result = await roleFlow.updateRole(Number(id), updateData);
 
             if (result.success && result.role) {
+                // Guardar permisos si han cambiado
+                if (JSON.stringify(permissions) !== JSON.stringify(originalPermissions)) {
+                    try {
+                        await permissionService.updateRolePermissions(result.role.id, permissions);
+                        setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
+                    } catch (permError) {
+                        console.error('Error guardando permisos:', permError);
+                        feedback.error('Rol actualizado pero error al guardar permisos');
+                    }
+                }
+
                 feedback.success('Rol actualizado exitosamente');
                 feedback.showNotification({
                     title: 'Rol actualizado',
@@ -382,6 +417,73 @@ export default function EditRolePage() {
                                             </small>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-shield-check me-2 text-primary"></i>
+                                        Permisos del Rol
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    {permissionsLoading ? (
+                                        <LoadingSpinner message="Cargando permisos..." size="sm" />
+                                    ) : permissions.length === 0 ? (
+                                        <AlertMessage
+                                            type="warning"
+                                            message="No se encontraron permisos para este rol"
+                                        />
+                                    ) : (
+                                        <div className="row g-4">
+                                            {(Object.keys(PermissionModule) as Array<keyof typeof PermissionModule>).map(moduleKey => {
+                                                const module = PermissionModule[moduleKey] as PermissionModuleType;
+                                                const modulePermissions = permissions.filter(p => p.module === module);
+                                                if (modulePermissions.length === 0) return null;
+
+                                                return (
+                                                    <div key={module} className="col-12 col-md-6">
+                                                        <div className="border rounded p-3">
+                                                            <h6 className="fw-semibold mb-3 text-capitalize">
+                                                                <i className="bi bi-folder me-2 text-primary"></i>
+                                                                {module.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                                                            </h6>
+                                                            <div className="d-flex flex-column gap-2">
+                                                                {modulePermissions.map(permission => {
+                                                                    const originalPermission = originalPermissions.find(
+                                                                        op => op.module === permission.module && op.action === permission.action
+                                                                    );
+                                                                    const hasChanged = originalPermission ? originalPermission.enabled !== permission.enabled : false;
+
+                                                                    return (
+                                                                        <div key={`${permission.module}:${permission.action}`} className="form-check">
+                                                                            <input
+                                                                                className="form-check-input"
+                                                                                type="checkbox"
+                                                                                id={`perm-${permission.module}-${permission.action}`}
+                                                                                checked={permission.enabled}
+                                                                                onChange={(e) => handlePermissionChange(permission.module, permission.action, e.target.checked)}
+                                                                                disabled={loading}
+                                                                            />
+                                                                            <label className={`form-check-label text-capitalize ${hasChanged ? 'text-success fw-semibold' : ''}`} htmlFor={`perm-${permission.module}-${permission.action}`}>
+                                                                                {permission.action.replace('_', ' ')}
+                                                                                {hasChanged && <i className="bi bi-pencil-square ms-1 small"></i>}
+                                                                            </label>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    <small className="text-muted d-block mt-3">
+                                        <i className="bi bi-info-circle me-1"></i>
+                                        Configura los permisos que tendrá este rol en el sistema
+                                    </small>
                                 </div>
                             </div>
 

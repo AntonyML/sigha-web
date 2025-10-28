@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
+import { permissionService } from '../../../services/permissionService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole, CreateUserData } from '../../../types/user';
+import type { Permission, PermissionModuleType } from '../../../types/permissions';
+import { PermissionModule } from '../../../types/permissions';
+import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
+import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
+import PasswordInput from '../../components/atoms/PasswordInput/PasswordInput';
 
 interface UserFormData {
     uIdentification: string;
@@ -33,6 +39,10 @@ export default function CreateUserPage() {
     const [loading, setLoading] = useState(false);
     const [roles, setRoles] = useState<UserRole[]>([]);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+    const [permissions, setPermissions] = useState<Permission[]>([]);
+    const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({});
+    const [permissionsLoading, setPermissionsLoading] = useState(false);
+    const [permissionsError, setPermissionsError] = useState<string>('');
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
 
@@ -70,11 +80,74 @@ export default function CreateUserPage() {
         if (field === 'uPassword') {
             setPasswordsMatch((value as string) === confirmPassword);
         }
+
+        // Si cambiamos el rol, cargar los permisos de ese rol
+        if (field === 'roleId') {
+            loadRolePermissions(Number(value));
+        }
     }
 
     function handleConfirmPasswordChange(value: string) {
         setConfirmPassword(value);
         setPasswordsMatch(formData.uPassword === value);
+    }
+
+    async function loadRolePermissions(roleId: number) {
+        if (roleId === 0) {
+            setPermissions([]);
+            setSelectedPermissions({});
+            setPermissionsError('');
+            return;
+        }
+
+        setPermissionsLoading(true);
+        setPermissionsError('');
+
+        // Crear un timeout para evitar loading infinito
+        const timeoutId = setTimeout(() => {
+            console.warn('Timeout cargando permisos del rol:', roleId);
+            setPermissions([]);
+            setSelectedPermissions({});
+            setPermissionsLoading(false);
+            setPermissionsError('Tiempo de espera agotado al cargar permisos del rol');
+        }, 5000); // 5 segundos timeout
+
+        try {
+            // Encontrar el nombre del rol seleccionado
+            const selectedRole = roles.find(role => role.id === roleId);
+            if (!selectedRole) {
+                throw new Error('Rol no encontrado');
+            }
+
+            const rolePermissions = permissionService.getRolePermissionsByName(selectedRole.rName);
+            clearTimeout(timeoutId); // Limpiar timeout si se completa exitosamente
+
+            setPermissions(rolePermissions);
+            setPermissionsLoading(false);
+
+            // Inicializar selectedPermissions con los valores actuales
+            const initialSelected: Record<string, boolean> = {};
+            rolePermissions.forEach(permission => {
+                const key = `${permission.module}:${permission.action}`;
+                initialSelected[key] = permission.enabled;
+            });
+            setSelectedPermissions(initialSelected);
+        } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('Error cargando permisos del rol:', error);
+            setPermissions([]);
+            setSelectedPermissions({});
+            setPermissionsLoading(false);
+            setPermissionsError('Error al cargar los permisos del rol seleccionado');
+        }
+    }
+
+    function handlePermissionChange(module: string, action: string, enabled: boolean) {
+        const key = `${module}:${action}`;
+        setSelectedPermissions(prev => ({
+            ...prev,
+            [key]: enabled
+        }));
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -323,10 +396,86 @@ export default function CreateUserPage() {
                                             </select>
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Los permisos se definen según el rol asignado
+                                                Selecciona un rol para configurar sus permisos específicos
                                             </small>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="card shadow-sm border-0 mb-4">
+                                <div className="card-header bg-white border-bottom py-3">
+                                    <h5 className="card-title mb-0 fw-semibold">
+                                        <i className="bi bi-shield-check me-2 text-primary"></i>
+                                        Permisos del Rol
+                                    </h5>
+                                </div>
+                                <div className="card-body p-4">
+                                    {formData.roleId === 0 ? (
+                                        <div className="text-center py-4">
+                                            <i className="bi bi-info-circle text-muted fs-1 mb-3 d-block"></i>
+                                            <p className="text-muted mb-0">Selecciona un rol para ver y configurar sus permisos</p>
+                                        </div>
+                                    ) : permissionsError ? (
+                                        <AlertMessage
+                                            type="danger"
+                                            message={permissionsError}
+                                            dismissible={true}
+                                            onDismiss={() => setPermissionsError('')}
+                                        />
+                                    ) : permissionsLoading ? (
+                                        <LoadingSpinner message="Cargando permisos del rol..." size="sm" />
+                                    ) : permissions.length === 0 ? (
+                                        <AlertMessage
+                                            type="warning"
+                                            message="No se encontraron permisos para este rol"
+                                        />
+                                    ) : (
+                                        <div className="row g-4">
+                                            {(Object.keys(PermissionModule) as Array<keyof typeof PermissionModule>).map(moduleKey => {
+                                                const module = PermissionModule[moduleKey] as PermissionModuleType;
+                                                const modulePermissions = permissions.filter(p => p.module === module);
+                                                if (modulePermissions.length === 0) return null;
+
+                                                return (
+                                                    <div key={module} className="col-12 col-md-6">
+                                                        <div className="border rounded p-3">
+                                                            <h6 className="fw-semibold mb-3 text-capitalize">
+                                                                <i className="bi bi-folder me-2 text-primary"></i>
+                                                                {module.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                                                            </h6>
+                                                            <div className="d-flex flex-column gap-2">
+                                                                {modulePermissions.map(permission => {
+                                                                    const key = `${permission.module}:${permission.action}`;
+                                                                    const isChecked = selectedPermissions[key] ?? permission.enabled;
+
+                                                                    return (
+                                                                        <div key={key} className="form-check">
+                                                                            <input
+                                                                                className="form-check-input"
+                                                                                type="checkbox"
+                                                                                id={key}
+                                                                                checked={isChecked}
+                                                                                onChange={(e) => handlePermissionChange(permission.module, permission.action, e.target.checked)}
+                                                                                disabled={loading}
+                                                                            />
+                                                                            <label className="form-check-label text-capitalize" htmlFor={key}>
+                                                                                {permission.action}
+                                                                            </label>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    <small className="text-muted d-block mt-3">
+                                        <i className="bi bi-info-circle me-1"></i>
+                                        Los permisos marcados estarán activos para usuarios con este rol
+                                    </small>
                                 </div>
                             </div>
 
@@ -340,19 +489,16 @@ export default function CreateUserPage() {
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="uPassword" className="form-label fw-semibold">
-                                                Contraseña <span className="text-danger">*</span>
-                                            </label>
-                                            <input
+                                            <PasswordInput
+                                                label="Contraseña"
                                                 id="uPassword"
-                                                type="password"
-                                                className="form-control form-control-lg"
                                                 value={formData.uPassword}
                                                 onChange={(e) => onInputChange('uPassword', e.target.value)}
                                                 placeholder="Mínimo 8 caracteres"
                                                 required
                                                 disabled={loading}
                                                 minLength={8}
+                                                className="form-control-lg"
                                             />
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
@@ -360,18 +506,15 @@ export default function CreateUserPage() {
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="confirmPassword" className="form-label fw-semibold">
-                                                Confirmar Contraseña <span className="text-danger">*</span>
-                                            </label>
-                                            <input
+                                            <PasswordInput
+                                                label="Confirmar Contraseña"
                                                 id="confirmPassword"
-                                                type="password"
-                                                className={`form-control form-control-lg ${!passwordsMatch && confirmPassword ? 'is-invalid' : passwordsMatch && confirmPassword ? 'is-valid' : ''}`}
                                                 value={confirmPassword}
                                                 onChange={(e) => handleConfirmPasswordChange(e.target.value)}
                                                 placeholder="Confirmar contraseña"
                                                 required
                                                 disabled={loading}
+                                                className={`form-control-lg ${!passwordsMatch && confirmPassword ? 'is-invalid' : passwordsMatch && confirmPassword ? 'is-valid' : ''}`}
                                             />
                                             {!passwordsMatch && confirmPassword && (
                                                 <div className="invalid-feedback d-block mt-2">

@@ -5,3 +5,4 @@ export { default as Icon } from './Icon/Icon';
 export { default as Input } from './Input/Input';
 export { Label } from './Label/Label';
 export { LoadingSpinner } from './LoadingSpinner/LoadingSpinner';
+export { default as PasswordInput } from './PasswordInput/PasswordInput';

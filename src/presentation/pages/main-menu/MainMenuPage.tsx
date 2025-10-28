@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../../components/atoms';
+import { useTwoFactorStatus } from '../../../infrastructure/flows/twoFactor';
+import { PermissionUtils } from '../../../utils/permissionUtils';
 import './style.css';
 
 interface MenuOption {
@@ -12,6 +15,26 @@ interface MenuOption {
 
 export default function MainMenuPage() {
     const navigate = useNavigate();
+    const { isEnabled } = useTwoFactorStatus();
+    const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
+
+    // Verificar permisos del usuario
+    useEffect(() => {
+        const checkPermissions = async () => {
+            try {
+                const [canManageUsers, isSuperAdmin] = await Promise.all([
+                    PermissionUtils.canViewAllUsers(),
+                    PermissionUtils.isSuperAdmin()
+                ]);
+                setHasRequiredPermissions(canManageUsers || isSuperAdmin);
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                setHasRequiredPermissions(false);
+            }
+        };
+
+        checkPermissions();
+    }, []);
 
     const menuOptions: MenuOption[] = [
         {
@@ -62,6 +85,13 @@ export default function MainMenuPage() {
             description: 'Revisar registros de auditoría y actividad del sistema',
             icon: 'shield',
             route: '/audits'
+        },
+        {
+            id: '8',
+            title: 'Mi Perfil',
+            description: 'Ver y editar tu información personal y configuración de cuenta',
+            icon: 'person',
+            route: '/profile'
         }
     ];
 
@@ -69,12 +99,37 @@ export default function MainMenuPage() {
         navigate(route);
     };
 
+    // Filtrar opciones del menú basado en estado del 2FA y permisos
+    const getFilteredMenuOptions = () => {
+        // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
+        if (!isEnabled) {
+            return menuOptions.filter(option =>
+                option.id === '5' || // Configuración 2FA
+                option.id === '8'    // Mi Perfil
+            );
+        }
+
+        // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
+        if (hasRequiredPermissions === false) {
+            return menuOptions.filter(option =>
+                option.id === '1' || // Fichas Virtuales
+                option.id === '5' || // Configuración 2FA
+                option.id === '8'    // Mi Perfil
+            );
+        }
+
+        // Usuarios con permisos completos ven todas las opciones
+        return menuOptions;
+    };
+
+    const filteredMenuOptions = getFilteredMenuOptions();
+
     return (
         <div className="container py-4">
            
             {/* Grid de opciones del menú */}
             <div className="row g-4">
-                {menuOptions.map((option) => (
+                {filteredMenuOptions.map((option) => (
                     <div key={option.id} className="col-12 col-md-6 col-lg-4">
                         <div
                             className="card h-100 shadow-sm border-0 hover-card"
@@ -115,7 +170,7 @@ export default function MainMenuPage() {
             </div>
 
             {/* Espacio para futuras opciones */}
-            {menuOptions.length === 0 && (
+            {filteredMenuOptions.length === 0 && (
                 <div className="text-center py-5">
                     <div className="text-muted">
                         No hay opciones de menú disponibles

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { twoFactorFlow } from '../../../infrastructure/flows/twoFactor';
+import { TwoFactorContext } from '../../../infrastructure/flows/twoFactor/TwoFactorContext';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { PageHeader } from '../../components/molecules/PageHeader/PageHeader';
@@ -19,6 +20,11 @@ type SetupStep = 'status' | 'setup' | 'verify' | 'success';
 
 export default function TwoFactorPage() {
     const navigate = useNavigate();
+    const context = useContext(TwoFactorContext);
+    if (!context) {
+        throw new Error('TwoFactorProvider not found');
+    }
+    const { refresh } = context;
 
     // Estados principales
     const [currentStep, setCurrentStep] = useState<SetupStep>('status');
@@ -111,6 +117,8 @@ export default function TwoFactorPage() {
             setTimeout(() => {
                 loadStatus();
                 setVerificationCode('');
+                // Refrescar el contexto global
+                refresh();
             }, 2000);
         } else {
             setError(result.error || 'Código inválido. Intenta nuevamente.');
@@ -137,6 +145,8 @@ export default function TwoFactorPage() {
             setSuccessMessage(result.message || '2FA deshabilitado correctamente');
             setDisableCode('');
             await loadStatus();
+            // Refrescar el contexto global
+            await refresh();
         } else {
             setError(result.error || 'Error al deshabilitar 2FA');
         }

@@ -13,6 +13,8 @@ import {
   List,
   Tags,
 } from 'lucide-react';
+import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
+import { PermissionUtils } from '../../../../utils/permissionUtils';
 
 interface MenuItem {
   id: string;
@@ -112,15 +114,35 @@ const menu: MenuItem[] = [
 export default function Sidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [compact, setCompact] = useState(false);
+  const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isEnabled } = useTwoFactorStatus();
 
   const toggleGroup = (id: string) => {
     setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
   };
+
+  // Verificar permisos del usuario
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const [canManageUsers, isSuperAdmin] = await Promise.all([
+          PermissionUtils.canViewAllUsers(),
+          PermissionUtils.isSuperAdmin()
+        ]);
+        setHasRequiredPermissions(canManageUsers || isSuperAdmin);
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+        setHasRequiredPermissions(false);
+      }
+    };
+
+    checkPermissions();
+  }, []);
 
   // Ajuste automático: si el contenido del nav excede la altura disponible,
   // activamos el modo compact (reduce paddings y tamaño de texto) para evitar scroll.
@@ -146,6 +168,31 @@ export default function Sidebar() {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
+  // Filtrar menú basado en estado del 2FA y permisos
+  const getFilteredMenu = () => {
+    // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
+    if (!isEnabled) {
+      return menu.filter(item =>
+        item.id === 'main' || // Inicio
+        item.id === 'twoFactor' // 2FA
+      );
+    }
+
+    // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
+    if (hasRequiredPermissions === false) {
+      return menu.filter(item =>
+        item.id === 'main' ||
+        item.id === 'dashboard' ||
+        item.id === 'twoFactor'
+      );
+    }
+
+    // Usuarios con permisos completos ven todo el menú
+    return menu;
+  };
+
+  const filteredMenu = getFilteredMenu();
+
   return (
     <aside className="hidden md:flex md:flex-col md:w-56 lg:w-64 bg-white border-r border-gray-100 h-screen sticky top-0 z-40">
       <div ref={headerRef} className="flex items-center gap-3 px-3 py-3 border-b border-gray-100">
@@ -160,7 +207,7 @@ export default function Sidebar() {
 
       <nav ref={navRef} className="flex-1 px-2 py-3">
         <ul className="space-y-1">
-          {menu.map((m) => (
+          {filteredMenu.map((m) => (
             <li key={m.id}>
               {m.children && m.children.length > 0 ? (
                 <div className="group">

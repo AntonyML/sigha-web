@@ -15,6 +15,8 @@ export default function PasswordRecoveryResetPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -105,17 +107,28 @@ export default function PasswordRecoveryResetPage() {
           <Label htmlFor="new-password" className="text-base font-semibold">
             Nueva Contraseña
           </Label>
-          <Input
-            id="new-password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="••••••••"
-            disabled={loading}
-            required
-            aria-required="true"
-            className="text-base h-12"
-          />
+          <div className="relative">
+            <Input
+              id="new-password"
+              type={showNewPassword ? 'text' : 'password'}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={loading}
+              required
+              aria-required="true"
+              className="text-base h-12 pr-10"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0 border-0 bg-transparent text-muted-foreground hover:text-foreground"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              aria-label={showNewPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              tabIndex={-1}
+            >
+              <i className={`bi ${showNewPassword ? 'bi-eye-slash' : 'bi-eye'}`} style={{ fontSize: '1.1rem' }}></i>
+            </button>
+          </div>
           <p className="text-xs text-muted-foreground">
             Mínimo 8 caracteres, debe incluir mayúsculas, minúsculas y números
           </p>
@@ -125,17 +138,28 @@ export default function PasswordRecoveryResetPage() {
           <Label htmlFor="confirm-password" className="text-base font-semibold">
             Confirmar Contraseña
           </Label>
-          <Input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-            disabled={loading}
-            required
-            aria-required="true"
-            className="text-base h-12"
-          />
+          <div className="relative">
+            <Input
+              id="confirm-password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              disabled={loading}
+              required
+              aria-required="true"
+              className="text-base h-12 pr-10"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0 border-0 bg-transparent text-muted-foreground hover:text-foreground"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              tabIndex={-1}
+            >
+              <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`} style={{ fontSize: '1.1rem' }}></i>
+            </button>
+          </div>
         </div>
 
         <Button

@@ -36,6 +36,12 @@ class PermissionStorage {
   public async loadPermissions(): Promise<void> {
     if (this.loaded) return;
 
+    // Primero intentar cargar desde localStorage
+    if (this.loadFromLocalStorage()) {
+      this.loaded = true;
+      return;
+    }
+
     try {
       // En un entorno real, esto vendría de una API
       // Por ahora, importamos el JSON directamente
@@ -91,6 +97,24 @@ class PermissionStorage {
   }
 
   /**
+   * Obtiene los permisos de un rol específico por nombre
+   */
+  public getRolePermissionsByName(roleName: string): RolePermissions | null {
+    if (!this.permissionsConfig) return null;
+    return this.permissionsConfig.roles.find(role =>
+      role.roleName.toLowerCase() === roleName.toLowerCase()
+    ) || null;
+  }
+
+  /**
+   * Obtiene todos los permisos de un rol por nombre
+   */
+  public getAllPermissionsForRoleByName(roleName: string): Permission[] {
+    const rolePermissions = this.getRolePermissionsByName(roleName);
+    return rolePermissions ? rolePermissions.permissions : [];
+  }
+
+  /**
    * Obtiene todos los permisos de un rol
    */
   public getAllPermissionsForRole(roleId: number): Permission[] {
@@ -121,18 +145,43 @@ class PermissionStorage {
   }
 
   /**
-   * Verifica si la configuración está cargada
+   * Actualiza los permisos de un rol
    */
-  public isLoaded(): boolean {
-    return this.loaded;
+  public async updateRolePermissions(roleId: number, permissions: Permission[]): Promise<void> {
+    if (!this.permissionsConfig) {
+      throw new Error('Configuración de permisos no cargada');
+    }
+
+    const roleIndex = this.permissionsConfig.roles.findIndex(role => role.roleId === roleId);
+    if (roleIndex === -1) {
+      throw new Error(`Rol con ID ${roleId} no encontrado`);
+    }
+
+    this.permissionsConfig.roles[roleIndex].permissions = permissions;
+
+    // En un entorno real, aquí se guardaría en el backend
+    // Por ahora, simulamos guardando en localStorage para persistencia temporal
+    try {
+      localStorage.setItem('permissionsConfig', JSON.stringify(this.permissionsConfig));
+    } catch (error) {
+      console.warn('No se pudo guardar en localStorage:', error);
+    }
   }
 
   /**
-   * Fuerza la recarga de permisos
+   * Carga permisos desde localStorage si existen
    */
-  public async reloadPermissions(): Promise<void> {
-    this.loaded = false;
-    await this.loadPermissions();
+  private loadFromLocalStorage(): boolean {
+    try {
+      const saved = localStorage.getItem('permissionsConfig');
+      if (saved) {
+        this.permissionsConfig = JSON.parse(saved);
+        return true;
+      }
+    } catch (error) {
+      console.warn('Error cargando permisos desde localStorage:', error);
+    }
+    return false;
   }
 }
 

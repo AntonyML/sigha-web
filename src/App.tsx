@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 
 import { AppLayout } from './presentation/components/organisms'
-import { FeedbackProvider } from './presentation/context/FeedbackContext'
 import { NotificationProvider } from './presentation/components/organisms/NotificationCenter'
+import { TwoFactorProvider } from './infrastructure/flows/twoFactor'
 
 import LoginForm from './presentation/pages/login/LoginPage'
 import PasswordRecoveryRequestPage from './presentation/pages/login/PasswordRecoveryRequestPage'
@@ -71,73 +71,73 @@ import AuditDashboardPage from './presentation/pages/audit/AuditDashboardPage'
 
 export default function App() {
   return (
-    <FeedbackProvider>
-      <NotificationProvider>
+    <NotificationProvider>
+      <TwoFactorProvider>
         <Routes>
-          {/* Authentication Routes - No Layout */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/auth/forgot-password" element={<PasswordRecoveryRequestPage />} />
-          <Route path="/auth/recovery/verify" element={<PasswordRecoveryVerifyPage />} />
-          <Route path="/auth/recovery/reset" element={<PasswordRecoveryResetPage />} />
-          <Route path="/auth/verify-2fa" element={<TwoFactorVerificationPage />} />
-          <Route path="/auth/create-user" element={<CreateUserPage />} />
+        {/* Authentication Routes - No Layout */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/auth/forgot-password" element={<PasswordRecoveryRequestPage />} />
+        <Route path="/auth/recovery/verify" element={<PasswordRecoveryVerifyPage />} />
+        <Route path="/auth/recovery/reset" element={<PasswordRecoveryResetPage />} />
+        <Route path="/auth/verify-2fa" element={<TwoFactorVerificationPage />} />
+        <Route path="/auth/create-user" element={<CreateUserPage />} />
 
-          {/* Main Application Routes - With Layout */}
-          <Route path="/*" element={
-            <AppLayout>
-              <Routes>
-                <Route path="main-menu" element={<MainMenuPage />} />
+        {/* Main Application Routes - With Layout */}
+        <Route path="/*" element={
+          <AppLayout>
+            <Routes>
+              <Route path="main-menu" element={<MainMenuPage />} />
 
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="virtualFiles" element={<ListVirtualFile />} />
-                <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
-                <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />
-                <Route path="virtualFiles/view/:id" element={<ViewAdultsPage />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="virtualFiles" element={<ListVirtualFile />} />
+              <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
+              <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />
+              <Route path="virtualFiles/view/:id" element={<ViewAdultsPage />} />
 
-                <Route path="users" element={<ListUser />} />
-                <Route path="users/create" element={<CreateUser />} />
-                <Route path="users/view/:id" element={<ViewUserPage />} />
-                <Route path="users/edit/:id" element={<EditUserPage />} />
-                <Route path="users/deleted" element={<DeletedUsersPage />} />
+              <Route path="users" element={<ListUser />} />
+              <Route path="users/create" element={<CreateUser />} />
+              <Route path="users/view/:id" element={<ViewUserPage />} />
+              <Route path="users/edit/:id" element={<EditUserPage />} />
+              <Route path="users/deleted" element={<DeletedUsersPage />} />
 
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="profile/edit" element={<EditProfilePage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="profile/edit" element={<EditProfilePage />} />
 
-                <Route path="roles" element={<RoleListPage />} />
-                <Route path="roles/create" element={<CreateRolePage />} />
-                <Route path="roles/view/:id" element={<ViewRolePage />} />
-                <Route path="roles/edit/:id" element={<EditRolePage />} />
+              <Route path="roles" element={<RoleListPage />} />
+              <Route path="roles/create" element={<CreateRolePage />} />
+              <Route path="roles/view/:id" element={<ViewRolePage />} />
+              <Route path="roles/edit/:id" element={<EditRolePage />} />
 
-                <Route path="permissions" element={<PermissionListPage />} />
-                <Route path="permissions/create" element={<CreatePermissionPage />} />
-                <Route path="permissions/view/:id" element={<ViewPermissionPage />} />
-                <Route path="permissions/edit/:id" element={<EditPermissionPage />} />
+              <Route path="permissions" element={<PermissionListPage />} />
+              <Route path="permissions/create" element={<CreatePermissionPage />} />
+              <Route path="permissions/view/:id" element={<ViewPermissionPage />} />
+              <Route path="permissions/edit/:id" element={<EditPermissionPage />} />
 
-                <Route path="programs" element={<ProgramListPage />} />
-                <Route path="programs/create" element={<CreateProgramPage />} />
+              <Route path="programs" element={<ProgramListPage />} />
+              <Route path="programs/create" element={<CreateProgramPage />} />
 
-                <Route path="vaccines" element={<VaccineListPage />} />
-                <Route path="vaccines/create" element={<CreateVaccinePage />} />
+              <Route path="vaccines" element={<VaccineListPage />} />
+              <Route path="vaccines/create" element={<CreateVaccinePage />} />
 
-                <Route path="sub-programs" element={<SubProgramListPage />} />
-                <Route path="sub-programs/create" element={<CreateSubProgramPage />} />
+              <Route path="sub-programs" element={<SubProgramListPage />} />
+              <Route path="sub-programs/create" element={<CreateSubProgramPage />} />
 
-                <Route path="two-factor" element={<TwoFactorPage />} />
+              <Route path="two-factor" element={<TwoFactorPage />} />
 
-                <Route path="entrance-exit" element={<EntranceExitDashboard />} />
-                <Route path="entrance-exit/register" element={<RegisterEntranceExit />} />
-                <Route path="entrance-exit/history" element={<EntranceExitHistory />} />
+              <Route path="entrance-exit" element={<EntranceExitDashboard />} />
+              <Route path="entrance-exit/register" element={<RegisterEntranceExit />} />
+              <Route path="entrance-exit/history" element={<EntranceExitHistory />} />
 
-                <Route path="audits" element={<AuditMenuPage />} />
-                <Route path="audits/list" element={<AuditListPage />} />
-                <Route path="audits/view/:id" element={<ViewAuditPage />} />
-                <Route path="audits/dashboard" element={<AuditDashboardPage />} />
-              </Routes>
-            </AppLayout>
-          } />
-        </Routes>
-      </NotificationProvider>
-    </FeedbackProvider>
+              <Route path="audits" element={<AuditMenuPage />} />
+              <Route path="audits/list" element={<AuditListPage />} />
+              <Route path="audits/view/:id" element={<ViewAuditPage />} />
+              <Route path="audits/dashboard" element={<AuditDashboardPage />} />
+            </Routes>
+          </AppLayout>
+        } />
+      </Routes>
+      </TwoFactorProvider>
+    </NotificationProvider>
   )
 }

@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../Navbar/Navbar';
 import Breadcrumbs from '../Breadcrumbs/Breadcrumbs';
 import Sidebar from '../Sidebar/Sidebar';
-import { ToastContainer } from '../ToastContainer';
 import { NotificationCenter } from '../NotificationCenter';
 
 interface AppLayoutProps {
@@ -42,7 +41,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Global UI Components */}
-      <ToastContainer />
       <NotificationCenter />
     </div>
   );

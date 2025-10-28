@@ -36,6 +36,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      // No redirigir si ya estamos en páginas de autenticación
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/auth/') || currentPath === '/login') {
+        return Promise.reject(error);
+      }
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('tempToken');

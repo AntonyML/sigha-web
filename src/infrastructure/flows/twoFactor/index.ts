@@ -20,3 +20,7 @@ export type {
   Verify2FAFlowResult,
   Disable2FAFlowResult
 } from './twoFactorFlow';
+
+// Context and hooks for global 2FA state management
+export { TwoFactorProvider } from './TwoFactorContext';
+export { useTwoFactorStatus } from './useTwoFactorStatus';

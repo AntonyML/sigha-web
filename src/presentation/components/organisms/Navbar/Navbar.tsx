@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Calendar, Bell, User } from 'lucide-react';
+import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
+import { PermissionUtils } from '../../../../utils/permissionUtils';
 
 interface NavItem {
   id: string;
@@ -12,6 +15,26 @@ interface NavItem {
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isEnabled } = useTwoFactorStatus();
+  const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
+
+  // Verificar permisos del usuario
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const [canManageUsers, isSuperAdmin] = await Promise.all([
+          PermissionUtils.canViewAllUsers(),
+          PermissionUtils.isSuperAdmin()
+        ]);
+        setHasRequiredPermissions(canManageUsers || isSuperAdmin);
+      } catch (error) {
+        console.error('Error checking permissions:', error);
+        setHasRequiredPermissions(false);
+      }
+    };
+
+    checkPermissions();
+  }, []);
 
   const navItems: NavItem[] = [
     {
@@ -67,6 +90,31 @@ export default function Navbar() {
     }
   };
 
+  // Filtrar items del navbar basado en estado del 2FA y permisos
+  const getFilteredNavItems = () => {
+    // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
+    if (!isEnabled) {
+      return navItems.filter(item =>
+        item.id === 'home' || // Inicio
+        item.id === 'profile'  // Perfil
+      );
+    }
+
+    // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
+    if (hasRequiredPermissions === false) {
+      return navItems.filter(item =>
+        item.id === 'home' || // Inicio
+        item.id === 'older-adults' || // Adultos Mayores
+        item.id === 'profile' // Perfil
+      );
+    }
+
+    // Usuarios con permisos completos ven todos los items
+    return navItems;
+  };
+
+  const filteredNavItems = getFilteredNavItems();
+
   return (
     <>
       {/* Desktop Navbar - Top */}
@@ -75,7 +123,7 @@ export default function Navbar() {
           <div className="flex items-center justify-end h-16">
             {/* Desktop Nav Items (aligned right) */}
             <div className="flex items-center space-x-1">
-              {navItems.map((item) => (
+              {filteredNavItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleNavigation(item.path)}
@@ -116,7 +164,7 @@ export default function Navbar() {
       {/* Mobile Navbar - Bottom */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 safe-area-bottom">
         <div className="grid grid-cols-5 h-16">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.id}
               onClick={() => handleNavigation(item.path)}

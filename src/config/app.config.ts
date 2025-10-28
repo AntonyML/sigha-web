@@ -8,7 +8,7 @@
  * 3. For production: 'https://your-domain.com'
  */
 
-export const ipv4Localhost = 'http://192.168.1.6:3000'; // esta es la ip de mi pc portatil donde corro el backend
+export const ipv4Localhost = 'http://10.44.45.236:3000'; // esta es la ip de mi pc portatil donde corro el backend
 export const localhost = 'http://localhost:3000';
 export const tunnelHost = 'http://localhost:3000'; // por si creo un tunel con cloudflare mas adelante
 export const config = {
