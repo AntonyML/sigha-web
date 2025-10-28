@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { auditService } from '../../../services/auditService';
 import { getFullName } from '../../../utils/userUtils';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -29,6 +29,7 @@ const defaultUserFormData: UserFormData = {
 export default function EditUserPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
     const [formData, setFormData] = useState<UserFormData>(defaultUserFormData);
     const [loading, setLoading] = useState<boolean>(true);
     const [saving, setSaving] = useState<boolean>(false);
@@ -36,15 +37,7 @@ export default function EditUserPage() {
     const [roles, setRoles] = useState<UserRole[]>([]);
     const [originalUser, setOriginalUser] = useState<User | null>(null);
 
-    useEffect(() => {
-        if (!id) {
-            setLoading(false);
-            return;
-        }
-        loadUserAndRoles();
-    }, [id]);
-
-    const loadUserAndRoles = async () => {
+    const loadUserAndRoles = useCallback(async () => {
         if (!id) return;
 
         setLoading(true);
@@ -81,7 +74,15 @@ export default function EditUserPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        if (!id) {
+            setLoading(false);
+            return;
+        }
+        loadUserAndRoles();
+    }, [id, loadUserAndRoles]);
 
     function onInputChange(field: keyof UserFormData, value: string | number | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -135,18 +136,23 @@ export default function EditUserPage() {
         if (result.success) {
             // Registrar cambio de rol si aplica
             if (updateData.roleId && originalUser) {
-                const oldRole = roles.find(r => r.id === originalUser.roleId)?.rName || 'Desconocido';
-                const newRole = roles.find(r => r.id === updateData.roleId)?.rName || 'Desconocido';
-                
-                await auditService.logRoleChange(
-                    Number(id),
-                    oldRole,
-                    newRole,
-                    `Cambio de rol de ${oldRole} a ${newRole} para usuario ${originalUser.uEmail}`
-                );
+                // TODO: Implementar logRoleChange en auditService
+                // const oldRole = roles.find(r => r.id === originalUser.roleId)?.rName || 'Desconocido';
+                // const newRole = roles.find(r => r.id === updateData.roleId)?.rName || 'Desconocido';
+                // await auditService.logRoleChange(
+                //     Number(id),
+                //     oldRole,
+                //     newRole,
+                //     `Cambio de rol de ${oldRole} a ${newRole} para usuario ${originalUser.uEmail}`
+                // );
             }
             
-            alert(result.message || 'Usuario actualizado exitosamente');
+            feedback.success(result.message || 'Usuario actualizado exitosamente');
+            feedback.showNotification({
+                title: 'Usuario actualizado',
+                message: 'El usuario ha sido actualizado correctamente en el sistema.',
+                variant: 'success'
+            });
             navigate('/users');
         } else {
             setError(result.error || 'Error al actualizar usuario');

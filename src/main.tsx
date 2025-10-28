@@ -5,6 +5,8 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import "./assets/styles/global.css";
 import { permissionEntityService } from './services/permissionEntityService';
+import { FeedbackProvider } from './presentation/context/FeedbackContext';
+import { Toast } from './presentation/components/molecules/Toast/Toast';
 
 // Inicializar servicios al cargar la aplicación
 const initializeApp = async () => {
@@ -19,16 +21,18 @@ const initializeApp = async () => {
 const isFileProtocol = window.location.protocol === 'file:'
 
 createRoot(document.getElementById('root')!).render(
-
-  isFileProtocol ? (
-    <HashRouter>
-      <App />
-    </HashRouter>
-  ) : (
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  )
+  <FeedbackProvider>
+    <Toast />
+    {isFileProtocol ? (
+      <HashRouter>
+        <App />
+      </HashRouter>
+    ) : (
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    )}
+  </FeedbackProvider>
 );
 
 // Inicializar servicios después del render

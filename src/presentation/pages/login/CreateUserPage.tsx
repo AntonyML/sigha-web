@@ -22,7 +22,8 @@ export default function CreateUserPage() {
             El registro de nuevos usuarios debe ser realizado por un administrador del sistema.
           </p>
           <p className="text-sm text-muted-foreground">
-            Contacta al administrador para crear tu cuenta de usuario.
+            Contacta al administrador para crear tu cuenta de usuario 
+            al correo antony.mongelopez@ucr.ac.cr.
           </p>
         </div>
 

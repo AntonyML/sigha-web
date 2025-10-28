@@ -4,6 +4,7 @@ import { userManagementFlow } from '../../../infrastructure/flows/userManagement
 import { getFullName } from '../../../utils/userUtils';
 import { PermissionUtils } from '../../../utils/permissionUtils';
 import { Icon } from '../../components/atoms';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User } from '../../../types/user';
 
 export default function UserListPage() {
@@ -16,6 +17,7 @@ export default function UserListPage() {
     const [canDeleteUsers, setCanDeleteUsers] = useState(false);
     const [canCreateUsers, setCanCreateUsers] = useState(false);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Cargar usuarios y verificar permisos al montar el componente
     useEffect(() => {
@@ -89,13 +91,17 @@ export default function UserListPage() {
     const handleDeleteClick = async (user: User) => {
         // Verificar permisos antes de eliminar
         if (!canDeleteUsers) {
-            alert('No tienes permisos para eliminar usuarios.');
+            feedback.error('No tienes permisos para eliminar usuarios', 'Acceso denegado');
             return;
         }
 
         const fullName = getFullName(user);
-        const ok = window.confirm(`¿Estás seguro que deseas eliminar al usuario "${fullName}"?\n\nEsta acción no se puede deshacer.`);
-        if (!ok) return;
+        const confirmed = await feedback.confirm(
+            `¿Estás seguro que deseas eliminar al usuario "${fullName}"?`,
+            'Esta acción no se puede deshacer.'
+        );
+
+        if (!confirmed) return;
 
         setLoading(true);
         const result = await userManagementFlow.deleteUser(user.id);
@@ -103,9 +109,15 @@ export default function UserListPage() {
         if (result.success) {
             // Recargar la lista de usuarios
             await loadUsersAndPermissions();
-            alert(result.message || 'Usuario eliminado exitosamente');
+            feedback.success(result.message || 'Usuario eliminado exitosamente');
+            feedback.showNotification({
+                title: 'Usuario eliminado',
+                message: `El usuario "${fullName}" ha sido eliminado del sistema`,
+                variant: 'success',
+                icon: 'bi-person-dash-fill'
+            });
         } else {
-            alert(result.error || 'Error al eliminar usuario');
+            feedback.error(result.error || 'Error al eliminar usuario', 'Error de eliminación');
         }
         setLoading(false);
     };

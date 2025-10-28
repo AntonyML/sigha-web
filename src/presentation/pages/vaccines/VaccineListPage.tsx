@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Vaccine } from '../../../types/vaccine';
 import { vaccineService } from '../../../services/vaccineService';
+import { useFeedbackWithNotifications } from '../../../presentation/hooks/useFeedbackWithNotifications';
 
 export default function VaccineListPage() {
   const [vaccines, setVaccines] = useState<Vaccine[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const feedback = useFeedbackWithNotifications();
 
   useEffect(() => {
     loadVaccines();
@@ -20,21 +22,32 @@ export default function VaccineListPage() {
       setVaccines(data);
     } catch (error) {
       console.error('❌ Error cargando vacunas:', error);
-      alert('Error al cargar las vacunas');
+      feedback.error('Error al cargar las vacunas', 'Error de carga');
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(id: number) {
-    if (window.confirm('¿Está seguro de que desea eliminar esta vacuna?')) {
+    const confirmed = await feedback.confirm(
+      '¿Está seguro de que desea eliminar esta vacuna?',
+      'Esta acción no se puede deshacer.'
+    );
+
+    if (confirmed) {
       try {
         await vaccineService.deleteVaccine(id);
         await loadVaccines();
-        alert('Vacuna eliminada exitosamente');
+        feedback.success('Vacuna eliminada exitosamente');
+        feedback.showNotification({
+          title: 'Vacuna eliminada',
+          message: 'La vacuna ha sido eliminada del sistema',
+          variant: 'success',
+          icon: 'bi-check-circle-fill'
+        });
       } catch (error) {
         console.error('❌ Error eliminando vacuna:', error);
-        alert('Error al eliminar la vacuna');
+        feedback.error('Error al eliminar la vacuna', 'Error de eliminación');
       }
     }
   }

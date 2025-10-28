@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole } from '../../../types/user';
 
 export default function RoleListPage() {
@@ -10,6 +11,7 @@ export default function RoleListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredRoles, setFilteredRoles] = useState<UserRole[]>([]);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Cargar roles al montar el componente
     useEffect(() => {
@@ -64,15 +66,16 @@ export default function RoleListPage() {
     const handleDeleteRole = async (role: UserRole) => {
         // Solo permitir eliminar roles que no sean del sistema (ID > 10 o verificar si no es admin del sistema)
         if (role.id <= 10) {
-            alert('No se pueden eliminar los roles del sistema.');
+            feedback.error('No se pueden eliminar los roles del sistema.');
             return;
         }
 
-        const confirmDelete = window.confirm(
+        const confirmed = await feedback.confirm(
+            'Eliminar rol',
             `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`
         );
 
-        if (!confirmDelete) return;
+        if (!confirmed) return;
 
         setError('');
 
@@ -80,7 +83,12 @@ export default function RoleListPage() {
             const result = await roleFlow.deleteRole(role.id);
 
             if (result.success) {
-                alert('Rol eliminado exitosamente');
+                feedback.success('Rol eliminado exitosamente');
+                feedback.showNotification({
+                    title: 'Rol eliminado',
+                    message: `El rol "${role.rName}" ha sido eliminado exitosamente.`,
+                    variant: 'success'
+                });
                 // Recargar la lista de roles
                 await loadRoles();
             } else {

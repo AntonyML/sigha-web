@@ -38,70 +38,53 @@ export default function AuditDashboardPage() {
         setLoading(true);
         setError('');
 
-            const result = await auditFlow.searchAuditReports({
+        try {
+            // ✅ Usar endpoint de estadísticas para datos agregados
+            const statsResult = await auditFlow.getAuditStatistics(
+                dateRange.start || undefined,
+                dateRange.end || undefined
+            );
+
+            // ✅ Usar endpoint de búsqueda solo para registros recientes (limit=10)
+            const recentResult = await auditFlow.searchAuditReports({
                 startDate: dateRange.start || undefined,
                 endDate: dateRange.end || undefined,
-                limit: '10000',
+                limit: '10',
             });
 
-            if (result.success && result.records) {
-                console.log('Datos del backend:', result.records.slice(0, 3)); // Ver primeros 3 registros
+            if (statsResult.success && statsResult.stats) {
+                console.log('Estadísticas del backend:', statsResult.stats);
                 
-                // Los datos ahora solo vienen como AuditReport
-                const records = result.records as AuditReport[];
-                console.log('Registros procesados:', records.slice(0, 3));
+                const backendStats = statsResult.stats;
+                const totalRecords = backendStats.totalActions;
+                console.log('Total de registros desde estadísticas:', totalRecords);
 
-                const totalRecords = records.length;
-                console.log('Total de registros:', totalRecords);
-
-                // Contar por acción
-                const actionCounts = records.reduce((acc: Record<string, number>, record) => {
-                    const a = record.ar_action || 'other';
-                    acc[a] = (acc[a] || 0) + 1;
-                    return acc;
-                }, {} as Record<string, number>);
-                console.log('Conteo por acción:', actionCounts);
-
-                const actionBreakdown: AuditActionStats[] = Object.entries(actionCounts).map(([action, count]) => ({
+                // ✅ Usar estadísticas agregadas del backend en lugar de calcular desde registros limitados
+                const actionBreakdown: AuditActionStats[] = Object.entries(backendStats.actionsByType).map(([action, count]) => ({
                     action,
                     count: Number(count),
                     percentage: Math.round((Number(count) / totalRecords) * 100),
                 })).sort((a, b) => b.count - a.count);
 
-                // Contar por tabla
-                const tableCounts = records.reduce((acc: Record<string, number>, record) => {
-                    const table = record.ar_entity_name || 'unknown';
-                    acc[table] = (acc[table] || 0) + 1;
-                    return acc;
-                }, {} as Record<string, number>);
-                console.log('Conteo por tabla:', tableCounts);
-
-                const tableBreakdown: AuditTableStats[] = Object.entries(tableCounts).map(([table, count]) => ({
+                const tableBreakdown: AuditTableStats[] = Object.entries(backendStats.actionsByEntity).map(([table, count]) => ({
                     table,
                     count: Number(count),
                     percentage: Math.round((Number(count) / totalRecords) * 100),
                 })).sort((a, b) => b.count - a.count);
 
-                // Top tablas
-                const topTables = Object.entries(tableCounts)
+                // Top tablas desde estadísticas del backend
+                const topTables = Object.entries(backendStats.actionsByEntity)
                     .map(([tableName, count]) => ({ tableName, count: Number(count) }))
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 5);
 
-                // Top usuarios
-                const userCounts = records.reduce((acc: Record<string, number>, record) => {
-                    const user = record.user_name || 'Sistema';
-                    acc[user] = (acc[user] || 0) + 1;
-                    return acc;
-                }, {} as Record<string, number>);
-                console.log('Conteo por usuario:', userCounts);
+                // Top usuarios desde estadísticas del backend
+                const topUsers = backendStats.topUsers.map(user => ({
+                    userName: user.username,
+                    count: user.actionCount
+                })).slice(0, 5);
 
-                const topUsers = Object.entries(userCounts)
-                    .map(([userName, count]) => ({ userName, count: Number(count) }))
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 5);
-                    
-                setStats({
+                console.log('Estadísticas procesadas:', {
                     totalRecords,
                     actionBreakdown,
                     tableBreakdown,
@@ -109,13 +92,59 @@ export default function AuditDashboardPage() {
                     topTables
                 });
 
-            // Ordenar por timestamp descendente (más recientes primero) y tomar los 10 más recientes
-            const sortedRecords = records.sort((a, b) =>
-                new Date(b.create_at).getTime() - new Date(a.create_at).getTime()
-            );
-            setRecentRecords(sortedRecords.slice(0, 10));
-        } else {
-            setError(result.error || 'Error al cargar estadísticas');
+                setStats({
+                    totalRecords,
+                    actionBreakdown,
+                    tableBreakdown,
+                    topUsers,
+                    topTables
+                });
+            } else {
+                console.error('Error obteniendo estadísticas:', statsResult.error);
+                setError(statsResult.error || 'Error al cargar estadísticas');
+            }
+
+            // ✅ Procesar registros recientes para "Actividad Reciente"
+            if (recentResult.success && recentResult.records) {
+                console.log('Registros recientes:', recentResult.records.slice(0, 3));
+                
+                const records = recentResult.records as AuditReport[];
+                
+                // Inspeccionar el primer registro en detalle
+                if (records.length > 0) {
+                    const firstRecord = records[0];
+                    console.log('Primer registro reciente:', firstRecord);
+                    console.log('Campos disponibles:', Object.keys(firstRecord));
+                    console.log('Valores de campos clave:', {
+                        id: firstRecord.id,
+                        ar_action: firstRecord.ar_action,
+                        ar_entity_name: firstRecord.ar_entity_name,
+                        user_name: firstRecord.user_name,
+                        user_email: firstRecord.user_email,
+                        create_at: firstRecord.create_at,
+                        ar_observations: firstRecord.ar_observations
+                    });
+                }
+
+                // Ordenar por timestamp descendente (más recientes primero)
+                const sortedRecords = records
+                    .filter(record => record.create_at)
+                    .sort((a, b) => {
+                        try {
+                            return new Date(b.create_at).getTime() - new Date(a.create_at).getTime();
+                        } catch {
+                            return 0;
+                        }
+                    });
+                
+                setRecentRecords(sortedRecords.slice(0, 10));
+            } else {
+                console.error('Error obteniendo registros recientes:', recentResult.error);
+                setRecentRecords([]);
+            }
+        } catch (error) {
+            console.error('Error general en loadDashboardData:', error);
+            setError('Error al cargar datos del dashboard');
         }
 
         setLoading(false);
@@ -391,10 +420,10 @@ export default function AuditDashboardPage() {
                                                         <div className="flex-grow-1">
                                                             <div className="d-flex align-items-center gap-2 mb-2">
                                                                 <span className="badge bg-primary">
-                                                                    {record.ar_action}
+                                                                    {record.ar_action || (record as unknown as Record<string, unknown>).action as string || 'other'}
                                                                 </span>
                                                                 <span className="badge bg-secondary">
-                                                                    {auditFlow.getTableLabel(record.ar_entity_name || '')}
+                                                                    {auditFlow.getTableLabel(record.ar_entity_name || (record as unknown as Record<string, unknown>).entity_name as string || (record as unknown as Record<string, unknown>).tableName as string || '')}
                                                                 </span>
                                                             </div>
                                                             <p className="mb-1">
@@ -402,7 +431,7 @@ export default function AuditDashboardPage() {
                                                             </p>
                                                             <small className="text-muted">
                                                                 <i className="bi bi-person-circle me-1"></i>
-                                                                {record.user_name || 'N/A'} • {auditFlow.formatAuditDate(record.create_at)}
+                                                                {record.user_name || record.user_email || (record as unknown as Record<string, unknown>).username as string || (record as unknown as Record<string, unknown>).name as string || 'N/A'} • {record.create_at ? auditFlow.formatAuditDate(record.create_at) : 'Fecha no disponible'}
                                                             </small>
                                                         </div>
                                                         <button

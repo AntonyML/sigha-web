@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole } from '../../../types/user';
 
 export default function ViewRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
     const [role, setRole] = useState<UserRole | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -251,14 +253,14 @@ export default function ViewRolePage() {
                                     </button>
                                     <button
                                         className="btn btn-outline-info btn-sm"
-                                        onClick={() => alert('Funcionalidad próximamente disponible')}
+                                        onClick={() => feedback.info('Funcionalidad próximamente disponible', 'La vista de usuarios asignados a este rol estará disponible en futuras versiones.')}
                                     >
                                         <i className="bi bi-people me-2"></i>
                                         Ver Usuarios
                                     </button>
                                     <button
                                         className="btn btn-outline-warning btn-sm"
-                                        onClick={() => alert('Funcionalidad próximamente disponible')}
+                                        onClick={() => feedback.info('Funcionalidad próximamente disponible', 'La gestión de permisos estará disponible en futuras versiones.')}
                                     >
                                         <i className="bi bi-key me-2"></i>
                                         Gestionar Permisos

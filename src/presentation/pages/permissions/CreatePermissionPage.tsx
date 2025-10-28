@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreatePermissionData } from '../../../types/permissionEntity';
 
 // Opciones disponibles para módulos y acciones
@@ -37,6 +38,7 @@ export default function CreatePermissionPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     function onInputChange(field: keyof CreatePermissionData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -77,7 +79,12 @@ export default function CreatePermissionPage() {
             const result = await permissionEntityFlow.createPermission(formData);
 
             if (result.success && result.permission) {
-                alert('Permiso creado exitosamente');
+                feedback.success('Permiso creado exitosamente');
+                feedback.showNotification({
+                    title: 'Permiso creado',
+                    message: `El permiso "${result.permission.name}" ha sido creado exitosamente.`,
+                    variant: 'success'
+                });
                 navigate('/permissions');
             } else {
                 setError(result.error || 'Error al crear permiso');

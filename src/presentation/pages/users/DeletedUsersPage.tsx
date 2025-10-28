@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { getFullName } from '../../../utils/userUtils';
 import { Icon } from '../../components/atoms';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User } from '../../../types/user';
 
 export default function DeletedUsersPage() {
@@ -12,6 +13,7 @@ export default function DeletedUsersPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Cargar usuarios eliminados al montar el componente
     useEffect(() => {
@@ -62,8 +64,11 @@ export default function DeletedUsersPage() {
 
     const handleRestoreClick = async (user: User) => {
         const fullName = getFullName(user);
-        const ok = window.confirm(`¿Estás seguro que deseas recuperar al usuario "${fullName}"?`);
-        if (!ok) return;
+        const confirmed = await feedback.confirm(
+            'Recuperar usuario',
+            `¿Estás seguro que deseas recuperar al usuario "${fullName}"?`
+        );
+        if (!confirmed) return;
 
         setLoading(true);
         const result = await userManagementFlow.toggleUserStatus(user.id);
@@ -71,9 +76,14 @@ export default function DeletedUsersPage() {
         if (result.success) {
             // Recargar la lista de usuarios eliminados
             await loadDeletedUsers();
-            alert(result.message || 'Usuario recuperado exitosamente');
+            feedback.success(result.message || 'Usuario recuperado exitosamente');
+            feedback.showNotification({
+                title: 'Usuario recuperado',
+                message: `El usuario ${fullName} ha sido recuperado exitosamente.`,
+                variant: 'success'
+            });
         } else {
-            alert(result.error || 'Error al recuperar usuario');
+            feedback.error(result.error || 'Error al recuperar usuario');
         }
         setLoading(false);
     };

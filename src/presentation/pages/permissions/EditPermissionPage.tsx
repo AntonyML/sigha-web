@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type {  UpdatePermissionData } from '../../../types/permissionEntity';
 
 // Opciones disponibles para módulos y acciones
@@ -35,6 +36,7 @@ interface PermissionFormData {
 export default function EditPermissionPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
     const [formData, setFormData] = useState<PermissionFormData>({
         name: '',
         description: '',
@@ -149,7 +151,12 @@ export default function EditPermissionPage() {
             const result = await permissionEntityFlow.updatePermission(Number(id), updateData);
 
             if (result.success && result.permission) {
-                alert('Permiso actualizado exitosamente');
+                feedback.success('Permiso actualizado exitosamente');
+                feedback.showNotification({
+                    title: 'Permiso actualizado',
+                    message: 'El permiso ha sido actualizado exitosamente.',
+                    variant: 'success'
+                });
                 navigate(`/permissions/view/${id}`);
             } else {
                 setError(result.error || 'Error al actualizar permiso');
@@ -162,10 +169,13 @@ export default function EditPermissionPage() {
         }
     }
 
-    const handleCancel = () => {
+    const handleCancel = async () => {
         if (hasChanges) {
-            const confirmLeave = window.confirm('¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.');
-            if (!confirmLeave) return;
+            const confirmed = await feedback.confirm(
+                'Salir sin guardar',
+                '¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.'
+            );
+            if (!confirmed) return;
         }
         navigate(`/permissions/view/${id}`);
     };

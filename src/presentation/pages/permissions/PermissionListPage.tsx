@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { PermissionEntity } from '../../../types/permissionEntity';
 
 export default function PermissionListPage() {
@@ -10,6 +11,7 @@ export default function PermissionListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredPermissions, setFilteredPermissions] = useState<PermissionEntity[]>([]);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Cargar permisos al montar el componente
     useEffect(() => {
@@ -67,15 +69,16 @@ export default function PermissionListPage() {
     const handleDeletePermission = async (permission: PermissionEntity) => {
         // Solo permitir eliminar permisos con ID > 23 (permisos agregados después de los iniciales)
         if (permission.id <= 23) {
-            alert('No se pueden eliminar los permisos predefinidos del sistema.');
+            feedback.error('No se pueden eliminar los permisos predefinidos del sistema.');
             return;
         }
 
-        const confirmDelete = window.confirm(
+        const confirmed = await feedback.confirm(
+            'Eliminar permiso',
             `¿Estás seguro de que deseas eliminar el permiso "${permission.name}"?\n\nEsta acción no se puede deshacer.`
         );
 
-        if (!confirmDelete) return;
+        if (!confirmed) return;
 
         setError('');
 
@@ -83,7 +86,12 @@ export default function PermissionListPage() {
             const result = await permissionEntityFlow.deletePermission(permission.id);
 
             if (result.success) {
-                alert('Permiso eliminado exitosamente');
+                feedback.success('Permiso eliminado exitosamente');
+                feedback.showNotification({
+                    title: 'Permiso eliminado',
+                    message: `El permiso "${permission.name}" ha sido eliminado exitosamente.`,
+                    variant: 'success'
+                });
                 // Recargar la lista de permisos
                 await loadPermissions();
             } else {
@@ -103,7 +111,12 @@ export default function PermissionListPage() {
         try {
             const result = await permissionEntityFlow.downloadPermissionsAsJson('permisos_actualizados.json');
             if (result.success) {
-                alert('Archivo JSON descargado exitosamente');
+                feedback.success('Archivo JSON descargado exitosamente');
+                feedback.showNotification({
+                    title: 'Exportación completada',
+                    message: 'Los permisos han sido exportados correctamente a un archivo JSON.',
+                    variant: 'success'
+                });
             } else {
                 setError(result.error || 'Error al exportar permisos');
             }

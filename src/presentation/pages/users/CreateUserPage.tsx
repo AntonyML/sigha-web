@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { auditService } from '../../../services/auditService';
 import { PermissionUtils } from '../../../utils/permissionUtils';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole, CreateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -34,6 +34,7 @@ export default function CreateUserPage() {
     const [roles, setRoles] = useState<UserRole[]>([]);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Verificar permisos y cargar roles al montar el componente
     useEffect(() => {
@@ -81,17 +82,17 @@ export default function CreateUserPage() {
 
         // Verificar permisos antes de procesar
         if (hasPermission === false) {
-            alert('No tienes permisos para crear usuarios.');
+            feedback.error('No tienes permisos para crear usuarios.');
             return;
         }
 
         if (!passwordsMatch) {
-            alert('Las contraseñas no coinciden');
+            feedback.error('Las contraseñas no coinciden');
             return;
         }
 
         if (!formData.roleId || formData.roleId === 0) {
-            alert('Por favor selecciona un rol');
+            feedback.error('Por favor selecciona un rol');
             return;
         }
 
@@ -111,23 +112,16 @@ export default function CreateUserPage() {
         const result = await userManagementFlow.createUser(createData);
 
         if (result.success && result.user) {
-            // Registrar creación de usuario en auditoría
-            const roleName = roles.find(r => r.id === formData.roleId)?.rName || 'Desconocido';
-            await auditService.logCreate(
-                'users',
-                result.user.id,
-                {
-                    email: result.user.uEmail,
-                    name: `${result.user.uName} ${result.user.uFLastName}`,
-                    role: roleName
-                },
-                `Nuevo usuario creado: ${result.user.uEmail} con rol ${roleName}`
-            );
-            
-            alert(result.message || 'Usuario creado exitosamente');
+            feedback.success(result.message || 'Usuario creado exitosamente');
+            feedback.showNotification({
+                title: 'Usuario creado',
+                message: `El usuario ${result.user.uEmail} ha sido creado exitosamente`,
+                variant: 'success',
+                icon: 'bi-person-plus-fill'
+            });
             navigate('/users');
         } else {
-            alert(result.error || 'Error al crear usuario');
+            feedback.error(result.error || 'Error al crear usuario', 'Error de creación');
         }
 
         setLoading(false);

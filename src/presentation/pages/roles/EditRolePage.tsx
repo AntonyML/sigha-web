@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UpdateRoleData } from '../../../types/user';
 
 interface RoleFormData {
@@ -15,6 +16,7 @@ interface RoleFormData {
 export default function EditRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
     const [formData, setFormData] = useState<RoleFormData>({
         rName: '',
         rDescription: '',
@@ -145,7 +147,12 @@ export default function EditRolePage() {
             const result = await roleFlow.updateRole(Number(id), updateData);
 
             if (result.success && result.role) {
-                alert('Rol actualizado exitosamente');
+                feedback.success('Rol actualizado exitosamente');
+                feedback.showNotification({
+                    title: 'Rol actualizado',
+                    message: `El rol "${result.role.rName}" ha sido actualizado correctamente.`,
+                    variant: 'success'
+                });
                 navigate(`/roles/view/${id}`);
             } else {
                 setError(result.error || 'Error al actualizar rol');
@@ -158,10 +165,13 @@ export default function EditRolePage() {
         }
     }
 
-    const handleCancel = () => {
+    const handleCancel = async () => {
         if (hasChanges) {
-            const confirmLeave = window.confirm('¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.');
-            if (!confirmLeave) return;
+            const confirmed = await feedback.confirm(
+                'Salir sin guardar',
+                '¿Estás seguro de que quieres salir? Los cambios no guardados se perderán.'
+            );
+            if (!confirmed) return;
         }
         navigate(`/roles/view/${id}`);
     };

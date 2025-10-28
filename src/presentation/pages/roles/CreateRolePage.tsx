@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreateRoleData } from '../../../types/user';
 
 const defaultRoleFormData: CreateRoleData = {
@@ -18,6 +19,7 @@ export default function CreateRolePage() {
     const [error, setError] = useState('');
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
 
     // Verificar permisos al montar el componente
     useEffect(() => {
@@ -64,7 +66,12 @@ export default function CreateRolePage() {
             const result = await roleFlow.createRole(formData);
 
             if (result.success && result.role) {
-                alert('Rol creado exitosamente');
+                feedback.success('Rol creado exitosamente');
+                feedback.showNotification({
+                    title: 'Rol creado',
+                    message: `El rol "${result.role.rName}" ha sido creado exitosamente.`,
+                    variant: 'success'
+                });
                 navigate('/roles');
             } else {
                 setError(result.error || 'Error al crear rol');

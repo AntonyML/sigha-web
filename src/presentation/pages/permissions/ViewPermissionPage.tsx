@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { PermissionEntity } from '../../../types/permissionEntity';
 
 export default function ViewPermissionPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const feedback = useFeedbackWithNotifications();
     const [permission, setPermission] = useState<PermissionEntity | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -248,14 +250,14 @@ export default function ViewPermissionPage() {
                                     </button>
                                     <button
                                         className="btn btn-outline-info btn-sm"
-                                        onClick={() => alert('Funcionalidad próximamente disponible')}
+                                        onClick={() => feedback.info('Funcionalidad próximamente disponible', 'Esta función estará disponible en futuras versiones del sistema.')}
                                     >
                                         <i className="bi bi-people me-2"></i>
                                         Ver Roles Asociados
                                     </button>
                                     <button
                                         className="btn btn-outline-warning btn-sm"
-                                        onClick={() => alert('Funcionalidad próximamente disponible')}
+                                        onClick={() => feedback.info('Funcionalidad próximamente disponible', 'Esta función estará disponible en futuras versiones del sistema.')}
                                     >
                                         <i className="bi bi-graph-up me-2"></i>
                                         Ver Estadísticas
