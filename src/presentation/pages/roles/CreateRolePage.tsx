@@ -1,27 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { roleFlow } from '../../../infrastructure/flows/role';
+import { PermissionUtils } from '../../../utils/permissionUtils';
+import type { CreateRoleData } from '../../../types/user';
 
-interface RoleFormData {
-    rName: string;
-}
-
-const defaultRoleFormData: RoleFormData = {
-    rName: ''
+const defaultRoleFormData: CreateRoleData = {
+    rName: '',
+    rDescription: '',
+    rIsAdmin: false,
+    rRequires2FA: false,
+    rIsActive: true
 };
 
 export default function CreateRolePage() {
-    const [formData, setFormData] = useState<RoleFormData>(defaultRoleFormData);
+    const [formData, setFormData] = useState<CreateRoleData>(defaultRoleFormData);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const navigate = useNavigate();
 
-    function onInputChange(field: keyof RoleFormData, value: string) {
+    // Verificar permisos al montar el componente
+    useEffect(() => {
+        const checkPermissions = async () => {
+            try {
+                const canManage = await PermissionUtils.canManageRoles();
+                setHasPermission(canManage);
+            } catch (err) {
+                console.error('Error verificando permisos:', err);
+                setHasPermission(false);
+            }
+        };
+
+        checkPermissions();
+    }, []);
+
+    function onInputChange(field: keyof CreateRoleData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError('');
+
+        // Verificar permisos antes de procesar
+        if (hasPermission === false) {
+            setError('No tienes permisos para crear roles.');
+            return;
+        }
 
         if (!formData.rName.trim()) {
             setError('Por favor ingresa el nombre del rol');
@@ -36,22 +61,14 @@ export default function CreateRolePage() {
         setLoading(true);
 
         try {
-            // TODO: Implementar creación de rol cuando esté disponible en el backend
-            // const result = await roleFlow.createRole({ rName: formData.rName });
+            const result = await roleFlow.createRole(formData);
 
-            // Por ahora, mostrar mensaje de que la funcionalidad está en desarrollo
-            alert('Funcionalidad de creación de roles estará disponible próximamente.\n\nRol que se intentaría crear: ' + formData.rName);
-
-            // Una vez implementado, descomentar:
-            // if (result.success && result.role) {
-            //     alert('Rol creado exitosamente');
-            //     navigate('/roles');
-            // } else {
-            //     setError(result.error || 'Error al crear rol');
-            // }
-
-            // Navegar de vuelta a la lista por ahora
-            navigate('/roles');
+            if (result.success && result.role) {
+                alert('Rol creado exitosamente');
+                navigate('/roles');
+            } else {
+                setError(result.error || 'Error al crear rol');
+            }
         } catch (err) {
             console.error('Error creando rol:', err);
             setError('Error inesperado al crear rol');
@@ -93,6 +110,20 @@ export default function CreateRolePage() {
                     </div>
                 )}
 
+                {hasPermission === false && (
+                    <div className="row mb-4">
+                        <div className="col-12">
+                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                <i className="bi bi-shield-x-fill me-2"></i>
+                                <strong>Acceso Denegado</strong>
+                                <p className="mb-0 mt-2">No tienes permisos para crear roles. Solo los administradores del sistema pueden crear nuevos roles.</p>
+                                <button type="button" className="btn-close" onClick={() => navigate('/roles')}></button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {hasPermission === true && (
                 <form onSubmit={handleSubmit}>
                     <div className="row">
                         <div className="col-12">
@@ -105,7 +136,7 @@ export default function CreateRolePage() {
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
-                                        <div className="col-12">
+                                        <div className="col-12 col-md-6">
                                             <label htmlFor="rName" className="form-label fw-semibold">
                                                 Nombre del Rol <span className="text-danger">*</span>
                                             </label>
@@ -126,32 +157,91 @@ export default function CreateRolePage() {
                                                 El nombre debe ser único y descriptivo (mínimo 3 caracteres)
                                             </small>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-info-circle me-2 text-warning"></i>
-                                        Información Importante
-                                    </h5>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="alert alert-info border-0 bg-light">
-                                        <h6 className="alert-heading fw-semibold">
-                                            <i className="bi bi-lightbulb me-2"></i>
-                                            Funcionalidad en Desarrollo
-                                        </h6>
-                                        <p className="mb-2">
-                                            La creación de roles es una funcionalidad avanzada que requiere configuración
-                                            cuidadosa de permisos y validaciones en el backend.
-                                        </p>
-                                        <hr />
-                                        <p className="mb-0 small">
-                                            <strong>Próximos pasos:</strong> Una vez implementado el endpoint en el backend,
-                                            esta página permitirá crear roles con permisos específicos asignados.
-                                        </p>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rIsActive" className="form-label fw-semibold">
+                                                Estado
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rIsActive"
+                                                    checked={formData.rIsActive}
+                                                    onChange={(e) => onInputChange('rIsActive', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rIsActive">
+                                                    {formData.rIsActive ? 'Activo' : 'Inactivo'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Indica si el rol está activo en el sistema
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rIsAdmin" className="form-label fw-semibold">
+                                                Rol Administrativo
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rIsAdmin"
+                                                    checked={formData.rIsAdmin}
+                                                    onChange={(e) => onInputChange('rIsAdmin', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rIsAdmin">
+                                                    {formData.rIsAdmin ? 'Es rol administrativo' : 'No es rol administrativo'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Los roles administrativos tienen permisos elevados
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rRequires2FA" className="form-label fw-semibold">
+                                                Requiere 2FA
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rRequires2FA"
+                                                    checked={formData.rRequires2FA}
+                                                    onChange={(e) => onInputChange('rRequires2FA', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rRequires2FA">
+                                                    {formData.rRequires2FA ? 'Requiere autenticación de dos factores' : 'No requiere 2FA'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Mayor seguridad para roles críticos
+                                            </small>
+                                        </div>
+                                        <div className="col-12">
+                                            <label htmlFor="rDescription" className="form-label fw-semibold">
+                                                Descripción
+                                            </label>
+                                            <textarea
+                                                id="rDescription"
+                                                className="form-control form-control-lg"
+                                                value={formData.rDescription}
+                                                onChange={(e) => onInputChange('rDescription', e.target.value)}
+                                                placeholder="Describe las responsabilidades y permisos de este rol..."
+                                                disabled={loading}
+                                                rows={3}
+                                                maxLength={255}
+                                            />
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Descripción opcional del rol y sus funciones
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -191,6 +281,8 @@ export default function CreateRolePage() {
                         </div>
                     </div>
                 </form>
+                )}
+
             </div>
         </div>
     );

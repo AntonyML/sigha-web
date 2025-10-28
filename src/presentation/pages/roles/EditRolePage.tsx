@@ -1,63 +1,87 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { UserRole } from '../../../types/user';
+import { roleFlow } from '../../../infrastructure/flows/role';
+import { PermissionUtils } from '../../../utils/permissionUtils';
+import type { UpdateRoleData } from '../../../types/user';
 
 interface RoleFormData {
     rName: string;
+    rDescription?: string;
+    rIsAdmin?: boolean;
+    rRequires2FA?: boolean;
+    rIsActive?: boolean;
 }
 
 export default function EditRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<RoleFormData>({ rName: '' });
-    const [originalData, setOriginalData] = useState<RoleFormData>({ rName: '' });
+    const [formData, setFormData] = useState<RoleFormData>({
+        rName: '',
+        rDescription: '',
+        rIsAdmin: false,
+        rRequires2FA: false,
+        rIsActive: true
+    });
+    const [originalData, setOriginalData] = useState<RoleFormData>({
+        rName: '',
+        rDescription: '',
+        rIsAdmin: false,
+        rRequires2FA: false,
+        rIsActive: true
+    });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState('');
     const [hasChanges, setHasChanges] = useState(false);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
+    // Verificar permisos y cargar datos del rol al montar el componente
     useEffect(() => {
-        const loadRole = async () => {
+        const checkPermissionsAndLoadData = async () => {
             if (!id) {
                 setError('ID de rol no proporcionado');
                 setLoadingData(false);
                 return;
             }
 
-            setLoadingData(true);
-            setError('');
-
             try {
-                // TODO: Implementar obtención de rol por ID cuando esté disponible en el backend
-                // const result = await roleFlow.getRoleById(Number(id));
+                // Verificar permisos
+                const canManage = await PermissionUtils.canManageRoles();
+                setHasPermission(canManage);
 
-                // Por ahora, simulamos la carga de un rol
-                const mockRole: UserRole = {
-                    id: Number(id),
-                    rName: `Rol ${id}` // Esto sería el nombre real del rol
-                };
+                if (!canManage) {
+                    setLoadingData(false);
+                    return;
+                }
 
-                const roleData = { rName: mockRole.rName };
-                setFormData(roleData);
-                setOriginalData(roleData);
+                // Cargar datos del rol
+                setLoadingData(true);
+                setError('');
 
-                // Una vez implementado, descomentar:
-                // if (result.success && result.role) {
-                //     const roleData = { rName: result.role.rName };
-                //     setFormData(roleData);
-                //     setOriginalData(roleData);
-                // } else {
-                //     setError(result.error || 'Error al cargar rol');
-                // }
+                const result = await roleFlow.getRoleById(Number(id));
+
+                if (result.success && result.role) {
+                    const roleData: RoleFormData = {
+                        rName: result.role.rName,
+                        rDescription: result.role.rDescription || '',
+                        rIsAdmin: result.role.rIsAdmin || false,
+                        rRequires2FA: result.role.rRequires2FA || false,
+                        rIsActive: result.role.rIsActive !== undefined ? result.role.rIsActive : true
+                    };
+                    setFormData(roleData);
+                    setOriginalData(roleData);
+                } else {
+                    setError(result.error || 'Error al cargar rol');
+                }
             } catch (err) {
-                console.error('Error cargando rol:', err);
+                console.error('Error verificando permisos o cargando rol:', err);
                 setError('Error inesperado al cargar el rol');
             } finally {
                 setLoadingData(false);
             }
         };
 
-        loadRole();
+        checkPermissionsAndLoadData();
     }, [id]);
 
     useEffect(() => {
@@ -66,13 +90,19 @@ export default function EditRolePage() {
         setHasChanges(changes);
     }, [formData, originalData]);
 
-    function onInputChange(field: keyof RoleFormData, value: string) {
+    function onInputChange(field: keyof RoleFormData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError('');
+
+        // Verificar permisos antes de procesar
+        if (hasPermission === false) {
+            setError('No tienes permisos para editar roles.');
+            return;
+        }
 
         if (!formData.rName.trim()) {
             setError('Por favor ingresa el nombre del rol');
@@ -92,22 +122,34 @@ export default function EditRolePage() {
         setLoading(true);
 
         try {
-            // TODO: Implementar actualización de rol cuando esté disponible en el backend
-            // const result = await roleFlow.updateRole(Number(id), { rName: formData.rName });
+            // Crear el objeto de datos para actualizar
+            const updateData: UpdateRoleData = {};
 
-            // Por ahora, mostrar mensaje de que la funcionalidad está en desarrollo
-            alert(`Funcionalidad de edición de roles estará disponible próximamente.\n\nRol que se intentaría actualizar: ${originalData.rName} → ${formData.rName}`);
+            // Solo incluir campos que han cambiado
+            if (formData.rName !== originalData.rName) {
+                updateData.rName = formData.rName;
+            }
+            if (formData.rDescription !== originalData.rDescription) {
+                updateData.rDescription = formData.rDescription;
+            }
+            if (formData.rIsAdmin !== originalData.rIsAdmin) {
+                updateData.rIsAdmin = formData.rIsAdmin;
+            }
+            if (formData.rRequires2FA !== originalData.rRequires2FA) {
+                updateData.rRequires2FA = formData.rRequires2FA;
+            }
+            if (formData.rIsActive !== originalData.rIsActive) {
+                updateData.rIsActive = formData.rIsActive;
+            }
 
-            // Una vez implementado, descomentar:
-            // if (result.success && result.role) {
-            //     alert('Rol actualizado exitosamente');
-            //     navigate(`/roles/view/${id}`);
-            // } else {
-            //     setError(result.error || 'Error al actualizar rol');
-            // }
+            const result = await roleFlow.updateRole(Number(id), updateData);
 
-            // Navegar de vuelta a la vista por ahora
-            navigate(`/roles/view/${id}`);
+            if (result.success && result.role) {
+                alert('Rol actualizado exitosamente');
+                navigate(`/roles/view/${id}`);
+            } else {
+                setError(result.error || 'Error al actualizar rol');
+            }
         } catch (err) {
             console.error('Error actualizando rol:', err);
             setError('Error inesperado al actualizar rol');
@@ -197,9 +239,23 @@ export default function EditRolePage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
-                    <div className="row">
+                {hasPermission === false && (
+                    <div className="row mb-4">
                         <div className="col-12">
+                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                                <i className="bi bi-shield-x-fill me-2"></i>
+                                <strong>Acceso Denegado</strong>
+                                <p className="mb-0 mt-2">No tienes permisos para editar roles. Solo los administradores del sistema pueden editar roles.</p>
+                                <button type="button" className="btn-close" onClick={() => navigate('/roles')}></button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {hasPermission === true && (
+                <form onSubmit={handleSubmit}>
+                <div className="row">
+                    <div className="col-12">
                             <div className="card shadow-sm border-0 mb-4">
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
@@ -209,7 +265,7 @@ export default function EditRolePage() {
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
-                                        <div className="col-12">
+                                        <div className="col-12 col-md-6">
                                             <label htmlFor="rName" className="form-label fw-semibold">
                                                 Nombre del Rol <span className="text-danger">*</span>
                                             </label>
@@ -230,6 +286,91 @@ export default function EditRolePage() {
                                                 El nombre debe ser único y descriptivo (mínimo 3 caracteres)
                                             </small>
                                         </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rIsActive" className="form-label fw-semibold">
+                                                Estado
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rIsActive"
+                                                    checked={formData.rIsActive}
+                                                    onChange={(e) => onInputChange('rIsActive', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rIsActive">
+                                                    {formData.rIsActive ? 'Activo' : 'Inactivo'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Indica si el rol está activo en el sistema
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rIsAdmin" className="form-label fw-semibold">
+                                                Rol Administrativo
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rIsAdmin"
+                                                    checked={formData.rIsAdmin}
+                                                    onChange={(e) => onInputChange('rIsAdmin', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rIsAdmin">
+                                                    {formData.rIsAdmin ? 'Es rol administrativo' : 'No es rol administrativo'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Los roles administrativos tienen permisos elevados
+                                            </small>
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                            <label htmlFor="rRequires2FA" className="form-label fw-semibold">
+                                                Requiere 2FA
+                                            </label>
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="rRequires2FA"
+                                                    checked={formData.rRequires2FA}
+                                                    onChange={(e) => onInputChange('rRequires2FA', e.target.checked)}
+                                                    disabled={loading}
+                                                />
+                                                <label className="form-check-label" htmlFor="rRequires2FA">
+                                                    {formData.rRequires2FA ? 'Requiere autenticación de dos factores' : 'No requiere 2FA'}
+                                                </label>
+                                            </div>
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Mayor seguridad para roles críticos
+                                            </small>
+                                        </div>
+                                        <div className="col-12">
+                                            <label htmlFor="rDescription" className="form-label fw-semibold">
+                                                Descripción
+                                            </label>
+                                            <textarea
+                                                id="rDescription"
+                                                className="form-control form-control-lg"
+                                                value={formData.rDescription}
+                                                onChange={(e) => onInputChange('rDescription', e.target.value)}
+                                                placeholder="Describe las responsabilidades y permisos de este rol..."
+                                                disabled={loading}
+                                                rows={3}
+                                                maxLength={255}
+                                            />
+                                            <small className="text-muted d-block mt-2">
+                                                <i className="bi bi-info-circle me-1"></i>
+                                                Descripción opcional del rol y sus funciones
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -245,18 +386,76 @@ export default function EditRolePage() {
                                     <div className="row g-3">
                                         <div className="col-md-6">
                                             <div className="border rounded p-3 bg-light">
-                                                <small className="text-muted d-block fw-semibold">Valor Original</small>
+                                                <small className="text-muted d-block fw-semibold">Nombre Original</small>
                                                 <span className="fw-semibold text-primary">{originalData.rName}</span>
                                             </div>
                                         </div>
                                         <div className="col-md-6">
                                             <div className="border rounded p-3 bg-light">
-                                                <small className="text-muted d-block fw-semibold">Valor Nuevo</small>
-                                                <span className={`fw-semibold ${hasChanges ? 'text-success' : 'text-muted'}`}>
+                                                <small className="text-muted d-block fw-semibold">Nombre Nuevo</small>
+                                                <span className={`fw-semibold ${formData.rName !== originalData.rName ? 'text-success' : 'text-muted'}`}>
                                                     {formData.rName || 'Sin cambios'}
                                                 </span>
                                             </div>
                                         </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Estado Original</small>
+                                                <span className="fw-semibold text-primary">{originalData.rIsActive ? 'Activo' : 'Inactivo'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Estado Nuevo</small>
+                                                <span className={`fw-semibold ${formData.rIsActive !== originalData.rIsActive ? 'text-success' : 'text-muted'}`}>
+                                                    {formData.rIsActive ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Rol Admin Original</small>
+                                                <span className="fw-semibold text-primary">{originalData.rIsAdmin ? 'Sí' : 'No'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Rol Admin Nuevo</small>
+                                                <span className={`fw-semibold ${formData.rIsAdmin !== originalData.rIsAdmin ? 'text-success' : 'text-muted'}`}>
+                                                    {formData.rIsAdmin ? 'Sí' : 'No'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Requiere 2FA Original</small>
+                                                <span className="fw-semibold text-primary">{originalData.rRequires2FA ? 'Sí' : 'No'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="border rounded p-3 bg-light">
+                                                <small className="text-muted d-block fw-semibold">Requiere 2FA Nuevo</small>
+                                                <span className={`fw-semibold ${formData.rRequires2FA !== originalData.rRequires2FA ? 'text-success' : 'text-muted'}`}>
+                                                    {formData.rRequires2FA ? 'Sí' : 'No'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {(formData.rDescription !== originalData.rDescription) && (
+                                            <>
+                                                <div className="col-md-6">
+                                                    <div className="border rounded p-3 bg-light">
+                                                        <small className="text-muted d-block fw-semibold">Descripción Original</small>
+                                                        <span className="fw-semibold text-primary small">{originalData.rDescription || 'Sin descripción'}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <div className="border rounded p-3 bg-light">
+                                                        <small className="text-muted d-block fw-semibold">Descripción Nueva</small>
+                                                        <span className="fw-semibold text-success small">{formData.rDescription || 'Sin descripción'}</span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     {hasChanges && (
                                         <div className="alert alert-warning border-0 bg-light mt-3">
@@ -267,31 +466,6 @@ export default function EditRolePage() {
                                 </div>
                             </div>
 
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-info-circle me-2 text-warning"></i>
-                                        Información Importante
-                                    </h5>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="alert alert-info border-0 bg-light">
-                                        <h6 className="alert-heading fw-semibold">
-                                            <i className="bi bi-tools me-2"></i>
-                                            Funcionalidad en Desarrollo
-                                        </h6>
-                                        <p className="mb-2">
-                                            La edición de roles es una funcionalidad avanzada que requiere validaciones
-                                            de permisos y control de concurrencia en el backend.
-                                        </p>
-                                        <hr />
-                                        <p className="mb-0 small">
-                                            <strong>Próximos pasos:</strong> Una vez implementado el endpoint en el backend,
-                                            esta página permitirá editar roles con validación de conflictos y auditoría.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-4">
@@ -328,6 +502,8 @@ export default function EditRolePage() {
                         </div>
                     </div>
                 </form>
+                )}
+
             </div>
         </div>
     );

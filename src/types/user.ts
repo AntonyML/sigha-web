@@ -17,6 +17,30 @@ export interface User {
 export interface UserRole {
   id: number;
   rName: string;
+  rDescription?: string;
+  rIsAdmin?: boolean;
+  rRequires2FA?: boolean;
+  rIsActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ==================== DTOs ====================
+
+export interface CreateRoleData {
+  rName: string;
+  rDescription?: string;
+  rIsAdmin?: boolean;
+  rRequires2FA?: boolean;
+  rIsActive?: boolean;
+}
+
+export interface UpdateRoleData {
+  rName?: string;
+  rDescription?: string;
+  rIsAdmin?: boolean;
+  rRequires2FA?: boolean;
+  rIsActive?: boolean;
 }
 
 // ==================== DTOs ====================

@@ -61,6 +61,37 @@ export default function RoleListPage() {
         navigate(`/roles/edit/${roleId}`);
     };
 
+    const handleDeleteRole = async (role: UserRole) => {
+        // Solo permitir eliminar roles que no sean del sistema (ID > 10 o verificar si no es admin del sistema)
+        if (role.id <= 10) {
+            alert('No se pueden eliminar los roles del sistema.');
+            return;
+        }
+
+        const confirmDelete = window.confirm(
+            `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`
+        );
+
+        if (!confirmDelete) return;
+
+        setError('');
+
+        try {
+            const result = await roleFlow.deleteRole(role.id);
+
+            if (result.success) {
+                alert('Rol eliminado exitosamente');
+                // Recargar la lista de roles
+                await loadRoles();
+            } else {
+                setError(result.error || 'Error al eliminar rol');
+            }
+        } catch (err) {
+            console.error('Error eliminando rol:', err);
+            setError('Error inesperado al eliminar rol');
+        }
+    };
+
     const handleCreateRole = () => {
         navigate('/roles/create');
     };
@@ -193,6 +224,15 @@ export default function RoleListPage() {
                                                                 >
                                                                     <i className="bi bi-pencil"></i>
                                                                 </button>
+                                                                {role.id > 10 && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-outline-danger"
+                                                                        onClick={() => handleDeleteRole(role)}
+                                                                        title="Eliminar rol"
+                                                                    >
+                                                                        <i className="bi bi-trash"></i>
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>

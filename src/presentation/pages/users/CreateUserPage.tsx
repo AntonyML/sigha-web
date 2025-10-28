@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { auditService } from '../../../services/auditService';
+import { PermissionUtils } from '../../../utils/permissionUtils';
 import type { UserRole, CreateUserData } from '../../../types/user';
 
 interface UserFormData {
@@ -30,23 +31,36 @@ export default function CreateUserPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordsMatch, setPasswordsMatch] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [roles, setRoles] = useState<UserRole[]>([]);
+    const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const navigate = useNavigate();
 
-    // Cargar roles al montar el componente
+    // Verificar permisos y cargar roles al montar el componente
     useEffect(() => {
-        loadRoles();
-    }, []);
+        const checkPermissionsAndLoadData = async () => {
+            try {
+                // Verificar permisos
+                const canCreate = await PermissionUtils.canCreateUsers();
+                setHasPermission(canCreate);
 
-    const loadRoles = async () => {
-        const result = await roleFlow.getAllRoles();
-        if (result.success && result.roles) {
-            setRoles(result.roles);
-        } else {
-            setError(result.error || 'Error al cargar roles');
-        }
-    };
+                if (!canCreate) {
+                    return;
+                }
+
+                // Cargar roles
+                const result = await roleFlow.getAllRoles();
+                if (result.success && result.roles) {
+                    setRoles(result.roles);
+                } else {
+                    console.error('Error al cargar roles:', result.error);
+                }
+            } catch (err) {
+                console.error('Error verificando permisos:', err);
+            }
+        };
+
+        checkPermissionsAndLoadData();
+    }, []);
 
     function onInputChange(field: keyof UserFormData, value: string | number) {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -64,15 +78,20 @@ export default function CreateUserPage() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        setError('');
+
+        // Verificar permisos antes de procesar
+        if (hasPermission === false) {
+            alert('No tienes permisos para crear usuarios.');
+            return;
+        }
 
         if (!passwordsMatch) {
-            setError('Las contraseñas no coinciden');
+            alert('Las contraseñas no coinciden');
             return;
         }
 
         if (!formData.roleId || formData.roleId === 0) {
-            setError('Por favor selecciona un rol');
+            alert('Por favor selecciona un rol');
             return;
         }
 
@@ -108,7 +127,7 @@ export default function CreateUserPage() {
             alert(result.message || 'Usuario creado exitosamente');
             navigate('/users');
         } else {
-            setError(result.error || 'Error al crear usuario');
+            alert(result.error || 'Error al crear usuario');
         }
 
         setLoading(false);
@@ -135,18 +154,20 @@ export default function CreateUserPage() {
                     </div>
                 </div>
 
-                {error && (
+                {hasPermission === false && (
                     <div className="row mb-4">
                         <div className="col-12">
                             <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                                {error}
-                                <button type="button" className="btn-close" onClick={() => setError('')}></button>
+                                <i className="bi bi-shield-x-fill me-2"></i>
+                                <strong>Acceso Denegado</strong>
+                                <p className="mb-0 mt-2">No tienes permisos para crear usuarios. Solo los administradores del sistema pueden crear nuevos usuarios.</p>
+                                <button type="button" className="btn-close" onClick={() => navigate('/users')}></button>
                             </div>
                         </div>
                     </div>
                 )}
 
+                {hasPermission === true && (
                 <form onSubmit={handleSubmit}>
                     <div className="row">
                         <div className="col-12">
@@ -392,6 +413,8 @@ export default function CreateUserPage() {
                         </div>
                     </div>
                 </form>
+                )}
+
             </div>
         </div>
     );
