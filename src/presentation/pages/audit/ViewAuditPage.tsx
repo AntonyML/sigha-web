@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/audit';
 import { Icon } from '../../components/atoms';
-import type { DigitalRecord } from '../../../types/audit';
+import type { AuditReport } from '../../../types/audit';
+import { AuditAction } from '../../../types/audit';
 
 export default function ViewAuditPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [record, setRecord] = useState<DigitalRecord | null>(null);
+    const [record, setRecord] = useState<AuditReport | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -21,10 +22,10 @@ export default function ViewAuditPage() {
             setLoading(true);
             setError('');
 
-            const result = await auditFlow.getDigitalRecordById(Number(id));
+            const result = await auditFlow.getAuditReportById(Number(id));
             
-            if (result.success && result.record) {
-                setRecord(result.record);
+            if (result.success && result.report) {
+                setRecord(result.report);
             } else {
                 setError(result.error || 'No se pudo cargar la información del registro');
             }
@@ -41,12 +42,12 @@ export default function ViewAuditPage() {
         const csvContent = [
             ['Campo', 'Valor'].join(','),
             ['ID', record.id].join(','),
-            ['Acción', auditFlow.getActionLabel(record.action)].join(','),
-            ['Tabla', auditFlow.getTableLabel(record.tableName || '')].join(','),
-            ['Usuario', record.userName || 'N/A'].join(','),
-            ['Email', record.userEmail || 'N/A'].join(','),
-            ['Descripción', `"${record.description || 'N/A'}"`].join(','),
-            ['Fecha', auditFlow.formatAuditDate(record.timestamp)].join(','),
+            ['Acción', auditFlow.getActionLabel(record.ar_action as AuditAction)].join(','),
+            ['Tabla', auditFlow.getTableLabel(record.ar_entity_name || '')].join(','),
+            ['Usuario', record.user_name || 'N/A'].join(','),
+            ['Email', record.user_email || 'N/A'].join(','),
+            ['Descripción', `"${record.ar_observations || 'N/A'}"`].join(','),
+            ['Fecha', auditFlow.formatAuditDate(record.create_at)].join(','),
         ].join('\n');
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -129,13 +130,7 @@ export default function ViewAuditPage() {
                                     <div>
                                         <h1 className="h3 fw-bold mb-1">Registro de Auditoría #{record.id}</h1>
                                         <p className="text-muted mb-0">
-                                            {auditFlow.formatAuditDate(record.timestamp)}
-                                            {auditFlow.isCriticalAudit(record) && (
-                                                <span className="badge bg-warning text-dark ms-2">
-                                                    <Icon name="exclamation_triangle" className="me-1" />
-                                                    Crítico
-                                                </span>
-                                            )}
+                                            {auditFlow.formatAuditDate(record.create_at)}
                                         </p>
                                     </div>
                                 </div>
@@ -179,9 +174,9 @@ export default function ViewAuditPage() {
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Acción</label>
                                         <p className="mb-0">
-                                            <span className={`badge fs-6 ${auditFlow.getActionBadgeClass(record.action)} d-inline-flex align-items-center`}>
-                                                <Icon name={auditFlow.getActionIcon(record.action)} size="sm" className="me-1" />
-                                                {auditFlow.getActionLabel(record.action)}
+                                            <span className={`badge fs-6 ${auditFlow.getActionBadgeClass(record.ar_action as AuditAction)} d-inline-flex align-items-center`}>
+                                                <Icon name={auditFlow.getActionIcon(record.ar_action as AuditAction)} size="sm" className="me-1" />
+                                                {auditFlow.getActionLabel(record.ar_action as AuditAction)}
                                             </span>
                                         </p>
                                     </div>
@@ -189,11 +184,11 @@ export default function ViewAuditPage() {
                                         <label className="text-muted small fw-semibold">Tabla Afectada</label>
                                         <p className="mb-0">
                                             <span className="badge bg-secondary fs-6">
-                                                {auditFlow.getTableLabel(record.tableName || '')}
+                                                {auditFlow.getTableLabel(record.ar_entity_name || '')}
                                             </span>
-                                            {record.recordId && (
+                                            {record.ar_entity_id && (
                                                 <span className="ms-2 text-muted">
-                                                    (ID: <code>#{record.recordId}</code>)
+                                                    (ID: <code>#{record.ar_entity_id}</code>)
                                                 </span>
                                             )}
                                         </p>
@@ -203,12 +198,12 @@ export default function ViewAuditPage() {
                                         <p className="mb-0">
                                             <span>
                                                 <Icon name="user_circle" className="me-2" />
-                                                {record.userName || 'N/A'}
+                                                {record.user_name || 'N/A'}
                                             </span>
-                                            {record.userEmail && (
+                                            {record.user_email && (
                                                 <>
                                                     <br />
-                                                    <small className="text-muted">{record.userEmail}</small>
+                                                    <small className="text-muted">{record.user_email}</small>
                                                 </>
                                             )}
                                         </p>
@@ -216,21 +211,14 @@ export default function ViewAuditPage() {
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Descripción</label>
                                         <p className="mb-2">
-                                            {auditFlow.getAuditDescription(record).userFriendly}
+                                            {auditFlow.getAuditReportDescription(record).userFriendly}
                                         </p>
-                                        {auditFlow.getAuditTechnicalInfo(record) && (
-                                            <div className="mt-2">
-                                                <small className="text-muted">
-                                                    <strong>Detalles técnicos:</strong> {auditFlow.getAuditTechnicalInfo(record)}
-                                                </small>
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="col-12">
                                         <label className="text-muted small fw-semibold">Fecha y Hora</label>
                                         <p className="mb-0">
                                             <Icon name="calendar_days" className="me-2" />
-                                            {auditFlow.formatAuditDate(record.timestamp)}
+                                            {auditFlow.formatAuditDate(record.create_at)}
                                         </p>
                                     </div>
                                 </div>
@@ -249,11 +237,11 @@ export default function ViewAuditPage() {
                             </div>
                             <div className="card-body">
                                 <div className="row g-3">
-                                    {record.userId && (
+                                    {record.id_generator && (
                                         <div className="col-12">
-                                            <label className="text-muted small fw-semibold">ID Usuario</label>
+                                            <label className="text-muted small fw-semibold">ID Generador</label>
                                             <p className="mb-0">
-                                                <code>#{record.userId}</code>
+                                                <code>#{record.id_generator}</code>
                                             </p>
                                         </div>
                                     )}

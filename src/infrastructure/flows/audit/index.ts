@@ -3,61 +3,37 @@
  *
  * SINCRONIZADO CON BACKEND NestJS audit.service.ts
  * Endpoints disponibles:
- * - POST /audit/digital-records
- * - GET /audit/digital-records/search
- * - GET /audit/digital-records/:id
- * - GET /audit/statistics
+ * - GET /audits/reports
+ * - GET /audits/stats
+ * - POST /audits/reports
+ * - DELETE /audits/reports/:id
  *
- * Encapsula toda la lógica de consulta y análisis de registros de auditoría (digital records),
+ * Encapsula toda la lógica de consulta y análisis de registros de auditoría,
  * incluyendo búsquedas, filtrado, estadísticas y exportación.
  */
 
 // Interfaces
 export type {
   AuditFlowResult,
-  GetDigitalRecordFlowResult,
-  GetDigitalRecordsFlowResult,
-  CreateDigitalRecordFlowResult,
+  GetAuditReportFlowResult,
+  GetAuditReportsFlowResult,
   GetAuditStatisticsFlowResult,
 } from './interfaces';
 
-// Helpers
-export {
-  formatAuditDate,
-  getActionLabel,
-  getTableLabel,
-  getActionBadgeClass,
-  isCriticalAudit,
-  getActionIcon,
-  getAuditDescription,
-  getAuditTechnicalInfo,
-} from './helpers';
-
 // Main operations
 import {
-  searchDigitalRecords,
-  getDigitalRecordById,
-  createDigitalRecord,
+  searchAuditReports,
+  getAuditReportById,
   getAuditStatistics,
-  exportDigitalRecords,
+  exportAuditReports,
 } from './main';
 
-// Reports operations
-import {
-  getAuditReports,
+export {
+  searchAuditReports,
   getAuditReportById,
-  generateAuditReport,
-  deleteAuditReport,
-} from './reports';
-
-// Specialized operations
-import {
-  getAuditsByUser,
-  getAuditsByEntity,
-  getAllAudits,
-  getDigitalRecordHistory,
-  searchOlderAdultUpdates,
-} from './specialized';
+  getAuditStatistics,
+  exportAuditReports,
+};
 
 // Helpers
 import {
@@ -65,10 +41,8 @@ import {
   getActionLabel,
   getTableLabel,
   getActionBadgeClass,
-  isCriticalAudit,
   getActionIcon,
-  getAuditDescription,
-  getAuditTechnicalInfo,
+  getAuditReportDescription,
 } from './helpers';
 
 /**
@@ -76,32 +50,16 @@ import {
  */
 export const auditFlow = {
   // Main operations
-  searchDigitalRecords,
-  getDigitalRecordById,
-  createDigitalRecord,
-  getAuditStatistics,
-  exportDigitalRecords,
-
-  // Reports operations
-  getAuditReports,
+  searchAuditReports,
   getAuditReportById,
-  generateAuditReport,
-  deleteAuditReport,
-
-  // Specialized operations
-  getAuditsByUser,
-  getAuditsByEntity,
-  getAllAudits,
-  getDigitalRecordHistory,
-  searchOlderAdultUpdates,
+  getAuditStatistics,
+  exportAuditReports,
 
   // Helpers
   formatAuditDate,
   getActionLabel,
   getTableLabel,
   getActionBadgeClass,
-  isCriticalAudit,
   getActionIcon,
-  getAuditDescription,
-  getAuditTechnicalInfo,
+  getAuditReportDescription,
 };

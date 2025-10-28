@@ -1,5 +1,5 @@
 import type { AuditAction } from '../../../types/audit';
-import type { DigitalRecord } from '../../../types/audit';
+import type {  AuditReport } from '../../../types/audit';
 
 /**
  * Formatea la fecha de un registro de auditoría
@@ -89,124 +89,103 @@ export function getActionBadgeClass(action: AuditAction): string {
 }
 
 /**
- * Determina si una auditoría es crítica (requiere atención)
- */
-export function isCriticalAudit(record: DigitalRecord): boolean {
-  const criticalActions: AuditAction[] = ['delete'];
-  const criticalTables = ['users', 'roles', 'older_adult'];
-
-  return (
-    criticalActions.includes(record.action) ||
-    (record.tableName !== null && criticalTables.includes(record.tableName))
-  );
-}
-
-/**
- * Obtiene una descripción amigable y explicativa del registro de auditoría
+ * Obtiene una descripción amigable y explicativa del reporte de auditoría
  * Convierte información técnica en lenguaje natural para usuarios finales
  */
-export function getAuditDescription(record: DigitalRecord): {
+export function getAuditReportDescription(record: AuditReport): {
   userFriendly: string;
   technical?: string;
 } {
-  const { action, tableName, description, recordId } = record;
-  const tableLabel = getTableLabel(tableName || '');
+  const { ar_action, ar_entity_name, ar_observations, ar_entity_id } = record;
+  const tableLabel = getTableLabel(ar_entity_name || '');
 
   // Descripciones específicas para casos comunes
-  if (description) {
+  if (ar_observations) {
     // Casos de envío de códigos de verificación
-    if (description.includes('Send code_verify') && description.includes('code_verifiy_email')) {
+    if (ar_observations.includes('Send code_verify') && ar_observations.includes('code_verifiy_email')) {
       return {
-        userFriendly: `Se envió un código de verificación al correo electrónico para ${action === 'create' ? 'registro' : 'recuperación'} de cuenta`,
-        technical: `Send code_verify id=code_verifiy_email (ID: ${recordId || 'N/A'})`
+        userFriendly: `Se envió un código de verificación al correo electrónico para ${ar_action === 'create' ? 'registro' : 'recuperación'} de cuenta`,
+        technical: `Send code_verify id=code_verifiy_email (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
     // Casos de envío de códigos 2FA
-    if (description.includes('Send 6_codes_2fa') && description.includes('6_codes_2fa_email')) {
+    if (ar_observations.includes('Send 6_codes_2fa') && ar_observations.includes('6_codes_2fa_email')) {
       return {
         userFriendly: 'Se enviaron 6 códigos de autenticación de dos factores al correo electrónico',
-        technical: `Send 6_codes_2fa id=6_codes_2fa_email (ID: ${recordId || 'N/A'})`
+        technical: `Send 6_codes_2fa id=6_codes_2fa_email (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
-    if (description.includes('Send 8_codes_2fa') && description.includes('8_codes_2fa_email')) {
+    if (ar_observations.includes('Send 8_codes_2fa') && ar_observations.includes('8_codes_2fa_email')) {
       return {
         userFriendly: 'Se enviaron 8 códigos de autenticación de dos factores al correo electrónico',
-        technical: `Send 8_codes_2fa id=8_codes_2fa_email (ID: ${recordId || 'N/A'})`
+        technical: `Send 8_codes_2fa id=8_codes_2fa_email (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
     // Casos de login/logout
-    if (action === 'login' && tableName === 'users') {
+    if (ar_action === 'login' && ar_entity_name === 'users') {
       return {
         userFriendly: 'Inicio de sesión exitoso en el sistema',
-        technical: description
+        technical: ar_observations
       };
     }
 
-    if (action === 'logout' && tableName === 'users') {
+    if (ar_action === 'logout' && ar_entity_name === 'users') {
       return {
         userFriendly: 'Cierre de sesión del sistema',
-        technical: description
+        technical: ar_observations
       };
     }
 
     // Casos de creación/edición/eliminación de registros
-    if (action === 'create' && tableName) {
+    if (ar_action === 'create' && ar_entity_name) {
       return {
         userFriendly: `Se creó un nuevo registro en ${tableLabel}`,
-        technical: `${description} (ID: ${recordId || 'N/A'})`
+        technical: `${ar_observations} (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
-    if (action === 'update' && tableName) {
+    if (ar_action === 'update' && ar_entity_name) {
       return {
         userFriendly: `Se actualizó un registro en ${tableLabel}`,
-        technical: `${description} (ID: ${recordId || 'N/A'})`
+        technical: `${ar_observations} (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
-    if (action === 'delete' && tableName) {
+    if (ar_action === 'delete' && ar_entity_name) {
       return {
         userFriendly: `Se eliminó un registro de ${tableLabel}`,
-        technical: `${description} (ID: ${recordId || 'N/A'})`
+        technical: `${ar_observations} (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
-    if (action === 'view' && tableName) {
+    if (ar_action === 'view' && ar_entity_name) {
       return {
         userFriendly: `Se consultó información de ${tableLabel}`,
-        technical: `${description} (ID: ${recordId || 'N/A'})`
+        technical: `${ar_observations} (ID: ${ar_entity_id || 'N/A'})`
       };
     }
 
-    if (action === 'export' && tableName) {
+    if (ar_action === 'export' && ar_entity_name) {
       return {
         userFriendly: `Se exportaron datos de ${tableLabel}`,
-        technical: `${description} (ID: ${recordId || 'N/A'})`
+        technical: `${ar_observations} (ID: ${ar_entity_id || 'N/A'})`
       };
     }
   }
 
   // Descripción por defecto si no hay casos específicos
-  const actionLabel = getActionLabel(action);
-  const baseDescription = tableName
-    ? `${actionLabel} en ${tableLabel}${recordId ? ` (ID: ${recordId})` : ''}`
-    : `${actionLabel}${recordId ? ` (ID: ${recordId})` : ''}`;
+  const actionLabel = getActionLabel(ar_action as AuditAction);
+  const baseDescription = ar_entity_name
+    ? `${actionLabel} en ${tableLabel}${ar_entity_id ? ` (ID: ${ar_entity_id})` : ''}`
+    : `${actionLabel}${ar_entity_id ? ` (ID: ${ar_entity_id})` : ''}`;
 
   return {
     userFriendly: baseDescription,
-    technical: description || undefined
+    technical: ar_observations || undefined
   };
-}
-
-/**
- * Obtiene información adicional técnica del registro (opcional)
- */
-export function getAuditTechnicalInfo(record: DigitalRecord): string | null {
-  const description = getAuditDescription(record);
-  return description.technical || null;
 }
 
 /**

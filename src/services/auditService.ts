@@ -1,19 +1,9 @@
 import axios from 'axios';
-import {
-  AuditAction,
-  AuditReportType,
-} from '../types/audit';
 import type {
-  DigitalRecord,
-  CreateDigitalRecordDto,
-  SearchDigitalRecordsDto,
-  PaginatedDigitalRecordsResponse,
-  AuditStatistics,
-  LogAuditRequest,
-  LogAuditResponse,
   AuditReport,
   SearchAuditReportsDto,
   PaginatedAuditReportsResponse,
+  AuditStatistics,
 } from '../types/audit';
 import { config } from '../config/app.config';
 
@@ -53,270 +43,28 @@ apiClient.interceptors.response.use(
 
 // ==================== Helper Functions ====================
 
-/**
- * Obtiene la IP del cliente (simplificado)
- * En producción, el backend lo maneja desde req.ip
- */
-const getClientIP = (): string | undefined => {
-  return undefined; 
-};
 
-/**
- * Obtiene el User Agent del navegador
- */
-const getUserAgent = (): string => {
-  return navigator.userAgent;
-};
 
 /**
  * Servicio de auditoría - Métodos principales y helpers
- * Endpoints sincronizados con backend NestJS:
- * - POST /audits/log (PRINCIPAL - usar este para registrar auditorías)
- * - GET /audits/search (búsqueda legacy)
- * - GET /audits/:id (obtener por ID legacy)
+ * Endpoints sincronizados con backend NestJS audit.service.ts:
+ * - GET /audits/search (búsqueda paginada de registros individuales)
+ * - GET /audits/reports (lista de reportes generados)
+ * - GET /audits/reports/:id (obtener reporte específico)
  * - GET /audits/stats (estadísticas)
- * - GET /audits/user/:userId (por usuario)
- * - GET /audits/entity/:entity/:entityId (por entidad)
+ * - POST /audits/reports (generar reportes)
+ * - DELETE /audits/reports/:id (eliminar reportes)
  */
 export const auditService = {
-  // ==================== MÉTODO PRINCIPAL ====================
+  // ==================== ENDPOINTS UNIFICADOS DEL BACKEND ====================
   
   /**
-   * 🎯 MÉTODO PRINCIPAL: Registra una acción de auditoría usando stored procedure
-   * Backend: logAudit() con stored procedure sp_insert_audit_log
-   * Endpoint: POST /audits/log
-   * 
-   * IMPORTANTE:
-   * - NO enviar userId (el backend lo extrae del JWT automáticamente)
-   * - ipAddress es opcional (backend lo obtiene de req.ip)
-   * - userAgent se envía automáticamente
-   * - oldValue y newValue deben ser JSON strings si son objetos
-   * - NO debe interrumpir el flujo de la aplicación si falla
-   * 
-   * @param request - Datos de la auditoría
-   * @returns Promise con el resultado del logging
-   */
-  logAudit: async (
-    request: LogAuditRequest
-  ): Promise<LogAuditResponse> => {
-    try {
-      const response = await apiClient.post<LogAuditResponse>(
-        '/audits/log',
-        {
-          ...request,
-          ipAddress: request.ipAddress || getClientIP(),
-          userAgent: request.userAgent || getUserAgent(),
-        }
-      );
-      
-      return response.data;
-    } catch (error) {
-      console.error('Error logging audit:', error);
-      // No lanzar error para no interrumpir flujo de la app
-      return { success: false, message: 'Failed to log audit' };
-    }
-  },
-
-  // ==================== HELPERS ESPECÍFICOS ====================
-  
-  /**
-   * 🔐 Helper para login exitoso
-   */
-  logLogin: async (observations?: string): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.LOGIN_ATTEMPTS,
-      action: AuditAction.LOGIN,
-      observations: observations || 'Ingreso al sistema',
-    });
-  },
-
-  /**
-   * 🚪 Helper para logout
-   */
-  logLogout: async (observations?: string): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.LOGIN_ATTEMPTS,
-      action: AuditAction.LOGOUT,
-      observations: observations || 'Cierre de sesión',
-    });
-  },
-
-  /**
-   * 👥 Helper para cambios de rol
-   */
-  logRoleChange: async (
-    userId: number,
-    oldRole: string,
-    newRole: string,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.ROLE_CHANGES,
-      action: AuditAction.UPDATE,
-      entityName: 'users',
-      entityId: userId,
-      oldValue: oldRole,
-      newValue: newRole,
-      observations: observations || `Cambio de rol de ${oldRole} a ${newRole}`,
-    });
-  },
-
-  /**
-   * 👴 Helper para actualización de adulto mayor
-   */
-  logOlderAdultUpdate: async (
-    adultId: number,
-    fieldChanged: string,
-    oldValue: unknown,
-    newValue: unknown,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.OLDER_ADULT_UPDATES,
-      action: AuditAction.UPDATE,
-      entityName: 'older_adult',
-      entityId: adultId,
-      oldValue: typeof oldValue === 'object' ? JSON.stringify(oldValue) : String(oldValue),
-      newValue: typeof newValue === 'object' ? JSON.stringify(newValue) : String(newValue),
-      observations: observations || `Actualización de campo: ${fieldChanged}`,
-    });
-  },
-
-  /**
-   * 👁️ Helper para acceso a expedientes
-   */
-  logSystemAccess: async (
-    entityName: string,
-    entityId: number,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.SYSTEM_ACCESS,
-      action: AuditAction.VIEW,
-      entityName,
-      entityId,
-      observations: observations || `Acceso a ${entityName} #${entityId}`,
-    });
-  },
-
-  /**
-   * 🏥 Helper para cambios en historiales clínicos
-   */
-  logClinicalRecordChange: async (
-    recordId: number,
-    action: keyof typeof AuditAction,
-    oldValue?: unknown,
-    newValue?: unknown,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.CLINICAL_RECORD_CHANGES,
-      action: AuditAction[action],
-      entityName: 'clinical_history',
-      entityId: recordId,
-      oldValue: oldValue ? JSON.stringify(oldValue) : undefined,
-      newValue: newValue ? JSON.stringify(newValue) : undefined,
-      observations: observations || 'Cambio en historial clínico',
-    });
-  },
-
-  /**
-   * 🔑 Helper para reseteo de contraseña
-   */
-  logPasswordReset: async (
-    userId: number,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.PASSWORD_RESETS,
-      action: AuditAction.UPDATE,
-      entityName: 'users',
-      entityId: userId,
-      observations: observations || 'Reseteo de contraseña',
-    });
-  },
-
-  /**
-   * 🔔 Helper para notificaciones
-   */
-  logNotification: async (
-    notificationId: number,
-    action: keyof typeof AuditAction,
-    newValue?: unknown,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.NOTIFICATIONS,
-      action: AuditAction[action],
-      entityName: 'notifications',
-      entityId: notificationId,
-      newValue: newValue ? JSON.stringify(newValue) : undefined,
-      observations: observations || 'Acción en notificación',
-    });
-  },
-
-  /**
-   * 📤 Helper para exportación de datos
-   */
-  logExport: async (
-    entityName: string,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.GENERAL_ACTIONS,
-      action: AuditAction.EXPORT,
-      entityName,
-      observations: observations || `Exportación de datos de ${entityName}`,
-    });
-  },
-
-  /**
-   * ➕ Helper para crear registros
-   */
-  logCreate: async (
-    entityName: string,
-    entityId: number,
-    newValue?: unknown,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.GENERAL_ACTIONS,
-      action: AuditAction.CREATE,
-      entityName,
-      entityId,
-      newValue: newValue ? JSON.stringify(newValue) : undefined,
-      observations: observations || `Creación de ${entityName} #${entityId}`,
-    });
-  },
-
-  /**
-   * ❌ Helper para eliminar registros
-   */
-  logDelete: async (
-    entityName: string,
-    entityId: number,
-    oldValue?: unknown,
-    observations?: string
-  ): Promise<LogAuditResponse> => {
-    return auditService.logAudit({
-      type: AuditReportType.GENERAL_ACTIONS,
-      action: AuditAction.DELETE,
-      entityName,
-      entityId,
-      oldValue: oldValue ? JSON.stringify(oldValue) : undefined,
-      observations: observations || `Eliminación de ${entityName} #${entityId}`,
-    });
-  },
-
-  // ==================== ENDPOINTS REALES DEL BACKEND ====================
-  
-  /**
-   * 📊 Obtener todos los reportes de auditoría generados
+   * 📊 Obtener lista de reportes de auditoría generados
    * Backend: getAuditReports()
-   * Endpoint: GET /audits/reports (con filtros opcionales)
+   * Endpoint: GET /audits/reports (sin paginación, solo reportes generados)
    * 
    * IMPORTANTE: Este endpoint devuelve REPORTES GENERADOS, no registros individuales
-   * Para registros individuales, usar searchDigitalRecords() o getAllAudits()
+   * Para registros individuales con paginación, usar searchAuditReports() -> /audits/search
    */
   getAuditReports: async (
     params?: SearchAuditReportsDto
@@ -358,90 +106,33 @@ export const auditService = {
   },
 
   /**
-   * 📋 Obtener todos los registros de auditoría (digital records)
-   * Backend: getAllAudits()
-   * Endpoint: GET /audits
-   * 
-   * Este es el endpoint correcto para listar registros de auditoría individuales
+   * � Buscar reportes de auditoría con filtros unificados
+   * Backend: getAuditReports() -> Cambiado a /audits/search para paginación
+   * Endpoint: GET /audits/search (con paginación y filtros)
    */
-  getAllAudits: async (
-    params?: SearchDigitalRecordsDto
-  ): Promise<PaginatedDigitalRecordsResponse> => {
-    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
-      '/audits',
-      { params }
+  searchAuditReports: async (
+    params?: SearchAuditReportsDto
+  ): Promise<PaginatedAuditReportsResponse> => {
+    // Convertir parámetros numéricos a strings para compatibilidad con backend
+    // Solo incluir parámetros que no sean undefined, null, o strings vacías
+    const queryParams: Record<string, string> = {};
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams[key] = String(value);
+        }
+      });
+    }
+
+    const response = await apiClient.get<PaginatedAuditReportsResponse>(
+      '/audits/search', // Cambiado de /audits/reports a /audits/search
+      { params: queryParams }
     );
     return response.data;
   },
 
   /**
-   * 📜 Obtener historial de auditoría para un registro digital específico
-   * Backend: getDigitalRecordHistory()
-   * Endpoint: GET /audits/digital-records/:recordId/history
-   */
-  getDigitalRecordHistory: async (
-    recordId: string,
-    queryDto?: any
-  ): Promise<any> => {
-    const response = await apiClient.get(
-      `/audits/digital-records/${recordId}/history`,
-      { params: queryDto }
-    );
-    return response.data;
-  },
-
-  /**
-   * 👴 Buscar actualizaciones de adultos mayores
-   * Backend: searchOlderAdultUpdates()
-   * Endpoint: GET /audits/older-adult-updates
-   */
-  searchOlderAdultUpdates: async (params?: any): Promise<any> => {
-    const response = await apiClient.get('/audits/older-adult-updates', { params });
-    return response.data;
-  },
-
-  // ==================== MÉTODOS DE BÚSQUEDA Y CONSULTA ====================
-  
-  /**
-   * 🔍 Buscar registros digitales con filtros
-   * Backend: searchAudits() / searchDigitalRecords()
-   * Endpoint: GET /audits/search
-   */
-  searchDigitalRecords: async (
-    params?: SearchDigitalRecordsDto
-  ): Promise<PaginatedDigitalRecordsResponse> => {
-    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
-      '/audits/search',
-      { params }
-    );
-    return response.data;
-  },
-
-  /**
-   * 🔎 Obtener un registro digital por ID
-   * Backend: getAuditById()
-   * Endpoint: GET /audits/:id
-   */
-  getDigitalRecordById: async (id: number): Promise<DigitalRecord> => {
-    const response = await apiClient.get<DigitalRecord>(`/audits/${id}`);
-    return response.data;
-  },
-
-  /**
-   * ➕ Crear un nuevo registro digital (auditoría manual)
-   * Backend: createAudit()
-   * Endpoint: POST /audits
-   * Nota: Backend obtiene userId del token JWT automáticamente
-   */
-  createDigitalRecord: async (
-    data: CreateDigitalRecordDto
-  ): Promise<DigitalRecord> => {
-    const response = await apiClient.post<DigitalRecord>('/audits', data);
-    return response.data;
-  },
-
-  /**
-   * 📊 Obtener estadísticas de auditoría
+   *  Obtener estadísticas de auditoría
    * Backend: getAuditStats()
    * Endpoint: GET /audits/stats
    */
@@ -453,55 +144,22 @@ export const auditService = {
   },
 
   /**
-   * 👤 Obtener auditorías por usuario
-   * Backend: getAuditsByUser()
-   * Endpoint: GET /audits/user/:userId
-   */
-  getAuditsByUser: async (
-    userId: number,
-    params?: SearchDigitalRecordsDto
-  ): Promise<PaginatedDigitalRecordsResponse> => {
-    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
-      `/audits/user/${userId}`,
-      { params }
-    );
-    return response.data;
-  },
-
-  /**
-   * 🏢 Obtener auditorías por entidad
-   * Backend: getAuditsByEntity()
-   * Endpoint: GET /audits/entity/:entity/:entityId
-   */
-  getAuditsByEntity: async (
-    entity: string,
-    entityId: number,
-    params?: SearchDigitalRecordsDto
-  ): Promise<PaginatedDigitalRecordsResponse> => {
-    const response = await apiClient.get<PaginatedDigitalRecordsResponse>(
-      `/audits/entity/${entity}/${entityId}`,
-      { params }
-    );
-    return response.data;
-  },
-
-  /**
    * Exportar auditorías a CSV (Frontend genera el CSV)
-   * Usa searchDigitalRecords con limit alto y genera CSV localmente
+   * Usa searchAuditReports con limit alto y genera CSV localmente
    */
-  exportDigitalRecords: async (params?: SearchDigitalRecordsDto): Promise<Blob> => {
-    const data = await auditService.searchDigitalRecords({ ...params, limit: 10000 });
+  exportAuditReports: async (params?: SearchAuditReportsDto): Promise<Blob> => {
+    const data = await auditService.searchAuditReports({ ...params, limit: '10000' });
     
     // Generar CSV manualmente
-    const headers = ['ID', 'Usuario', 'Acción', 'Tabla', 'ID Registro', 'Descripción', 'Fecha'];
+    const headers = ['ID', 'Tipo', 'Entidad', 'ID Entidad', 'Acción', 'Usuario', 'Fecha'];
     const rows = data.records.map(record => [
       record.id,
-      record.userName,
-      record.action,
-      record.tableName || 'N/A',
-      record.recordId || 'N/A',
-      record.description || 'N/A',
-      new Date(record.timestamp).toLocaleString('es-CR'),
+      record.ar_type,
+      record.ar_entity_name || 'N/A',
+      record.ar_entity_id || 'N/A',
+      record.ar_action,
+      record.user_name || 'N/A',
+      new Date(record.create_at).toLocaleString('es-CR'),
     ]);
     
     const csvContent = [

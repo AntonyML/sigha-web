@@ -2,15 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/audit';
 import { Icon } from '../../components/atoms';
-import type { DigitalRecord, SearchDigitalRecordsDto, AuditActionType } from '../../../types/audit';
+import type { AuditReport, SearchAuditReportsDto } from '../../../types/audit';
 import { AuditAction } from '../../../types/audit';
 
 export default function AuditListPage() {
-    const [records, setRecords] = useState<DigitalRecord[]>([]);
+    const [records, setRecords] = useState<AuditReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterAction, setFilterAction] = useState<AuditAction | 'ALL'>('ALL');
+    const [filterAction, setFilterAction] = useState<string>('ALL');
     const [filterTable, setFilterTable] = useState<string>('ALL');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -24,11 +24,11 @@ export default function AuditListPage() {
         setLoading(true);
         setError('');
 
-        const params: SearchDigitalRecordsDto = {
-            page: currentPage,
-            limit: pageSize,
-            action: filterAction !== 'ALL' ? (filterAction as AuditActionType) : undefined,
-            tableName: filterTable !== 'ALL' ? filterTable : undefined,
+        const params: SearchAuditReportsDto = {
+            page: currentPage.toString(),
+            limit: pageSize.toString(),
+            action: filterAction !== 'ALL' ? filterAction : undefined,
+            entityName: filterTable !== 'ALL' ? filterTable : undefined,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
         };
@@ -36,12 +36,18 @@ export default function AuditListPage() {
         console.log('Filtros aplicados:', { filterAction, filterTable, startDate, endDate, currentPage, pageSize });
         console.log('Parametros enviados:', params);
 
-        const result = await auditFlow.searchDigitalRecords(params);
+        const result = await auditFlow.searchAuditReports(params);
         
         console.log('Respuesta del backend:', result);
 
         if (result.success) {
-            setRecords(result.records || []);
+            console.log('Datos del backend (primeros 3):', result.records?.slice(0, 3)); // Ver primeros 3 registros
+            
+            // Los datos ahora solo vienen como AuditReport
+            const records = (result.records || []) as AuditReport[];
+            console.log('Registros procesados (primeros 3):', records.slice(0, 3));
+
+            setRecords(records);
             setTotalRecords(result.total || 0);
             setTotalPages(result.totalPages || 1);
         } else {
@@ -59,25 +65,25 @@ export default function AuditListPage() {
     const filteredRecords = records.filter(record => {
         if (!searchTerm.trim()) return true;
         const term = searchTerm.toLowerCase();
-        const auditDesc = auditFlow.getAuditDescription(record);
+        const auditDesc = auditFlow.getAuditReportDescription(record);
         return (
-            (record.description || '').toLowerCase().includes(term) ||
+            (record.ar_observations || '').toLowerCase().includes(term) ||
             auditDesc.userFriendly.toLowerCase().includes(term) ||
-            (record.userName || '').toLowerCase().includes(term) ||
-            (record.userEmail || '').toLowerCase().includes(term) ||
-            record.action.toLowerCase().includes(term) ||
-            (record.tableName || '').toLowerCase().includes(term)
+            (record.user_name || '').toLowerCase().includes(term) ||
+            (record.user_email || '').toLowerCase().includes(term) ||
+            record.ar_action.toLowerCase().includes(term) ||
+            (record.ar_entity_name || '').toLowerCase().includes(term)
         );
     });
 
-    const handleView = (record: DigitalRecord) => {
+    const handleView = (record: AuditReport) => {
         navigate(`/audits/view/${record.id}`);
     };
 
     const handleExport = async () => {
-        const result = await auditFlow.exportDigitalRecords({
-            action: filterAction !== 'ALL' ? (filterAction as AuditActionType) : undefined,
-            tableName: filterTable !== 'ALL' ? filterTable : undefined,
+        const result = await auditFlow.exportAuditReports({
+            action: filterAction !== 'ALL' ? filterAction : undefined,
+            entityName: filterTable !== 'ALL' ? filterTable : undefined,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
         }, 'auditorias.csv');
@@ -229,19 +235,19 @@ export default function AuditListPage() {
                                     {filteredRecords.map((record) => (
                                         <tr key={record.id}>
                                             <td><code>#{record.id}</code></td>
-                                            <td><small>{auditFlow.formatAuditDate(record.timestamp)}</small></td>
+                                            <td><small>{auditFlow.formatAuditDate(record.create_at)}</small></td>
                                             <td>
-                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.action)} d-inline-flex align-items-center`}>
-                                                    <Icon name={auditFlow.getActionIcon(record.action)} size="sm" className="me-1" />
-                                                    {auditFlow.getActionLabel(record.action)}
+                                                <span className={`badge ${auditFlow.getActionBadgeClass(record.ar_action as AuditAction)} d-inline-flex align-items-center`}>
+                                                    <Icon name={auditFlow.getActionIcon(record.ar_action as AuditAction)} size="sm" className="me-1" />
+                                                    {auditFlow.getActionLabel(record.ar_action as AuditAction)}
                                                 </span>
                                             </td>
-                                            <td><span className="badge bg-secondary">{auditFlow.getTableLabel(record.tableName)}</span></td>
+                                            <td><span className="badge bg-secondary">{auditFlow.getTableLabel(record.ar_entity_name)}</span></td>
                                             <td>
-                                                <div><Icon name="person" size="sm" className="me-1" />{record.userName}</div>
-                                                {record.userEmail && <small className="text-muted">{record.userEmail}</small>}
+                                                <div><Icon name="person" size="sm" className="me-1" />{record.user_name}</div>
+                                                {record.user_email && <small className="text-muted">{record.user_email}</small>}
                                             </td>
-                                            <td><div className="text-truncate" style={{ maxWidth: '300px' }}>{auditFlow.getAuditDescription(record).userFriendly}</div></td>
+                                            <td><div className="text-truncate" style={{ maxWidth: '300px' }}>{auditFlow.getAuditReportDescription(record).userFriendly}</div></td>
                                             <td>
                                                 <button className="btn btn-sm btn-outline-primary" onClick={() => handleView(record)}>
                                                     <Icon name="visibility" size="sm" />

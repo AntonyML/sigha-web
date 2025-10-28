@@ -1,5 +1,5 @@
 import type {
-  DigitalRecord,
+  AuditReport,
   AuditStatistics,
 } from '../../../types/audit';
 
@@ -13,27 +13,20 @@ export interface AuditFlowResult {
 }
 
 /**
- * Resultado de obtener un registro digital
+ * Resultado de obtener un reporte de auditoría
  */
-export interface GetDigitalRecordFlowResult extends AuditFlowResult {
-  record?: DigitalRecord;
+export interface GetAuditReportFlowResult extends AuditFlowResult {
+  report?: AuditReport;
 }
 
 /**
- * Resultado de obtener lista de registros digitales
+ * Resultado de obtener lista de reportes de auditoría
  */
-export interface GetDigitalRecordsFlowResult extends AuditFlowResult {
-  records?: DigitalRecord[];
+export interface GetAuditReportsFlowResult extends AuditFlowResult {
+  records?: AuditReport[];
   total?: number;
   page?: number;
   totalPages?: number;
-}
-
-/**
- * Resultado de crear un registro digital
- */
-export interface CreateDigitalRecordFlowResult extends AuditFlowResult {
-  record?: DigitalRecord;
 }
 
 /**

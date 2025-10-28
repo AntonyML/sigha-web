@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auditFlow } from '../../../infrastructure/flows/audit';
-import type { DigitalRecord } from '../../../types/audit';
+import type { AuditReport } from '../../../types/audit';
 
 interface AuditActionStats {
     action: string;
@@ -25,7 +25,7 @@ interface DashboardStats {
 
 export default function AuditDashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
-    const [recentRecords, setRecentRecords] = useState<DigitalRecord[]>([]);
+    const [recentRecords, setRecentRecords] = useState<AuditReport[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [dateRange, setDateRange] = useState({
@@ -38,69 +38,80 @@ export default function AuditDashboardPage() {
         setLoading(true);
         setError('');
 
-        const result = await auditFlow.searchDigitalRecords({
-            startDate: dateRange.start || undefined,
-            endDate: dateRange.end || undefined,
-            limit: 10000
-        });
-
-        if (result.success && result.records) {
-            const totalRecords = result.records.length;
-
-            // Contar por acción
-            const actionCounts = result.records.reduce((acc, record) => {
-                acc[record.action] = (acc[record.action] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-
-            const actionBreakdown: AuditActionStats[] = Object.entries(actionCounts).map(([action, count]) => ({
-                action,
-                count,
-                percentage: Math.round((count / totalRecords) * 100)
-            })).sort((a, b) => b.count - a.count);
-
-            // Contar por tabla
-            const tableCounts = result.records.reduce((acc, record) => {
-                const table = record.tableName || 'unknown';
-                acc[table] = (acc[table] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-
-            const tableBreakdown: AuditTableStats[] = Object.entries(tableCounts).map(([table, count]) => ({
-                table,
-                count,
-                percentage: Math.round((count / totalRecords) * 100)
-            })).sort((a, b) => b.count - a.count);
-
-            // Top tablas
-            const topTables = Object.entries(tableCounts)
-                .map(([tableName, count]) => ({ tableName, count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 5);
-
-            // Top usuarios
-            const userCounts = result.records.reduce((acc, record) => {
-                const user = record.userName || 'Desconocido';
-                acc[user] = (acc[user] || 0) + 1;
-                return acc;
-            }, {} as Record<string, number>);
-
-            const topUsers = Object.entries(userCounts)
-                .map(([userName, count]) => ({ userName, count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 5);
-
-            setStats({
-                totalRecords,
-                actionBreakdown,
-                tableBreakdown,
-                topUsers,
-                topTables
+            const result = await auditFlow.searchAuditReports({
+                startDate: dateRange.start || undefined,
+                endDate: dateRange.end || undefined,
+                limit: '10000',
             });
 
+            if (result.success && result.records) {
+                console.log('Datos del backend:', result.records.slice(0, 3)); // Ver primeros 3 registros
+                
+                // Los datos ahora solo vienen como AuditReport
+                const records = result.records as AuditReport[];
+                console.log('Registros procesados:', records.slice(0, 3));
+
+                const totalRecords = records.length;
+                console.log('Total de registros:', totalRecords);
+
+                // Contar por acción
+                const actionCounts = records.reduce((acc: Record<string, number>, record) => {
+                    const a = record.ar_action || 'other';
+                    acc[a] = (acc[a] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+                console.log('Conteo por acción:', actionCounts);
+
+                const actionBreakdown: AuditActionStats[] = Object.entries(actionCounts).map(([action, count]) => ({
+                    action,
+                    count: Number(count),
+                    percentage: Math.round((Number(count) / totalRecords) * 100),
+                })).sort((a, b) => b.count - a.count);
+
+                // Contar por tabla
+                const tableCounts = records.reduce((acc: Record<string, number>, record) => {
+                    const table = record.ar_entity_name || 'unknown';
+                    acc[table] = (acc[table] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+                console.log('Conteo por tabla:', tableCounts);
+
+                const tableBreakdown: AuditTableStats[] = Object.entries(tableCounts).map(([table, count]) => ({
+                    table,
+                    count: Number(count),
+                    percentage: Math.round((Number(count) / totalRecords) * 100),
+                })).sort((a, b) => b.count - a.count);
+
+                // Top tablas
+                const topTables = Object.entries(tableCounts)
+                    .map(([tableName, count]) => ({ tableName, count: Number(count) }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+
+                // Top usuarios
+                const userCounts = records.reduce((acc: Record<string, number>, record) => {
+                    const user = record.user_name || 'Sistema';
+                    acc[user] = (acc[user] || 0) + 1;
+                    return acc;
+                }, {} as Record<string, number>);
+                console.log('Conteo por usuario:', userCounts);
+
+                const topUsers = Object.entries(userCounts)
+                    .map(([userName, count]) => ({ userName, count: Number(count) }))
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 5);
+                    
+                setStats({
+                    totalRecords,
+                    actionBreakdown,
+                    tableBreakdown,
+                    topUsers,
+                    topTables
+                });
+
             // Ordenar por timestamp descendente (más recientes primero) y tomar los 10 más recientes
-            const sortedRecords = result.records.sort((a, b) => 
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            const sortedRecords = records.sort((a, b) =>
+                new Date(b.create_at).getTime() - new Date(a.create_at).getTime()
             );
             setRecentRecords(sortedRecords.slice(0, 10));
         } else {
@@ -380,23 +391,18 @@ export default function AuditDashboardPage() {
                                                         <div className="flex-grow-1">
                                                             <div className="d-flex align-items-center gap-2 mb-2">
                                                                 <span className="badge bg-primary">
-                                                                    {record.action}
+                                                                    {record.ar_action}
                                                                 </span>
                                                                 <span className="badge bg-secondary">
-                                                                    {auditFlow.getTableLabel(record.tableName || '')}
+                                                                    {auditFlow.getTableLabel(record.ar_entity_name || '')}
                                                                 </span>
-                                                                {auditFlow.isCriticalAudit(record) && (
-                                                                    <span className="badge bg-warning text-dark">
-                                                                        <i className="bi bi-exclamation-triangle"></i> Crítico
-                                                                    </span>
-                                                                )}
                                                             </div>
                                                             <p className="mb-1">
-                                                                {auditFlow.getAuditDescription(record).userFriendly}
+                                                                {auditFlow.getAuditReportDescription(record).userFriendly}
                                                             </p>
                                                             <small className="text-muted">
                                                                 <i className="bi bi-person-circle me-1"></i>
-                                                                {record.userName || 'N/A'} • {auditFlow.formatAuditDate(record.timestamp)}
+                                                                {record.user_name || 'N/A'} • {auditFlow.formatAuditDate(record.create_at)}
                                                             </small>
                                                         </div>
                                                         <button

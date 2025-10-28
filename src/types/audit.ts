@@ -109,62 +109,18 @@ export interface AuditReport {
 }
 
 /**
- * Registro de auditoría digital (Digital Record) - LEGACY
- * Mapea a tabla digital_record en DB
- * @deprecated Usar AuditReport para consultas y LogAuditRequest para registros nuevos
- */
-export interface DigitalRecord {
-  id: number;
-  userId: number;
-  userName: string;
-  userEmail: string;
-  action: AuditActionType;
-  tableName: string | null;       // Tabla afectada (ej: 'older_adult', 'users', 'programs')
-  recordId: number | null;         // ID del registro afectado
-  description: string | null;
-  timestamp: string;               // drTimestamp del backend
-}
-
-/**
- * DTO para crear un registro de auditoría digital - LEGACY
- * @deprecated Usar LogAuditRequest en su lugar
- * Sincronizado con CreateDigitalRecordDto del backend
- */
-export interface CreateDigitalRecordDto {
-  action: AuditActionType;
-  tableName?: string;
-  recordId?: number;
-  description?: string;
-}
-
-/**
  * Parámetros de búsqueda de reportes de auditoría
  * Sincronizado con backend para tabla audit_report
  */
 export interface SearchAuditReportsDto {
   type?: string;           // ar_type: login_attempts, role_changes, etc.
   entityName?: string;     // ar_entity_name: users, older_adults, etc.
-  entityId?: number;       // ar_entity_id
+  entityId?: string;       // ar_entity_id (enviado como string al backend)
   action?: string;         // ar_action: login, logout, create, update, delete
   startDate?: string;
   endDate?: string;
-  page?: number;
-  limit?: number;
-}
-
-/**
- * Parámetros de búsqueda de registros digitales - LEGACY
- * @deprecated Usar SearchAuditReportsDto
- */
-export interface SearchDigitalRecordsDto {
-  userId?: number;
-  action?: AuditActionType;
-  tableName?: string;
-  recordId?: number;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  limit?: number;
+  page?: string;           // Número de página (enviado como string al backend)
+  limit?: string;          // Límite de registros por página (enviado como string al backend)
 }
 
 /**
@@ -173,18 +129,6 @@ export interface SearchDigitalRecordsDto {
  */
 export interface PaginatedAuditReportsResponse {
   records: AuditReport[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-/**
- * Respuesta paginada de registros digitales - LEGACY
- * @deprecated Usar PaginatedAuditReportsResponse
- */
-export interface PaginatedDigitalRecordsResponse {
-  records: DigitalRecord[];
   total: number;
   page: number;
   limit: number;
@@ -204,37 +148,5 @@ export interface AuditStatistics {
     username: string;
     actionCount: number;
   }>;
-  recentActivity: DigitalRecord[];
+  recentActivity: AuditReport[];
 }
-
-// ==================== Legacy Types (mantener compatibilidad) ====================
-
-/**
- * @deprecated Usar DigitalRecord en su lugar
- * Mantener para compatibilidad con componentes existentes
- */
-export interface Audit extends DigitalRecord {
-  aAction: AuditActionType;
-  aEntity: string;
-  aEntityId: number | null;
-  aDescription: string | null;
-  aUserId: number;
-  aUsername: string;
-  createAt: string;
-}
-
-/**
- * @deprecated Usar PaginatedDigitalRecordsResponse
- */
-export interface AuditListResponse {
-  data: DigitalRecord[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-/**
- * @deprecated Usar AuditStatistics
- */
-export interface AuditStats extends AuditStatistics {}

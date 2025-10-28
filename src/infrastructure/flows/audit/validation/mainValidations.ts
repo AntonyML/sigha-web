@@ -3,12 +3,12 @@
  * Validaciones para operaciones principales de auditoría
  */
 
-import type { SearchDigitalRecordsDto } from '../../../../types/audit';
+import type { SearchAuditReportsDto } from '../../../../types/audit';
 
 /**
- * Valida parámetros de búsqueda de registros digitales
+ * Valida parámetros de búsqueda de reportes de auditoría
  */
-export function validateSearchParams(params?: SearchDigitalRecordsDto): string | null {
+export function validateSearchParams(params?: SearchAuditReportsDto): string | null {
   if (params && typeof params !== 'object') {
     return 'Los parámetros de búsqueda deben ser un objeto válido.';
   }
@@ -31,15 +31,15 @@ export function validateSearchParams(params?: SearchDigitalRecordsDto): string |
 }
 
 /**
- * Valida ID de registro digital
+ * Valida ID de reporte de auditoría
  */
-export function validateDigitalRecordId(id: number): string | null {
+export function validateAuditReportId(id: number): string | null {
   if (!id || id <= 0) {
-    return 'El ID del registro digital debe ser un número positivo.';
+    return 'El ID del reporte de auditoría debe ser un número positivo.';
   }
 
   if (!Number.isInteger(id)) {
-    return 'El ID del registro digital debe ser un número entero.';
+    return 'El ID del reporte de auditoría debe ser un número entero.';
   }
 
   return null;

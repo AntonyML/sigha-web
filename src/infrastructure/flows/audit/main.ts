@@ -1,8 +1,7 @@
 import { auditService } from '../../../services/auditService';
 import type {
-  CreateDigitalRecordDto,
-  SearchDigitalRecordsDto,
-  PaginatedDigitalRecordsResponse,
+  SearchAuditReportsDto,
+  PaginatedAuditReportsResponse,
   AuditStatistics,
 } from '../../../types/audit';
 import {
@@ -10,30 +9,29 @@ import {
 } from './validation/auditValidations';
 import {
   validateSearchParams,
-  validateDigitalRecordId
+  validateAuditReportId
 } from './validation/mainValidations';
 import type {
   AuditFlowResult,
-  GetDigitalRecordFlowResult,
-  GetDigitalRecordsFlowResult,
-  CreateDigitalRecordFlowResult,
+  GetAuditReportFlowResult,
+  GetAuditReportsFlowResult,
   GetAuditStatisticsFlowResult,
 } from './interfaces';
 
 /**
- * Flujo para buscar registros digitales con filtros
- * Backend: searchDigitalRecords()
+ * Flujo para buscar reportes de auditoría con filtros
+ * Backend: getAuditReports()
  *
  * Maneja:
- * - Búsqueda con filtros (userId, action, tableName, recordId, fechas)
+ * - Búsqueda con filtros (entityName, action, fechas)
  * - Paginación
  * - Validación de fechas
  * - Manejo de errores
  *
  * @param params - Parámetros de búsqueda
- * @returns GetDigitalRecordsFlowResult con registros encontrados
+ * @returns GetAuditReportsFlowResult con reportes encontrados
  */
-export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Promise<GetDigitalRecordsFlowResult> {
+export async function searchAuditReports(params?: SearchAuditReportsDto): Promise<GetAuditReportsFlowResult> {
   try {
     // Validar parámetros de búsqueda si se proporcionan
     if (params) {
@@ -46,7 +44,7 @@ export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Pr
       }
     }
 
-    const response: PaginatedDigitalRecordsResponse = await auditService.searchDigitalRecords(params);
+    const response: PaginatedAuditReportsResponse = await auditService.searchAuditReports(params);
 
     // Backend SIEMPRE retorna: { records, total, page, limit, totalPages }
     const records = response.records || [];
@@ -73,8 +71,8 @@ export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Pr
       totalPages,
       message: `${records.length} registros encontrados`,
     };
-  } catch (error: any) {
-    console.error('Error en auditFlow.searchDigitalRecords:', error);
+  } catch (error: unknown) {
+    console.error('Error en auditFlow.searchAuditReports:', error);
     return {
       success: false,
       error: getAuditErrorMessage(error),
@@ -83,20 +81,20 @@ export async function searchDigitalRecords(params?: SearchDigitalRecordsDto): Pr
 }
 
 /**
- * Flujo para obtener un registro digital por ID
- * Backend: getDigitalRecordById()
+ * Flujo para obtener un reporte de auditoría por ID
+ * Backend: getAuditReportById()
  *
  * Maneja:
  * - Validación del ID
- * - Obtención del registro
+ * - Obtención del reporte
  * - Manejo de errores 404
  *
- * @param id - ID del registro digital
- * @returns GetDigitalRecordFlowResult con el registro encontrado
+ * @param id - ID del reporte de auditoría
+ * @returns GetAuditReportFlowResult con el reporte encontrado
  */
-export async function getDigitalRecordById(id: number): Promise<GetDigitalRecordFlowResult> {
+export async function getAuditReportById(id: number): Promise<GetAuditReportFlowResult> {
   try {
-    const validationError = validateDigitalRecordId(id);
+    const validationError = validateAuditReportId(id);
     if (validationError) {
       return {
         success: false,
@@ -104,68 +102,30 @@ export async function getDigitalRecordById(id: number): Promise<GetDigitalRecord
       };
     }
 
-    const record = await auditService.getDigitalRecordById(id);
+    const report = await auditService.getAuditReportById(id);
 
     return {
       success: true,
-      record,
-      message: 'Registro de auditoría obtenido exitosamente',
+      report,
+      message: 'Reporte de auditoría obtenido exitosamente',
     };
-  } catch (error: any) {
-    console.error('Error en auditFlow.getDigitalRecordById:', error);
+  } catch (error: unknown) {
+    console.error('Error en auditFlow.getAuditReportById:', error);
 
-    if (error.response?.status === 404) {
+    if ((error as any)?.response?.status === 404) {
       return {
         success: false,
-        error: 'Registro de auditoría no encontrado',
+        error: 'Reporte de auditoría no encontrado',
       };
     }
 
-    return {
-      success: false,
-      error: error.response?.data?.message || 'Error al obtener el registro de auditoría',
-    };
-  }
-}
-
-/**
- * Flujo para crear un registro digital manual
- * Backend: createDigitalRecord()
- *
- * Maneja:
- * - Validación de datos requeridos
- * - Creación del registro (backend obtiene userId del token JWT)
- * - Manejo de errores
- *
- * @param data - Datos del registro digital
- * @returns CreateDigitalRecordFlowResult con el registro creado
- */
-export async function createDigitalRecord(data: CreateDigitalRecordDto): Promise<CreateDigitalRecordFlowResult> {
-  try {
-    // Validar datos requeridos
-    if (!data.action) {
-      return {
-        success: false,
-        error: 'La acción es requerida',
-      };
-    }
-
-    // Backend obtiene userId automáticamente del token JWT
-    const record = await auditService.createDigitalRecord(data);
-
-    return {
-      success: true,
-      record,
-      message: 'Registro de auditoría creado exitosamente',
-    };
-  } catch (error: any) {
-    console.error('Error en auditFlow.createDigitalRecord:', error);
     return {
       success: false,
       error: getAuditErrorMessage(error),
     };
   }
 }
+
 
 /**
  * Flujo para obtener estadísticas de auditoría
@@ -215,17 +175,17 @@ export async function getAuditStatistics(
       stats: safeStats,
       message: 'Estadísticas de auditoría obtenidas exitosamente',
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditStatistics:', error);
     return {
       success: false,
-      error: error.response?.data?.message || 'Error al obtener estadísticas de auditoría',
+      error: getAuditErrorMessage(error),
     };
   }
 }
 
 /**
- * Flujo para exportar registros digitales a CSV
+ * Flujo para exportar reportes de auditoría a CSV
  *
  * Maneja:
  * - Exportación con filtros
@@ -237,12 +197,12 @@ export async function getAuditStatistics(
  * @param filename - Nombre del archivo a descargar
  * @returns AuditFlowResult indicando éxito o error
  */
-export async function exportDigitalRecords(
-  params?: SearchDigitalRecordsDto,
+export async function exportAuditReports(
+  params?: SearchAuditReportsDto,
   filename: string = 'auditorias.csv'
 ): Promise<AuditFlowResult> {
   try {
-    const blob = await auditService.exportDigitalRecords(params);
+    const blob = await auditService.exportAuditReports(params);
 
     // Crear link de descarga
     const url = window.URL.createObjectURL(blob);
@@ -256,13 +216,13 @@ export async function exportDigitalRecords(
 
     return {
       success: true,
-      message: 'Auditorías exportadas exitosamente',
+      message: 'Reportes de auditoría exportados exitosamente',
     };
-  } catch (error: any) {
-    console.error('Error en auditFlow.exportDigitalRecords:', error);
+  } catch (error: unknown) {
+    console.error('Error en auditFlow.exportAuditReports:', error);
     return {
       success: false,
-      error: error.response?.data?.message || 'Error al exportar auditorías',
+      error: getAuditErrorMessage(error),
     };
   }
 }
