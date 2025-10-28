@@ -4,7 +4,17 @@ import App from './App'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import "./assets/styles/global.css";
+import { permissionEntityService } from './services/permissionEntityService';
 
+// Inicializar servicios al cargar la aplicación
+const initializeApp = async () => {
+  try {
+    await permissionEntityService.initialize();
+    console.log('PermissionEntityService inicializado correctamente');
+  } catch (error) {
+    console.error('Error inicializando PermissionEntityService:', error);
+  }
+};
 
 const isFileProtocol = window.location.protocol === 'file:'
 
@@ -19,4 +29,7 @@ createRoot(document.getElementById('root')!).render(
       <App />
     </BrowserRouter>
   )
-)
+);
+
+// Inicializar servicios después del render
+initializeApp();

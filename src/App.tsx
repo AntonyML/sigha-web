@@ -25,6 +25,18 @@ import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
 import DeletedUsersPage from './presentation/pages/users/DeletedUsersPage'
 
+//Roles
+import RoleListPage from './presentation/pages/roles/RoleListPage'
+import CreateRolePage from './presentation/pages/roles/CreateRolePage'
+import ViewRolePage from './presentation/pages/roles/ViewRolePage'
+import EditRolePage from './presentation/pages/roles/EditRolePage'
+
+//Permissions
+import PermissionListPage from './presentation/pages/permissions/PermissionListPage'
+import CreatePermissionPage from './presentation/pages/permissions/CreatePermissionPage'
+import ViewPermissionPage from './presentation/pages/permissions/ViewPermissionPage'
+import EditPermissionPage from './presentation/pages/permissions/EditPermissionPage'
+
 //Programs
 import ProgramListPage from './presentation/pages/programs/ProgramListPage'
 import CreateProgramPage from './presentation/pages/programs/CreateProgramPage'
@@ -80,6 +92,16 @@ export default function App() {
             <Route path="users/view/:id" element={<ViewUserPage />} />
             <Route path="users/edit/:id" element={<EditUserPage />} />
             <Route path="users/deleted" element={<DeletedUsersPage />} />
+
+            <Route path="roles" element={<RoleListPage />} />
+            <Route path="roles/create" element={<CreateRolePage />} />
+            <Route path="roles/view/:id" element={<ViewRolePage />} />
+            <Route path="roles/edit/:id" element={<EditRolePage />} />
+
+            <Route path="permissions" element={<PermissionListPage />} />
+            <Route path="permissions/create" element={<CreatePermissionPage />} />
+            <Route path="permissions/view/:id" element={<ViewPermissionPage />} />
+            <Route path="permissions/edit/:id" element={<EditPermissionPage />} />
 
             <Route path="programs" element={<ProgramListPage />} />
             <Route path="programs/create" element={<CreateProgramPage />} />

@@ -30,20 +30,34 @@ export default function MainMenuPage() {
         },
         {
             id: '3',
+            title: 'Roles',
+            description: 'Gestionar roles del sistema y sus permisos asociados',
+            icon: 'admin_panel_settings',
+            route: '/roles'
+        },
+        {
+            id: '4',
+            title: 'Permisos',
+            description: 'Administrar permisos del sistema y sus configuraciones',
+            icon: 'security',
+            route: '/permissions'
+        },
+        {
+            id: '5',
             title: 'Configuración 2FA',
             description: 'Configurar autenticación de dos factores para mayor seguridad',
             icon: 'lock',
             route: '/two-factor'
         },
         {
-            id: '4',
+            id: '6',
             title: 'Entradas y Salidas',
             description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
             icon: 'transfer_within_a_station',
             route: '/entrance-exit'
         },
         {
-            id: '5',
+            id: '7',
             title: 'Auditoría',
             description: 'Revisar registros de auditoría y actividad del sistema',
             icon: 'shield',

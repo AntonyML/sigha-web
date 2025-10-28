@@ -123,7 +123,9 @@ const nameMap: Record<string, string> = {
   info: 'information_circle',
   bolt: 'bolt',
   arrow_right_circle: 'arrow_right_circle',
-  exclamation_triangle: 'exclamation_triangle'
+  exclamation_triangle: 'exclamation_triangle',
+  admin_panel_settings: 'cog_6_tooth',
+  security: 'shield_check'
 }
 
 export default function Icon({
