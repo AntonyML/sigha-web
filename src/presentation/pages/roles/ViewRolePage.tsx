@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
+import { roleFlow } from '../../../infrastructure/flows/role';
 import type { UserRole } from '../../../types/user';
 
 export default function ViewRolePage() {
@@ -10,6 +11,7 @@ export default function ViewRolePage() {
     const [role, setRole] = useState<UserRole | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
+    const [deleting, setDeleting] = useState<boolean>(false);
 
     useEffect(() => {
         const loadRole = async () => {
@@ -23,24 +25,13 @@ export default function ViewRolePage() {
             setError('');
 
             try {
-                // TODO: Implementar obtención de rol por ID cuando esté disponible en el backend
-                // const result = await roleFlow.getRoleById(Number(id));
+                const result = await roleFlow.getRoleById(Number(id));
 
-                // Por ahora, simulamos la carga de un rol
-                // En un escenario real, esto vendría del backend
-                const mockRole: UserRole = {
-                    id: Number(id),
-                    rName: `Rol ${id}` // Esto sería el nombre real del rol
-                };
-
-                setRole(mockRole);
-
-                // Una vez implementado, descomentar:
-                // if (result.success && result.role) {
-                //     setRole(result.role);
-                // } else {
-                //     setError(result.error || 'Error al cargar rol');
-                // }
+                if (result.success && result.role) {
+                    setRole(result.role);
+                } else {
+                    setError(result.error || 'Error al cargar rol');
+                }
             } catch (err) {
                 console.error('Error cargando rol:', err);
                 setError('Error inesperado al cargar el rol');
@@ -54,6 +45,61 @@ export default function ViewRolePage() {
 
     const handleEditRole = () => {
         navigate(`/roles/edit/${id}`);
+    };
+
+    const handleDeleteRole = async () => {
+        if (!role) return;
+
+        // Verificar si el rol puede ser eliminado
+        if (role.rIsAdmin) {
+            feedback.showNotification({
+                title: 'No se puede eliminar',
+                message: 'No se pueden eliminar roles administrativos.',
+                variant: 'warning'
+            });
+            return;
+        }
+
+        // Verificar si es un rol crítico del sistema (por nombre)
+        const criticalRoles = ['Super Admin', 'Administrador', 'Admin'];
+        if (criticalRoles.includes(role.rName)) {
+            feedback.showNotification({
+                title: 'No se puede eliminar',
+                message: 'Este es un rol crítico del sistema y no puede ser eliminado.',
+                variant: 'warning'
+            });
+            return;
+        }
+
+        // Confirmar eliminación
+        const confirmed = await feedback.confirm(
+            '¿Eliminar Rol?',
+            `¿Estás seguro de que deseas eliminar el rol "${role.rName}"? Esta acción no se puede deshacer.`
+        );
+
+        if (!confirmed) return;
+
+        setDeleting(true);
+
+        try {
+            const result = await roleFlow.deleteRole(role.id);
+
+            if (result.success) {
+                feedback.showNotification({
+                    title: 'Rol eliminado',
+                    message: `El rol "${role.rName}" ha sido eliminado exitosamente.`,
+                    variant: 'success'
+                });
+                navigate('/roles');
+            } else {
+                setError(result.error || 'Error al eliminar el rol');
+            }
+        } catch (err) {
+            console.error('Error eliminando rol:', err);
+            setError('Error inesperado al eliminar el rol');
+        } finally {
+            setDeleting(false);
+        }
     };
 
     const handleBackToList = () => {
@@ -147,6 +193,16 @@ export default function ViewRolePage() {
                                     <i className="bi bi-pencil"></i>
                                     Editar Rol
                                 </button>
+                                {role && !role.rIsAdmin && !['Super Admin', 'Administrador', 'Admin'].includes(role.rName) && (
+                                    <button
+                                        className="btn btn-outline-danger d-flex align-items-center gap-2"
+                                        onClick={handleDeleteRole}
+                                        disabled={deleting}
+                                    >
+                                        <i className={`bi ${deleting ? 'bi-hourglass-split' : 'bi-trash'}`}></i>
+                                        {deleting ? 'Eliminando...' : 'Eliminar Rol'}
+                                    </button>
+                                )}
                                 <button
                                     className="btn btn-outline-secondary d-flex align-items-center gap-2"
                                     onClick={handleBackToList}
@@ -251,6 +307,16 @@ export default function ViewRolePage() {
                                         <i className="bi bi-pencil me-2"></i>
                                         Editar Rol
                                     </button>
+                                    {role && !role.rIsAdmin && !['Super Admin', 'Administrador', 'Admin'].includes(role.rName) && (
+                                        <button
+                                            className="btn btn-outline-danger btn-sm"
+                                            onClick={handleDeleteRole}
+                                            disabled={deleting}
+                                        >
+                                            <i className={`bi ${deleting ? 'bi-hourglass-split' : 'bi-trash'} me-2`}></i>
+                                            {deleting ? 'Eliminando...' : 'Eliminar'}
+                                        </button>
+                                    )}
                                     <button
                                         className="btn btn-outline-info btn-sm"
                                         onClick={() => feedback.info('Funcionalidad próximamente disponible', 'La vista de usuarios asignados a este rol estará disponible en futuras versiones.')}

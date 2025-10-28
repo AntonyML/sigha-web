@@ -208,7 +208,7 @@ export default function UserListPage() {
                                             <input
                                                 type="text"
                                                 className="form-control border-start-0 ps-0"
-                                                placeholder="Buscar por nombre, email o identificación..."
+                                                placeholder="Buscar por nombre, correo o identificación..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                             />
@@ -269,7 +269,7 @@ export default function UserListPage() {
                                                     <th className="ps-4 py-3 fw-semibold text-muted text-uppercase small">#</th>
                                                     <th className="py-3 fw-semibold text-muted text-uppercase small">Identificación</th>
                                                     <th className="py-3 fw-semibold text-muted text-uppercase small">Nombre Completo</th>
-                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Email</th>
+                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Correo</th>
                                                     <th className="pe-4 py-3 fw-semibold text-muted text-uppercase small text-end">Acciones</th>
                                                 </tr>
                                             </thead>

@@ -27,6 +27,10 @@ import ViewUserPage from './presentation/pages/users/ViewUserPage'
 import EditUserPage from './presentation/pages/users/EditUserPage'
 import DeletedUsersPage from './presentation/pages/users/DeletedUsersPage'
 
+//Profile
+import ProfilePage from './presentation/pages/profile/ProfilePage';
+import EditProfilePage from './presentation/pages/profile/EditProfilePage'
+
 //Roles
 import RoleListPage from './presentation/pages/roles/RoleListPage'
 import CreateRolePage from './presentation/pages/roles/CreateRolePage'
@@ -96,6 +100,9 @@ export default function App() {
                 <Route path="users/view/:id" element={<ViewUserPage />} />
                 <Route path="users/edit/:id" element={<EditUserPage />} />
                 <Route path="users/deleted" element={<DeletedUsersPage />} />
+
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/edit" element={<EditProfilePage />} />
 
                 <Route path="roles" element={<RoleListPage />} />
                 <Route path="roles/create" element={<CreateRolePage />} />
