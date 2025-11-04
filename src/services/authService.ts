@@ -138,6 +138,9 @@ export const authService = {
         localStorage.removeItem('tempToken');
         localStorage.removeItem('tempCredentials');
         console.log('Tokens guardados correctamente');
+
+        // Notificar cambio de token para actualizar contextos
+        window.dispatchEvent(new CustomEvent('authTokenChanged'));
       }
 
       return response.data;

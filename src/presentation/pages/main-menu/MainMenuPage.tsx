@@ -15,7 +15,7 @@ interface MenuOption {
 
 export default function MainMenuPage() {
     const navigate = useNavigate();
-    const { isEnabled } = useTwoFactorStatus();
+    const { isEnabled, loading } = useTwoFactorStatus();
     const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
 
     // Verificar permisos del usuario
@@ -101,6 +101,14 @@ export default function MainMenuPage() {
 
     // Filtrar opciones del menú basado en estado del 2FA y permisos
     const getFilteredMenuOptions = () => {
+        // Si está cargando, mostrar opciones limitadas
+        if (loading) {
+            return menuOptions.filter(option =>
+                option.id === '5' || // Configuración 2FA
+                option.id === '8'    // Mi Perfil
+            );
+        }
+
         // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
         if (!isEnabled) {
             return menuOptions.filter(option =>
@@ -127,6 +135,14 @@ export default function MainMenuPage() {
     return (
         <div className="container py-4">
            
+            {/* Indicador de carga */}
+            {loading && (
+                <div className="alert alert-info text-center mb-4">
+                    <i className="bi bi-hourglass-split me-2"></i>
+                    Verificando configuración de seguridad...
+                </div>
+            )}
+
             {/* Grid de opciones del menú */}
             <div className="row g-4">
                 {filteredMenuOptions.map((option) => (

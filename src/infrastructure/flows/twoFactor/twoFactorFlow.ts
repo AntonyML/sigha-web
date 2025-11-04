@@ -85,7 +85,7 @@ export const twoFactorFlow = {
             return {
                 success: true,
                 enabled: status.enabled,
-                lastUsed: status.lastUsed,
+                lastUsed: status.lastUsed ? new Date(status.lastUsed) : null,
                 hasBackupCodes: status.hasBackupCodes,
             };
         } catch (error: any) {

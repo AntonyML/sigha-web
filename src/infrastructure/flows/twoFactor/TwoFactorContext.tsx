@@ -46,9 +46,14 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
         const handleFocus = () => check2FAStatus();
         window.addEventListener('focus', handleFocus);
 
+        // Verificar cuando cambie el token de autenticación
+        const handleAuthTokenChanged = () => check2FAStatus();
+        window.addEventListener('authTokenChanged', handleAuthTokenChanged);
+
         return () => {
             clearInterval(interval);
             window.removeEventListener('focus', handleFocus);
+            window.removeEventListener('authTokenChanged', handleAuthTokenChanged);
         };
     }, [check2FAStatus]);
 
