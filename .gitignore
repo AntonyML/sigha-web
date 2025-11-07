@@ -26,11 +26,6 @@ dist-ssr
 # Session files for AI assistant
 .chatcatalyst/
 
-# Playwright test results and reports
-test-results/
-playwright-report/
-playwright/.cache/
-
 # Debug screenshots and files
 debug-page.png
 *.png
