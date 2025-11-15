@@ -15,4 +15,15 @@ export default defineConfig({
     host: true,   // Permite acceso desde otras IPs en la red
     port: 5173,  
   },
+  publicDir: 'public',
+  assetsInclude: ['**/*.json'],
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+      external: [],
+    },
+    copyPublicDir: true
+  }
 })

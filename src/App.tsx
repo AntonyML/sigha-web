@@ -75,7 +75,7 @@ export default function App() {
       <TwoFactorProvider>
         <Routes>
         {/* Authentication Routes - No Layout */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LoginForm />} />
         <Route path="/login" element={<LoginForm />} />
         <Route path="/auth/forgot-password" element={<PasswordRecoveryRequestPage />} />
         <Route path="/auth/recovery/verify" element={<PasswordRecoveryVerifyPage />} />

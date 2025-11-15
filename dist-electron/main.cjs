@@ -40,7 +40,7 @@ async function createWindow() {
         fullscreen: isDev, // Pantalla completa en modo desarrollo (oculta taskbar)
         autoHideMenuBar: true, // Ocultar barra de menú automáticamente
         frame: true, // Mantener el frame pero sin menú
-        icon: (0, path_1.join)(__dirname, '..', 'src', 'assets', 'asopogua.png'),
+        icon: (0, path_1.join)(__dirname, '..', 'src', 'assets', 'images', 'asopogua.png'),
         webPreferences: {
             preload: (0, path_1.join)(__dirname, 'preload.cjs'),
             contextIsolation: true,
