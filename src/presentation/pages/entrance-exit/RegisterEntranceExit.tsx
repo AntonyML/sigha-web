@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 import { entranceExitService } from '../../../services/entranceExitService';
 import { defaultEntranceExitForm, type AccessType, type EntranceExitApiPayload, type EntranceExitForm, type EntranceExitType } from '../../../types/entranceExit';
 
+interface ValidationErrors {
+  type?: string;
+  identification?: string;
+  name?: string;
+  firstLastName?: string;
+  secondLastName?: string;
+  datetime?: string;
+}
+
 export default function RegisterEntranceExit() {
   const [formData, setFormData] = useState<EntranceExitForm>(defaultEntranceExitForm);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accessType = searchParams.get('type') as AccessType || 'entrance';
-
+ 
   useEffect(() => {
     const now = new Date().toISOString().slice(0, 16);
     setFormData(prev => ({
@@ -20,8 +31,55 @@ export default function RegisterEntranceExit() {
     }));
   }, [accessType]);
 
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    const now = new Date();
+    const selectedDate = new Date(formData.datetime);
+
+    if (!formData.type) {
+      newErrors.type = 'Debe seleccionar un tipo de persona/vehículo';
+    }
+
+    if (!formData.identification?.trim()) {
+      newErrors.identification = 'La identificación es obligatoria';
+    }
+
+    if (!formData.name?.trim()) {
+      newErrors.name = 'El nombre es obligatorio';
+    }
+
+    if (!formData.firstLastName?.trim()) {
+      newErrors.firstLastName = 'El primer apellido es obligatorio';
+    }
+
+    if (!formData.secondLastName?.trim()) {
+      newErrors.secondLastName = 'El segundo apellido es obligatorio';
+    }
+
+    if (!formData.datetime) {
+      newErrors.datetime = 'La fecha y hora son obligatorias';
+    } else {
+      if (selectedDate > now) {
+        newErrors.datetime = 'No se puede registrar una fecha futura';
+      }
+
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      if (selectedDate < oneYearAgo) {
+        newErrors.datetime = 'La fecha no puede ser anterior a un año';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (field: keyof EntranceExitForm, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    if (errors[field as keyof ValidationErrors]) {
+      setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const handleCheckboxChange = (field: keyof EntranceExitForm, value: boolean) => {
@@ -32,19 +90,69 @@ export default function RegisterEntranceExit() {
     return {
       eeType: form.type,
       eeAccessType: form.accessType,
-      eeIdentification: form.identification || undefined,
-      eeName: form.name || undefined,
-      eeFLastName: form.firstLastName || undefined,
-      eeSLastName: form.secondLastName || undefined,
+      eeIdentification: form.identification?.trim() || undefined,
+      eeName: form.name?.trim() || undefined,
+      eeFLastName: form.firstLastName?.trim() || undefined,
+      eeSLastName: form.secondLastName?.trim() || undefined,
       eeDatetimeEntrance: form.accessType === 'entrance' ? form.datetime : undefined,
       eeDatetimeExit: form.accessType === 'exit' ? form.datetime : undefined,
       eeClose: form.close,
-      eeObservations: form.observations || undefined
+      eeObservations: form.observations?.trim() || undefined
     };
+  };
+
+  const getTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'employee': 'Empleado',
+      'older adult': 'Adulto Mayor',
+      'visitor': 'Visitante',
+      'volunteer': 'Voluntario',
+      'vehicle': 'Vehículo',
+      'other': 'Otro'
+    };
+    return labels[type] || type;
+  };
+
+  const showConfirmationDialog = () => {
+    const actionText = accessType === 'entrance' ? 'entrada' : 'salida';
+    const person = formData.name?.trim() || formData.identification?.trim() || 'la persona';
+    
+    return Swal.fire({
+      title: '¿Confirmar registro?',
+      html: `
+        <div class="text-start">
+          <p><strong>Tipo:</strong> ${getTypeLabel(formData.type)}</p>
+          <p><strong>Persona:</strong> ${person}</p>
+          <p><strong>Fecha/Hora:</strong> ${new Date(formData.datetime).toLocaleString('es-ES')}</p>
+          <p><strong>Acción:</strong> ${actionText}</p>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, registrar',
+      cancelButtonText: 'Cancelar'
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      await Swal.fire({
+        title: 'Errores en el formulario',
+        text: 'Por favor corrige los errores antes de continuar',
+        icon: 'error',
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Aceptar'
+      });
+      return;
+    }
+
+    const result = await showConfirmationDialog();
+    if (!result.isConfirmed) return;
+
     setLoading(true);
 
     try {
@@ -54,12 +162,31 @@ export default function RegisterEntranceExit() {
       const response = await entranceExitService.createEntranceExit(apiPayload);
       console.log('Respuesta del servidor:', response);
       
+      await Swal.fire({
+        title: '¡Registro exitoso!',
+        text: `El registro de ${accessType === 'entrance' ? 'entrada' : 'salida'} se ha guardado correctamente`,
+        icon: 'success',
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Aceptar',
+        timer: 3000,
+        timerProgressBar: true,
+        allowOutsideClick: false
+      });
+
       navigate('/entrance-exit');
     } catch (error) {
       console.error('Error creando registro:', error);
       console.error('Detalles del error:', {
         message: error instanceof Error ? error.message : 'Error desconocido',
         payload: transformToApiPayload(formData)
+      });
+      
+      await Swal.fire({
+        title: 'Error al guardar',
+        text: 'Ocurrió un error al guardar el registro. Por favor intenta nuevamente.',
+        icon: 'error',
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Aceptar'
       });
     } finally {
       setLoading(false);
@@ -76,7 +203,7 @@ export default function RegisterEntranceExit() {
   ];
 
   const getTitle = () => {
-    return accessType === 'entrance' ? 'Registrar Entrada-Salida' : 'Registrar Salida-Entrada';
+    return accessType === 'entrance' ? 'Registrar Entrada' : 'Registrar Salida';
   };
 
   const getDateTimeLabel = () => {
@@ -104,67 +231,77 @@ export default function RegisterEntranceExit() {
             <label htmlFor="type" className="form-label">Tipo de Persona/Vehículo *</label>
             <select
               id="type"
-              className="form-select"
+              className={`form-select ${errors.type ? 'is-invalid' : ''}`}
               value={formData.type}
               onChange={(e) => handleInputChange('type', e.target.value)}
               required
             >
+              <option value="">Seleccione un tipo</option>
               {typeOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
+            {errors.type && <div className="invalid-feedback">{errors.type}</div>}
           </div>
 
           <div className="col-12 col-md-6">
-            <label htmlFor="identification" className="form-label">Identificación</label>
+            <label htmlFor="identification" className="form-label">Identificación *</label>
             <input
               id="identification"
               type="text"
-              className="form-control"
+              className={`form-control ${errors.identification ? 'is-invalid' : ''}`}
               value={formData.identification}
               onChange={(e) => handleInputChange('identification', e.target.value)}
               placeholder="Número de identificación"
+              required
             />
+            {errors.identification && <div className="invalid-feedback">{errors.identification}</div>}
           </div>
         </div>
 
         <div className="row g-3 mb-4">
           <div className="col-12 col-md-4">
-            <label htmlFor="name" className="form-label">Nombre</label>
+            <label htmlFor="name" className="form-label">Nombre *</label>
             <input
               id="name"
               type="text"
-              className="form-control"
+              className={`form-control ${errors.name ? 'is-invalid' : ''}`}
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Nombre"
+              required
             />
+            {errors.name && <div className="invalid-feedback">{errors.name}</div>}
           </div>
 
           <div className="col-12 col-md-4">
-            <label htmlFor="firstLastName" className="form-label">Primer Apellido</label>
+            <label htmlFor="firstLastName" className="form-label">Primer Apellido *</label>
             <input
               id="firstLastName"
               type="text"
-              className="form-control"
+              className={`form-control ${errors.firstLastName ? 'is-invalid' : ''}`}
               value={formData.firstLastName}
               onChange={(e) => handleInputChange('firstLastName', e.target.value)}
               placeholder="Primer apellido"
+              required
             />
+            {errors.firstLastName && <div className="invalid-feedback">{errors.firstLastName}</div>}
           </div>
 
           <div className="col-12 col-md-4">
-            <label htmlFor="secondLastName" className="form-label">Segundo Apellido</label>
+            <label htmlFor="secondLastName" className="form-label">Segundo Apellido *</label>
             <input
               id="secondLastName"
               type="text"
-              className="form-control"
+              className={`form-control ${errors.secondLastName ? 'is-invalid' : ''}`}
               value={formData.secondLastName}
               onChange={(e) => handleInputChange('secondLastName', e.target.value)}
               placeholder="Segundo apellido"
+              required
             />
+            {errors.secondLastName && <div className="invalid-feedback">{errors.secondLastName}</div>}
           </div>
         </div>
 
@@ -174,11 +311,16 @@ export default function RegisterEntranceExit() {
             <input
               id="datetime"
               type="datetime-local"
-              className="form-control"
+              className={`form-control ${errors.datetime ? 'is-invalid' : ''}`}
               value={formData.datetime}
               onChange={(e) => handleInputChange('datetime', e.target.value)}
+              max={new Date().toISOString().slice(0, 16)}
               required
             />
+            {errors.datetime && <div className="invalid-feedback">{errors.datetime}</div>}
+            <div className="form-text">
+              No se pueden registrar fechas futuras
+            </div>
           </div>
         </div>
 

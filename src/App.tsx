@@ -63,6 +63,12 @@ import EntranceExitDashboard from './presentation/pages/entrance-exit/EntranceEx
 import RegisterEntranceExit from './presentation/pages/entrance-exit/RegisterEntranceExit'
 import EntranceExitHistory from './presentation/pages/entrance-exit/EntranceExitHistory'
 
+//Nursing
+import NursingDashboard from './presentation/pages/nursing/NursingDashboard'
+import ScheduleAppointment from './presentation/pages/nursing/ScheduleAppointment'
+import AppointmentHistory from './presentation/pages/nursing/AppointmentHistory'
+import PatientAppointments from './presentation/pages/nursing/PatientAppointments'
+
 //Audit
 import AuditMenuPage from './presentation/pages/audit/AuditMenuPage'
 import AuditListPage from './presentation/pages/audit/AuditListPage'
@@ -128,6 +134,11 @@ export default function App() {
               <Route path="entrance-exit" element={<EntranceExitDashboard />} />
               <Route path="entrance-exit/register" element={<RegisterEntranceExit />} />
               <Route path="entrance-exit/history" element={<EntranceExitHistory />} />
+
+              <Route path="nursing" element={<NursingDashboard />} />
+              <Route path="nursing/appointments/new" element={<ScheduleAppointment />} />
+              <Route path="nursing/appointments/history" element={<AppointmentHistory />} />
+              <Route path="nursing/patients/:patientId/appointments" element={<PatientAppointments />} />
 
               <Route path="audits" element={<AuditMenuPage />} />
               <Route path="audits/list" element={<AuditListPage />} />
