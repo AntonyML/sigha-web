@@ -3,9 +3,17 @@ import type { Patient, Appointment, AppointmentApiPayload, AppointmentStatus } f
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
 
+<<<<<<< HEAD
 const API_URL = "http://localhost:3000"; //cambiar por la ruta jona
 
 
+=======
+const API_URL = config.apiUrl;
+
+/**
+ * Axios instance configured for nursing API calls
+ */
+>>>>>>> Luis
 const apiClient = axios.create({
   baseURL: `${API_URL}/api/nursing`,
   headers: {
@@ -13,7 +21,11 @@ const apiClient = axios.create({
   },
 });
 
+<<<<<<< HEAD
 
+=======
+// Request interceptor to add auth token
+>>>>>>> Luis
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
@@ -22,7 +34,11 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+<<<<<<< HEAD
 
+=======
+// Response interceptor to handle auth errors
+>>>>>>> Luis
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -37,17 +53,35 @@ apiClient.interceptors.response.use(
 );
 
 export const nursingService = {
+<<<<<<< HEAD
   
+=======
+  // === PATIENTS ===
+  
+  /**
+   * Get all patients
+   */
+>>>>>>> Luis
   async getAllPatients(): Promise<Patient[]> {
     try {
       const response = await apiClient.get('/patients');
       return response.data;
     } catch (error) {
       console.error('Error fetching patients:', error);
+<<<<<<< HEAD
+=======
+      // Return mock data for now
+>>>>>>> Luis
       return this.getMockPatients();
     }
   },
 
+<<<<<<< HEAD
+=======
+  /**
+   * Get patient by ID
+   */
+>>>>>>> Luis
   async getPatientById(id: number): Promise<Patient> {
     try {
       const response = await apiClient.get(`/patients/${id}`);
@@ -63,8 +97,16 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
 
 
+=======
+  // === APPOINTMENTS ===
+
+  /**
+   * Get all appointments
+   */
+>>>>>>> Luis
   async getAllAppointments(): Promise<Appointment[]> {
     try {
       const response = await apiClient.get('/appointments');
@@ -75,7 +117,13 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
 
+=======
+  /**
+   * Get pending appointments (sorted by date)
+   */
+>>>>>>> Luis
   async getPendingAppointments(): Promise<Appointment[]> {
     try {
       const response = await apiClient.get('/appointments/pending');
@@ -90,7 +138,13 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
 
+=======
+  /**
+   * Get appointments by patient ID
+   */
+>>>>>>> Luis
   async getAppointmentsByPatient(patientId: number): Promise<Appointment[]> {
     try {
       const response = await apiClient.get(`/appointments/patient/${patientId}`);
@@ -102,6 +156,12 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  /**
+   * Create new appointment
+   */
+>>>>>>> Luis
   async createAppointment(appointmentData: AppointmentApiPayload): Promise<Appointment> {
     try {
       const response = await apiClient.post('/appointments', appointmentData);
@@ -112,6 +172,12 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  /**
+   * Update appointment status and details
+   */
+>>>>>>> Luis
   async updateAppointment(id: number, updateData: Partial<Appointment>): Promise<Appointment> {
     try {
       const response = await apiClient.put(`/appointments/${id}`, updateData);
@@ -122,7 +188,13 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
 
+=======
+  /**
+   * Complete appointment with medical data
+   */
+>>>>>>> Luis
   async completeAppointment(id: number, completionData: any): Promise<Appointment> {
     try {
       const response = await apiClient.put(`/appointments/${id}/complete`, completionData);
@@ -133,6 +205,12 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
+=======
+  /**
+   * Cancel appointment
+   */
+>>>>>>> Luis
   async cancelAppointment(id: number, reason?: string): Promise<Appointment> {
     try {
       const response = await apiClient.put(`/appointments/${id}/cancel`, { reason });
@@ -143,7 +221,12 @@ export const nursingService = {
     }
   },
 
+<<<<<<< HEAD
 //Elimina los datos quemados 
+=======
+  // === MOCK DATA (for development) ===
+
+>>>>>>> Luis
   getMockPatients(): Patient[] {
     return [
       {

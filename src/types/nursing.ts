@@ -1,7 +1,10 @@
 export type AppointmentStatus = 'pending' | 'completed' | 'cancelled' | 'no_show';
 export type AppointmentType = 'consultation' | 'medication' | 'vital_signs' | 'treatment' | 'follow_up' | 'emergency';
 
+<<<<<<< HEAD
 //Si ocupas modificar lo que envias es acá 
+=======
+>>>>>>> Luis
 export interface Patient {
   id: number;
   identification: string;

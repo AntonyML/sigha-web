@@ -24,6 +24,7 @@ const defaultAppointmentForm: AppointmentForm = {
 
 interface ValidationErrors {
   patientId?: string;
+  
   appointmentType?: string;
   appointmentDate?: string;
   appointmentTime?: string;
