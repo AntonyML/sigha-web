@@ -1,5 +1,6 @@
 import axios from 'axios';
-import type { AuthUser, LoginResponse } from '../types/auth';
+import type { User, LoginCredentials, LoginResponse, AuthResponse, VerifyTwoFactorData, VerifyTwoFactorResponse, ChangePasswordData, ChangePasswordResponse } from '../types/auth'
+import { navigateTo, getCurrentPath } from '../utils/navigationUtils'
 import { config } from '../config/app.config';
 
 /**
@@ -39,7 +40,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || '';
-      const currentPath = window.location.pathname;
+      const currentPath = getCurrentPath();
 
       // Debug logging for troubleshooting authentication issues
       console.log('401 Interceptor triggered for URL:', requestUrl);
@@ -54,7 +55,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         localStorage.removeItem('tempToken');
-        window.location.href = '/login';
+        navigateTo('/login');
       } else {
         console.log('Skipping redirect for login/2FA flow');
       }

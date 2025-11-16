@@ -44,7 +44,7 @@ class PermissionEntityStorage {
         console.log('Permisos cargados desde localStorage:', this.permissions.length, 'permisos');
       } else {
         // Si no hay datos en localStorage, cargar desde el archivo JSON inicial
-        const response = await fetch('/src/infrastructure/storage/permissionEntities.json');
+        const response = await fetch('./permissionEntities.json');
         if (!response.ok) {
           throw new Error(`Failed to load permission entities: ${response.status}`);
         }

@@ -45,7 +45,7 @@ class PermissionStorage {
     try {
       // En un entorno real, esto vendría de una API
       // Por ahora, importamos el JSON directamente
-      const response = await fetch('/src/infrastructure/storage/permissions.json');
+      const response = await fetch('./permissions.json');
       if (!response.ok) {
         throw new Error(`Failed to load permissions: ${response.status}`);
       }

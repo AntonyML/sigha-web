@@ -28,3 +28,5 @@ export * from './entranceExitApi';
 export * from './vaccine';
 
 export * from './notifuse';
+
+export * from './nursing';

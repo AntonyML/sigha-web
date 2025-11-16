@@ -1,0 +1,232 @@
+[
+  {
+    "id": 1,
+    "name": "Ver Usuarios",
+    "description": "Permite visualizar la lista de usuarios del sistema",
+    "module": "users",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "name": "Crear Usuarios",
+    "description": "Permite crear nuevos usuarios en el sistema",
+    "module": "users",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "name": "Editar Usuarios",
+    "description": "Permite modificar la información de usuarios existentes",
+    "module": "users",
+    "action": "edit",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 4,
+    "name": "Eliminar Usuarios",
+    "description": "Permite eliminar usuarios del sistema",
+    "module": "users",
+    "action": "delete",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 5,
+    "name": "Ver Roles",
+    "description": "Permite visualizar la lista de roles del sistema",
+    "module": "roles",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 6,
+    "name": "Crear Roles",
+    "description": "Permite crear nuevos roles en el sistema",
+    "module": "roles",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 7,
+    "name": "Editar Roles",
+    "description": "Permite modificar la información de roles existentes",
+    "module": "roles",
+    "action": "edit",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 8,
+    "name": "Eliminar Roles",
+    "description": "Permite eliminar roles del sistema",
+    "module": "roles",
+    "action": "delete",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 9,
+    "name": "Ver Dashboard",
+    "description": "Permite acceder al panel principal del sistema",
+    "module": "dashboard",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 10,
+    "name": "Ver Fichas Virtuales",
+    "description": "Permite visualizar las fichas virtuales de adultos mayores",
+    "module": "virtualFiles",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 11,
+    "name": "Crear Fichas Virtuales",
+    "description": "Permite crear nuevas fichas virtuales",
+    "module": "virtualFiles",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 12,
+    "name": "Editar Fichas Virtuales",
+    "description": "Permite modificar fichas virtuales existentes",
+    "module": "virtualFiles",
+    "action": "edit",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 13,
+    "name": "Eliminar Fichas Virtuales",
+    "description": "Permite eliminar fichas virtuales del sistema",
+    "module": "virtualFiles",
+    "action": "delete",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 14,
+    "name": "Ver Auditorías",
+    "description": "Permite visualizar los registros de auditoría",
+    "module": "audits",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 15,
+    "name": "Ver Programas",
+    "description": "Permite visualizar la lista de programas",
+    "module": "programs",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 16,
+    "name": "Crear Programas",
+    "description": "Permite crear nuevos programas",
+    "module": "programs",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 17,
+    "name": "Ver Vacunas",
+    "description": "Permite visualizar la lista de vacunas",
+    "module": "vaccines",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 18,
+    "name": "Crear Vacunas",
+    "description": "Permite crear nuevos registros de vacunas",
+    "module": "vaccines",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 19,
+    "name": "Ver Sub-programas",
+    "description": "Permite visualizar la lista de sub-programas",
+    "module": "subPrograms",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 20,
+    "name": "Ver Entradas/Salidas",
+    "description": "Permite visualizar registros de entradas y salidas",
+    "module": "entranceExit",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 21,
+    "name": "Registrar Entradas/Salidas",
+    "description": "Permite crear registros de entradas y salidas",
+    "module": "entranceExit",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 22,
+    "name": "Ver Configuración 2FA",
+    "description": "Permite acceder a la configuración de autenticación de dos factores",
+    "module": "twoFactor",
+    "action": "view",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  },
+  {
+    "id": 23,
+    "name": "Configurar 2FA",
+    "description": "Permite configurar la autenticación de dos factores",
+    "module": "twoFactor",
+    "action": "create",
+    "enabled": true,
+    "createdAt": "2025-10-27T00:00:00.000Z",
+    "updatedAt": "2025-10-27T00:00:00.000Z"
+  }
+]

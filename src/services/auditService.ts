@@ -6,6 +6,7 @@ import type {
   AuditStatistics,
 } from '../types/audit';
 import { config } from '../config/app.config';
+import { navigateTo } from '../utils/navigationUtils';
 
 /**
  * Respuesta del backend para registros digitales de auditoría
@@ -63,7 +64,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('tempToken');
-      window.location.href = '/login';
+      navigateTo('/login');
     }
     return Promise.reject(error);
   }

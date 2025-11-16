@@ -8,6 +8,7 @@ import type {
   Verify2FARequest,
   Verify2FAResponse,
 } from '../types/twoFactor';
+import { navigateTo, getCurrentPath } from '../utils/navigationUtils';
 import { config } from '../config/app.config';
 
 const apiClient = axios.create({
@@ -37,14 +38,14 @@ apiClient.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       // No redirigir si ya estamos en páginas de autenticación
-      const currentPath = window.location.pathname;
+      const currentPath = getCurrentPath();
       if (currentPath.startsWith('/auth/') || currentPath === '/login') {
         return Promise.reject(error);
       }
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('tempToken');
-      window.location.href = '/login';
+      navigateTo('/login');
     }
     return Promise.reject(error);
   }
