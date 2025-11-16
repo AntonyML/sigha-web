@@ -1,6 +1,6 @@
 import { Builder, WebDriver, By } from 'selenium-webdriver';
 
-describe('Pruebas GUI Entrada/Salida - Simples', () => {
+describe('Pruebas de interfaz', () => {
   let driver: WebDriver;
   const baseUrl = 'http://localhost:5173';
 
@@ -15,7 +15,7 @@ describe('Pruebas GUI Entrada/Salida - Simples', () => {
     await driver.quit();
   });
 
-  // PRUEBA 1: Verificar que la página principal carga
+  // Verificar que la página principal carga
   test('1. La página principal debe cargar', async () => {
     try {
       await driver.get(baseUrl);
@@ -29,7 +29,7 @@ describe('Pruebas GUI Entrada/Salida - Simples', () => {
     }
   });
 
-  // PRUEBA 2: Verificar navegación básica
+  // Verificar que haya navegación 
   test('2. Debe poder navegar a una página', async () => {
     try {
       await driver.get(`${baseUrl}/#/`);
@@ -43,7 +43,7 @@ describe('Pruebas GUI Entrada/Salida - Simples', () => {
     }
   });
 
-  // PRUEBA 3: Verificar que existen elementos básicos
+  // Verificar que hayan elementos básicos
   test('3. Debe encontrar elementos de la página', async () => {
     try {
       await driver.get(baseUrl);
@@ -57,7 +57,7 @@ describe('Pruebas GUI Entrada/Salida - Simples', () => {
     }
   });
 
-  // PRUEBA 4: Verificar que se puede hacer clic en elementos
+  // Verificar que si se pueda hacer clic en botones
   test('4. Debe poder interactuar con elementos', async () => {
     try {
       await driver.get(baseUrl);
@@ -78,7 +78,7 @@ describe('Pruebas GUI Entrada/Salida - Simples', () => {
     }
   });
 
-  // PRUEBA 5: Verificar formularios básicos
+  // Verificar que hayan formularios 
   test('5. Debe encontrar campos de entrada', async () => {
     try {
       await driver.get(baseUrl);

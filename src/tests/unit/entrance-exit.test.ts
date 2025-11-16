@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { entranceExitService } from '../../services/entranceExitService';
 import type { EntranceExitApiPayload, EntranceExitType } from '../../types/entranceExit';
 
-describe('Pruebas Unitarias - Módulo Entrada/Salida', () => {
+describe('Pruebas Unitarias Entrada/Salida', () => {
   
   //Verificar que el servicio existe y estam los métodos necesarios
   it('1. El servicio de entrada/salida debe existir con métodos básicos', () => {
@@ -19,10 +19,10 @@ describe('Pruebas Unitarias - Módulo Entrada/Salida', () => {
     const validData: EntranceExitApiPayload = {
       eeType: 'visitor',
       eeAccessType: 'entrance',
-      eeIdentification: '12345678',
-      eeName: 'Juan',
-      eeFLastName: 'Pérez',
-      eeSLastName: 'González',
+      eeIdentification: '703180966',
+      eeName: 'Michelle',
+      eeFLastName: 'Arguedas',
+      eeSLastName: 'Murillo',
       eeDatetimeEntrance: '2025-11-15T10:30:00',
       eeClose: false,
       eeObservations: 'Visita familiar'
@@ -84,10 +84,10 @@ describe('Pruebas Unitarias - Módulo Entrada/Salida', () => {
     const entranceData: EntranceExitApiPayload = {
       eeType: 'visitor',
       eeAccessType: 'entrance',
-      eeIdentification: '12345678',
-      eeName: 'Juan',
-      eeFLastName: 'Pérez',
-      eeSLastName: 'González',
+      eeIdentification: '703180966',
+      eeName: 'Michelle',
+      eeFLastName: 'Arguedas',
+      eeSLastName: 'Murillo',
       eeClose: false
     };
 
