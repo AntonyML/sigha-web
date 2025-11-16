@@ -19,10 +19,14 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
+    "test:unit": "vitest run src/tests/unit --coverage --reporter=verbose",
+    "test:unit:watch": "vitest src/tests/unit",
+    "test:selenium:headless": "HEADLESS=true jest --config jest.selenium.config.cjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:selenium": "jest --config jest.selenium.config.cjs",
-    "test:gui": "jest --config jest.selenium.config.cjs"
+    "test:gui": "jest --config jest.selenium.config.cjs",
+    "build:prod": "NODE_ENV=production npm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
