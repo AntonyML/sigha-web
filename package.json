@@ -19,7 +19,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:unit": "vitest run src/tests/unit --coverage --reporter=verbose",
+    "test:unit": "vitest run tests/unit tests/luistest --coverage --reporter=verbose",
     "test:unit:watch": "vitest src/tests/unit",
     "test:selenium:headless": "HEADLESS=true jest --config jest.selenium.config.cjs",
     "test:e2e": "playwright test",
