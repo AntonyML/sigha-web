@@ -18,9 +18,6 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-<<<<<<< HEAD
-    "test:run": "vitest run"
-=======
     "test:run": "vitest run",
     "test:unit": "vitest run src/tests/unit --coverage --reporter=verbose",
     "test:unit:watch": "vitest src/tests/unit",
@@ -30,7 +27,6 @@
     "test:selenium": "jest --config jest.selenium.config.cjs",
     "test:gui": "jest --config jest.selenium.config.cjs",
     "build:prod": "NODE_ENV=production npm run build"
->>>>>>> luis
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
