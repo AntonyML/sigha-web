@@ -145,7 +145,7 @@ export const nursingService = {
     }
   },
 
-//Elimina los datos quemados 
+//Eliminar los datos quemados 
   getMockPatients(): Patient[] {
     return [
       {
