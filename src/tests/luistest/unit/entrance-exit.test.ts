@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { entranceExitService } from '../../services/entranceExitService';
-import type { EntranceExitApiPayload, EntranceExitType } from '../../types/entranceExit';
+import { entranceExitService } from '../../../services/entranceExitService';
+import type { EntranceExitApiPayload, EntranceExitType } from '../../../types/entranceExit';
 
 describe('Pruebas Unitarias Entrada/Salida', () => {
   
