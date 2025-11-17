@@ -21,7 +21,7 @@ export default function CreateVaccinePage() {
     e.preventDefault();
     
     if (!formData.vName.trim()) {
-      alert('El nombre de la vacuna es requeridoo');
+      alert('El nombre de la vacuna es requeridoooo');
       return;
     }
 
