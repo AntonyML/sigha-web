@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { nursingService } from '../../../services/nursingService';
-import type { Appointment, AppointmentStatus } from '../../../types/nursing';
+import type { NursingAppointment } from '../../../types/nursing';
+import { appointmentStatusLabels, appointmentTypeLabels, appointmentStatusColors, appointmentPriorityColors } from '../../../types/nursing';
 
 export default function AppointmentHistory() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<NursingAppointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<NursingAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [filters, setFilters] = useState({
@@ -29,10 +30,9 @@ export default function AppointmentHistory() {
     setLoading(true);
     setError('');
     try {
-      const data = await nursingService.getAllAppointments();
-      const sortedData = data.sort((a, b) => 
-        new Date(b.scheduledDate + 'T' + b.scheduledTime).getTime() - 
-        new Date(a.scheduledDate + 'T' + a.scheduledTime).getTime()
+      const data = await nursingService.getNursingAppointments();
+      const sortedData = data.sort((a: NursingAppointment, b: NursingAppointment) => 
+        new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
       );
       setAppointments(sortedData);
     } catch (err) {
@@ -56,17 +56,17 @@ export default function AppointmentHistory() {
     if (filters.search) {
       const search = filters.search.toLowerCase();
       filtered = filtered.filter(apt => {
-        const patientName = `${apt.patient?.name} ${apt.patient?.firstLastName} ${apt.patient?.secondLastName}`.toLowerCase();
+        const patientName = `${apt.patient?.name} ${apt.patient?.firstLastName}`.toLowerCase();
         const patientId = apt.patient?.identification || '';
         return patientName.includes(search) || patientId.includes(search);
       });
     }
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(apt => apt.scheduledDate >= filters.dateFrom);
+      filtered = filtered.filter(apt => apt.appointmentDate >= filters.dateFrom);
     }
     if (filters.dateTo) {
-      filtered = filtered.filter(apt => apt.scheduledDate <= filters.dateTo);
+      filtered = filtered.filter(apt => apt.appointmentDate <= filters.dateTo);
     }
 
     setFilteredAppointments(filtered);
@@ -86,30 +86,8 @@ export default function AppointmentHistory() {
     });
   };
 
-  const getStatusBadgeClass = (status: AppointmentStatus) => {
-    const classes = {
-      pending: 'bg-warning text-dark',
-      completed: 'bg-success',
-      cancelled: 'bg-danger',
-      no_show: 'bg-secondary'
-    };
-    return `badge ${classes[status]}`;
-  };
-
-  const getTypeBadgeClass = (type: string) => {
-    const classes = {
-      consultation: 'bg-primary',
-      medication: 'bg-info',
-      vital_signs: 'bg-success',
-      treatment: 'bg-warning text-dark',
-      follow_up: 'bg-secondary',
-      emergency: 'bg-danger'
-    };
-    return `badge ${classes[type as keyof typeof classes] || 'bg-light text-dark'}`;
-  };
-
-  const formatDateTime = (date: string, time: string) => {
-    const appointmentDate = new Date(`${date}T${time}`);
+  const formatDateTime = (dateTime: string) => {
+    const appointmentDate = new Date(dateTime);
     return appointmentDate.toLocaleString('es-ES', {
       day: '2-digit',
       month: '2-digit',
@@ -117,28 +95,6 @@ export default function AppointmentHistory() {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const getStatusLabel = (status: AppointmentStatus) => {
-    const labels = {
-      pending: 'Pendiente',
-      completed: 'Completada',
-      cancelled: 'Cancelada',
-      no_show: 'No se presentó'
-    };
-    return labels[status];
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels = {
-      consultation: 'Consulta',
-      medication: 'Medicación',
-      vital_signs: 'Signos Vitales',
-      treatment: 'Tratamiento',
-      follow_up: 'Seguimiento',
-      emergency: 'Emergencia'
-    };
-    return labels[type as keyof typeof labels] || type;
   };
 
   if (loading) {
@@ -162,7 +118,7 @@ export default function AppointmentHistory() {
         </h3>
         <button 
           type="button" 
-          className="btn btn-secondary"
+          className="btn btn-outline-secondary"
           onClick={() => navigate('/nursing')}
         >
           <i className="bi bi-arrow-left me-2"></i>
@@ -195,7 +151,9 @@ export default function AppointmentHistory() {
                 onChange={(e) => handleFilterChange('status', e.target.value)}
               >
                 <option value="">Todos los estados</option>
+                <option value="scheduled">Programada</option>
                 <option value="pending">Pendiente</option>
+                <option value="in_progress">En progreso</option>
                 <option value="completed">Completada</option>
                 <option value="cancelled">Cancelada</option>
                 <option value="no_show">No se presentó</option>
@@ -210,10 +168,9 @@ export default function AppointmentHistory() {
                 onChange={(e) => handleFilterChange('type', e.target.value)}
               >
                 <option value="">Todos los tipos</option>
-                <option value="consultation">Consulta</option>
-                <option value="medication">Medicación</option>
-                <option value="vital_signs">Signos Vitales</option>
-                <option value="treatment">Tratamiento</option>
+                <option value="checkup">Chequeo</option>
+                <option value="evaluation">Evaluación</option>
+                <option value="therapy">Terapia</option>
                 <option value="follow_up">Seguimiento</option>
                 <option value="emergency">Emergencia</option>
               </select>
@@ -287,7 +244,8 @@ export default function AppointmentHistory() {
                     <th>Tipo</th>
                     <th>Motivo</th>
                     <th>Estado</th>
-                    <th>Diagnóstico</th>
+                    <th>Observaciones</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -295,7 +253,7 @@ export default function AppointmentHistory() {
                     <tr key={appointment.id}>
                       <td>
                         <small>
-                          {formatDateTime(appointment.scheduledDate, appointment.scheduledTime)}
+                          {formatDateTime(appointment.appointmentDate)}
                         </small>
                       </td>
                       <td>
@@ -310,34 +268,48 @@ export default function AppointmentHistory() {
                         </div>
                       </td>
                       <td>
-                        <span className={getTypeBadgeClass(appointment.appointmentType)}>
-                          {getTypeLabel(appointment.appointmentType)}
+                        <span className={`badge bg-${appointmentPriorityColors[appointment.priority]}`}>
+                          {appointmentTypeLabels[appointment.appointmentType]}
                         </span>
                       </td>
                       <td>
-                        <span title={appointment.reason}>
-                          {appointment.reason.length > 30 
-                            ? appointment.reason.substring(0, 30) + '...'
-                            : appointment.reason
+                        <span title={appointment.notes || ''}>
+                          {appointment.notes && appointment.notes.length > 30 
+                            ? appointment.notes.substring(0, 30) + '...'
+                            : appointment.notes || '-'
                           }
                         </span>
                       </td>
                       <td>
-                        <span className={getStatusBadgeClass(appointment.status)}>
-                          {getStatusLabel(appointment.status)}
+                        <span className={`badge bg-${appointmentStatusColors[appointment.status]}`}>
+                          {appointmentStatusLabels[appointment.status]}
                         </span>
                       </td>
                       <td>
-                        {appointment.diagnosis ? (
-                          <span title={appointment.diagnosis}>
-                            {appointment.diagnosis.length > 30 
-                              ? appointment.diagnosis.substring(0, 30) + '...'
-                              : appointment.diagnosis
+                        {appointment.observations ? (
+                          <span title={appointment.observations}>
+                            {appointment.observations.length > 30 
+                              ? appointment.observations.substring(0, 30) + '...'
+                              : appointment.observations
                             }
                           </span>
                         ) : (
                           <span className="text-muted">-</span>
                         )}
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => {
+                            const returnPath = '/nursing/appointments/history';
+                            navigate(`/nursing/appointments/${appointment.id}/results?returnTo=${encodeURIComponent(returnPath)}`);
+                          }}
+                          disabled={appointment.status !== 'completed'}
+                          title={appointment.status === 'completed' ? 'Ver resultados' : 'Cita no completada'}
+                        >
+                          <i className="bi bi-clipboard-data me-1"></i>
+                          Ver Resultados
+                        </button>
                       </td>
                     </tr>
                   ))}

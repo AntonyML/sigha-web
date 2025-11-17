@@ -67,6 +67,9 @@ import EntranceExitHistory from './presentation/pages/entrance-exit/EntranceExit
 import NursingDashboard from './presentation/pages/nursing/NursingDashboard'
 import ScheduleAppointment from './presentation/pages/nursing/ScheduleAppointment'
 import AppointmentHistory from './presentation/pages/nursing/AppointmentHistory'
+import AppointmentDetail from './presentation/pages/nursing/AppointmentDetail'
+import AppointmentResults from './presentation/pages/nursing/AppointmentResults'
+import CompleteAppointment from './presentation/pages/nursing/CompleteAppointment'
 import PatientAppointments from './presentation/pages/nursing/PatientAppointments'
 
 //Audit
@@ -138,6 +141,9 @@ export default function App() {
               <Route path="nursing" element={<NursingDashboard />} />
               <Route path="nursing/appointments/new" element={<ScheduleAppointment />} />
               <Route path="nursing/appointments/history" element={<AppointmentHistory />} />
+              <Route path="nursing/appointments/:id/view" element={<AppointmentDetail />} />
+              <Route path="nursing/appointments/:id/results" element={<AppointmentResults />} />
+              <Route path="nursing/appointments/:id/complete" element={<CompleteAppointment />} />
               <Route path="nursing/patients/:patientId/appointments" element={<PatientAppointments />} />
 
               <Route path="audits" element={<AuditMenuPage />} />

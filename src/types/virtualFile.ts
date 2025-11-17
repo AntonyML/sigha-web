@@ -125,6 +125,31 @@ export interface VirtualFileSearchParams {
   estadoCivil?: string;
 }
 
+// ==================== Patient Search DTOs ====================
+
+export interface SearchVirtualRecordsDto {
+  search: string;
+}
+
+export interface PatientBasicInfo {
+  id: number;
+  identification: string;
+  name: string;
+  firstLastName: string;
+  secondLastName: string;
+  fullName: string;
+  birthdate: string;
+  gender: string;
+  phone: string;
+  email: string;
+  status: string;
+}
+
+export interface SearchPatientsResponse {
+  message: string;
+  data: PatientBasicInfo[];
+}
+
 export interface VirtualFileApiResponse {
   data: VirtualFile[];
   total: number;
