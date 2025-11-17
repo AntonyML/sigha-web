@@ -50,7 +50,6 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
   // Validar tipos de persona permitidos
   it('3. Debe aceptar solo tipos de persona válidos', () => {
     const validTypes: EntranceExitType[] = ['employee', 'older adult', 'visitor', 'volunteer', 'vehicle', 'other'];
-    
     validTypes.forEach(type => {
       const data: EntranceExitApiPayload = {
         eeType: type,
@@ -61,7 +60,6 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
         eeSLastName: 'Test',
         eeClose: false
       };
-      // Verificar que el tipo está en la lista válida
       expect(validTypes).toContain(data.eeType);
     });
   });
@@ -70,11 +68,9 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
   it('4. Debe validar formato correcto de fecha y hora', () => {
     const validDatetime = '2025-11-15T10:30:00';
     const invalidDatetime = 'fecha-invalida';
-    // Fecha válida debe crear objeto Date válido
     const validDate = new Date(validDatetime);
     expect(validDate instanceof Date).toBe(true);
     expect(!isNaN(validDate.getTime())).toBe(true);
-    // Fecha inválida debe crear objeto Date inválido
     const invalidDate = new Date(invalidDatetime);
     expect(isNaN(invalidDate.getTime())).toBe(true);
   });
@@ -90,7 +86,6 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
       eeSLastName: 'Murillo',
       eeClose: false
     };
-
     const exitData: EntranceExitApiPayload = {
       eeType: 'visitor', 
       eeAccessType: 'exit',
@@ -100,10 +95,8 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
       eeSLastName: 'González',
       eeClose: true
     };
-    // Validar tipos de acceso
     expect(['entrance', 'exit']).toContain(entranceData.eeAccessType);
     expect(['entrance', 'exit']).toContain(exitData.eeAccessType);
-    // Validar estructura básica
     expect(entranceData.eeType).toBeTruthy();
     expect(entranceData.eeIdentification).toBeTruthy();
     expect(entranceData.eeName).toBeTruthy();
