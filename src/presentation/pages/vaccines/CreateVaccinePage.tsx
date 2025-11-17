@@ -29,14 +29,14 @@ export default function CreateVaccinePage() {
 
     try {
       setLoading(true);
-      console.log('📤 Creando vacuna:', formData);
+      console.log('Creando vacuna:', formData);
       
       await vaccineService.createVaccine(formData);
       
       alert('Vacuna creada exitosamente');
       navigate('/vaccines');
     } catch (error) {
-      console.error('❌ Error creando vacuna:', error);
+      console.error(' Error creando vacuna:', error);
       alert('Error al crear la vacuna. Por favor, inténtelo de nuevo.');
     } finally {
       setLoading(false);
