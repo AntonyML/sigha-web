@@ -1,21 +1,26 @@
 import axios from 'axios';
-import type { Patient, Appointment, AppointmentApiPayload, AppointmentStatus } from '../types/nursing';
+import type {
+  NursingAppointment,
+  GetNursingAppointmentsDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  CancelAppointmentDto,
+  CompleteAppointmentDto,
+  NursingAppointmentResponse,
+  SingleNursingAppointmentResponse,
+  CompleteAppointmentResponse,
+  NursingRecordsResponse
+} from '../types/nursing';
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
 
-const API_URL = config.api.baseUrl; //CONFIGURAR URL JONA
-
-/**
- * Axios instance configured for nursing API calls
- */
 const apiClient = axios.create({
-  baseURL: `${API_URL}/api/nursing`,
+  baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor to add auth token
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   if (token) {
@@ -24,7 +29,6 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor to handle auth errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -40,217 +44,269 @@ apiClient.interceptors.response.use(
 
 export const nursingService = {
   
-  async getAllPatients(): Promise<Patient[]> {
+  /**
+   * Get all nursing appointments with optional filters
+   * 
+   * @param filters Optional filters (status, priority, dateFrom, dateTo)
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments
+   * Query params: status, priority, dateFrom, dateTo
+   */
+  async getNursingAppointments(filters?: GetNursingAppointmentsDto): Promise<NursingAppointment[]> {
     try {
-      const response = await apiClient.get('/patients');
-      return response.data;
+      const response = await apiClient.get<NursingAppointmentResponse>('/nursing/appointments', {
+        params: filters
+      });
+      return response.data.data;
     } catch (error) {
-      console.error('Error fetching patients:', error);
-      return this.getMockPatients();
-    }
-  },
-
-  async getPatientById(id: number): Promise<Patient> {
-    try {
-      const response = await apiClient.get(`/patients/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching patient:', error);
-      const mockPatients = this.getMockPatients();
-      const patient = mockPatients.find(p => p.id === id);
-      if (!patient) {
-        throw new Error(`Patient with ID ${id} not found`);
-      }
-      return patient;
-    }
-  },
-
-
-
-  async getAllAppointments(): Promise<Appointment[]> {
-    try {
-      const response = await apiClient.get('/appointments');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-      return this.getMockAppointments();
-    }
-  },
-
-
-  async getPendingAppointments(): Promise<Appointment[]> {
-    try {
-      const response = await apiClient.get('/appointments/pending');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching pending appointments:', error);
-      const allAppointments = this.getMockAppointments();
-      return allAppointments
-        .filter(apt => apt.status === 'pending')
-        .sort((a, b) => new Date(a.scheduledDate + 'T' + a.scheduledTime).getTime() - 
-                       new Date(b.scheduledDate + 'T' + b.scheduledTime).getTime());
-    }
-  },
-
-
-  async getAppointmentsByPatient(patientId: number): Promise<Appointment[]> {
-    try {
-      const response = await apiClient.get(`/appointments/patient/${patientId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching patient appointments:', error);
-      const allAppointments = this.getMockAppointments();
-      return allAppointments.filter(apt => apt.patientId === patientId);
-    }
-  },
-
-  async createAppointment(appointmentData: AppointmentApiPayload): Promise<Appointment> {
-    try {
-      const response = await apiClient.post('/appointments', appointmentData);
-      return response.data;
-    } catch (error) {
-      console.error('Error creating appointment:', error);
+      console.error('Error fetching nursing appointments:', error);
       throw error;
     }
   },
 
-  async updateAppointment(id: number, updateData: Partial<Appointment>): Promise<Appointment> {
+  /**
+   * Get pending nursing appointments (scheduled + in_progress)
+   * 
+   * @param filters Optional filters (priority, dateFrom, dateTo)
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments/pending
+   */
+  async getPendingAppointments(filters?: GetNursingAppointmentsDto): Promise<NursingAppointment[]> {
     try {
-      const response = await apiClient.put(`/appointments/${id}`, updateData);
-      return response.data;
+      const response = await apiClient.get<NursingAppointmentResponse>('/nursing/appointments/pending', {
+        params: filters
+      });
+      return response.data.data;
     } catch (error) {
-      console.error('Error updating appointment:', error);
+      console.error('Error fetching pending nursing appointments:', error);
       throw error;
     }
   },
 
-
-  async completeAppointment(id: number, completionData: any): Promise<Appointment> {
+  /**
+   * Get completed nursing appointments with their nursing records
+   * 
+   * @param filters Optional filters (priority, dateFrom, dateTo)
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments/completed
+   */
+  async getCompletedAppointments(filters?: GetNursingAppointmentsDto): Promise<NursingAppointment[]> {
     try {
-      const response = await apiClient.put(`/appointments/${id}/complete`, completionData);
-      return response.data;
+      const response = await apiClient.get<NursingAppointmentResponse>('/nursing/appointments/completed', {
+        params: filters
+      });
+      return response.data.data;
     } catch (error) {
-      console.error('Error completing appointment:', error);
+      console.error('Error fetching completed nursing appointments:', error);
       throw error;
     }
   },
 
-  async cancelAppointment(id: number, reason?: string): Promise<Appointment> {
+  /**
+   * Get cancelled nursing appointments
+   * 
+   * @param filters Optional filters (priority, dateFrom, dateTo)
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments/cancelled
+   */
+  async getCancelledAppointments(filters?: GetNursingAppointmentsDto): Promise<NursingAppointment[]> {
     try {
-      const response = await apiClient.put(`/appointments/${id}/cancel`, { reason });
-      return response.data;
+      const response = await apiClient.get<NursingAppointmentResponse>('/nursing/appointments/cancelled', {
+        params: filters
+      });
+      return response.data.data;
     } catch (error) {
-      console.error('Error cancelling appointment:', error);
+      console.error('Error fetching cancelled nursing appointments:', error);
       throw error;
     }
   },
 
-//Eliminar los datos quemados 
-  getMockPatients(): Patient[] {
-    return [
-      {
-        id: 1,
-        identification: '12345678',
-        name: 'María',
-        firstLastName: 'González',
-        secondLastName: 'Pérez',
-        birthDate: '1945-03-15',
-        age: 79,
-        phone: '2234-5678',
-        emergencyContact: 'Juan González - 8765-4321',
-        medicalConditions: 'Hipertensión, Diabetes',
-        allergies: 'Penicilina',
-        createAt: '2024-01-15T10:00:00Z'
-      },
-      {
-        id: 2,
-        identification: '87654321',
-        name: 'José',
-        firstLastName: 'Rodríguez',
-        secondLastName: 'López',
-        birthDate: '1938-07-22',
-        age: 86,
-        phone: '2345-6789',
-        emergencyContact: 'Ana López - 9876-5432',
-        medicalConditions: 'Artritis, Problemas cardíacos',
-        allergies: 'Ninguna conocida',
-        createAt: '2024-01-20T14:30:00Z'
-      },
-      {
-        id: 3,
-        identification: '11223344',
-        name: 'Carmen',
-        firstLastName: 'Jiménez',
-        secondLastName: 'Morales',
-        birthDate: '1950-12-03',
-        age: 73,
-        phone: '2456-7890',
-        emergencyContact: 'Luis Jiménez - 7890-1234',
-        medicalConditions: 'Osteoporosis',
-        allergies: 'Aspirina',
-        createAt: '2024-02-01T09:15:00Z'
-      }
-    ];
+  /**
+   * Get all nursing appointments for a specific patient by patient ID
+   * 
+   * @param patientId Patient ID
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments/patient/:patientId
+   */
+  async getAppointmentsByPatientId(patientId: number): Promise<NursingAppointment[]> {
+    try {
+      const response = await apiClient.get<NursingAppointmentResponse>(
+        `/nursing/appointments/patient/${patientId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching patient nursing appointments by ID:', error);
+      throw error;
+    }
   },
 
-  getMockAppointments(): Appointment[] {
-    const patients = this.getMockPatients();
-    return [
-      {
-        id: 1,
-        patientId: 1,
-        patient: patients[0],
-        appointmentType: 'consultation',
-        scheduledDate: '2024-11-15',
-        scheduledTime: '09:00',
-        status: 'pending',
-        reason: 'Control de presión arterial',
-        notes: 'Paciente reporta mareos ocasionales',
-        createAt: '2024-11-14T10:00:00Z'
-      },
-      {
-        id: 2,
-        patientId: 2,
-        patient: patients[1],
-        appointmentType: 'medication',
-        scheduledDate: '2024-11-15',
-        scheduledTime: '10:30',
-        status: 'pending',
-        reason: 'Administración de medicamento para el corazón',
-        createAt: '2024-11-14T11:00:00Z'
-      },
-      {
-        id: 3,
-        patientId: 3,
-        patient: patients[2],
-        appointmentType: 'vital_signs',
-        scheduledDate: '2024-11-16',
-        scheduledTime: '14:00',
-        status: 'pending',
-        reason: 'Toma de signos vitales rutinaria',
-        createAt: '2024-11-14T12:00:00Z'
-      },
-      {
-        id: 4,
-        patientId: 1,
-        patient: patients[0],
-        appointmentType: 'consultation',
-        scheduledDate: '2024-11-10',
-        scheduledTime: '15:00',
-        status: 'completed',
-        reason: 'Revisión general',
-        diagnosis: 'Presión arterial controlada',
-        nurseNotes: 'Paciente en buen estado general',
-        vitalSigns: {
-          bloodPressure: '120/80',
-          heartRate: 72,
-          temperature: 36.5,
-          weight: 65,
-          height: 160
-        },
-        createAt: '2024-11-09T10:00:00Z',
-        updatedAt: '2024-11-10T15:30:00Z'
-      }
-    ];
+  /**
+   * Get all nursing appointments for a specific patient by identification
+   * 
+   * @param identification Patient identification number
+   * @returns Promise<NursingAppointment[]>
+   * 
+   * Endpoint: GET /nursing/appointments/patient/identification/:identification
+   */
+  async getAppointmentsByPatientIdentification(identification: string): Promise<NursingAppointment[]> {
+    try {
+      const response = await apiClient.get<NursingAppointmentResponse>(
+        `/nursing/appointments/patient/identification/${identification}`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching patient nursing appointments by identification:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get nursing records for a specific appointment
+   * 
+   * @param appointmentId Appointment ID
+   * @returns Promise<NursingRecord[]>
+   * 
+   * Endpoint: GET /nursing/appointments/:id/records
+   */
+  async getNursingRecordsByAppointment(appointmentId: number): Promise<any[]> {
+    try {
+      const response = await apiClient.get<NursingRecordsResponse>(
+        `/nursing/appointments/${appointmentId}/records`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching nursing records by appointment:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new nursing appointment
+   * 
+   * @param createDto Appointment data
+   * @returns Promise<NursingAppointment>
+   * 
+   * Endpoint: POST /nursing/appointments
+   * Required fields:
+   * - saAppointmentDate: ISO datetime string
+   * - saAppointmentType: AppointmentType
+   * - saPriority: AppointmentPriority
+   * - idArea: number (nursing area ID)
+   * - idPatient: number
+   * - idStaff: number
+   * Optional fields:
+   * - saNotes: string
+   * - saDurationMinutes: number
+   */
+  async createAppointment(createDto: CreateAppointmentDto): Promise<NursingAppointment> {
+    try {
+      const response = await apiClient.post<SingleNursingAppointmentResponse>(
+        '/nursing/appointments',
+        createDto
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error creating nursing appointment:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update/Reschedule a nursing appointment
+   * 
+   * @param id Appointment ID
+   * @param updateDto Updated appointment data (partial)
+   * @returns Promise<NursingAppointment>
+   * 
+   * Endpoint: PUT /nursing/appointments/:id
+   * Optional fields (all):
+   * - saAppointmentDate: ISO datetime string
+   * - saAppointmentType: AppointmentType
+   * - saPriority: AppointmentPriority
+   * - saNotes: string
+   * - saObservations: string
+   * - saDurationMinutes: number
+   * - idStaff: number
+   * 
+   * Note: Cannot update completed or cancelled appointments
+   */
+  async updateAppointment(id: number, updateDto: UpdateAppointmentDto): Promise<NursingAppointment> {
+    try {
+      const response = await apiClient.put<SingleNursingAppointmentResponse>(
+        `/nursing/appointments/${id}`,
+        updateDto
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error updating nursing appointment:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cancel a nursing appointment
+   * 
+   * @param id Appointment ID
+   * @param cancelDto Cancellation data
+   * @returns Promise<NursingAppointment>
+   * 
+   * Endpoint: PATCH /nursing/appointments/:id/cancel
+   * Optional fields:
+   * - cancellationReason: string
+   * 
+   * Note: Cannot cancel completed appointments
+   */
+  async cancelAppointment(id: number, cancelDto: CancelAppointmentDto): Promise<NursingAppointment> {
+    try {
+      const response = await apiClient.patch<SingleNursingAppointmentResponse>(
+        `/nursing/appointments/${id}/cancel`,
+        cancelDto
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error cancelling nursing appointment:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Complete a nursing appointment and create nursing record
+   * 
+   * @param id Appointment ID
+   * @param completeDto Nursing record data
+   * @returns Promise<{ appointment: NursingAppointment; nursingRecord: NursingRecord }>
+   * 
+   * Endpoint: POST /nursing/appointments/:id/complete
+   * Optional fields (all):
+   * - nrTemperature: number (30-45)
+   * - nrBloodPressure: string (format: XXX/XXX)
+   * - nrHeartRate: number (30-250)
+   * - nrPainLevel: number (0-10)
+   * - nrMobility: Mobility
+   * - nrAppetite: QualityLevel
+   * - nrSleepQuality: QualityLevel
+   * - nrNotes: string
+   * 
+   * Note: Changes appointment status to 'completed' and creates nursing record
+   */
+  async completeAppointment(id: number, completeDto: CompleteAppointmentDto): Promise<{
+    appointment: NursingAppointment;
+    nursingRecord: any;
+  }> {
+    try {
+      const response = await apiClient.post<CompleteAppointmentResponse>(
+        `/nursing/appointments/${id}/complete`,
+        completeDto
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error completing nursing appointment:', error);
+      throw error;
+    }
   }
 };

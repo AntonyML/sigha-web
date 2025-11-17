@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { nursingService } from '../../../services/nursingService';
-import type { Appointment, Patient, AppointmentStatus } from '../../../types/nursing';
+import type { NursingAppointment } from '../../../types/nursing';
+import { 
+  appointmentStatusLabels, 
+  appointmentTypeLabels,
+  appointmentPriorityLabels,
+  appointmentStatusColors,
+  appointmentTypeColors,
+  appointmentPriorityColors
+} from '../../../types/nursing';
 
 export default function PatientAppointments() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [patient, setPatient] = useState<Patient | null>(null);
+  const [appointments, setAppointments] = useState<NursingAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
@@ -13,29 +20,24 @@ export default function PatientAppointments() {
 
   useEffect(() => {
     if (patientId) {
-      loadData();
+      loadAppointments();
     }
   }, [patientId]);
 
-  const loadData = async () => {
+  const loadAppointments = async () => {
     if (!patientId) return;
 
     setLoading(true);
     setError('');
     
     try {
-      const [appointmentsData, patientData] = await Promise.all([
-        nursingService.getAppointmentsByPatient(parseInt(patientId)),
-        nursingService.getPatientById(parseInt(patientId))
-      ]);
+      const appointmentsData = await nursingService.getAppointmentsByPatientId(parseInt(patientId));
 
-      const sortedAppointments = appointmentsData.sort((a, b) => 
-        new Date(b.scheduledDate + 'T' + b.scheduledTime).getTime() - 
-        new Date(a.scheduledDate + 'T' + a.scheduledTime).getTime()
+      const sortedAppointments = appointmentsData.sort((a: NursingAppointment, b: NursingAppointment) => 
+        new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime()
       );
       
       setAppointments(sortedAppointments);
-      setPatient(patientData);
     } catch (err) {
       console.error('Error loading patient appointments:', err);
       setError('Error al cargar las citas del paciente');
@@ -44,30 +46,8 @@ export default function PatientAppointments() {
     }
   };
 
-  const getStatusBadgeClass = (status: AppointmentStatus) => {
-    const classes = {
-      pending: 'bg-warning text-dark',
-      completed: 'bg-success',
-      cancelled: 'bg-danger',
-      no_show: 'bg-secondary'
-    };
-    return `badge ${classes[status]}`;
-  };
-
-  const getTypeBadgeClass = (type: string) => {
-    const classes = {
-      consultation: 'bg-primary',
-      medication: 'bg-info',
-      vital_signs: 'bg-success',
-      treatment: 'bg-warning text-dark',
-      follow_up: 'bg-secondary',
-      emergency: 'bg-danger'
-    };
-    return `badge ${classes[type as keyof typeof classes] || 'bg-light text-dark'}`;
-  };
-
-  const formatDateTime = (date: string, time: string) => {
-    const appointmentDate = new Date(`${date}T${time}`);
+  const formatDateTime = (dateTime: string) => {
+    const appointmentDate = new Date(dateTime);
     return appointmentDate.toLocaleString('es-ES', {
       day: '2-digit',
       month: '2-digit',
@@ -75,39 +55,6 @@ export default function PatientAppointments() {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const getStatusLabel = (status: AppointmentStatus) => {
-    const labels = {
-      pending: 'Pendiente',
-      completed: 'Completada',
-      cancelled: 'Cancelada',
-      no_show: 'No se presentó'
-    };
-    return labels[status];
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels = {
-      consultation: 'Consulta',
-      medication: 'Medicación',
-      vital_signs: 'Signos Vitales',
-      treatment: 'Tratamiento',
-      follow_up: 'Seguimiento',
-      emergency: 'Emergencia'
-    };
-    return labels[type as keyof typeof labels] || type;
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
   };
 
   if (loading) {
@@ -131,7 +78,7 @@ export default function PatientAppointments() {
         </div>
         <button 
           type="button"
-          className="btn btn-secondary"
+          className="btn btn-outline-secondary"
           onClick={() => navigate('/nursing')}
         >
           <i className="bi bi-arrow-left me-2"></i>
@@ -151,7 +98,10 @@ export default function PatientAppointments() {
         <div className="d-flex gap-2">
           <button 
             type="button"
-            className="btn btn-primary"
+            className="btn btn-success"
+            style={{ backgroundColor: '#198754', borderColor: '#198754', color: 'white' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#157347'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#198754'}
             onClick={() => navigate(`/nursing/appointments/new?patientId=${patientId}`)}
           >
             <i className="bi bi-calendar-plus me-2"></i>
@@ -159,7 +109,7 @@ export default function PatientAppointments() {
           </button>
           <button 
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-outline-secondary"
             onClick={() => navigate('/nursing')}
           >
             <i className="bi bi-arrow-left me-2"></i>
@@ -167,9 +117,9 @@ export default function PatientAppointments() {
           </button>
         </div>
       </div>
-      {patient && (
-        <div className="card mb-4">
-          <div className="card-header">
+      {appointments.length > 0 && appointments[0].patient && (
+        <div className="card mb-4 shadow-sm">
+          <div className="card-header bg-primary bg-opacity-10">
             <h6 className="mb-0">
               <i className="bi bi-person me-2"></i>
               Información del Paciente
@@ -178,37 +128,21 @@ export default function PatientAppointments() {
           <div className="card-body">
             <div className="row">
               <div className="col-md-6">
-                <p className="mb-1">
-                  <strong>Nombre completo:</strong> {patient.name} {patient.firstLastName} {patient.secondLastName}
+                <p className="mb-2">
+                  <strong>Nombre completo:</strong><br />
+                  {appointments[0].patient.name} {appointments[0].patient.firstLastName} {appointments[0].patient.secondLastName}
                 </p>
-                <p className="mb-1">
-                  <strong>Identificación:</strong> {patient.identification}
-                </p>
-                <p className="mb-1">
-                  <strong>Edad:</strong> {calculateAge(patient.birthDate)} años
+                <p className="mb-0">
+                  <strong>Identificación:</strong> {appointments[0].patient.identification}
                 </p>
               </div>
               <div className="col-md-6">
-                {patient.phone && (
-                  <p className="mb-1">
-                    <strong>Teléfono:</strong> {patient.phone}
-                  </p>
-                )}
-                {patient.emergencyContact && (
-                  <p className="mb-1">
-                    <strong>Contacto de emergencia:</strong> {patient.emergencyContact}
-                  </p>
-                )}
-                {patient.medicalConditions && (
-                  <p className="mb-1">
-                    <strong>Condiciones médicas:</strong> {patient.medicalConditions}
-                  </p>
-                )}
-                {patient.allergies && (
-                  <p className="mb-1">
-                    <strong>Alergias:</strong> {patient.allergies}
-                  </p>
-                )}
+                <p className="mb-2">
+                  <strong>Total de citas:</strong> {appointments.length}
+                </p>
+                <p className="mb-0">
+                  <strong>Citas completadas:</strong> {appointments.filter(a => a.status === 'completed').length}
+                </p>
               </div>
             </div>
           </div>
@@ -242,10 +176,11 @@ export default function PatientAppointments() {
                   <tr>
                     <th>Fecha/Hora</th>
                     <th>Tipo</th>
-                    <th>Motivo</th>
-                    <th>Estado</th>
-                    <th>Diagnóstico</th>
+                    <th>Prioridad</th>
                     <th>Notas</th>
+                    <th>Estado</th>
+                    <th>Observaciones</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -253,33 +188,38 @@ export default function PatientAppointments() {
                     <tr key={appointment.id}>
                       <td>
                         <small>
-                          {formatDateTime(appointment.scheduledDate, appointment.scheduledTime)}
+                          {formatDateTime(appointment.appointmentDate)}
                         </small>
                       </td>
                       <td>
-                        <span className={getTypeBadgeClass(appointment.appointmentType)}>
-                          {getTypeLabel(appointment.appointmentType)}
+                        <span className={`badge bg-${appointmentTypeColors[appointment.appointmentType]}`}>
+                          {appointmentTypeLabels[appointment.appointmentType]}
                         </span>
                       </td>
                       <td>
-                        <span title={appointment.reason}>
-                          {appointment.reason.length > 30 
-                            ? appointment.reason.substring(0, 30) + '...'
-                            : appointment.reason
+                        <span className={`badge bg-${appointmentPriorityColors[appointment.priority]}`}>
+                          {appointmentPriorityLabels[appointment.priority]}
+                        </span>
+                      </td>
+                      <td>
+                        <span title={appointment.notes || ''}>
+                          {appointment.notes && appointment.notes.length > 30 
+                            ? appointment.notes.substring(0, 30) + '...'
+                            : appointment.notes || '-'
                           }
                         </span>
                       </td>
                       <td>
-                        <span className={getStatusBadgeClass(appointment.status)}>
-                          {getStatusLabel(appointment.status)}
+                        <span className={`badge bg-${appointmentStatusColors[appointment.status]}`}>
+                          {appointmentStatusLabels[appointment.status]}
                         </span>
                       </td>
                       <td>
-                        {appointment.diagnosis ? (
-                          <span title={appointment.diagnosis}>
-                            {appointment.diagnosis.length > 30 
-                              ? appointment.diagnosis.substring(0, 30) + '...'
-                              : appointment.diagnosis
+                        {appointment.observations ? (
+                          <span title={appointment.observations}>
+                            {appointment.observations.length > 30 
+                              ? appointment.observations.substring(0, 30) + '...'
+                              : appointment.observations
                             }
                           </span>
                         ) : (
@@ -287,16 +227,27 @@ export default function PatientAppointments() {
                         )}
                       </td>
                       <td>
-                        {appointment.nurseNotes ? (
-                          <span title={appointment.nurseNotes}>
-                            {appointment.nurseNotes.length > 30 
-                              ? appointment.nurseNotes.substring(0, 30) + '...'
-                              : appointment.nurseNotes
-                            }
-                          </span>
-                        ) : (
-                          <span className="text-muted">-</span>
-                        )}
+                        <div className="btn-group btn-group-sm">
+                          <button
+                            className="btn btn-outline-primary"
+                            onClick={() => {
+                              const returnPath = `/nursing/patients/${patientId}/appointments`;
+                              navigate(`/nursing/appointments/${appointment.id}/results?returnTo=${encodeURIComponent(returnPath)}`);
+                            }}
+                            disabled={appointment.status !== 'completed'}
+                            title={appointment.status === 'completed' ? 'Ver resultados' : 'Cita no completada'}
+                          >
+                            <i className="bi bi-clipboard-data"></i>
+                          </button>
+                          <button
+                            className="btn btn-outline-warning"
+                            onClick={() => navigate(`/nursing/appointments/${appointment.id}/view`)}
+                            disabled={appointment.status === 'completed' || appointment.status === 'cancelled'}
+                            title={appointment.status === 'completed' || appointment.status === 'cancelled' ? 'No se puede editar' : 'Editar cita'}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

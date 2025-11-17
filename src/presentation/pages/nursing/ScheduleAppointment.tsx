@@ -2,24 +2,29 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { nursingService } from '../../../services/nursingService';
-import type { Patient, AppointmentType } from '../../../types/nursing';
+import { virtualFileService } from '../../../services/virtualFileService';
+import type { AppointmentType, AppointmentPriority, CreateAppointmentDto } from '../../../types/nursing';
+import { appointmentTypeLabels, appointmentPriorityLabels } from '../../../types/nursing';
+import type { PatientBasicInfo } from '../../../types/virtualFile';
 
 interface AppointmentForm {
   patientId: string;
   appointmentDate: string;
   appointmentTime: string;
   type: AppointmentType;
+  priority: AppointmentPriority;
   reason: string;
-  symptoms: string;
+  notes: string;
 }
 
 const defaultAppointmentForm: AppointmentForm = {
   patientId: '',
   appointmentDate: '',
   appointmentTime: '',
-  type: 'consultation',
+  type: 'checkup',
+  priority: 'medium',
   reason: '',
-  symptoms: ''
+  notes: ''
 };
 
 interface ValidationErrors {
@@ -33,19 +38,23 @@ interface ValidationErrors {
 
 export default function ScheduleAppointment() {
   const [formData, setFormData] = useState<AppointmentForm>(defaultAppointmentForm);
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patients, setPatients] = useState<PatientBasicInfo[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPatient, setSelectedPatient] = useState<PatientBasicInfo | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedPatientId = searchParams.get('patientId');
 
   useEffect(() => {
-    loadPatients();
+    // Si hay un paciente preseleccionado, cargarlo
     if (preselectedPatientId) {
+      loadPreselectedPatient(preselectedPatientId);
       setFormData(prev => ({ ...prev, patientId: preselectedPatientId }));
     }
+    
     const now = new Date();
     const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -64,25 +73,65 @@ export default function ScheduleAppointment() {
     }
   }, [formData.patientId, patients]);
 
-  const loadPatients = async () => {
+  const loadPreselectedPatient = async (patientId: string) => {
+    setSearchLoading(true);
     try {
-      const data = await nursingService.getAllPatients();
+      // Buscar el paciente por ID usando una búsqueda vacía que traerá resultados
+      // Luego filtrar por ID. Como no hay endpoint directo para obtener un paciente por ID,
+      // usamos el historial de citas para obtener la info del paciente
+      const appointments = await nursingService.getAppointmentsByPatientId(parseInt(patientId));
+      if (appointments && appointments.length > 0 && appointments[0].patient) {
+        const patientInfo: PatientBasicInfo = {
+          id: parseInt(patientId),
+          identification: appointments[0].patient.identification,
+          name: appointments[0].patient.name,
+          firstLastName: appointments[0].patient.firstLastName,
+          secondLastName: appointments[0].patient.secondLastName,
+          fullName: `${appointments[0].patient.name} ${appointments[0].patient.firstLastName} ${appointments[0].patient.secondLastName}`,
+          birthdate: '',
+          gender: '',
+          phone: '',
+          email: '',
+          status: 'alive'
+        };
+        setPatients([patientInfo]);
+        setSelectedPatient(patientInfo);
+      }
+    } catch (error) {
+      console.warn('No se pudo cargar el paciente preseleccionado:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const loadPatients = async () => {
+    if (!searchTerm.trim()) {
+      setPatients([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const data = await virtualFileService.searchPatientsBasic(searchTerm);
       setPatients(data);
     } catch (error) {
       console.error('Error loading patients:', error);
       await Swal.fire({
         title: 'Error',
-        text: 'Error al cargar la lista de pacientes',
+        text: 'Error al buscar pacientes',
         icon: 'error',
         confirmButtonText: 'Aceptar'
       });
+    } finally {
+      setSearchLoading(false);
     }
+  };
+
+  const handleSearchPatients = () => {
+    loadPatients();
   };
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
-    const now = new Date();
-    const selectedDateTime = new Date(`${formData.appointmentDate}T${formData.appointmentTime}`);
 
     if (!formData.patientId) {
       newErrors.patientId = 'Debe seleccionar un paciente';
@@ -94,8 +143,6 @@ export default function ScheduleAppointment() {
 
     if (!formData.appointmentDate) {
       newErrors.appointmentDate = 'La fecha de la cita es obligatoria';
-    } else if (selectedDateTime <= now) {
-      newErrors.appointmentDate = 'La fecha y hora debe ser futura';
     }
 
     if (!formData.appointmentTime) {
@@ -135,9 +182,10 @@ export default function ScheduleAppointment() {
       title: '¿Confirmar cita?',
       html: `
         <div class="text-start">
-          <p><strong>Paciente:</strong> ${selectedPatient?.name} ${selectedPatient?.firstLastName}</p>
+          <p><strong>Paciente:</strong> ${selectedPatient?.fullName}</p>
           <p><strong>Fecha:</strong> ${new Date(formData.appointmentDate + 'T' + formData.appointmentTime).toLocaleString('es-ES')}</p>
-          <p><strong>Tipo:</strong> ${getTypeLabel(formData.type)}</p>
+          <p><strong>Tipo:</strong> ${appointmentTypeLabels[formData.type]}</p>
+          <p><strong>Prioridad:</strong> ${appointmentPriorityLabels[formData.priority]}</p>
           <p><strong>Motivo:</strong> ${formData.reason}</p>
         </div>
       `,
@@ -154,13 +202,15 @@ export default function ScheduleAppointment() {
     setLoading(true);
 
     try {
-      const payload = {
-        patientId: parseInt(formData.patientId),
-        appointmentType: formData.type,
-        scheduledDate: formData.appointmentDate,
-        scheduledTime: formData.appointmentTime,
-        reason: formData.reason,
-        notes: formData.symptoms || undefined
+      const payload: CreateAppointmentDto = {
+        saAppointmentDate: `${formData.appointmentDate} ${formData.appointmentTime}`,
+        saAppointmentType: formData.type,
+        saPriority: formData.priority,
+        saNotes: formData.reason + (formData.notes ? `\n\n${formData.notes}` : ''),
+        saDurationMinutes: 30,
+        idArea: 1,
+        idPatient: parseInt(formData.patientId),
+        idStaff: 1
       };
 
       await nursingService.createAppointment(payload);
@@ -188,18 +238,6 @@ export default function ScheduleAppointment() {
     }
   };
 
-  const getTypeLabel = (type: AppointmentType) => {
-    const labels = {
-      consultation: 'Consulta',
-      medication: 'Medicación',
-      vital_signs: 'Signos Vitales',
-      treatment: 'Tratamiento',
-      follow_up: 'Seguimiento',
-      emergency: 'Emergencia'
-    };
-    return labels[type];
-  };
-
   const calculateAge = (birthDate: string) => {
     const today = new Date();
     const birth = new Date(birthDate);
@@ -221,7 +259,7 @@ export default function ScheduleAppointment() {
           </h3>
           <button 
             type="button" 
-            className="btn btn-secondary"
+            className="btn btn-outline-secondary"
             onClick={() => navigate('/nursing')}
           >
             <i className="bi bi-arrow-left me-2"></i>
@@ -232,43 +270,78 @@ export default function ScheduleAppointment() {
           <div className="card-header">
             <h6 className="mb-0">
               <i className="bi bi-person me-2"></i>
-              Información del Paciente
+              Seleccionar Paciente
             </h6>
           </div>
           <div className="card-body">
             <div className="row g-3">
               <div className="col-12">
-                <label htmlFor="patientId" className="form-label">Paciente *</label>
-                <select
-                  id="patientId"
-                  className={`form-select ${errors.patientId ? 'is-invalid' : ''}`}
-                  value={formData.patientId}
-                  onChange={(e) => handleInputChange('patientId', e.target.value)}
-                  required
-                >
-                  <option value="">Seleccione un paciente</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={patient.id.toString()}>
-                      {patient.name} {patient.firstLastName} - ID: {patient.identification}
-                    </option>
-                  ))}
-                </select>
-                {errors.patientId && <div className="invalid-feedback">{errors.patientId}</div>}
+                <label htmlFor="searchTerm" className="form-label">Buscar Paciente *</label>
+                <div className="input-group">
+                  <input
+                    id="searchTerm"
+                    type="text"
+                    className="form-control"
+                    placeholder="Buscar por nombre o identificación..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearchPatients()}
+                  />
+                  <button 
+                    className="btn btn-primary" 
+                    type="button"
+                    onClick={handleSearchPatients}
+                    disabled={searchLoading || !searchTerm.trim()}
+                  >
+                    {searchLoading ? (
+                      <span className="spinner-border spinner-border-sm" />
+                    ) : (
+                      <><i className="bi bi-search me-1"></i>Buscar</>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {selectedPatient && (
+              {patients.length > 0 && (
                 <div className="col-12">
-                  <div className="alert alert-info">
-                    <strong>Paciente seleccionado:</strong><br />
-                    {selectedPatient.name} {selectedPatient.firstLastName} {selectedPatient.secondLastName}<br />
-                    <strong>Edad:</strong> {calculateAge(selectedPatient.birthDate)} años<br />
-                    <strong>ID:</strong> {selectedPatient.identification}<br />
-                    {selectedPatient.phone && <><strong>Teléfono:</strong> {selectedPatient.phone}<br /></>}
-                    {selectedPatient.medicalConditions && <><strong>Condiciones médicas:</strong> {selectedPatient.medicalConditions}<br /></>}
-                    {selectedPatient.allergies && <><strong>Alergias:</strong> {selectedPatient.allergies}</>}
+                  <label className="form-label">Seleccione un paciente de los resultados</label>
+                  <div className="list-group">
+                    {patients.map(patient => (
+                      <button
+                        key={patient.id}
+                        type="button"
+                        className={`list-group-item list-group-item-action ${formData.patientId === patient.id.toString() ? 'active' : ''}`}
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, patientId: patient.id.toString() }));
+                          setSelectedPatient(patient);
+                          setErrors(prev => ({ ...prev, patientId: undefined }));
+                        }}
+                      >
+                        <div className="d-flex w-100 justify-content-between">
+                          <h6 className="mb-1">{patient.fullName}</h6>
+                          <small>{patient.birthdate ? `${calculateAge(patient.birthdate)} años` : ''}</small>
+                        </div>
+                        <p className="mb-1">
+                          <small><strong>ID:</strong> {patient.identification}</small>
+                          {patient.phone && <small className="ms-3"><strong>Tel:</strong> {patient.phone}</small>}
+                          {patient.email && <small className="ms-3"><strong>Email:</strong> {patient.email}</small>}
+                        </p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
+
+              {selectedPatient && (
+                <div className="col-12">
+                  <div className="alert alert-success">
+                    <i className="bi bi-check-circle me-2"></i>
+                    <strong>Paciente seleccionado:</strong> {selectedPatient.fullName} (ID: {selectedPatient.identification})
+                  </div>
+                </div>
+              )}
+
+              {errors.patientId && <div className="col-12"><div className="text-danger"><small>{errors.patientId}</small></div></div>}
             </div>
           </div>
         </div>
@@ -281,7 +354,7 @@ export default function ScheduleAppointment() {
           </div>
           <div className="card-body">
             <div className="row g-3">
-              <div className="col-md-6">
+              <div className="col-md-4">
                 <label htmlFor="type" className="form-label">Tipo de Cita *</label>
                 <select
                   id="type"
@@ -290,14 +363,29 @@ export default function ScheduleAppointment() {
                   onChange={(e) => handleInputChange('type', e.target.value as AppointmentType)}
                   required
                 >
-                  <option value="consultation">Consulta</option>
-                  <option value="medication">Medicación</option>
-                  <option value="vital_signs">Signos Vitales</option>
-                  <option value="treatment">Tratamiento</option>
+                  <option value="checkup">Chequeo</option>
+                  <option value="evaluation">Evaluación</option>
+                  <option value="therapy">Terapia</option>
                   <option value="follow_up">Seguimiento</option>
                   <option value="emergency">Emergencia</option>
                 </select>
                 {errors.appointmentType && <div className="invalid-feedback">{errors.appointmentType}</div>}
+              </div>
+
+              <div className="col-md-2">
+                <label htmlFor="priority" className="form-label">Prioridad *</label>
+                <select
+                  id="priority"
+                  className="form-select"
+                  value={formData.priority}
+                  onChange={(e) => handleInputChange('priority', e.target.value as AppointmentPriority)}
+                  required
+                >
+                  <option value="low">Baja</option>
+                  <option value="medium">Media</option>
+                  <option value="high">Alta</option>
+                  <option value="urgent">Urgente</option>
+                </select>
               </div>
 
               <div className="col-md-3">
@@ -328,28 +416,28 @@ export default function ScheduleAppointment() {
               </div>
 
               <div className="col-12">
-                <label htmlFor="reason" className="form-label">Motivo de la Cita *</label>
+                <label htmlFor="reason" className="form-label">Motivo Principal de la Cita *</label>
                 <textarea
                   id="reason"
                   className={`form-control ${errors.reason ? 'is-invalid' : ''}`}
-                  rows={3}
+                  rows={2}
                   value={formData.reason}
                   onChange={(e) => handleInputChange('reason', e.target.value)}
-                  placeholder="Describa el motivo de la cita..."
+                  placeholder="Ej: Chequeo de rutina, evaluación de estado físico, etc."
                   required
                 />
                 {errors.reason && <div className="invalid-feedback">{errors.reason}</div>}
               </div>
 
               <div className="col-12">
-                <label htmlFor="symptoms" className="form-label">Síntomas o Notas Adicionales</label>
+                <label htmlFor="notes" className="form-label">Notas Adicionales</label>
                 <textarea
-                  id="symptoms"
+                  id="notes"
                   className="form-control"
                   rows={3}
-                  value={formData.symptoms}
-                  onChange={(e) => handleInputChange('symptoms', e.target.value)}
-                  placeholder="Describa síntomas o información adicional relevante (opcional)..."
+                  value={formData.notes}
+                  onChange={(e) => handleInputChange('notes', e.target.value)}
+                  placeholder="Síntomas, observaciones, información adicional relevante (opcional)..."
                 />
               </div>
             </div>
@@ -359,7 +447,10 @@ export default function ScheduleAppointment() {
         <div className="d-flex gap-2">
           <button 
             type="submit" 
-            className="btn btn-primary" 
+            className="btn btn-success" 
+            style={{ backgroundColor: '#198754', borderColor: '#198754', color: 'white' }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#157347'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#198754'}
             disabled={loading}
           >
             {loading ? (
@@ -376,7 +467,7 @@ export default function ScheduleAppointment() {
           </button>
           <button 
             type="button" 
-            className="btn btn-secondary"
+            className="btn btn-outline-secondary"
             onClick={() => navigate('/nursing')}
           >
             <i className="bi bi-x-circle me-2"></i>

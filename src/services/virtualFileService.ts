@@ -6,7 +6,9 @@ import type {
   VirtualFileSearchParams,
   VirtualFileApiResponse,
   ApiFamily,
-  ApiMedication
+  ApiMedication,
+  PatientBasicInfo,
+  SearchPatientsResponse
 } from '../types/virtualFile';
 import { transformVirtualFileToApiPayload } from '../types/virtualFile';
 import { config } from '../config/app.config';
@@ -124,5 +126,42 @@ export const virtualFileService = {
   searchVirtualFiles: async (params: VirtualFileSearchParams): Promise<VirtualFileApiResponse> => {
     const response = await apiClient.get<VirtualFileApiResponse>('/virtual-files/search', { params });
     return response.data;
+  },
+
+  /**
+   * Search patients with basic information only
+   * 
+   * Universal search across identification, name, and last names
+   * Returns only essential patient information (no programs, family, or clinical data)
+   * 
+   * @param searchTerm Search term to find by identification, name, or last names
+   * @returns Promise<PatientBasicInfo[]>
+   * 
+   * Endpoint: GET /virtual-records/patients/search
+   * Query param: search (required)
+   * 
+   * @example
+   * // Search by name
+   * const patients = await virtualFileService.searchPatientsBasic('María');
+   * 
+   * // Search by identification
+   * const patients = await virtualFileService.searchPatientsBasic('1-1234');
+   * 
+   * // Search by last name
+   * const patients = await virtualFileService.searchPatientsBasic('González');
+   */
+  searchPatientsBasic: async (searchTerm: string): Promise<PatientBasicInfo[]> => {
+    try {
+      const response = await apiClient.get<SearchPatientsResponse>(
+        '/virtual-records/patients/search',
+        {
+          params: { search: searchTerm }
+        }
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error searching patients (basic):', error);
+      throw error;
+    }
   },
 };
