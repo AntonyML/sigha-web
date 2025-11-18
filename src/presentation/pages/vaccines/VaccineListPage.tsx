@@ -22,7 +22,7 @@ export default function VaccineListPage() {
       setVaccines(data);
     } catch (error) {
       console.error(' Error cargando vacuna:', error);
-      feedback.error('Error al cargar las vacunas', 'Error de carga');
+      feedback.error('Error al cargar las vacunaas', 'Error de carga');
     } finally {
       setLoading(false);
     }
