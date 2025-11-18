@@ -21,7 +21,7 @@ export default function VaccineListPage() {
       const data = await vaccineService.getAllVaccines();
       setVaccines(data);
     } catch (error) {
-      console.error(' Error cargando vacunaas:', error);
+      console.error(' Error cargando vacuna:', error);
       feedback.error('Error al cargar las vacunas', 'Error de carga');
     } finally {
       setLoading(false);
