@@ -90,9 +90,9 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
       eeType: 'visitor', 
       eeAccessType: 'exit',
       eeIdentification: '12345678',
-      eeName: 'Juan',
-      eeFLastName: 'Pérez',
-      eeSLastName: 'González',
+      eeName: 'Luis',
+      eeFLastName: 'Rivera',
+      eeSLastName: 'Lopez',
       eeClose: true
     };
     expect(['entrance', 'exit']).toContain(entranceData.eeAccessType);
