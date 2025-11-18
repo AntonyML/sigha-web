@@ -37,7 +37,7 @@ export default function CreateVaccinePage() {
       navigate('/vaccines');
     } catch (error) {
       console.error(' Error creando vacuna:', error);
-      alert('Error al crear la vacuna. Por favor, inténtelo de nuevo.');
+      alert('Error al crear la vacunaaa. Por favor, inténtelo de nuevo.');
     } finally {
       setLoading(false);
     }
