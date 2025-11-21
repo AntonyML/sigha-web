@@ -1,6 +1,6 @@
 import { Builder, WebDriver, By } from 'selenium-webdriver';
 
-describe('Pruebas de interfaz', () => {
+describe('Pruebas de selenium', () => {
   let driver: WebDriver;
   const baseUrl = 'http://localhost:5173';
 
