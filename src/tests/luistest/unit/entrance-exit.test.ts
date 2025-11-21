@@ -7,7 +7,7 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
   //Verificar que el servicio existe y estam los métodos necesarios
   it('1. El servicio de entrada/salida debe existir con métodos básicos', () => {
     expect(entranceExitService).toBeDefined();
-    expect(typeof entranceExitService.createEntranceExit).toBe('function');
+    expect(typeof entranceExitService.createEntranceExit).toBe('string');
     expect(typeof entranceExitService.getAllEntranceExits).toBe('function');
     expect(typeof entranceExitService.getClosedRecords).toBe('function');
     expect(typeof entranceExitService.getActiveEntrances).toBe('function');
