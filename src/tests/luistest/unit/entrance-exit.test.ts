@@ -15,7 +15,7 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
   });
 
   // Validar los datos 
-  it('2. Debe validar la estructura correcta de datos de entrada', () => {
+  it('2. Debe validar la estructura correcta de datos de entradaa', () => {
     const validData: EntranceExitApiPayload = {
       eeType: 'visitor',
       eeAccessType: 'entrance',
