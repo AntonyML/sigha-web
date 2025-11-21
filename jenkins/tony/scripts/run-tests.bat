@@ -9,7 +9,7 @@ if not exist "!TEST_RESULTS_DIR!" mkdir "!TEST_RESULTS_DIR!"
 echo [JEST] Directorio de resultados creado: !TEST_RESULTS_DIR!
 
 echo [JEST] Ejecutando pruebas unitarias...
-call npm run test:run -- --coverage
+call npm run test:run -- --coverage --exclude="src/tests/**/selenium/**"
 
 if errorlevel 1 (
     echo [JEST] ERROR: Las pruebas fallaron
