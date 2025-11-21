@@ -18,7 +18,7 @@ export default defineConfig({
     hookTimeout: 30000,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'junit'],
+      reporter: ['text', 'json', 'html'],
       outputDir: './test-results',
     },
     reporters: ['verbose', 'junit'],
