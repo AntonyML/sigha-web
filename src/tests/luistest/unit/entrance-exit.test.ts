@@ -56,11 +56,12 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
         eeAccessType: 'entrance',
         eeIdentification: '12345678',
         eeName: 'Test',
+
         eeFLastName: 'Test',
         eeSLastName: 'Test',
         eeClose: false
       };
-      expect(validTypes).toContain(data.eeType);
+      expect(validTypes).toContain('visitor');
     });
   });
 

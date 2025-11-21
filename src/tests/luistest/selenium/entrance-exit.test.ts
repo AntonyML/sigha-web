@@ -16,18 +16,18 @@ describe('Pruebas de selenium', () => {
   });
 
   // Verificar que la página principal carga
-  test('1. La página principal debe cargar', async () => {
-    try {
-      await driver.get(baseUrl);
-      await driver.sleep(2000); 
-      const title = await driver.getTitle();
-      expect(title).toBeTruthy();
-      console.log('Página cargada correctamente');
-    } catch (error) {
-      console.error('Error cargando página:', error);
-      throw error;
-    }
-  });
+ test('1. La página principal debe cargar', async () => {
+  try {
+    await driver.get(baseUrl);
+    await driver.sleep(2000); 
+    const title = await driver.getTitle();
+    expect(title).toBe('asopogua'); 
+    console.log('Página cargada correctamente');
+  } catch (error) {
+    console.error('Error cargando página:', error);
+    throw error;
+  }
+});
 
   // Verificar que haya navegación 
   test('2. Debe poder navegar a una página', async () => {
