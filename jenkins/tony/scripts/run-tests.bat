@@ -9,7 +9,7 @@ if not exist "!TEST_RESULTS_DIR!" mkdir "!TEST_RESULTS_DIR!"
 echo [JEST] Directorio de resultados creado: !TEST_RESULTS_DIR!
 
 echo [JEST] Ejecutando pruebas unitarias...
-call npm run test -- --coverage --testPathPatterns="tests/tony/unit"
+call npm run test:run -- --coverage
 
 if errorlevel 1 (
     echo [JEST] ERROR: Las pruebas fallaron

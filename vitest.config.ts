@@ -14,5 +14,14 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'junit'],
+      outputDir: './test-results',
+    },
+    reporters: ['verbose', 'junit'],
+    outputFile: {
+      junit: './test-results/junit.xml',
+    },
   },
 })
