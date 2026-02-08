@@ -13,7 +13,7 @@ export const localhost = 'http://localhost:3000';
 export const tunnelHost = 'http://localhost:3000'; // por si creo un tunel con cloudflare mas adelante
 export const config = {
     api: {
-        baseUrl: ipv4Localhost, // Cambiado para usar ipv4Localhost
+        baseUrl: localhost, // Cambiado para usar ipv4Localhost
         timeout: 10000,
     },
 
@@ -26,6 +26,7 @@ export const config = {
     features: {
         enableDebugLogs: true,
         enableMockData: false,
+        enable2FA: import.meta.env.VITE_ENABLE_2FA === 'true',
     },
 } as const;
 

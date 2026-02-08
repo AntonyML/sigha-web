@@ -75,10 +75,35 @@ export const authService = {
     // Clear any existing invalid tokens before login
     localStorage.removeItem('tempToken');
 
-    const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
+    // Prepare request body
+    const requestBody: any = {
+      uEmail: credentials.uEmail,
+      uPassword: credentials.uPassword,
+    };
+
+    // If 2FA is disabled in config, include dummy code to bypass 2FA requirement
+    if (!config.features.enable2FA) {
+      requestBody.twoFactorCode = import.meta.env.VITE_2FA_DUMMY_CODE || '000000';
+    }
+
+    const response = await apiClient.post<LoginResponse>('/auth/login', requestBody);
 
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
 
+    // If 2FA is disabled, ignore requiresTwoFactor and proceed with tokens
+    if (!config.features.enable2FA) {
+      if (accessToken && user) {
+        localStorage.setItem('authToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        // Also store refreshToken if present
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
+      }
+      return response.data;
+    }
+
+    // Normal 2FA flow if enabled
     // Store temporary token for 2FA verification if required
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
