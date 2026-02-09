@@ -95,7 +95,7 @@ export const authFlow = {
                 requiresTwoFactor: false,
                 error: 'Respuesta inesperada del servidor',
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en authFlow.login:', error);
             return {
                 success: false,
@@ -143,7 +143,7 @@ export const authFlow = {
                 success: false,
                 error: 'Respuesta inesperada del servidor',
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en authFlow.verify2FA:', error);
             return {
                 success: false,
@@ -168,7 +168,7 @@ export const authFlow = {
             return {
                 success: true,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en authFlow.logout:', error);
 
             // Aunque falle, limpiamos la sesión local

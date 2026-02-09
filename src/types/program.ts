@@ -36,7 +36,16 @@ export interface CreateProgramData {
   p_status: 'planned' | 'in progress' | 'completed' | 'cancelled';
 }
 
-export interface UpdateProgramData extends Partial<CreateProgramData> {}
+export interface UpdateProgramData {
+  p_name?: string;
+  p_description?: string;
+  p_type?: 'health' | 'recreation' | 'education' | 'community' | 'research' | 'other';
+  p_observations?: string;
+  p_start_date?: string;
+  p_end_date?: string;
+  p_budget?: number;
+  p_status?: 'planned' | 'in progress' | 'completed' | 'cancelled';
+}
 
 export interface ProgramSearchParams {
   p_name?: string;

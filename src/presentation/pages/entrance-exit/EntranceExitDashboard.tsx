@@ -22,7 +22,7 @@ export default function EntranceExitDashboard() {
       ]);
       setActiveEntrances(Array.isArray(entrances) ? entrances : []);
       setActiveExits(Array.isArray(exits) ? exits : []);
-    } catch (error) {
+    } catch {
       setActiveEntrances([]);
       setActiveExits([]);
     } finally {

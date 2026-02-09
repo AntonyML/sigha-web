@@ -18,9 +18,7 @@ export const useFeedbackCompat = () => {
     },
     showConfirm: async (
       title: string,
-      text: string,
-      confirmText = 'Sí',
-      cancelText = 'Cancelar'
+      text: string
     ): Promise<boolean> => {
       return await feedback.confirm(title, text);
     },

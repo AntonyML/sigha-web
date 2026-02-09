@@ -115,7 +115,7 @@ export interface CreateVirtualFileData {
   problemasAudicion: string;
 }
 
-export interface UpdateVirtualFileData extends Partial<CreateVirtualFileData> {}
+export type UpdateVirtualFileData = Partial<CreateVirtualFileData>
 
 export interface VirtualFileSearchParams {
   nombreApellido?: string;

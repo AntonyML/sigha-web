@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 
 import { AppLayout } from './presentation/components/organisms'
 import { NotificationProvider } from './presentation/components/organisms/NotificationCenter'

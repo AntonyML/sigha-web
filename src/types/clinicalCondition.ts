@@ -7,7 +7,9 @@ export interface CreateClinicalConditionData {
   ccName: string;
 }
 
-export interface UpdateClinicalConditionData extends Partial<CreateClinicalConditionData> {}
+export interface UpdateClinicalConditionData {
+  ccName?: string;
+}
 
 export interface ClinicalConditionSearchParams {
   ccName?: string;

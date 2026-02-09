@@ -7,7 +7,9 @@ export interface CreateVaccineData {
   vName: string; // Cambiado para coincidir con el backend
 }
 
-export interface UpdateVaccineData extends Partial<CreateVaccineData> {}
+export interface UpdateVaccineData {
+  vName?: string;
+}
 
 export interface VaccineSearchParams {
   vName?: string; // Cambiado para coincidir con el backend

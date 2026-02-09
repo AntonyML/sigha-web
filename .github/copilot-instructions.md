@@ -1,4 +1,4 @@
-Always start sessions by reading Session_starter.md, then README.md, then project files; update logs with Date | Summary using 2025-10-26.
+Always start sessions by reading Session_starter.md, then README.md, then project files; update logs with Date | Summary using 2026-02-09.
 
 Follow existing coding standards, architectural decisions, and design patterns; maintain consistent style; reference project frontend_proton_react_hogar_de_ancianos and type react.
 
@@ -16,6 +16,6 @@ Reference previous session context, architectural decisions, and solved problems
 
 Optimize prompts: be specific, define output format, split tasks, provide sample inputs/outputs, and allow Copilot to repeat tasks.
 
-Maintain professional, concise communication; link docs when needed; leverage memory, MCP servers, workspace intelligence, and variables frontend_proton_react_hogar_de_ancianos, react, 2025-10-26. 
+Maintain professional, concise communication; link docs when needed; leverage memory, MCP servers, workspace intelligence, and variables frontend_proton_react_hogar_de_ancianos, react, 2026-02-09. 
 
 Nuncas hagas archivos md, solo si el usuario se lo dice especificamente

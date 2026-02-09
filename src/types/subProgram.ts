@@ -14,7 +14,10 @@ export interface CreateSubProgramData {
   programId: number;
 }
 
-export interface UpdateSubProgramData extends Partial<CreateSubProgramData> {}
+export interface UpdateSubProgramData {
+  spName?: string;
+  programId?: number;
+}
 
 export interface SubProgramSearchParams {
   spName?: string;

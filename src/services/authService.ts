@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, LoginCredentials, LoginResponse, AuthResponse, VerifyTwoFactorData, VerifyTwoFactorResponse, ChangePasswordData, ChangePasswordResponse } from '../types/auth'
+import type { LoginResponse, AuthUser } from '../types/auth'
 import { navigateTo, getCurrentPath } from '../utils/navigationUtils'
 import { config } from '../config/app.config';
 
@@ -76,7 +76,11 @@ export const authService = {
     localStorage.removeItem('tempToken');
 
     // Prepare request body
-    const requestBody: any = {
+    const requestBody: {
+      uEmail: string;
+      uPassword: string;
+      twoFactorCode?: string;
+    } = {
       uEmail: credentials.uEmail,
       uPassword: credentials.uPassword,
     };
