@@ -1,3 +1,9 @@
+2026-02-09 | olderAdultFamilyFlow COMPLETADO. Creado validation/olderAdultFamilyValidations.ts con funciones de validacion y manejo de errores. Actualizado main.ts para usar las validaciones en todos los metodos (createFamilyMember, updateFamilyMember, deleteFamilyMember, toggleFamilyMemberStatus, getEmergencyContacts). TODOS LOS FLOWS COMPLETADOS.
+
+2026-02-09 | olderAdultUpdateFlow COMPLETADO. Creado validation/olderAdultUpdateValidations.ts con funciones de validacion y manejo de errores. Actualizado main.ts para usar las validaciones en todos los metodos (createUpdate, updateUpdate, deleteUpdate). Proximo: olderAdultFamilyFlow.
+
+2026-02-09 | emergencyContactFlow COMPLETADO. Creado validation/emergencyContactValidations.ts con funciones de validacion y manejo de errores. Actualizado main.ts para usar las validaciones en todos los metodos (createContact, updateContact, deleteContact, toggleContactStatus). Proximo: olderAdultUpdateFlow.
+
 2026-02-09 | nursingFlow COMPLETADO. Creado validation/nursingValidations.ts con funciones de validacion y manejo de errores. Actualizado main.ts para usar las validaciones en todos los metodos (createAppointment, updateAppointment, cancelAppointment, completeAppointment). Proximo: emergencyContactFlow.
 
 2026-02-09 | socialWorkFlow COMPLETADO. Creado validation/socialWorkValidations.ts con funciones de validacion y manejo de errores. Actualizado main.ts para usar las validaciones. Proximo: nursingFlow.

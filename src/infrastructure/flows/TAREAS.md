@@ -114,37 +114,46 @@
 - [x] Finalizado - Agregar validaciones de negocio
 
 ### 10. emergencyContactFlow
-- [ ] No iniciado - Crear carpeta emergency-contact en flows
-- [ ] No iniciado - Crear archivo main.ts
-- [ ] No iniciado - Implementar getAllContacts()
-- [ ] No iniciado - Implementar getContactById()
-- [ ] No iniciado - Implementar createContact()
-- [ ] No iniciado - Implementar updateContact()
-- [ ] No iniciado - Implementar deleteContact()
-- [ ] No iniciado - Crear validation/emergencyContactValidations.ts
-- [ ] No iniciado - Agregar validaciones de negocio
+- [x] Finalizado - Crear carpeta emergency-contact en flows
+- [x] Finalizado - Crear archivo main.ts
+- [x] Finalizado - Implementar getAllContacts()
+- [x] Finalizado - Implementar getContactById()
+- [x] Finalizado - Implementar getContactsByPatient()
+- [x] Finalizado - Implementar createContact()
+- [x] Finalizado - Implementar updateContact()
+- [x] Finalizado - Implementar deleteContact()
+- [x] Finalizado - Implementar toggleContactStatus()
+- [x] Finalizado - Crear validation/emergencyContactValidations.ts
+- [x] Finalizado - Agregar validaciones de negocio
 
 ### 11. olderAdultUpdateFlow
-- [ ] No iniciado - Crear carpeta older-adult-update en flows
-- [ ] No iniciado - Crear archivo main.ts
-- [ ] No iniciado - Implementar getAllUpdates()
-- [ ] No iniciado - Implementar getUpdateById()
-- [ ] No iniciado - Implementar createUpdate()
-- [ ] No iniciado - Implementar updateUpdate()
-- [ ] No iniciado - Implementar deleteUpdate()
-- [ ] No iniciado - Crear validation/olderAdultUpdateValidations.ts
-- [ ] No iniciado - Agregar validaciones de negocio
+- [x] Finalizado - Crear carpeta older-adult-update en flows
+- [x] Finalizado - Crear archivo main.ts
+- [x] Finalizado - Implementar getAllUpdates()
+- [x] Finalizado - Implementar getUpdateById()
+- [x] Finalizado - Implementar getUpdatesByPatient()
+- [x] Finalizado - Implementar getUpdatesByType()
+- [x] Finalizado - Implementar createUpdate()
+- [x] Finalizado - Implementar updateUpdate()
+- [x] Finalizado - Implementar deleteUpdate()
+- [x] Finalizado - Implementar getRecentUpdates()
+- [x] Finalizado - Crear validation/olderAdultUpdateValidations.ts
+- [x] Finalizado - Agregar validaciones de negocio
 
 ### 12. olderAdultFamilyFlow
-- [ ] No iniciado - Crear carpeta older-adult-family en flows
-- [ ] No iniciado - Crear archivo main.ts
-- [ ] No iniciado - Implementar getAllFamilyMembers()
-- [ ] No iniciado - Implementar getFamilyMemberById()
-- [ ] No iniciado - Implementar createFamilyMember()
-- [ ] No iniciado - Implementar updateFamilyMember()
-- [ ] No iniciado - Implementar deleteFamilyMember()
-- [ ] No iniciado - Crear validation/familyMemberValidations.ts
-- [ ] No iniciado - Agregar validaciones de negocio
+- [x] Finalizado - Crear carpeta older-adult-family en flows
+- [x] Finalizado - Crear archivo main.ts
+- [x] Finalizado - Implementar getAllFamilyMembers()
+- [x] Finalizado - Implementar getFamilyMemberById()
+- [x] Finalizado - Implementar getFamilyMembersByPatient()
+- [x] Finalizado - Implementar getFamilyMembersByRelationship()
+- [x] Finalizado - Implementar createFamilyMember()
+- [x] Finalizado - Implementar updateFamilyMember()
+- [x] Finalizado - Implementar deleteFamilyMember()
+- [x] Finalizado - Implementar toggleFamilyMemberStatus()
+- [x] Finalizado - Implementar getEmergencyContacts()
+- [x] Finalizado - Crear validation/olderAdultFamilyValidations.ts
+- [x] Finalizado - Agregar validaciones de negocio
 
 ## Estructura General de Flows
 

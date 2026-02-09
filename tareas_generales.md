@@ -61,7 +61,7 @@
   - Ver: src/services/TAREAS.md
 
 ### 14. Flows de Infraestructura
-- [ ] Crear flows faltantes
+- [x] Finalizado - Crear flows faltantes
   - Ver: src/infrastructure/flows/TAREAS.md
 
 ### 15. Types y Interfaces
