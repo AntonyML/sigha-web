@@ -79,7 +79,7 @@
 - [ ] Actualizar documentacion de API
 
 ### 18. Optimizacion
-- [ ] Resolver errores de ESLint pendientes
+- [ ] Resolver errores de ESLint pendientes (161 errores restantes - mayormente @typescript-eslint/no-explicit-any)
 - [ ] Optimizar rendimiento de componentes
 
 ## Notas

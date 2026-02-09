@@ -157,7 +157,7 @@ export function validateFamilyPhone(phone: string | null | undefined): Validatio
     const trimmedPhone = phone.trim();
 
     // Permitir diferentes formatos de teléfono: +1234567890, 123-456-7890, (123) 456-7890, etc.
-    const phoneRegex = /^[\+]?[\d\s\-\(\)]{7,20}$/;
+    const phoneRegex = /^[+]?[\d\s\-()]{7,20}$/;
     if (!phoneRegex.test(trimmedPhone)) {
         return { isValid: false, error: OlderAdultFamilyValidationError.INVALID_PHONE };
     }

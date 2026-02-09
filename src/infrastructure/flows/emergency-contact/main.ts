@@ -6,7 +6,7 @@
  */
 
 // TODO: Importar servicio cuando esté creado
-import { emergencyContactService } from '../../../services/emergencyContactService';
+// import { emergencyContactService } from '../../../services/emergencyContactService';
 
 // TODO: Importar tipos cuando estén creados
 // import type { EmergencyContact, CreateEmergencyContactDto, UpdateEmergencyContactDto } from '../../../types/emergencyContact';
@@ -36,7 +36,7 @@ export const emergencyContactFlow = {
      * @param filters - Filtros opcionales (patientId, active, relationship)
      * @returns Lista de contactos de emergencia
      */
-    async getAllContacts(filters?: any): Promise<EmergencyContactFlowResult> {
+    async getAllContacts(_filters?: any): Promise<EmergencyContactFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await emergencyContactService.getEmergencyContacts(filters);
@@ -242,7 +242,7 @@ export const emergencyContactFlow = {
      * @param active - Estado activo/inactivo
      * @returns Contacto actualizado
      */
-    async toggleContactStatus(id: string | number, active: boolean): Promise<EmergencyContactFlowResult> {
+    async toggleContactStatus(id: string | number, _active: boolean): Promise<EmergencyContactFlowResult> {
         try {
             // Validar ID del contacto
             const idValidation = validateEmergencyContactId(id);

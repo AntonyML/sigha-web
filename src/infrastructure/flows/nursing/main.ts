@@ -6,7 +6,7 @@
  */
 
 // TODO: Importar servicio cuando esté creado
-import { nursingService } from '../../../services/nursingService';
+// import { nursingService } from '../../../services/nursingService';
 
 // TODO: Importar tipos cuando estén creados
 // import type { NursingAppointment, CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto, CompleteAppointmentDto } from '../../../types/nursing';
@@ -36,7 +36,7 @@ export const nursingFlow = {
      * @param filters - Filtros opcionales (status, priority, dateFrom, dateTo)
      * @returns Lista de citas de enfermería
      */
-    async getAllAppointments(filters?: any): Promise<NursingFlowResult> {
+    async getAllAppointments(_filters?: any): Promise<NursingFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // Validar permisos si es necesario
@@ -64,7 +64,7 @@ export const nursingFlow = {
      * @param filters - Filtros opcionales
      * @returns Lista de citas pendientes
      */
-    async getPendingAppointments(filters?: any): Promise<NursingFlowResult> {
+    async getPendingAppointments(_filters?: any): Promise<NursingFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await nursingService.getPendingAppointments(filters);
@@ -89,7 +89,7 @@ export const nursingFlow = {
      * @param filters - Filtros opcionales
      * @returns Lista de citas completadas
      */
-    async getCompletedAppointments(filters?: any): Promise<NursingFlowResult> {
+    async getCompletedAppointments(_filters?: any): Promise<NursingFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await nursingService.getCompletedAppointments(filters);
@@ -114,7 +114,7 @@ export const nursingFlow = {
      * @param filters - Filtros opcionales
      * @returns Lista de citas canceladas
      */
-    async getCancelledAppointments(filters?: any): Promise<NursingFlowResult> {
+    async getCancelledAppointments(_filters?: any): Promise<NursingFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await nursingService.getCancelledAppointments(filters);

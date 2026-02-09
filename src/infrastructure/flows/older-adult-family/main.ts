@@ -6,7 +6,7 @@
  */
 
 // TODO: Importar servicio cuando esté creado
-import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
+// import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
 
 // TODO: Importar tipos cuando estén creados
 // import type { OlderAdultFamily, CreateFamilyMemberDto, UpdateFamilyMemberDto } from '../../../types/olderAdultFamily';
@@ -36,7 +36,7 @@ export const olderAdultFamilyFlow = {
      * @param filters - Filtros opcionales (patientId, relationship, active)
      * @returns Lista de miembros de familia
      */
-    async getAllFamilyMembers(filters?: any): Promise<OlderAdultFamilyFlowResult> {
+    async getAllFamilyMembers(_filters?: any): Promise<OlderAdultFamilyFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await olderAdultFamilyService.getOlderAdultFamilyMembers(filters);
@@ -274,7 +274,7 @@ export const olderAdultFamilyFlow = {
      * @param active - Estado activo/inactivo
      * @returns Miembro de familia actualizado
      */
-    async toggleFamilyMemberStatus(id: string | number, active: boolean): Promise<OlderAdultFamilyFlowResult> {
+    async toggleFamilyMemberStatus(id: string | number, _active: boolean): Promise<OlderAdultFamilyFlowResult> {
         try {
             // Validar ID del miembro de familia
             const idValidation = validateOlderAdultFamilyId(id);

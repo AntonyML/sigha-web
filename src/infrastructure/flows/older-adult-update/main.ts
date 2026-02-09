@@ -6,7 +6,7 @@
  */
 
 // TODO: Importar servicio cuando esté creado
-import { olderAdultUpdateService } from '../../../services/olderAdultUpdateService';
+// import { olderAdultUpdateService } from '../../../services/olderAdultUpdateService';
 
 // TODO: Importar tipos cuando estén creados
 // import type { OlderAdultUpdate, CreateUpdateDto, UpdateUpdateDto } from '../../../types/olderAdultUpdate';
@@ -36,7 +36,7 @@ export const olderAdultUpdateFlow = {
      * @param filters - Filtros opcionales (patientId, updateType, dateFrom, dateTo)
      * @returns Lista de actualizaciones
      */
-    async getAllUpdates(filters?: any): Promise<OlderAdultUpdateFlowResult> {
+    async getAllUpdates(_filters?: any): Promise<OlderAdultUpdateFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await olderAdultUpdateService.getOlderAdultUpdates(filters);
