@@ -11,6 +11,7 @@ import {
   validateUserSearchParams,
   getUserManagementErrorMessage
 } from './validation/userValidations';
+import type { AxiosError } from 'axios';
 
 /**
  * Resultado del flujo de obtención de usuarios
@@ -104,17 +105,18 @@ export const userManagementFlow = {
                 users,
                 total: users.length,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.getAllUsers:', error);
 
-            if (error.response?.status === 401) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
                 };
             }
 
-            if (error.response?.status === 403) {
+            if (axiosError.response?.status === 403) {
                 return {
                     success: false,
                     error: 'No tienes permisos para ver la lista de usuarios.',
@@ -123,7 +125,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener usuarios.',
+                error: axiosError.response?.data?.message || 'Error al obtener usuarios.',
             };
         }
     },
@@ -149,24 +151,25 @@ export const userManagementFlow = {
                 success: true,
                 user,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.getUserById:', error);
 
-            if (error.response?.status === 404) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status === 404) {
                 return {
                     success: false,
                     error: 'Usuario no encontrado.',
                 };
             }
 
-            if (error.response?.status === 401) {
+            if (axiosError.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
                 };
             }
 
-            if (error.response?.status === 403) {
+            if (axiosError.response?.status === 403) {
                 return {
                     success: false,
                     error: 'No tienes permisos para ver este usuario.',
@@ -175,7 +178,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener usuario.',
+                error: axiosError.response?.data?.message || 'Error al obtener usuario.',
             };
         }
     },
@@ -204,13 +207,14 @@ export const userManagementFlow = {
                 user,
                 message: 'Usuario creado exitosamente.',
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.createUser:', error);
-            console.error('Error response:', error.response?.data);
-            console.error('Error status:', error.response?.status);
+            const axiosError = error as AxiosError;
+            console.error('Error response:', axiosError.response?.data);
+            console.error('Error status:', axiosError.response?.status);
             return {
                 success: false,
-                error: getUserManagementErrorMessage(error),
+                error: getUserManagementErrorMessage(axiosError),
             };
         }
     },

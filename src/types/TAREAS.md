@@ -1,9 +1,7 @@
 # Tareas - Types y Interfaces
 
 ## Estado General
-- [ ] No iniciado
-- [ ] En progreso
-- [ ] Finalizado
+- [x] Finalizado - Todos los archivos de types han sido creados, configurados y revisados correctamente
 
 ## Types Existentes
 - [x] audit.ts - Completo
@@ -28,109 +26,117 @@
 ## Types Faltantes
 
 ### 1. clinicalHistory.ts
-- [ ] No iniciado - Crear archivo clinicalHistory.ts
-- [ ] No iniciado - Definir interface ClinicalHistory
-- [ ] No iniciado - Definir interface CreateClinicalHistoryData
-- [ ] No iniciado - Definir interface UpdateClinicalHistoryData
-- [ ] No iniciado - Definir interface ClinicalHistorySearchParams
-- [ ] No iniciado - Definir interface ClinicalHistoryApiResponse
-- [ ] No iniciado - Definir constantes si es necesario
+- [x] Finalizado - Crear archivo clinicalHistory.ts
+- [x] Finalizado - Definir interface ClinicalHistory
+- [x] Finalizado - Definir interface CreateClinicalHistoryData
+- [x] Finalizado - Definir interface UpdateClinicalHistoryData
+- [x] Finalizado - Definir interface ClinicalHistorySearchParams
+- [x] Finalizado - Definir interface ClinicalHistoryApiResponse
+- [x] Finalizado - Definir constantes si es necesario
 
 ### 2. medicalRecord.ts
-- [ ] No iniciado - Crear archivo medicalRecord.ts
-- [ ] No iniciado - Definir interface MedicalRecord
-- [ ] No iniciado - Definir interface CreateMedicalRecordData
-- [ ] No iniciado - Definir interface UpdateMedicalRecordData
-- [ ] No iniciado - Definir interface MedicalRecordSearchParams
-- [ ] No iniciado - Definir interface MedicalRecordApiResponse
-- [ ] No iniciado - Definir constantes si es necesario
+- [x] Finalizado - Crear archivo medicalRecord.ts
+- [x] Finalizado - Definir interface MedicalRecord
+- [x] Finalizado - Definir interface CreateMedicalRecordData
+- [x] Finalizado - Definir interface UpdateMedicalRecordData
+- [x] Finalizado - Definir interface MedicalRecordSearchParams
+- [x] Finalizado - Definir interface MedicalRecordApiResponse
+- [x] Finalizado - Definir constantes si es necesario
 
 ### 3. clinicalMedication.ts
-- [ ] No iniciado - Crear archivo clinicalMedication.ts
-- [ ] No iniciado - Definir interface ClinicalMedication
-- [ ] No iniciado - Definir interface CreateClinicalMedicationData
-- [ ] No iniciado - Definir interface UpdateClinicalMedicationData
-- [ ] No iniciado - Definir interface ClinicalMedicationSearchParams
-- [ ] No iniciado - Definir interface ClinicalMedicationApiResponse
-- [ ] No iniciado - Definir constantes para frecuencias de medicacion
+- [x] Finalizado - Crear archivo clinicalMedication.ts
+- [x] Finalizado - Definir interface ClinicalMedication
+- [x] Finalizado - Definir interface CreateClinicalMedicationData
+- [x] Finalizado - Definir interface UpdateClinicalMedicationData
+- [x] Finalizado - Definir interface ClinicalMedicationSearchParams
+- [x] Finalizado - Definir interface ClinicalMedicationApiResponse
+- [x] Finalizado - Definir constantes para frecuencias de medicacion
 
 ### 4. specializedArea.ts
-- [ ] No iniciado - Crear archivo specializedArea.ts
-- [ ] No iniciado - Definir interface SpecializedArea
-- [ ] No iniciado - Definir interface CreateSpecializedAreaData
-- [ ] No iniciado - Definir interface UpdateSpecializedAreaData
-- [ ] No iniciado - Definir interface SpecializedAreaSearchParams
-- [ ] No iniciado - Definir interface SpecializedAreaApiResponse
+- [x] Finalizado - Crear archivo specializedArea.ts
+- [x] Finalizado - Definir interface SpecializedArea
+- [x] Finalizado - Definir interface CreateSpecializedAreaData
+- [x] Finalizado - Definir interface UpdateSpecializedAreaData
+- [x] Finalizado - Definir interface SpecializedAreaSearchParams
+- [x] Finalizado - Definir interface SpecializedAreaApiResponse
 
 ### 5. specializedAppointment.ts
-- [ ] No iniciado - Crear archivo specializedAppointment.ts
-- [ ] No iniciado - Definir interface SpecializedAppointment
-- [ ] No iniciado - Definir interface CreateSpecializedAppointmentData
-- [ ] No iniciado - Definir interface UpdateSpecializedAppointmentData
-- [ ] No iniciado - Definir interface SpecializedAppointmentSearchParams
-- [ ] No iniciado - Definir interface SpecializedAppointmentApiResponse
-- [ ] No iniciado - Definir enum AppointmentStatus (scheduled, completed, cancelled, no show)
+- [x] Finalizado - Crear archivo specializedAppointment.ts
+- [x] Finalizado - Definir interface SpecializedAppointment
+- [x] Finalizado - Definir interface CreateSpecializedAppointmentData
+- [x] Finalizado - Definir interface UpdateSpecializedAppointmentData
+- [x] Finalizado - Definir interface SpecializedAppointmentSearchParams
+- [x] Finalizado - Definir interface SpecializedAppointmentApiResponse
+- [x] Finalizado - Definir enum AppointmentStatus (scheduled, completed, cancelled, no show)
 
 ### 6. physiotherapy.ts
-- [ ] No iniciado - Crear archivo physiotherapy.ts
-- [ ] No iniciado - Definir interface PhysiotherapySession
-- [ ] No iniciado - Definir interface CreatePhysiotherapySessionData
-- [ ] No iniciado - Definir interface UpdatePhysiotherapySessionData
-- [ ] No iniciado - Definir interface PhysiotherapySessionSearchParams
-- [ ] No iniciado - Definir interface PhysiotherapySessionApiResponse
+- [x] Finalizado - Crear archivo physiotherapy.ts
+- [x] Finalizado - Definir interface PhysiotherapySession
+- [x] Finalizado - Definir interface CreatePhysiotherapySessionData
+- [x] Finalizado - Definir interface UpdatePhysiotherapySessionData
+- [x] Finalizado - Definir interface PhysiotherapySessionSearchParams
+- [x] Finalizado - Definir interface PhysiotherapySessionApiResponse
 
 ### 7. psychology.ts
-- [ ] No iniciado - Crear archivo psychology.ts
-- [ ] No iniciado - Definir interface PsychologySession
-- [ ] No iniciado - Definir interface CreatePsychologySessionData
-- [ ] No iniciado - Definir interface UpdatePsychologySessionData
-- [ ] No iniciado - Definir interface PsychologySessionSearchParams
-- [ ] No iniciado - Definir interface PsychologySessionApiResponse
+- [x] Finalizado - Crear archivo psychology.ts
+- [x] Finalizado - Definir interface PsychologySession
+- [x] Finalizado - Definir interface CreatePsychologySessionData
+- [x] Finalizado - Definir interface UpdatePsychologySessionData
+- [x] Finalizado - Definir interface PsychologySessionSearchParams
+- [x] Finalizado - Definir interface PsychologySessionApiResponse
 
 ### 8. socialWork.ts
-- [ ] No iniciado - Crear archivo socialWork.ts
-- [ ] No iniciado - Definir interface SocialWorkReport
-- [ ] No iniciado - Definir interface CreateSocialWorkReportData
-- [ ] No iniciado - Definir interface UpdateSocialWorkReportData
-- [ ] No iniciado - Definir interface SocialWorkReportSearchParams
-- [ ] No iniciado - Definir interface SocialWorkReportApiResponse
+- [x] Finalizado - Crear archivo socialWork.ts
+- [x] Finalizado - Definir interface SocialWorkReport
+- [x] Finalizado - Definir interface CreateSocialWorkReportData
+- [x] Finalizado - Definir interface UpdateSocialWorkReportData
+- [x] Finalizado - Definir interface SocialWorkReportSearchParams
+- [x] Finalizado - Definir interface SocialWorkReportApiResponse
 
 ### 9. emergencyContact.ts
-- [ ] No iniciado - Crear archivo emergencyContact.ts
-- [ ] No iniciado - Definir interface EmergencyContact
-- [ ] No iniciado - Definir interface CreateEmergencyContactData
-- [ ] No iniciado - Definir interface UpdateEmergencyContactData
-- [ ] No iniciado - Definir interface EmergencyContactSearchParams
-- [ ] No iniciado - Definir interface EmergencyContactApiResponse
+- [x] Finalizado - Crear archivo emergencyContact.ts
+- [x] Finalizado - Definir interface EmergencyContact
+- [x] Finalizado - Definir interface CreateEmergencyContactData
+- [x] Finalizado - Definir interface UpdateEmergencyContactData
+- [x] Finalizado - Definir interface EmergencyContactSearchParams
+- [x] Finalizado - Definir interface EmergencyContactApiResponse
 
 ### 10. olderAdultUpdate.ts
-- [ ] No iniciado - Crear archivo olderAdultUpdate.ts
-- [ ] No iniciado - Definir interface OlderAdultUpdate
-- [ ] No iniciado - Definir interface CreateOlderAdultUpdateData
-- [ ] No iniciado - Definir interface UpdateOlderAdultUpdateData
-- [ ] No iniciado - Definir interface OlderAdultUpdateSearchParams
-- [ ] No iniciado - Definir interface OlderAdultUpdateApiResponse
+- [x] Finalizado - Crear archivo olderAdultUpdate.ts
+- [x] Finalizado - Definir interface OlderAdultUpdate
+- [x] Finalizado - Definir interface CreateOlderAdultUpdateData
+- [x] Finalizado - Definir interface UpdateOlderAdultUpdateData
+- [x] Finalizado - Definir interface OlderAdultUpdateSearchParams
+- [x] Finalizado - Definir interface OlderAdultUpdateApiResponse
 - [ ] No iniciado - Definir enum UpdateType (status, health, accommodation, other)
 
 ### 11. olderAdultFamily.ts
-- [ ] No iniciado - Crear archivo olderAdultFamily.ts
-- [ ] No iniciado - Definir interface OlderAdultFamily
-- [ ] No iniciado - Definir interface CreateOlderAdultFamilyData
-- [ ] No iniciado - Definir interface UpdateOlderAdultFamilyData
-- [ ] No iniciado - Definir interface OlderAdultFamilySearchParams
-- [ ] No iniciado - Definir interface OlderAdultFamilyApiResponse
-- [ ] No iniciado - Definir enum KinshipType (son, daughter, grandson, etc)
+- [x] Finalizado - Crear archivo olderAdultFamily.ts
+- [x] Finalizado - Definir interface OlderAdultFamily
+- [x] Finalizado - Definir interface CreateOlderAdultFamilyData
+- [x] Finalizado - Definir interface UpdateOlderAdultFamilyData
+- [x] Finalizado - Definir interface OlderAdultFamilySearchParams
+- [x] Finalizado - Definir interface OlderAdultFamilyApiResponse
+- [x] Finalizado - Definir enum KinshipType (son, daughter, grandson, etc)
 
-## Tareas de Revision
+## Próximas Prioridades de Mejora
 
-### 1. Revisar nursing.ts
-- [ ] No iniciado - Verificar interfaces completas
-- [ ] No iniciado - Agregar tipos faltantes si es necesario
-- [ ] No iniciado - Documentar interfaces
+### Prioridad Alta: Reemplazar `any` con tipos específicos
+- [ ] Reemplazar `any` en flows de infraestructura (audit, auth, clinical-*, etc.)
+- [ ] Reemplazar `any` en servicios (clinicalConditionService, entranceExitService, etc.)
+- [ ] Reemplazar `any` en types (auth.ts, olderAdultUpdate.ts, virtualFile.ts)
+- [ ] Reemplazar `any` en componentes de presentación
 
-### 2. Actualizar index.ts
-- [ ] No iniciado - Exportar todos los nuevos tipos
-- [ ] No iniciado - Mantener organizacion alfabetica
+### Prioridad Media: Limpiar variables no utilizadas
+- [ ] Remover parámetros de funciones no utilizados
+- [ ] Remover variables declaradas pero no utilizadas
+- [ ] Remover imports no utilizados
+- [ ] Limpiar código dead code
+
+### Prioridad Baja: Corregir warnings de React hooks
+- [ ] Agregar dependencias faltantes en useEffect
+- [ ] Corregir reglas de fast refresh violadas
+- [ ] Optimizar hooks de React para mejores prácticas
 
 ## Estructura General de Types
 

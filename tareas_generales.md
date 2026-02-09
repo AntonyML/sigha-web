@@ -7,7 +7,7 @@
 ## Infraestructura Crítica
 
 ### 1. Types y Interfaces
-- [ ] Crear types faltantes
+- [x] Crear types faltantes
   - Ver: src/types/TAREAS.md
 
 ### 2. Servicios del Frontend

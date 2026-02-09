@@ -345,7 +345,7 @@ function isNetworkError(error: any): boolean {
   );
 }
 
-export function getUserManagementErrorMessage(error: any): string {
+export function getUserManagementErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
