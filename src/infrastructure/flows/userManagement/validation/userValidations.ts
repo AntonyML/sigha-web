@@ -2,6 +2,7 @@
 // Centraliza las validaciones y mensajes de error para los flujos de gestión de usuarios
 
 import type { CreateUserData, UpdateUserData, UserChangePasswordData, UserSearchParams } from '../../../../types/user';
+import type { AxiosError } from 'axios';
 
 
 // Validaciones de negocio para crear usuario
