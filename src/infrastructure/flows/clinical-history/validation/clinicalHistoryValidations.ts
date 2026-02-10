@@ -5,8 +5,7 @@
  * Incluye validaciones de datos, reglas de negocio y mensajes de error.
  */
 
-// TODO: Importar tipos cuando estén creados
-// import type { CreateClinicalHistoryData, UpdateClinicalHistoryData } from '../../../../types/clinicalHistory';
+import type { CreateClinicalHistoryData, UpdateClinicalHistoryData } from '../../../../types/clinicalHistory';
 
 /**
  * Valida los datos para crear un historial clínico
@@ -14,7 +13,7 @@
  * @param data - Datos del historial clínico
  * @returns Mensaje de error o null si es válido
  */
-export function validateClinicalHistoryData(data: any): string | null {
+export function validateClinicalHistoryData(data: CreateClinicalHistoryData): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 

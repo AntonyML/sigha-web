@@ -1,6 +1,8 @@
 // authValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación
 
+import type { AxiosError } from 'axios';
+
 
 // Validaciones de negocio para login
 export function validateLoginCredentials(email: string, password: string): string | null {
@@ -58,45 +60,46 @@ export function validateLoginCredentials(email: string, password: string): strin
 
 
 // Reglas de red/Axios para login
-function isNetworkError(error: any): boolean {
+function isNetworkError(error: AxiosError | Error | unknown): boolean {
   return (
-    error?.code === 'ERR_NETWORK' ||
-    error?.message === 'Network Error' ||
-    error?.isAxiosError && !error.response
+    (error as any)?.code === 'ERR_NETWORK' ||
+    (error as any)?.message === 'Network Error' ||
+    (error as any)?.isAxiosError && !(error as any).response
   );
 }
 
-export function getLoginErrorMessage(error: any): string {
+export function getLoginErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  if (error?.response?.status === 400) {
+  const axiosError = error as AxiosError;
+  if (axiosError?.response?.status === 400) {
     // Validación de datos desde backend
-    const msg = error?.response?.data?.message;
+    const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Datos enviados no válidos.';
   }
-  if (error?.response?.status === 401) {
+  if (axiosError?.response?.status === 401) {
     return 'Credenciales inválidas. Verifica tu correo y contraseña.';
   }
-  if (error?.response?.status === 403) {
+  if (axiosError?.response?.status === 403) {
     return 'Usuario inactivo, bloqueado o sin permisos.';
   }
-  if (error?.response?.status === 404) {
+  if (axiosError?.response?.status === 404) {
     return 'El recurso solicitado no existe o el endpoint es incorrecto.';
   }
-  if (error?.response?.status === 409) {
+  if (axiosError?.response?.status === 409) {
     return 'Conflicto de datos. Es posible que el usuario ya exista o haya un problema de duplicidad.';
   }
-  if (error?.response?.status === 429) {
+  if (axiosError?.response?.status === 429) {
     return 'Demasiados intentos. Espera unos minutos antes de volver a intentar.';
   }
-  if (error?.response?.status >= 500) {
+  if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
+  if (axiosError?.response?.data?.message) {
+    return axiosError.response.data.message;
   }
   return 'Error desconocido al iniciar sesión. Intenta nuevamente.';
 }
@@ -131,37 +134,38 @@ export function validate2FACode(code: string): string | null {
 
 
 // Reglas de red/Axios para 2FA
-export function get2FAErrorMessage(error: any): string {
+export function get2FAErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  if (error?.response?.status === 400) {
-    const msg = error?.response?.data?.message;
+  const axiosError = error as AxiosError;
+  if (axiosError?.response?.status === 400) {
+    const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Código enviado no válido.';
   }
-  if (error?.response?.status === 401) {
-    const msg = error?.response?.data?.message || '';
+  if (axiosError?.response?.status === 401) {
+    const msg = axiosError?.response?.data?.message || '';
     if (msg.includes('Token temporal') || msg.includes('expirado')) {
       return 'El tiempo para verificar el código ha expirado (5 minutos desde el login inicial). La hora del servidor puede estar desincronizada. Por favor, inicia sesión nuevamente.';
     }
     return 'Código 2FA inválido. Verifica que el código sea correcto.';
   }
-  if (error?.response?.status === 403) {
+  if (axiosError?.response?.status === 403) {
     return 'No tienes permisos para realizar esta acción.';
   }
-  if (error?.response?.status === 404) {
+  if (axiosError?.response?.status === 404) {
     return 'No se encontró la sesión o el recurso para la verificación.';
   }
-  if (error?.response?.status === 429) {
+  if (axiosError?.response?.status === 429) {
     return 'Demasiados intentos de verificación. Espera unos minutos antes de volver a intentar.';
   }
-  if (error?.response?.status >= 500) {
+  if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (error?.response?.data?.message) {
-    return error.response.data.message;
+  if (axiosError?.response?.data?.message) {
+    return axiosError.response.data.message;
   }
   return 'Error desconocido al verificar el código 2FA. Intenta nuevamente.';
 }

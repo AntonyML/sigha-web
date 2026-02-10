@@ -122,7 +122,8 @@
 ## Próximas Prioridades de Mejora
 
 ### Prioridad Alta: Reemplazar `any` con tipos específicos
-- [ ] Reemplazar `any` en flows de infraestructura (audit, auth, clinical-*, etc.)
+- [x] Reemplazar `any` en flows de infraestructura (userManagement, twoFactor, specialized-area, audit completados)
+- [ ] Reemplazar `any` en flows de infraestructura (auth, clinical-*, etc.)
 - [ ] Reemplazar `any` en servicios (clinicalConditionService, entranceExitService, etc.)
 - [ ] Reemplazar `any` en types (auth.ts, olderAdultUpdate.ts, virtualFile.ts)
 - [ ] Reemplazar `any` en componentes de presentación

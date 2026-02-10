@@ -5,8 +5,8 @@
  * Incluye validaciones de datos, reglas de negocio y mensajes de error.
  */
 
-// TODO: Importar tipos cuando estén creados
-// import type { CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../../types/specializedArea';
+import type { CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../../types/specializedArea';
+import type { AxiosError } from 'axios';
 
 /**
  * Valida los datos para crear un área especializada
@@ -14,7 +14,7 @@
  * @param data - Datos del área especializada
  * @returns Mensaje de error o null si es válido
  */
-export function validateSpecializedAreaData(data: any): string | null {
+export function validateSpecializedAreaData(data: CreateSpecializedAreaData): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 

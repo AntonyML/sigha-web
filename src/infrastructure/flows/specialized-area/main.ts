@@ -8,8 +8,8 @@
 // TODO: Importar servicio cuando esté creado
 // import { specializedAreaService } from '../../../services/specializedAreaService';
 
-// TODO: Importar tipos cuando estén creados
-// import type { SpecializedArea, CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../types/specializedArea';
+import type { SpecializedArea, CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../types/specializedArea';
+import type { AxiosError } from 'axios';
 
 // TODO: Importar validaciones cuando estén creadas
 import { validateSpecializedAreaData, validateSpecializedAreaId, getSpecializedAreaErrorMessage } from './validation/areaValidations';
@@ -17,7 +17,7 @@ import { validateSpecializedAreaData, validateSpecializedAreaId, getSpecializedA
 /**
  * Resultado de operaciones del flujo de áreas especializadas
  */
-export interface SpecializedAreaFlowResult<T = any> {
+export interface SpecializedAreaFlowResult<T = SpecializedArea> {
     success: boolean;
     data?: T;
     error?: string;
@@ -94,7 +94,7 @@ export const specializedAreaFlow = {
      * @param data - Datos del área especializada a crear
      * @returns Área especializada creada
      */
-    async createArea(data: any): Promise<SpecializedAreaFlowResult> {
+    async createArea(data: CreateSpecializedAreaData): Promise<SpecializedAreaFlowResult> {
         try {
             // Validar datos
             const validationError = validateSpecializedAreaData(data);

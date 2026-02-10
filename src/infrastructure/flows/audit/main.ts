@@ -17,6 +17,7 @@ import type {
   GetAuditReportsFlowResult,
   GetAuditStatisticsFlowResult,
 } from './interfaces';
+import type { AxiosError } from 'axios';
 
 /**
  * Flujo para buscar reportes de auditoría con filtros
@@ -112,7 +113,8 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
   } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditReportById:', error);
 
-    if ((error as any)?.response?.status === 404) {
+    const axiosError = error as AxiosError;
+    if (axiosError?.response?.status === 404) {
       return {
         success: false,
         error: 'Reporte de auditoría no encontrado',

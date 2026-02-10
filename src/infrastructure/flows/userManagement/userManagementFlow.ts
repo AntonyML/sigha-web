@@ -251,7 +251,7 @@ export const userManagementFlow = {
                 user,
                 message: 'Usuario actualizado exitosamente.',
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.updateUser:', error);
             return {
                 success: false,
@@ -281,24 +281,25 @@ export const userManagementFlow = {
                 success: true,
                 message: 'Usuario eliminado exitosamente.',
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.deleteUser:', error);
 
-            if (error.response?.status === 401) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
                 };
             }
 
-            if (error.response?.status === 403) {
+            if (axiosError.response?.status === 403) {
                 return {
                     success: false,
                     error: 'No tienes permisos para eliminar usuarios.',
                 };
             }
 
-            if (error.response?.status === 404) {
+            if (axiosError.response?.status === 404) {
                 return {
                     success: false,
                     error: 'Usuario no encontrado.',
@@ -307,7 +308,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al eliminar usuario.',
+                error: axiosError.response?.data?.message || 'Error al eliminar usuario.',
             };
         }
     },
@@ -333,7 +334,7 @@ export const userManagementFlow = {
                 success: true,
                 users,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.searchUsers:', error);
             return {
                 success: false,
@@ -364,17 +365,18 @@ export const userManagementFlow = {
                 users,
                 total: users.length,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.getUsersByRole:', error);
 
-            if (error.response?.status === 401) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
                 };
             }
 
-            if (error.response?.status === 403) {
+            if (axiosError.response?.status === 403) {
                 return {
                     success: false,
                     error: 'No tienes permisos para ver usuarios por rol.',
@@ -383,7 +385,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al obtener usuarios por rol.',
+                error: axiosError.response?.data?.message || 'Error al obtener usuarios por rol.',
             };
         }
     },
@@ -412,24 +414,25 @@ export const userManagementFlow = {
                 user,
                 message: `Usuario ${action} exitosamente.`,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.toggleUserStatus:', error);
 
-            if (error.response?.status === 401) {
+            const axiosError = error as AxiosError;
+            if (axiosError.response?.status === 401) {
                 return {
                     success: false,
                     error: 'No estás autenticado. Por favor inicia sesión.',
                 };
             }
 
-            if (error.response?.status === 403) {
+            if (axiosError.response?.status === 403) {
                 return {
                     success: false,
                     error: 'No tienes permisos para cambiar el estado de usuarios.',
                 };
             }
 
-            if (error.response?.status === 404) {
+            if (axiosError.response?.status === 404) {
                 return {
                     success: false,
                     error: 'Usuario no encontrado.',
@@ -438,7 +441,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: error.response?.data?.message || 'Error al cambiar estado del usuario.',
+                error: axiosError.response?.data?.message || 'Error al cambiar estado del usuario.',
             };
         }
     },
@@ -483,7 +486,7 @@ export const userManagementFlow = {
                 users,
                 total: users.length,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error en userManagementFlow.searchUsersAdvanced:', error);
             return {
                 success: false,

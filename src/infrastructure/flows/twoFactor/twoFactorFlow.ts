@@ -13,6 +13,7 @@ import {
   validateVerify2FAData,
   getTwoFactorErrorMessage
 } from './validation/twoFactorValidations';
+import type { AxiosError } from 'axios';
 
 /**
  * Resultado del flujo de obtención de estado 2FA
@@ -88,7 +89,7 @@ export const twoFactorFlow = {
                 lastUsed: status.lastUsed ? new Date(status.lastUsed) : null,
                 hasBackupCodes: status.hasBackupCodes,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error getting 2FA status:', error);
             
             return {
@@ -113,7 +114,7 @@ export const twoFactorFlow = {
                 secret: setup.secret,
                 backupCodes: setup.backupCodes,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error setting up 2FA:', error);
             
             return {
@@ -148,7 +149,7 @@ export const twoFactorFlow = {
                 message: result.message,
                 backupCodes: result.backupCodes,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error enabling 2FA:', error);
             
             return {
@@ -183,7 +184,7 @@ export const twoFactorFlow = {
                 success: true,
                 token: result.token,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error verifying 2FA:', error);
             
             return {
@@ -212,7 +213,7 @@ export const twoFactorFlow = {
                 success: true,
                 message: result.message,
             };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error disabling 2FA:', error);
             
             return {

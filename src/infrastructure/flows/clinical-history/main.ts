@@ -8,8 +8,8 @@
 // TODO: Importar servicio cuando esté creado
 // import { clinicalHistoryService } from '../../../services/clinicalHistoryService';
 
-// TODO: Importar tipos cuando estén creados
-// import type { ClinicalHistory, CreateClinicalHistoryData, UpdateClinicalHistoryData } from '../../../types/clinicalHistory';
+import type { ClinicalHistory, CreateClinicalHistoryData, UpdateClinicalHistoryData } from '../../../types/clinicalHistory';
+import type { AxiosError } from 'axios';
 
 // TODO: Importar validaciones cuando estén creadas
 import { validateClinicalHistoryData, validateClinicalHistoryId, getClinicalHistoryErrorMessage } from './validation/clinicalHistoryValidations';
@@ -17,7 +17,7 @@ import { validateClinicalHistoryData, validateClinicalHistoryId, getClinicalHist
 /**
  * Resultado de operaciones del flujo de historial clínico
  */
-export interface ClinicalHistoryFlowResult<T = any> {
+export interface ClinicalHistoryFlowResult<T = ClinicalHistory> {
     success: boolean;
     data?: T;
     error?: string;
@@ -94,7 +94,7 @@ export const clinicalHistoryFlow = {
      * @param data - Datos del historial clínico a crear
      * @returns Historial clínico creado
      */
-    async createClinicalHistory(data: any): Promise<ClinicalHistoryFlowResult> {
+    async createClinicalHistory(data: CreateClinicalHistoryData): Promise<ClinicalHistoryFlowResult> {
         try {
             // Validar datos
             const validationError = validateClinicalHistoryData(data);
@@ -126,7 +126,7 @@ export const clinicalHistoryFlow = {
      * @param data - Datos a actualizar
      * @returns Historial clínico actualizado
      */
-    async updateClinicalHistory(id: string | number, data: any): Promise<ClinicalHistoryFlowResult> {
+    async updateClinicalHistory(id: string | number, data: UpdateClinicalHistoryData): Promise<ClinicalHistoryFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // Validar datos
