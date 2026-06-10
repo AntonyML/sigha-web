@@ -27,3 +27,17 @@ export { passwordRecoveryFlow } from './passwordRecovery';
 
 // Email flows (Resend-backed). Replaces the legacy notifuseFlow.
 export { emailFlow } from './email';
+
+// Clinical flows (EPICA 3).
+export { clinicalHistoryFlow } from './clinical-history';
+export { clinicalMedicationFlow } from './clinical-medication';
+export { emergencyContactFlow } from './emergency-contact';
+export { medicalRecordFlow } from './medical-record';
+export { nursingFlow } from './nursing';
+export { olderAdultFamilyFlow } from './older-adult-family';
+export { olderAdultUpdateFlow } from './older-adult-update';
+export { physiotherapyFlow } from './physiotherapy';
+export { psychologyFlow } from './psychology';
+export { socialWorkFlow } from './social-work';
+export { specializedAppointmentFlow } from './specialized-appointment';
+export { specializedAreaFlow } from './specialized-area';

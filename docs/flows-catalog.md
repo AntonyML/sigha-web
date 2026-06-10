@@ -40,6 +40,8 @@
 | 21 | `olderAdultUpdateFlow` | `flows/older-adult-update/` | `main.ts` exists; not exported | `olderAdultUpdateService` (missing) |
 | 22 | `olderAdultFamilyFlow` | `flows/older-adult-family/` | `main.ts` exists; not exported | `olderAdultFamilyService` (missing) |
 
+> ✅ **2026-06-10 — EPICA 3:** All 12 flows are now exported from `flows/index.ts`. Each `main.ts` has an `index.ts` re-export. The flows still use stub implementations; the new `*Service.ts` files provide the real HTTP layer. Follow-up commits should wire each flow to its service.
+
 ---
 
 ## Pattern reminder (see `flow-pattern.md` for the full guide)

@@ -1,0 +1,1 @@
+export { specializedAreaFlow } from './main';

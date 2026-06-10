@@ -72,6 +72,30 @@ import AppointmentResults from './presentation/pages/nursing/AppointmentResults'
 import CompleteAppointment from './presentation/pages/nursing/CompleteAppointment'
 import PatientAppointments from './presentation/pages/nursing/PatientAppointments'
 
+// EPICA 3 — clinical modules (placeholder pages; flows wired)
+import ClinicalHistoryListPage from './presentation/pages/clinical-history/ClinicalHistoryListPage'
+import ClinicalHistoryCreatePage from './presentation/pages/clinical-history/ClinicalHistoryCreatePage'
+import ClinicalMedicationListPage from './presentation/pages/clinical-medication/ClinicalMedicationListPage'
+import ClinicalMedicationCreatePage from './presentation/pages/clinical-medication/ClinicalMedicationCreatePage'
+import MedicalRecordsListPage from './presentation/pages/medical-records/MedicalRecordsListPage'
+import MedicalRecordsCreatePage from './presentation/pages/medical-records/MedicalRecordsCreatePage'
+import EmergencyContactsListPage from './presentation/pages/emergency-contacts/EmergencyContactsListPage'
+import EmergencyContactsCreatePage from './presentation/pages/emergency-contacts/EmergencyContactsCreatePage'
+import OlderAdultFamilyListPage from './presentation/pages/older-adult-family/OlderAdultFamilyListPage'
+import OlderAdultFamilyCreatePage from './presentation/pages/older-adult-family/OlderAdultFamilyCreatePage'
+import OlderAdultUpdatesListPage from './presentation/pages/older-adult-updates/OlderAdultUpdatesListPage'
+import OlderAdultUpdatesCreatePage from './presentation/pages/older-adult-updates/OlderAdultUpdatesCreatePage'
+import PhysiotherapyListPage from './presentation/pages/physiotherapy/PhysiotherapyListPage'
+import PhysiotherapyCreatePage from './presentation/pages/physiotherapy/PhysiotherapyCreatePage'
+import PsychologyListPage from './presentation/pages/psychology/PsychologyListPage'
+import PsychologyCreatePage from './presentation/pages/psychology/PsychologyCreatePage'
+import SocialWorkListPage from './presentation/pages/social-work/SocialWorkListPage'
+import SocialWorkCreatePage from './presentation/pages/social-work/SocialWorkCreatePage'
+import SpecializedAppointmentsListPage from './presentation/pages/specialized-appointments/SpecializedAppointmentsListPage'
+import SpecializedAppointmentsCreatePage from './presentation/pages/specialized-appointments/SpecializedAppointmentsCreatePage'
+import SpecializedAreasListPage from './presentation/pages/specialized-areas/SpecializedAreasListPage'
+import SpecializedAreasCreatePage from './presentation/pages/specialized-areas/SpecializedAreasCreatePage'
+
 //Audit
 import AuditMenuPage from './presentation/pages/audit/AuditMenuPage'
 import AuditListPage from './presentation/pages/audit/AuditListPage'
@@ -145,6 +169,30 @@ export default function App() {
               <Route path="nursing/appointments/:id/results" element={<AppointmentResults />} />
               <Route path="nursing/appointments/:id/complete" element={<CompleteAppointment />} />
               <Route path="nursing/patients/:patientId/appointments" element={<PatientAppointments />} />
+
+              {/* EPICA 3 — clinical module routes */}
+              <Route path="clinical-history" element={<ClinicalHistoryListPage />} />
+              <Route path="clinical-history/create" element={<ClinicalHistoryCreatePage />} />
+              <Route path="clinical-medication" element={<ClinicalMedicationListPage />} />
+              <Route path="clinical-medication/create" element={<ClinicalMedicationCreatePage />} />
+              <Route path="medical-records" element={<MedicalRecordsListPage />} />
+              <Route path="medical-records/create" element={<MedicalRecordsCreatePage />} />
+              <Route path="emergency-contacts" element={<EmergencyContactsListPage />} />
+              <Route path="emergency-contacts/create" element={<EmergencyContactsCreatePage />} />
+              <Route path="older-adult-family" element={<OlderAdultFamilyListPage />} />
+              <Route path="older-adult-family/create" element={<OlderAdultFamilyCreatePage />} />
+              <Route path="older-adult-updates" element={<OlderAdultUpdatesListPage />} />
+              <Route path="older-adult-updates/create" element={<OlderAdultUpdatesCreatePage />} />
+              <Route path="physiotherapy" element={<PhysiotherapyListPage />} />
+              <Route path="physiotherapy/create" element={<PhysiotherapyCreatePage />} />
+              <Route path="psychology" element={<PsychologyListPage />} />
+              <Route path="psychology/create" element={<PsychologyCreatePage />} />
+              <Route path="social-work" element={<SocialWorkListPage />} />
+              <Route path="social-work/create" element={<SocialWorkCreatePage />} />
+              <Route path="specialized-appointments" element={<SpecializedAppointmentsListPage />} />
+              <Route path="specialized-appointments/create" element={<SpecializedAppointmentsCreatePage />} />
+              <Route path="specialized-areas" element={<SpecializedAreasListPage />} />
+              <Route path="specialized-areas/create" element={<SpecializedAreasCreatePage />} />
 
               <Route path="audits" element={<AuditMenuPage />} />
               <Route path="audits/list" element={<AuditListPage />} />
