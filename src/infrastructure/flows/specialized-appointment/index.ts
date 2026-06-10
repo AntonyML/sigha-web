@@ -1,0 +1,1 @@
+export { specializedAppointmentFlow } from './main';

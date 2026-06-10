@@ -46,6 +46,8 @@
 | 10 | `olderAdultFamilyService.ts` | `/older-adult-family*` | `olderAdultFamilyFlow` |
 | 11 | `olderAdultUpdateService.ts` | `/older-adult-updates*` | `olderAdultUpdateFlow` |
 
+> ✅ **2026-06-10 — EPICA 3:** All 11 services have been created. The pages, flows, and routes are wired; flows use placeholder stubs pending the real-service wiring. See `tareas.md` for details on what to do next.
+
 ---
 
 ## Pattern — copy from `vaccineService.ts` or `nursingService.ts`
