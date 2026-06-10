@@ -31,3 +31,11 @@ debug-page.png
 *.png
 *.jpg
 *.jpeg
+
+.env
+.env.*
+!.env.example
+
+Session_starter.md
+
+test-results/
