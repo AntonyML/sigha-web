@@ -108,33 +108,42 @@ export default function MainMenuPage() {
 
     // Filtrar opciones del menú basado en estado del 2FA y permisos
     const getFilteredMenuOptions = () => {
-        // Si está cargando, mostrar opciones limitadas
+        // Si está cargando, no mostrar opciones para evitar parpadeo
         if (loading) {
-            return menuOptions.filter(option =>
-                option.id === '5' || // Configuración 2FA
-                option.id === '8'    // Mi Perfil
-            );
+            return [];
         }
 
-        // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
+        // Si el usuario no tiene 2FA activado, mostrar únicamente Configuración 2FA
         if (!isEnabled) {
+            return menuOptions.filter(option => option.id === '6');
+        }
+
+        // Si el rol es "not specified", sólo permitir Configuración 2FA y Mi Perfil
+        if (PermissionUtils.isNotSpecifiedSync()) {
             return menuOptions.filter(option =>
-                option.id === '5' || // Configuración 2FA
-                option.id === '8'    // Mi Perfil
+                option.id === '6' || // Configuración 2FA
+                option.id === '9'    // Mi Perfil
             );
         }
 
-        // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
-        if (hasRequiredPermissions === false) {
-            return menuOptions.filter(option =>
-                option.id === '1' || // Fichas Virtuales
-                option.id === '5' || // Configuración 2FA
-                option.id === '8'    // Mi Perfil
-            );
-        }
+        // Mapear cada opción de menú a su correspondiente identificador de módulo
+        const optionModuleMap: Record<string, string> = {
+            '1': 'virtualFiles',
+            '2': 'nursing',
+            '3': 'users',
+            '4': 'roles',
+            '5': 'permissions',
+            '6': 'twoFactor',
+            '7': 'entranceExit',
+            '8': 'audits',
+            '9': 'profile'
+        };
 
-        // Usuarios con permisos completos ven todas las opciones
-        return menuOptions;
+        // Filtrar según el rol usando canAccessModule
+        return menuOptions.filter(option => {
+            const moduleName = optionModuleMap[option.id];
+            return moduleName ? PermissionUtils.canAccessModule(moduleName) : false;
+        });
     };
 
     const filteredMenuOptions = getFilteredMenuOptions();

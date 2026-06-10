@@ -178,17 +178,16 @@ export default function Sidebar() {
       );
     }
 
-    // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
-    if (hasRequiredPermissions === false) {
+    // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
+    if (PermissionUtils.isNotSpecifiedSync()) {
       return menu.filter(item =>
         item.id === 'main' ||
-        item.id === 'dashboard' ||
         item.id === 'twoFactor'
       );
     }
 
-    // Usuarios con permisos completos ven todo el menú
-    return menu;
+    // Filtrar según el rol usando canAccessModule para cada item
+    return menu.filter(item => PermissionUtils.canAccessModule(item.id));
   };
 
   const filteredMenu = getFilteredMenu();

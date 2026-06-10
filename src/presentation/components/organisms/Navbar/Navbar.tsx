@@ -100,17 +100,28 @@ export default function Navbar() {
       );
     }
 
-    // Si tiene 2FA activado pero no tiene permisos avanzados, mostrar opciones básicas
-    if (hasRequiredPermissions === false) {
+    // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
+    if (PermissionUtils.isNotSpecifiedSync()) {
       return navItems.filter(item =>
-        item.id === 'home' || // Inicio
-        item.id === 'older-adults' || // Adultos Mayores
-        item.id === 'profile' // Perfil
+        item.id === 'home' ||
+        item.id === 'profile'
       );
     }
 
-    // Usuarios con permisos completos ven todos los items
-    return navItems;
+    // Mapear cada nav item a su correspondiente identificador de módulo
+    const navItemModuleMap: Record<string, string> = {
+      'home': 'main',
+      'older-adults': 'virtualFiles',
+      'activities': 'programs',
+      'audits': 'audits',
+      'profile': 'profile'
+    };
+
+    // Filtrar según el rol usando canAccessModule
+    return navItems.filter(item => {
+      const moduleName = navItemModuleMap[item.id];
+      return moduleName ? PermissionUtils.canAccessModule(moduleName) : false;
+    });
   };
 
   const filteredNavItems = getFilteredNavItems();
