@@ -171,8 +171,8 @@ Asegúrate de tener instalado:
 ### 1. Clonar el Repositorio
 
 ```bash
-git clone https://git.ucr.ac.cr/proyecto_analisis/frontend_proton_react_hogar_de_ancianos.git
-cd frontend_proton_react_hogar_de_ancianos
+git clone https://git.ucr.ac.cr/proyecto_analisis/sigha-web.git
+cd sigha-web
 ```
 
 ### 2. Instalar Dependencias
@@ -230,7 +230,7 @@ El instalador se generará en `dist/electron/`
 ## Estructura del Proyecto
 
 ```
-frontend_proton_react_hogar_de_ancianos/
+sigha-web/
 │
 ├── public/                                    # Archivos estáticos
 │
@@ -1082,7 +1082,7 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 Para consultas o soporte:
 
 - Email: soporte@hogar-ancianos.com
-- GitLab: [Issues](https://git.ucr.ac.cr/proyecto_analisis/frontend_proton_react_hogar_de_ancianos/-/issues)
+- GitLab: [Issues](https://git.ucr.ac.cr/proyecto_analisis/sigha-web/-/issues)
 
 ---
 
