@@ -25,5 +25,5 @@ export { passwordRecoveryFlow } from './passwordRecovery';
 // Virtual file flows (pending implementation)
 // export { virtualFileFlow } from './virtualFile';
 
-// Notifuse flows
-export { notifuseFlow } from './notifuse';
+// Email flows (Resend-backed). Replaces the legacy notifuseFlow.
+export { emailFlow } from './email';
