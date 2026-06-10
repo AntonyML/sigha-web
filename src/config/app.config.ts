@@ -1,38 +1,31 @@
 /**
  * Centralized application configuration
- * All configurations are centralized here for easy management and environment switching
- *
- * TO CHANGE API URL:
- * 1. Modify api.baseUrl with your backend URL
- * 2. For backend on another PC: 'http://192.168.1.XXX:3000'
- * 3. For production: 'https://your-domain.com'
+ * API URL comes from VITE_API_URL env variable.
+ * Set it in .env (dev) or in the hosting platform env vars (prod).
  */
 
-export const ipv4Localhost = 'http://10.124.14.250:3000'; // esta es la ip de mi pc portatil donde corro el backend
-export const localhost = 'http://localhost:3000';
-export const tunnelHost = 'http://localhost:3000'; // por si creo un tunel con cloudflare mas adelante
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const nodeEnv = (import.meta.env.VITE_APP_ENV || 'development') as 'development' | 'production' | 'test';
+
 export const config = {
     api: {
-        baseUrl: localhost, // Cambiado para usar ipv4Localhost
+        baseUrl: apiBaseUrl,
         timeout: 10000,
     },
 
     app: {
         name: 'Hogar de Ancianos',
         version: '1.0.0',
-        environment: 'development' as 'development' | 'production' | 'test',
+        environment: nodeEnv,
     },
 
     features: {
-        enableDebugLogs: true,
+        enableDebugLogs: nodeEnv !== 'production',
         enableMockData: false,
         enable2FA: import.meta.env.VITE_ENABLE_2FA === 'true',
     },
 } as const;
 
-/**
- * Configuration utilities
- */
 export const getApiUrl = (endpoint: string): string => {
     const baseUrl = config.api.baseUrl;
     return `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;

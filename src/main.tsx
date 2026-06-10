@@ -12,9 +12,8 @@ import { Toast } from './presentation/components/molecules/Toast/Toast';
 const initializeApp = async () => {
   try {
     await permissionEntityService.initialize();
-    console.log('PermissionEntityService inicializado correctamente');
-  } catch (error) {
-    console.error('Error inicializando PermissionEntityService:', error);
+  } catch {
+    // silencioso — no bloquea el arranque
   }
 };
 
