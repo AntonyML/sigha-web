@@ -9,7 +9,6 @@
 // import { specializedAreaService } from '../../../services/specializedAreaService';
 
 import type { SpecializedArea, CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../types/specializedArea';
-import type { AxiosError } from 'axios';
 
 // TODO: Importar validaciones cuando estén creadas
 import { validateSpecializedAreaData, validateSpecializedAreaId, getSpecializedAreaErrorMessage } from './validation/areaValidations';

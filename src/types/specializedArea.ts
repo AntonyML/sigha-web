@@ -8,38 +8,41 @@
 /**
  * Estado de un área especializada
  */
-export enum SpecializedAreaStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  MAINTENANCE = 'maintenance',
-  CLOSED = 'closed'
-}
+export const SpecializedAreaStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  MAINTENANCE: 'maintenance',
+  CLOSED: 'closed'
+} as const;
+export type SpecializedAreaStatus = typeof SpecializedAreaStatus[keyof typeof SpecializedAreaStatus];
 
 /**
  * Tipo de especialidad médica
  */
-export enum MedicalSpecialty {
-  GERIATRICS = 'geriatrics',
-  CARDIOLOGY = 'cardiology',
-  NEUROLOGY = 'neurology',
-  PSYCHIATRY = 'psychiatry',
-  PHYSIOTHERAPY = 'physiotherapy',
-  NUTRITION = 'nutrition',
-  DENTISTRY = 'dentistry',
-  OPHTHALMOLOGY = 'ophthalmology',
-  DERMATOLOGY = 'dermatology',
-  GENERAL_MEDICINE = 'general_medicine'
-}
+export const MedicalSpecialty = {
+  GERIATRICS: 'geriatrics',
+  CARDIOLOGY: 'cardiology',
+  NEUROLOGY: 'neurology',
+  PSYCHIATRY: 'psychiatry',
+  PHYSIOTHERAPY: 'physiotherapy',
+  NUTRITION: 'nutrition',
+  DENTISTRY: 'dentistry',
+  OPHTHALMOLOGY: 'ophthalmology',
+  DERMATOLOGY: 'dermatology',
+  GENERAL_MEDICINE: 'general_medicine'
+} as const;
+export type MedicalSpecialty = typeof MedicalSpecialty[keyof typeof MedicalSpecialty];
 
 /**
  * Nivel de cuidado requerido
  */
-export enum CareLevel {
-  BASIC = 'basic',
-  INTERMEDIATE = 'intermediate',
-  INTENSIVE = 'intensive',
-  CRITICAL = 'critical'
-}
+export const CareLevel = {
+  BASIC: 'basic',
+  INTERMEDIATE: 'intermediate',
+  INTENSIVE: 'intensive',
+  CRITICAL: 'critical'
+} as const;
+export type CareLevel = typeof CareLevel[keyof typeof CareLevel];
 
 /**
  * Interface principal del área especializada

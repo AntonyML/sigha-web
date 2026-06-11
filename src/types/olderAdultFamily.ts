@@ -8,67 +8,71 @@
 /**
  * Relación familiar con el adulto mayor
  */
-export enum OlderAdultFamilyRelationship {
-  SPOUSE = 'spouse',
-  CHILD = 'child',
-  PARENT = 'parent',
-  SIBLING = 'sibling',
-  GRANDCHILD = 'grandchild',
-  GRANDPARENT = 'grandparent',
-  AUNT_UNCLE = 'aunt_uncle',
-  NIECE_NEPHEW = 'niece_nephew',
-  COUSIN = 'cousin',
-  IN_LAW = 'in_law',
-  OTHER = 'other'
-}
+export const OlderAdultFamilyRelationship = {
+  SPOUSE: 'spouse',
+  CHILD: 'child',
+  PARENT: 'parent',
+  SIBLING: 'sibling',
+  GRANDCHILD: 'grandchild',
+  GRANDPARENT: 'grandparent',
+  AUNT_UNCLE: 'aunt_uncle',
+  NIECE_NEPHEW: 'niece_nephew',
+  COUSIN: 'cousin',
+  IN_LAW: 'in_law',
+  OTHER: 'other'
+} as const;
+export type OlderAdultFamilyRelationship = typeof OlderAdultFamilyRelationship[keyof typeof OlderAdultFamilyRelationship];
 
 /**
  * Estado del miembro de familia
  */
-export enum OlderAdultFamilyStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DECEASED = 'deceased',
-  NO_CONTACT = 'no_contact'
-}
+export const OlderAdultFamilyStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  DECEASED: 'deceased',
+  NO_CONTACT: 'no_contact'
+} as const;
+export type OlderAdultFamilyStatus = typeof OlderAdultFamilyStatus[keyof typeof OlderAdultFamilyStatus];
 
 /**
  * Nivel de involucramiento familiar
  */
-export enum FamilyInvolvementLevel {
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
-  NONE = 'none'
-}
+export const FamilyInvolvementLevel = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+  NONE: 'none'
+} as const;
+export type FamilyInvolvementLevel = typeof FamilyInvolvementLevel[keyof typeof FamilyInvolvementLevel];
 
 /**
  * Tipo específico de parentesco familiar
  */
-export enum KinshipType {
-  SON = 'son',
-  DAUGHTER = 'daughter',
-  GRANDSON = 'grandson',
-  GRANDDAUGHTER = 'granddaughter',
-  FATHER = 'father',
-  MOTHER = 'mother',
-  GRANDFATHER = 'grandfather',
-  GRANDMOTHER = 'grandmother',
-  BROTHER = 'brother',
-  SISTER = 'sister',
-  UNCLE = 'uncle',
-  AUNT = 'aunt',
-  NEPHEW = 'nephew',
-  NIECE = 'niece',
-  COUSIN_MALE = 'cousin_male',
-  COUSIN_FEMALE = 'cousin_female',
-  FATHER_IN_LAW = 'father_in_law',
-  MOTHER_IN_LAW = 'mother_in_law',
-  BROTHER_IN_LAW = 'brother_in_law',
-  SISTER_IN_LAW = 'sister_in_law',
-  SPOUSE = 'spouse',
-  OTHER = 'other'
-}
+export const KinshipType = {
+  SON: 'son',
+  DAUGHTER: 'daughter',
+  GRANDSON: 'grandson',
+  GRANDDAUGHTER: 'granddaughter',
+  FATHER: 'father',
+  MOTHER: 'mother',
+  GRANDFATHER: 'grandfather',
+  GRANDMOTHER: 'grandmother',
+  BROTHER: 'brother',
+  SISTER: 'sister',
+  UNCLE: 'uncle',
+  AUNT: 'aunt',
+  NEPHEW: 'nephew',
+  NIECE: 'niece',
+  COUSIN_MALE: 'cousin_male',
+  COUSIN_FEMALE: 'cousin_female',
+  FATHER_IN_LAW: 'father_in_law',
+  MOTHER_IN_LAW: 'mother_in_law',
+  BROTHER_IN_LAW: 'brother_in_law',
+  SISTER_IN_LAW: 'sister_in_law',
+  SPOUSE: 'spouse',
+  OTHER: 'other'
+} as const;
+export type KinshipType = typeof KinshipType[keyof typeof KinshipType];
 
 /**
  * Interface principal del miembro de familia de adulto mayor

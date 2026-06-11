@@ -8,47 +8,51 @@
 /**
  * Estado de una sesión de psicología
  */
-export enum PsychologySessionStatus {
-  SCHEDULED = 'scheduled',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show',
-  POSTPONED = 'postponed'
-}
+export const PsychologySessionStatus = {
+  SCHEDULED: 'scheduled',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  POSTPONED: 'postponed'
+} as const;
+export type PsychologySessionStatus = typeof PsychologySessionStatus[keyof typeof PsychologySessionStatus];
 
 /**
  * Tipo de sesión de psicología
  */
-export enum PsychologySessionType {
-  INDIVIDUAL = 'individual',
-  GROUP = 'group',
-  FAMILY = 'family',
-  COUPLES = 'couples'
-}
+export const PsychologySessionType = {
+  INDIVIDUAL: 'individual',
+  GROUP: 'group',
+  FAMILY: 'family',
+  COUPLES: 'couples'
+} as const;
+export type PsychologySessionType = typeof PsychologySessionType[keyof typeof PsychologySessionType];
 
 /**
  * Área de especialización psicológica
  */
-export enum PsychologySpecialty {
-  CLINICAL_PSYCHOLOGY = 'clinical_psychology',
-  COGNITIVE_BEHAVIORAL = 'cognitive_behavioral',
-  PSYCHOANALYSIS = 'psychoanalysis',
-  FAMILY_THERAPY = 'family_therapy',
-  GERONTOLOGY = 'gerontology',
-  TRAUMA_THERAPY = 'trauma_therapy',
-  DEPRESSION_ANXIETY = 'depression_anxiety',
-  COGNITIVE_DISORDERS = 'cognitive_disorders'
-}
+export const PsychologySpecialty = {
+  CLINICAL_PSYCHOLOGY: 'clinical_psychology',
+  COGNITIVE_BEHAVIORAL: 'cognitive_behavioral',
+  PSYCHOANALYSIS: 'psychoanalysis',
+  FAMILY_THERAPY: 'family_therapy',
+  GERONTOLOGY: 'gerontology',
+  TRAUMA_THERAPY: 'trauma_therapy',
+  DEPRESSION_ANXIETY: 'depression_anxiety',
+  COGNITIVE_DISORDERS: 'cognitive_disorders'
+} as const;
+export type PsychologySpecialty = typeof PsychologySpecialty[keyof typeof PsychologySpecialty];
 
 /**
  * Nivel de urgencia de la sesión
  */
-export enum PsychologyUrgencyLevel {
-  ROUTINE = 'routine',
-  URGENT = 'urgent',
-  EMERGENCY = 'emergency'
-}
+export const PsychologyUrgencyLevel = {
+  ROUTINE: 'routine',
+  URGENT: 'urgent',
+  EMERGENCY: 'emergency'
+} as const;
+export type PsychologyUrgencyLevel = typeof PsychologyUrgencyLevel[keyof typeof PsychologyUrgencyLevel];
 
 /**
  * Interface principal de la sesión de psicología

@@ -2,7 +2,7 @@
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación de dos factores
 
 import type { Enable2FARequest, Verify2FARequest } from '../../../../types/twoFactor';
-import type { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 
 // Validaciones de negocio para códigos TOTP
@@ -161,7 +161,7 @@ export function getTwoFactorErrorMessage(error: AxiosError | Error | unknown): s
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError;
+  const axiosError = error as AxiosError<any>;
   if (axiosError?.response?.status === 400) {
     const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;

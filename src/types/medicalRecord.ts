@@ -8,36 +8,39 @@
 /**
  * Tipo de registro médico
  */
-export enum MedicalRecordType {
-  CONSULTATION = 'consultation',
-  EMERGENCY = 'emergency',
-  FOLLOW_UP = 'follow_up',
-  PROCEDURE = 'procedure',
-  LABORATORY = 'laboratory',
-  IMAGING = 'imaging',
-  PRESCRIPTION = 'prescription',
-  VACCINATION = 'vaccination'
-}
+export const MedicalRecordType = {
+  CONSULTATION: 'consultation',
+  EMERGENCY: 'emergency',
+  FOLLOW_UP: 'follow_up',
+  PROCEDURE: 'procedure',
+  LABORATORY: 'laboratory',
+  IMAGING: 'imaging',
+  PRESCRIPTION: 'prescription',
+  VACCINATION: 'vaccination'
+} as const;
+export type MedicalRecordType = typeof MedicalRecordType[keyof typeof MedicalRecordType];
 
 /**
  * Estado de un registro médico
  */
-export enum MedicalRecordStatus {
-  DRAFT = 'draft',
-  FINALIZED = 'finalized',
-  CANCELLED = 'cancelled',
-  ARCHIVED = 'archived'
-}
+export const MedicalRecordStatus = {
+  DRAFT: 'draft',
+  FINALIZED: 'finalized',
+  CANCELLED: 'cancelled',
+  ARCHIVED: 'archived'
+} as const;
+export type MedicalRecordStatus = typeof MedicalRecordStatus[keyof typeof MedicalRecordStatus];
 
 /**
  * Prioridad del registro médico
  */
-export enum MedicalRecordPriority {
-  LOW = 'low',
-  NORMAL = 'normal',
-  HIGH = 'high',
-  URGENT = 'urgent'
-}
+export const MedicalRecordPriority = {
+  LOW: 'low',
+  NORMAL: 'normal',
+  HIGH: 'high',
+  URGENT: 'urgent'
+} as const;
+export type MedicalRecordPriority = typeof MedicalRecordPriority[keyof typeof MedicalRecordPriority];
 
 /**
  * Interface principal del registro médico

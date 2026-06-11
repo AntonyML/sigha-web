@@ -9,7 +9,6 @@
 // import { clinicalHistoryService } from '../../../services/clinicalHistoryService';
 
 import type { ClinicalHistory, CreateClinicalHistoryData, UpdateClinicalHistoryData } from '../../../types/clinicalHistory';
-import type { AxiosError } from 'axios';
 
 // TODO: Importar validaciones cuando estén creadas
 import { validateClinicalHistoryData, validateClinicalHistoryId, getClinicalHistoryErrorMessage } from './validation/clinicalHistoryValidations';

@@ -11,7 +11,7 @@ import {
   validateUserSearchParams,
   getUserManagementErrorMessage
 } from './validation/userValidations';
-import type { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 /**
  * Resultado del flujo de obtención de usuarios
@@ -108,7 +108,7 @@ export const userManagementFlow = {
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.getAllUsers:', error);
 
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             if (axiosError.response?.status === 401) {
                 return {
                     success: false,
@@ -154,7 +154,7 @@ export const userManagementFlow = {
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.getUserById:', error);
 
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             if (axiosError.response?.status === 404) {
                 return {
                     success: false,
@@ -209,7 +209,7 @@ export const userManagementFlow = {
             };
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.createUser:', error);
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             console.error('Error response:', axiosError.response?.data);
             console.error('Error status:', axiosError.response?.status);
             return {
@@ -284,7 +284,7 @@ export const userManagementFlow = {
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.deleteUser:', error);
 
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             if (axiosError.response?.status === 401) {
                 return {
                     success: false,
@@ -368,7 +368,7 @@ export const userManagementFlow = {
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.getUsersByRole:', error);
 
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             if (axiosError.response?.status === 401) {
                 return {
                     success: false,
@@ -417,7 +417,7 @@ export const userManagementFlow = {
         } catch (error: unknown) {
             console.error('Error en userManagementFlow.toggleUserStatus:', error);
 
-            const axiosError = error as AxiosError;
+            const axiosError = error as AxiosError<any>;
             if (axiosError.response?.status === 401) {
                 return {
                     success: false,

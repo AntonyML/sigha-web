@@ -8,35 +8,37 @@
 /**
  * Tipos de error para validaciones de familia de adultos mayores
  */
-export enum OlderAdultFamilyValidationError {
-    INVALID_ID = 'INVALID_ID',
-    MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
-    INVALID_PATIENT_ID = 'INVALID_PATIENT_ID',
-    INVALID_NAME = 'INVALID_NAME',
-    INVALID_RELATIONSHIP = 'INVALID_RELATIONSHIP',
-    INVALID_PHONE = 'INVALID_PHONE',
-    INVALID_EMAIL = 'INVALID_EMAIL',
-    INVALID_ADDRESS = 'INVALID_ADDRESS',
-    DUPLICATE_FAMILY_MEMBER = 'DUPLICATE_FAMILY_MEMBER',
-    INVALID_EMERGENCY_CONTACT = 'INVALID_EMERGENCY_CONTACT'
-}
+export const OlderAdultFamilyValidationError = {
+    INVALID_ID: 'INVALID_ID',
+    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+    INVALID_PATIENT_ID: 'INVALID_PATIENT_ID',
+    INVALID_NAME: 'INVALID_NAME',
+    INVALID_RELATIONSHIP: 'INVALID_RELATIONSHIP',
+    INVALID_PHONE: 'INVALID_PHONE',
+    INVALID_EMAIL: 'INVALID_EMAIL',
+    INVALID_ADDRESS: 'INVALID_ADDRESS',
+    DUPLICATE_FAMILY_MEMBER: 'DUPLICATE_FAMILY_MEMBER',
+    INVALID_EMERGENCY_CONTACT: 'INVALID_EMERGENCY_CONTACT'
+} as const;
+export type OlderAdultFamilyValidationError = typeof OlderAdultFamilyValidationError[keyof typeof OlderAdultFamilyValidationError];
 
 /**
  * Tipos de relación familiar permitidos
  */
-export enum FamilyRelationship {
-    SPOUSE = 'spouse',
-    CHILD = 'child',
-    PARENT = 'parent',
-    SIBLING = 'sibling',
-    GRANDCHILD = 'grandchild',
-    GRANDPARENT = 'grandparent',
-    AUNT_UNCLE = 'aunt_uncle',
-    NIECE_NEPHEW = 'niece_nephew',
-    COUSIN = 'cousin',
-    IN_LAW = 'in_law',
-    OTHER = 'other'
-}
+export const FamilyRelationship = {
+    SPOUSE: 'spouse',
+    CHILD: 'child',
+    PARENT: 'parent',
+    SIBLING: 'sibling',
+    GRANDCHILD: 'grandchild',
+    GRANDPARENT: 'grandparent',
+    AUNT_UNCLE: 'aunt_uncle',
+    NIECE_NEPHEW: 'niece_nephew',
+    COUSIN: 'cousin',
+    IN_LAW: 'in_law',
+    OTHER: 'other'
+} as const;
+export type FamilyRelationship = typeof FamilyRelationship[keyof typeof FamilyRelationship];
 
 /**
  * Resultado de validación

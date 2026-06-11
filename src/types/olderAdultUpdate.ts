@@ -8,26 +8,28 @@
 /**
  * Tipo de actualización de información del adulto mayor
  */
-export enum OlderAdultUpdateType {
-  PERSONAL_INFO = 'personal_info',
-  MEDICAL_INFO = 'medical_info',
-  CONTACT_INFO = 'contact_info',
-  EMERGENCY_CONTACT = 'emergency_contact',
-  HEALTH_STATUS = 'health_status',
-  MEDICATION = 'medication',
-  LIVING_SITUATION = 'living_situation',
-  OTHER = 'other'
-}
+export const OlderAdultUpdateType = {
+  PERSONAL_INFO: 'personal_info',
+  MEDICAL_INFO: 'medical_info',
+  CONTACT_INFO: 'contact_info',
+  EMERGENCY_CONTACT: 'emergency_contact',
+  HEALTH_STATUS: 'health_status',
+  MEDICATION: 'medication',
+  LIVING_SITUATION: 'living_situation',
+  OTHER: 'other'
+} as const;
+export type OlderAdultUpdateType = typeof OlderAdultUpdateType[keyof typeof OlderAdultUpdateType];
 
 /**
  * Estado de la actualización
  */
-export enum OlderAdultUpdateStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  ARCHIVED = 'archived'
-}
+export const OlderAdultUpdateStatus = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  ARCHIVED: 'archived'
+} as const;
+export type OlderAdultUpdateStatus = typeof OlderAdultUpdateStatus[keyof typeof OlderAdultUpdateStatus];
 
 /**
  * Interface principal de la actualización de adulto mayor

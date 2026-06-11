@@ -8,16 +8,17 @@
 /**
  * Tipos de error para validaciones de contactos de emergencia
  */
-export enum EmergencyContactValidationError {
-    INVALID_ID = 'INVALID_ID',
-    MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
-    INVALID_NAME = 'INVALID_NAME',
-    INVALID_PHONE = 'INVALID_PHONE',
-    INVALID_EMAIL = 'INVALID_EMAIL',
-    INVALID_RELATIONSHIP = 'INVALID_RELATIONSHIP',
-    INVALID_PATIENT_ID = 'INVALID_PATIENT_ID',
-    DUPLICATE_CONTACT = 'DUPLICATE_CONTACT'
-}
+export const EmergencyContactValidationError = {
+    INVALID_ID: 'INVALID_ID',
+    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+    INVALID_NAME: 'INVALID_NAME',
+    INVALID_PHONE: 'INVALID_PHONE',
+    INVALID_EMAIL: 'INVALID_EMAIL',
+    INVALID_RELATIONSHIP: 'INVALID_RELATIONSHIP',
+    INVALID_PATIENT_ID: 'INVALID_PATIENT_ID',
+    DUPLICATE_CONTACT: 'DUPLICATE_CONTACT'
+} as const;
+export type EmergencyContactValidationError = typeof EmergencyContactValidationError[keyof typeof EmergencyContactValidationError];
 
 /**
  * Resultado de validación
