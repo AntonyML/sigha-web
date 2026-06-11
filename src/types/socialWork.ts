@@ -8,56 +8,52 @@
 /**
  * Estado de un reporte de trabajo social
  */
-export const SocialWorkReportStatus = {
-  DRAFT: 'draft',
-  SUBMITTED: 'submitted',
-  UNDER_REVIEW: 'under_review',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  ARCHIVED: 'archived'
-} as const;
-export type SocialWorkReportStatus = typeof SocialWorkReportStatus[keyof typeof SocialWorkReportStatus];
+export enum SocialWorkReportStatus {
+  DRAFT = 'draft',
+  SUBMITTED = 'submitted',
+  UNDER_REVIEW = 'under_review',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  ARCHIVED = 'archived'
+}
 
 /**
  * Tipo de intervención social
  */
-export const SocialWorkInterventionType = {
-  FAMILY_SUPPORT: 'family_support',
-  ECONOMIC_ASSISTANCE: 'economic_assistance',
-  HOUSING_SUPPORT: 'housing_support',
-  LEGAL_AID: 'legal_aid',
-  PSYCHOLOGICAL_SUPPORT: 'psychological_support',
-  HEALTHCARE_COORDINATION: 'healthcare_coordination',
-  EDUCATIONAL_SUPPORT: 'educational_support',
-  COMMUNITY_INTEGRATION: 'community_integration',
-  ELDER_CARE: 'elder_care',
-  DISABILITY_SUPPORT: 'disability_support',
-  CRISIS_INTERVENTION: 'crisis_intervention',
-  OTHER: 'other'
-} as const;
-export type SocialWorkInterventionType = typeof SocialWorkInterventionType[keyof typeof SocialWorkInterventionType];
+export enum SocialWorkInterventionType {
+  FAMILY_SUPPORT = 'family_support',
+  ECONOMIC_ASSISTANCE = 'economic_assistance',
+  HOUSING_SUPPORT = 'housing_support',
+  LEGAL_AID = 'legal_aid',
+  PSYCHOLOGICAL_SUPPORT = 'psychological_support',
+  HEALTHCARE_COORDINATION = 'healthcare_coordination',
+  EDUCATIONAL_SUPPORT = 'educational_support',
+  COMMUNITY_INTEGRATION = 'community_integration',
+  ELDER_CARE = 'elder_care',
+  DISABILITY_SUPPORT = 'disability_support',
+  CRISIS_INTERVENTION = 'crisis_intervention',
+  OTHER = 'other'
+}
 
 /**
  * Nivel de prioridad de la intervención
  */
-export const SocialWorkPriorityLevel = {
-  LOW: 'low',
-  MEDIUM: 'medium',
-  HIGH: 'high',
-  URGENT: 'urgent'
-} as const;
-export type SocialWorkPriorityLevel = typeof SocialWorkPriorityLevel[keyof typeof SocialWorkPriorityLevel];
+export enum SocialWorkPriorityLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  URGENT = 'urgent'
+}
 
 /**
  * Tipo de beneficiario
  */
-export const BeneficiaryType = {
-  ELDERLY_PERSON: 'elderly_person',
-  FAMILY_MEMBER: 'family_member',
-  CAREGIVER: 'caregiver',
-  COMMUNITY_MEMBER: 'community_member'
-} as const;
-export type BeneficiaryType = typeof BeneficiaryType[keyof typeof BeneficiaryType];
+export enum BeneficiaryType {
+  ELDERLY_PERSON = 'elderly_person',
+  FAMILY_MEMBER = 'family_member',
+  CAREGIVER = 'caregiver',
+  COMMUNITY_MEMBER = 'community_member'
+}
 
 /**
  * Interface principal del reporte de trabajo social
@@ -492,3 +488,60 @@ export const defaultSocialWorkReportSearchParams: SocialWorkReportSearchParams =
   sort_order: 'desc',
   pending_approval: false
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TIPOS SINCRONIZADOS CON BACKEND: /social-work/reports
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type SocialWorkReportType =
+  | 'initial_assessment'
+  | 'follow_up'
+  | 'family_meeting'
+  | 'crisis_intervention'
+  | 'discharge_planning'
+  | 'resource_referral';
+
+export type SupportLevel = 'high' | 'moderate' | 'low' | 'none';
+export type LivingArrangement = 'nursing_home' | 'family_home' | 'independent' | 'assisted_living' | 'other';
+
+export type SocialWorkVisitType = 'home visit' | 'institutional visit' | 'interview' | 'follow_up';
+
+export interface SocialWorkReportApi {
+  id: number;
+  sw_date?: string;
+  sw_visit_type?: SocialWorkVisitType;
+  sw_family_relationship?: string;
+  sw_economic_assessment?: string;
+  sw_social_support?: string;
+  sw_observations?: string;
+  sw_recommendations?: string;
+  create_at?: string;
+  id_appointment?: {
+    id: number;
+    saAppointmentDate?: string;
+    patient?: { id: number; name: string; firstLastName: string; secondLastName: string; identification?: string };
+  };
+}
+
+export interface CreateSocialWorkReportDto {
+  sw_date?: string;
+  sw_visit_type?: SocialWorkVisitType;
+  sw_family_relationship?: string;
+  sw_economic_assessment?: string;
+  sw_social_support?: string;
+  sw_observations?: string;
+  sw_recommendations?: string;
+  id_appointment?: number;
+}
+
+export interface UpdateSocialWorkReportDto extends Partial<CreateSocialWorkReportDto> {}
+
+export interface SocialWorkReportApiResponse {
+  message: string;
+  data: SocialWorkReportApi[];
+}
+
+export interface SingleSocialWorkReportApiResponse {
+  message: string;
+  data: SocialWorkReportApi;
+}

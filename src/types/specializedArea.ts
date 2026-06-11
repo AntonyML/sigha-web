@@ -8,41 +8,38 @@
 /**
  * Estado de un área especializada
  */
-export const SpecializedAreaStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  MAINTENANCE: 'maintenance',
-  CLOSED: 'closed'
-} as const;
-export type SpecializedAreaStatus = typeof SpecializedAreaStatus[keyof typeof SpecializedAreaStatus];
+export enum SpecializedAreaStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  MAINTENANCE = 'maintenance',
+  CLOSED = 'closed'
+}
 
 /**
  * Tipo de especialidad médica
  */
-export const MedicalSpecialty = {
-  GERIATRICS: 'geriatrics',
-  CARDIOLOGY: 'cardiology',
-  NEUROLOGY: 'neurology',
-  PSYCHIATRY: 'psychiatry',
-  PHYSIOTHERAPY: 'physiotherapy',
-  NUTRITION: 'nutrition',
-  DENTISTRY: 'dentistry',
-  OPHTHALMOLOGY: 'ophthalmology',
-  DERMATOLOGY: 'dermatology',
-  GENERAL_MEDICINE: 'general_medicine'
-} as const;
-export type MedicalSpecialty = typeof MedicalSpecialty[keyof typeof MedicalSpecialty];
+export enum MedicalSpecialty {
+  GERIATRICS = 'geriatrics',
+  CARDIOLOGY = 'cardiology',
+  NEUROLOGY = 'neurology',
+  PSYCHIATRY = 'psychiatry',
+  PHYSIOTHERAPY = 'physiotherapy',
+  NUTRITION = 'nutrition',
+  DENTISTRY = 'dentistry',
+  OPHTHALMOLOGY = 'ophthalmology',
+  DERMATOLOGY = 'dermatology',
+  GENERAL_MEDICINE = 'general_medicine'
+}
 
 /**
  * Nivel de cuidado requerido
  */
-export const CareLevel = {
-  BASIC: 'basic',
-  INTERMEDIATE: 'intermediate',
-  INTENSIVE: 'intensive',
-  CRITICAL: 'critical'
-} as const;
-export type CareLevel = typeof CareLevel[keyof typeof CareLevel];
+export enum CareLevel {
+  BASIC = 'basic',
+  INTERMEDIATE = 'intermediate',
+  INTENSIVE = 'intensive',
+  CRITICAL = 'critical'
+}
 
 /**
  * Interface principal del área especializada
@@ -360,3 +357,40 @@ export const defaultSpecializedAreaSearchParams: SpecializedAreaSearchParams = {
   sort_order: 'asc',
   available_only: false
 };
+
+// ---- Backend API types ----
+export enum SpecializedAreaName {
+  NURSING = 'nursing',
+  PHYSIOTHERAPY = 'physiotherapy',
+  PSYCHOLOGY = 'psychology',
+  SOCIAL_WORK = 'social_work',
+  NOT_SPECIFIED = 'not specified',
+}
+
+export interface SpecializedAreaApi {
+  id: number;
+  saName?: SpecializedAreaName;
+  saDescription?: string;
+  saContactEmail?: string;
+  saContactPhone?: string;
+  saIsActive?: boolean;
+  idManager?: number;
+}
+
+export interface CreateSpecializedAreaDto {
+  saName?: SpecializedAreaName;
+  saDescription?: string;
+  saContactEmail?: string;
+  saContactPhone?: string;
+  saIsActive?: boolean;
+  idManager?: number;
+}
+
+export interface UpdateSpecializedAreaDto {
+  saName?: SpecializedAreaName;
+  saDescription?: string;
+  saContactEmail?: string;
+  saContactPhone?: string;
+  saIsActive?: boolean;
+  idManager?: number;
+}

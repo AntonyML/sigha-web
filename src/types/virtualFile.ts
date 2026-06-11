@@ -59,6 +59,9 @@ export interface VirtualFile {
   dificultadesVision: string; // 'SI' | 'NO'
   problemasAudicion: string; // 'SI' | 'NO'
 
+  // Status (from backend oa_status: 'alive' | 'deceased')
+  status?: string;
+
   // Control fields
   createdAt?: string;
   updatedAt?: string;
@@ -362,6 +365,114 @@ const MARITAL_STATUS_MAP: Record<string, string> = {
   divorciado: 'divorced',
   'union-libre': 'common law union' // Corregido para coincidir con BD
 };
+
+/* ── Reverse mapping: API snake_case → VirtualFile camelCase ── */
+
+const MARITAL_STATUS_REVERSE: Record<string, string> = {
+  single:             'soltero',
+  married:            'casado',
+  widowed:            'viudo',
+  divorced:           'divorciado',
+  'common law union': 'union-libre',
+}
+
+const SCHOOLING_REVERSE: Record<string, string> = {
+  'no schooling':          '0',
+  'incomplete primary':    '4',
+  'complete primary':      '6',
+  'incomplete secondary':  '9',
+  'complete secondary':    '11',
+  'incomplete university': '13',
+  'complete university':   '15',
+  postgraduate:            '17',
+}
+
+function calcEdad(birthdate?: string): string {
+  if (!birthdate) return ''
+  const d = new Date(birthdate)
+  if (isNaN(d.getTime())) return ''
+  return String(Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25)))
+}
+
+/**
+ * Converts a raw API response record into the frontend VirtualFile shape.
+ * The backend returns camelCase with oa/ch prefixes (e.g. oaIdentification, chWeight).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mapApiToVirtualFile(raw: any): VirtualFile {
+  const r = raw ?? {}
+  const ch = r.clinicalHistory ?? {}
+
+  // conditions[] contains objects with id; vaccines[] too
+  const condArr: Array<{ id: number }> = ch.conditions ?? []
+  const condSet = new Set(condArr.map((c: { id: number }) => c.id))
+
+  const vaccArr: Array<{ id: number }> = ch.vaccines ?? []
+  const vaccSet = new Set(vaccArr.map((v: { id: number }) => v.id))
+
+  const firstName  = r.oaName      ?? ''
+  const firstLast  = r.oaFLastName ?? ''
+  const secondLast = r.oaSLastName ?? ''
+  const nombreApellido = [firstName, firstLast, secondLast].filter(Boolean).join(' ')
+
+  const birthdate = r.oaBirthdate ?? ''
+
+  return {
+    id:              r.id,
+    // Personal
+    fecha:           r.createAt ?? r.oaEntryDate ?? '',
+    cedula:          r.oaIdentification ?? '',
+    edad:            calcEdad(birthdate),
+    fechaNacimiento: birthdate,
+    nombreApellido,
+    estadoCivil:     MARITAL_STATUS_REVERSE[r.oaMaritalStatus] ?? r.oaMaritalStatus ?? '',
+    vivienda:        r.oaAddress       ?? '',
+    anosEscolaridad: SCHOOLING_REVERSE[r.oaYearsSchooling] ?? r.oaYearsSchooling ?? '',
+    trabajoPrevio:   r.oaIsRetired ? 'jubilacion' : r.oaHasPension ? 'pension' : r.oaOther ? 'otros' : (r.oaPreviousWork ?? ''),
+    // Optional fields
+    zonaProcedencia:  r.oaAreaOfOrigin   ?? '',
+    cantidadHijos:    r.oaChildrenCount  ?? 0,
+    ingresoEconomico: r.oaEconomicIncome != null ? Number(r.oaEconomicIncome) : undefined,
+    telefono:         r.oaPhoneNumber    ?? '',
+    email:            r.oaEmail          ?? '',
+    genero:           r.oaGender         ?? '',
+    tipoSangre:       r.oaBloodType      ?? '',
+    urlFotoPerfil:    r.oaProfilePhotoUrl ?? '',
+    status:           r.oaStatus         ?? '',
+    createdAt:        r.createAt         ?? '',
+    // Clinical history
+    ta:               ch.chBloodPressure ?? '',
+    peso:             ch.chWeight  != null ? String(ch.chWeight)                  : '',
+    talla:            ch.chHeight  != null ? String(Number(ch.chHeight) * 100)    : '', // metres→cm
+    imc:              ch.chImc     != null ? String(ch.chImc)                     : '',
+    rcvg:             ch.chRcvg            ?? '',
+    dificultadesVision: ch.chVisionProblems ? 'SI' : 'NO',
+    problemasAudicion:  ch.chVisionHearing  ? 'SI' : 'NO',
+    otrasCondiciones:   ch.chObservations   ?? '',
+    neoplasiasDetalle:  ch.chNeoplasmsDescription ?? '',
+    // Medical conditions by ID
+    hta:                   condSet.has(1),
+    dbt:                   condSet.has(2),
+    dislip:                condSet.has(3),
+    irc:                   condSet.has(4),
+    cardioIsq:             condSet.has(5),
+    acv:                   condSet.has(6),
+    amputacion:            condSet.has(7),
+    tabaquismo:            condSet.has(8),
+    alcoholismo:           condSet.has(9),
+    parkinson:             condSet.has(10),
+    demencia:              condSet.has(11),
+    prostatismo:           condSet.has(12),
+    incontinenciaUrinaria: condSet.has(13),
+    caidasFrecuentes:      condSet.has(14),
+    neoplasias:            condSet.has(15),
+    // Vaccines by ID
+    vacunaCt:        vaccSet.has(1),
+    vacunaHepB:      vaccSet.has(2),
+    vacunaGripe:     vaccSet.has(3),
+    vacunaNeumococo: vaccSet.has(4),
+  }
+}
 
 export function transformVirtualFileToApiPayload(
   virtualFile: VirtualFile,

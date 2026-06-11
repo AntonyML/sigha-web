@@ -8,71 +8,67 @@
 /**
  * Relación familiar con el adulto mayor
  */
-export const OlderAdultFamilyRelationship = {
-  SPOUSE: 'spouse',
-  CHILD: 'child',
-  PARENT: 'parent',
-  SIBLING: 'sibling',
-  GRANDCHILD: 'grandchild',
-  GRANDPARENT: 'grandparent',
-  AUNT_UNCLE: 'aunt_uncle',
-  NIECE_NEPHEW: 'niece_nephew',
-  COUSIN: 'cousin',
-  IN_LAW: 'in_law',
-  OTHER: 'other'
-} as const;
-export type OlderAdultFamilyRelationship = typeof OlderAdultFamilyRelationship[keyof typeof OlderAdultFamilyRelationship];
+export enum OlderAdultFamilyRelationship {
+  SPOUSE = 'spouse',
+  CHILD = 'child',
+  PARENT = 'parent',
+  SIBLING = 'sibling',
+  GRANDCHILD = 'grandchild',
+  GRANDPARENT = 'grandparent',
+  AUNT_UNCLE = 'aunt_uncle',
+  NIECE_NEPHEW = 'niece_nephew',
+  COUSIN = 'cousin',
+  IN_LAW = 'in_law',
+  OTHER = 'other'
+}
 
 /**
  * Estado del miembro de familia
  */
-export const OlderAdultFamilyStatus = {
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  DECEASED: 'deceased',
-  NO_CONTACT: 'no_contact'
-} as const;
-export type OlderAdultFamilyStatus = typeof OlderAdultFamilyStatus[keyof typeof OlderAdultFamilyStatus];
+export enum OlderAdultFamilyStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  DECEASED = 'deceased',
+  NO_CONTACT = 'no_contact'
+}
 
 /**
  * Nivel de involucramiento familiar
  */
-export const FamilyInvolvementLevel = {
-  HIGH: 'high',
-  MEDIUM: 'medium',
-  LOW: 'low',
-  NONE: 'none'
-} as const;
-export type FamilyInvolvementLevel = typeof FamilyInvolvementLevel[keyof typeof FamilyInvolvementLevel];
+export enum FamilyInvolvementLevel {
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
+  NONE = 'none'
+}
 
 /**
  * Tipo específico de parentesco familiar
  */
-export const KinshipType = {
-  SON: 'son',
-  DAUGHTER: 'daughter',
-  GRANDSON: 'grandson',
-  GRANDDAUGHTER: 'granddaughter',
-  FATHER: 'father',
-  MOTHER: 'mother',
-  GRANDFATHER: 'grandfather',
-  GRANDMOTHER: 'grandmother',
-  BROTHER: 'brother',
-  SISTER: 'sister',
-  UNCLE: 'uncle',
-  AUNT: 'aunt',
-  NEPHEW: 'nephew',
-  NIECE: 'niece',
-  COUSIN_MALE: 'cousin_male',
-  COUSIN_FEMALE: 'cousin_female',
-  FATHER_IN_LAW: 'father_in_law',
-  MOTHER_IN_LAW: 'mother_in_law',
-  BROTHER_IN_LAW: 'brother_in_law',
-  SISTER_IN_LAW: 'sister_in_law',
-  SPOUSE: 'spouse',
-  OTHER: 'other'
-} as const;
-export type KinshipType = typeof KinshipType[keyof typeof KinshipType];
+export enum KinshipType {
+  SON = 'son',
+  DAUGHTER = 'daughter',
+  GRANDSON = 'grandson',
+  GRANDDAUGHTER = 'granddaughter',
+  FATHER = 'father',
+  MOTHER = 'mother',
+  GRANDFATHER = 'grandfather',
+  GRANDMOTHER = 'grandmother',
+  BROTHER = 'brother',
+  SISTER = 'sister',
+  UNCLE = 'uncle',
+  AUNT = 'aunt',
+  NEPHEW = 'nephew',
+  NIECE = 'niece',
+  COUSIN_MALE = 'cousin_male',
+  COUSIN_FEMALE = 'cousin_female',
+  FATHER_IN_LAW = 'father_in_law',
+  MOTHER_IN_LAW = 'mother_in_law',
+  BROTHER_IN_LAW = 'brother_in_law',
+  SISTER_IN_LAW = 'sister_in_law',
+  SPOUSE = 'spouse',
+  OTHER = 'other'
+}
 
 /**
  * Interface principal del miembro de familia de adulto mayor
@@ -567,3 +563,51 @@ export const defaultOlderAdultFamilySearchParams: OlderAdultFamilySearchParams =
   sort_order: 'asc',
   active_only: true
 };
+
+// ---- Backend API types ----
+export enum KinshipTypeApi {
+  SON = 'son',
+  DAUGHTER = 'daughter',
+  GRANDSON = 'grandson',
+  GRANDDAUGHTER = 'granddaughter',
+  BROTHER = 'brother',
+  SISTER = 'sister',
+  NEPHEW = 'nephew',
+  NIECE = 'niece',
+  HUSBAND = 'husband',
+  WIFE = 'wife',
+  LEGAL_GUARDIAN = 'legal guardian',
+  OTHER = 'other',
+  NOT_SPECIFIED = 'not specified',
+}
+
+export interface OlderAdultFamilyApi {
+  id: number;
+  pfIdentification: string;
+  pfName: string;
+  pfFLastName: string;
+  pfSLastName: string;
+  pfPhoneNumber?: string;
+  pfEmail?: string;
+  pfKinship: KinshipTypeApi;
+}
+
+export interface CreateOlderAdultFamilyDto {
+  pfIdentification: string;
+  pfName: string;
+  pfFLastName: string;
+  pfSLastName: string;
+  pfPhoneNumber?: string;
+  pfEmail?: string;
+  pfKinship: KinshipTypeApi;
+}
+
+export interface UpdateOlderAdultFamilyDto {
+  pfIdentification?: string;
+  pfName?: string;
+  pfFLastName?: string;
+  pfSLastName?: string;
+  pfPhoneNumber?: string;
+  pfEmail?: string;
+  pfKinship?: KinshipTypeApi;
+}

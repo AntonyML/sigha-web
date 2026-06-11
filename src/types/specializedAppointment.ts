@@ -8,41 +8,38 @@
 /**
  * Estado de una cita especializada
  */
-export const AppointmentStatus = {
-  SCHEDULED: 'scheduled',
-  CONFIRMED: 'confirmed',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-  NO_SHOW: 'no_show',
-  RESCHEDULED: 'rescheduled'
-} as const;
-export type AppointmentStatus = typeof AppointmentStatus[keyof typeof AppointmentStatus];
+export enum AppointmentStatus {
+  SCHEDULED = 'scheduled',
+  CONFIRMED = 'confirmed',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  NO_SHOW = 'no_show',
+  RESCHEDULED = 'rescheduled'
+}
 
 /**
  * Tipo de cita especializada
  */
-export const AppointmentType = {
-  CONSULTATION: 'consultation',
-  FOLLOW_UP: 'follow_up',
-  PROCEDURE: 'procedure',
-  EMERGENCY: 'emergency',
-  SPECIALIST_REFERRAL: 'specialist_referral',
-  THERAPY_SESSION: 'therapy_session',
-  DIAGNOSTIC_TEST: 'diagnostic_test'
-} as const;
-export type AppointmentType = typeof AppointmentType[keyof typeof AppointmentType];
+export enum AppointmentType {
+  CONSULTATION = 'consultation',
+  FOLLOW_UP = 'follow_up',
+  PROCEDURE = 'procedure',
+  EMERGENCY = 'emergency',
+  SPECIALIST_REFERRAL = 'specialist_referral',
+  THERAPY_SESSION = 'therapy_session',
+  DIAGNOSTIC_TEST = 'diagnostic_test'
+}
 
 /**
  * Prioridad de la cita
  */
-export const AppointmentPriority = {
-  LOW: 'low',
-  NORMAL: 'normal',
-  HIGH: 'high',
-  URGENT: 'urgent'
-} as const;
-export type AppointmentPriority = typeof AppointmentPriority[keyof typeof AppointmentPriority];
+export enum AppointmentPriority {
+  LOW = 'low',
+  NORMAL = 'normal',
+  HIGH = 'high',
+  URGENT = 'urgent'
+}
 
 /**
  * Interface principal de la cita especializada
@@ -433,3 +430,70 @@ export const defaultSpecializedAppointmentSearchParams: SpecializedAppointmentSe
   sort_order: 'asc',
   upcoming_only: true
 };
+
+// ---- Backend API types ----
+export enum AppointmentTypeApi {
+  CHECKUP = 'checkup',
+  EVALUATION = 'evaluation',
+  THERAPY = 'therapy',
+  FOLLOW_UP = 'follow_up',
+  EMERGENCY = 'emergency',
+}
+
+export enum AppointmentPriorityApi {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
+
+export enum AppointmentStatusApi {
+  SCHEDULED = 'scheduled',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  RESCHEDULED = 'rescheduled',
+}
+
+export interface SpecializedAppointmentApi {
+  id: number;
+  saAppointmentDate: string;
+  saAppointmentType?: AppointmentTypeApi;
+  saPriority?: AppointmentPriorityApi;
+  saStatus?: AppointmentStatusApi;
+  saNotes?: string;
+  saObservations?: string;
+  saDurationMinutes?: number;
+  saNextAppointment?: string;
+  idArea: number;
+  idPatient: number;
+  idStaff: number;
+}
+
+export interface CreateSpecializedAppointmentDto {
+  saAppointmentDate: string;
+  saAppointmentType?: AppointmentTypeApi;
+  saPriority?: AppointmentPriorityApi;
+  saStatus?: AppointmentStatusApi;
+  saNotes?: string;
+  saObservations?: string;
+  saDurationMinutes?: number;
+  saNextAppointment?: string;
+  idArea: number;
+  idPatient: number;
+  idStaff: number;
+}
+
+export interface UpdateSpecializedAppointmentDto {
+  saAppointmentDate?: string;
+  saAppointmentType?: AppointmentTypeApi;
+  saPriority?: AppointmentPriorityApi;
+  saStatus?: AppointmentStatusApi;
+  saNotes?: string;
+  saObservations?: string;
+  saDurationMinutes?: number;
+  saNextAppointment?: string;
+  idArea?: number;
+  idPatient?: number;
+  idStaff?: number;
+}

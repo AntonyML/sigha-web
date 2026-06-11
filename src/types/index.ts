@@ -19,6 +19,8 @@ export * from './audit';
 
 export * from './permissions';
 
+export * from './permissionEntity';
+
 export * from './physiotherapy';
 
 export * from './program';

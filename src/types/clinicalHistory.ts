@@ -8,24 +8,22 @@
 /**
  * Estado de un historial clínico
  */
-export const ClinicalHistoryStatus = {
-  ACTIVE: 'active',
-  ARCHIVED: 'archived',
-  DRAFT: 'draft'
-} as const;
-export type ClinicalHistoryStatus = typeof ClinicalHistoryStatus[keyof typeof ClinicalHistoryStatus];
+export enum ClinicalHistoryStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived',
+  DRAFT = 'draft'
+}
 
 /**
  * Tipo de entrada en el historial clínico
  */
-export const ClinicalHistoryEntryType = {
-  INITIAL_ASSESSMENT: 'initial_assessment',
-  FOLLOW_UP: 'follow_up',
-  EMERGENCY: 'emergency',
-  ROUTINE_CHECK: 'routine_check',
-  SPECIALIST_REFERRAL: 'specialist_referral'
-} as const;
-export type ClinicalHistoryEntryType = typeof ClinicalHistoryEntryType[keyof typeof ClinicalHistoryEntryType];
+export enum ClinicalHistoryEntryType {
+  INITIAL_ASSESSMENT = 'initial_assessment',
+  FOLLOW_UP = 'follow_up',
+  EMERGENCY = 'emergency',
+  ROUTINE_CHECK = 'routine_check',
+  SPECIALIST_REFERRAL = 'specialist_referral'
+}
 
 /**
  * Interface principal del historial clínico
