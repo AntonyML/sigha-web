@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Syringe,
   Shield,
-  ClipboardList,
   List,
   Tags,
 } from 'lucide-react';
@@ -30,12 +29,6 @@ const menu: MenuItem[] = [
     label: 'Principal',
     path: '/main-menu',
     icon: <Home className="w-5 h-5" />,
-  },
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: <ClipboardList className="w-5 h-5" />,
   },
   {
     id: 'virtualFiles',

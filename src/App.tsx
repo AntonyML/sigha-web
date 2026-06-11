@@ -14,7 +14,7 @@ import CreateUserPage from './presentation/pages/login/CreateUserPage'
 import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
 
 //Older Adults
-import Dashboard from './presentation/pages/dashboard/DashboardPage'
+
 import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPage'
 import CreateVirtualFile from './presentation/pages/older-adults/CreateVirtualRecordPage'
 import EditVirtualFile from './presentation/pages/older-adults/EditVirtualRecordPage'
@@ -122,7 +122,6 @@ export default function App() {
             <Routes>
               <Route path="main-menu" element={<MainMenuPage />} />
 
-              <Route path="dashboard" element={<Dashboard />} />
               <Route path="virtualFiles" element={<ListVirtualFile />} />
               <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
               <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />

@@ -22,7 +22,6 @@ export const config = {
     features: {
         enableDebugLogs: nodeEnv !== 'production',
         enableMockData: false,
-        enable2FA: import.meta.env.VITE_ENABLE_2FA === 'true',
     },
 } as const;
 

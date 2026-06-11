@@ -43,67 +43,48 @@ export const authService = {
   login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
     localStorage.removeItem('tempToken');
 
-    const requestBody: {
-      uEmail: string;
-      uPassword: string;
-      twoFactorCode?: string;
-    } = {
+    const requestBody = {
       uEmail: credentials.uEmail,
       uPassword: credentials.uPassword,
     };
 
-    if (!config.features.enable2FA) {
-      requestBody.twoFactorCode = import.meta.env.VITE_2FA_DUMMY_CODE || '000000';
-    }
-
     const response = await apiClient.post<LoginResponse>('/auth/login', requestBody);
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
 
-    if (!config.features.enable2FA) {
-      if (accessToken && user) {
-        localStorage.setItem('authToken', accessToken);
-        localStorage.setItem('user', JSON.stringify(user));
-        if (response.data.refreshToken) {
-          localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
-      }
-      return response.data;
-    }
-
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
-      localStorage.setItem('tempCredentials', JSON.stringify({
-        uEmail: credentials.uEmail,
-        uPassword: credentials.uPassword
-      }));
       return response.data;
     }
 
     if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
     }
 
     return response.data;
   },
 
   verify2FA: async (twoFactorCode: string): Promise<LoginResponse> => {
-    const tempCredentials = authService.getTempCredentials();
-    if (!tempCredentials) {
-      throw new Error('No se encontraron credenciales temporales. Inicia sesión nuevamente.');
+    const tempToken = authService.getTempToken();
+    if (!tempToken) {
+      throw new Error('No se encontró el token temporal. Inicia sesión nuevamente.');
     }
 
-    const response = await apiClient.post<LoginResponse>('/auth/login', {
-      uEmail: tempCredentials.uEmail,
-      uPassword: tempCredentials.uPassword,
+    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', {
+      tempToken,
       twoFactorCode: twoFactorCode.replace(/[\s-]/g, ''),
     });
 
     const { accessToken, refreshToken, user } = response.data;
 
-    if (accessToken && refreshToken && user) {
+    if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.removeItem('tempToken');
       localStorage.removeItem('tempCredentials');
