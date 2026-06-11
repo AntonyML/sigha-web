@@ -14,7 +14,7 @@ import {
   Tags,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
-import { PermissionUtils } from '../../../../utils/permissionUtils';
+import { usePermissions } from '../../../../utils/permissionUtils';
 
 interface MenuItem {
   id: string;
@@ -114,35 +114,17 @@ const menu: MenuItem[] = [
 export default function Sidebar() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [compact, setCompact] = useState(false);
-  const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
   const navRef = useRef<HTMLElement | null>(null);
   const headerRef = useRef<HTMLDivElement | null>(null);
   const footerRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { isEnabled } = useTwoFactorStatus();
+  const { isNotSpecifiedSync, canAccessModule } = usePermissions();
 
   const toggleGroup = (id: string) => {
     setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
   };
-
-  // Verificar permisos del usuario
-  useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        const [canManageUsers, isSuperAdmin] = await Promise.all([
-          PermissionUtils.canViewAllUsers(),
-          PermissionUtils.isSuperAdmin()
-        ]);
-        setHasRequiredPermissions(canManageUsers || isSuperAdmin);
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setHasRequiredPermissions(false);
-      }
-    };
-
-    checkPermissions();
-  }, []);
 
   // Ajuste automático: si el contenido del nav excede la altura disponible,
   // activamos el modo compact (reduce paddings y tamaño de texto) para evitar scroll.
@@ -179,15 +161,14 @@ export default function Sidebar() {
     }
 
     // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
-    if (PermissionUtils.isNotSpecifiedSync()) {
+    if (isNotSpecifiedSync()) {
       return menu.filter(item =>
         item.id === 'main' ||
         item.id === 'twoFactor'
       );
     }
 
-    // Filtrar según el rol usando canAccessModule para cada item
-    return menu.filter(item => PermissionUtils.canAccessModule(item.id));
+    return menu.filter(item => canAccessModule(item.id));
   };
 
   const filteredMenu = getFilteredMenu();

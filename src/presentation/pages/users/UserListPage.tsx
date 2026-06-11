@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { getFullName } from '../../../utils/userUtils';
-import { PermissionUtils } from '../../../utils/permissionUtils';
+import { usePermissions } from '../../../utils/permissionUtils';
 import { Icon } from '../../components/atoms';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User } from '../../../types/user';
@@ -14,31 +14,19 @@ export default function UserListPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const [filterStatus] = useState<'all' | 'active'>('active');
-    const [canDeleteUsers, setCanDeleteUsers] = useState(false);
-    const [canCreateUsers, setCanCreateUsers] = useState(false);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+    const { canDeleteUsers, canCreateUsers } = usePermissions();
 
-    // Cargar usuarios y verificar permisos al montar el componente
     useEffect(() => {
-        loadUsersAndPermissions();
+        loadUsers();
     }, []);
 
-    const loadUsersAndPermissions = async () => {
+    const loadUsers = async () => {
         setLoading(true);
         setError('');
 
         try {
-            // Verificar permisos del usuario actual
-            const [canDelete, canCreate] = await Promise.all([
-                PermissionUtils.canDeleteUsers(),
-                PermissionUtils.canCreateUsers()
-            ]);
-
-            setCanDeleteUsers(canDelete);
-            setCanCreateUsers(canCreate);
-
-            // Cargar usuarios
             const result = await userManagementFlow.getAllUsers();
 
             if (result.success && result.users) {
@@ -48,7 +36,7 @@ export default function UserListPage() {
                 setError(result.error || 'Error al cargar usuarios');
             }
         } catch (err) {
-            console.error('Error cargando usuarios y permisos:', err);
+            console.error('Error cargando usuarios:', err);
             setError('Error inesperado al cargar usuarios');
         } finally {
             setLoading(false);
@@ -90,7 +78,7 @@ export default function UserListPage() {
 
     const handleDeleteClick = async (user: User) => {
         // Verificar permisos antes de eliminar
-        if (!canDeleteUsers) {
+        if (!canDeleteUsers()) {
             feedback.error('No tienes permisos para eliminar usuarios', 'Acceso denegado');
             return;
         }
@@ -108,7 +96,7 @@ export default function UserListPage() {
 
         if (result.success) {
             // Recargar la lista de usuarios
-            await loadUsersAndPermissions();
+            await loadUsers();
             feedback.success(result.message || 'Usuario eliminado exitosamente');
             feedback.showNotification({
                 title: 'Usuario eliminado',
@@ -146,7 +134,7 @@ export default function UserListPage() {
                         <button className="btn btn-secondary" onClick={() => navigate('/main-menu')}>
                             Volver al menú
                         </button>
-                        <button className="btn btn-primary" onClick={loadUsersAndPermissions}>
+                        <button className="btn btn-primary" onClick={loadUsers}>
                             Reintentar
                         </button>
                     </div>
@@ -184,8 +172,8 @@ export default function UserListPage() {
                                 <button
                                     className="btn btn-primary d-flex align-items-center gap-2"
                                     onClick={() => navigate('/users/create')}
-                                    disabled={!canCreateUsers}
-                                    title={!canCreateUsers ? 'No tienes permisos para crear usuarios' : 'Crear nuevo usuario'}
+                                    disabled={!canCreateUsers()}
+                                    title={!canCreateUsers() ? 'No tienes permisos para crear usuarios' : 'Crear nuevo usuario'}
                                 >
                                     <Icon name="add" size="sm" />
                                     Nuevo Usuario
@@ -249,18 +237,18 @@ export default function UserListPage() {
                                         <p className="text-muted">Intenta con otros términos de búsqueda</p>
                                     </div>
                                 ) : filteredUsers.length === 0 ? (
-                                    <div className="text-center py-5">
-                                        <Icon name="person" size="xl" className="display-4 text-muted mb-3 d-block" />
-                                        <h5 className="text-muted mb-3">No hay usuarios registrados</h5>
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={() => navigate('/users/create')}
-                                            disabled={!canCreateUsers}
-                                        >
-                                            <Icon name="add" size="sm" className="me-2" />
-                                            Crear primer usuario
-                                        </button>
-                                    </div>
+                                        <div className="text-center py-5">
+                                            <Icon name="person" size="xl" className="display-4 text-muted mb-3 d-block" />
+                                            <h5 className="text-muted mb-3">No hay usuarios registrados</h5>
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={() => navigate('/users/create')}
+                                                disabled={!canCreateUsers()}
+                                            >
+                                                <Icon name="add" size="sm" className="me-2" />
+                                                Crear primer usuario
+                                            </button>
+                                        </div>
                                 ) : (
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle mb-0">
@@ -322,8 +310,8 @@ export default function UserListPage() {
                                                                 <button
                                                                     className="btn btn-sm btn-danger"
                                                                     onClick={() => handleDeleteClick(user)}
-                                                                    title={canDeleteUsers ? "Eliminar" : "No tienes permisos para eliminar usuarios"}
-                                                                    disabled={!canDeleteUsers}
+                                                                    title={canDeleteUsers() ? "Eliminar" : "No tienes permisos para eliminar usuarios"}
+                                                                    disabled={!canDeleteUsers()}
                                                                 >
                                                                     <Icon name="delete" size="sm" />
                                                                 </button>

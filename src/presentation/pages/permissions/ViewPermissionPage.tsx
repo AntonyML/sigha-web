@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { permissionFlow } from '../../../infrastructure/flows/permission';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
-import type { PermissionEntity } from '../../../types/permissionEntity';
+import type { PermissionApi } from '../../../services/permissionApiService';
 
 export default function ViewPermissionPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
-    const [permission, setPermission] = useState<PermissionEntity | null>(null);
+    const [permission, setPermission] = useState<PermissionApi | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
 
@@ -24,7 +24,7 @@ export default function ViewPermissionPage() {
             setError('');
 
             try {
-                const result = await permissionEntityFlow.getPermissionById(Number(id));
+                const result = await permissionFlow.getPermissionById(Number(id));
 
                 if (result.success && result.permission) {
                     setPermission(result.permission);
@@ -162,17 +162,17 @@ export default function ViewPermissionPage() {
                                 <div className="row g-4">
                                     <div className="col-12">
                                         <div className="d-flex align-items-center mb-4">
-                                            <div className={`text-white rounded-circle d-flex align-items-center justify-content-center me-4 ${permission.enabled ? 'bg-success' : 'bg-danger'}`} style={{width: '80px', height: '80px'}}>
+                                            <div className={`text-white rounded-circle d-flex align-items-center justify-content-center me-4 ${permission.pEnabled ? 'bg-success' : 'bg-danger'}`} style={{width: '80px', height: '80px'}}>
                                                 <i className="bi bi-shield-check fs-1"></i>
                                             </div>
                                             <div>
-                                                <h3 className="mb-1 fw-bold">{permission.name}</h3>
-                                                <p className="text-muted mb-2">{permission.description}</p>
+                                                <h3 className="mb-1 fw-bold">{permission.pName}</h3>
+                                                <p className="text-muted mb-2">{permission.pDescription}</p>
                                                 <span className="badge bg-primary fs-6 px-3 py-2 me-2">
                                                     ID: #{permission.id}
                                                 </span>
-                                                <span className={`badge fs-6 px-3 py-2 ${permission.enabled ? 'bg-success' : 'bg-danger'}`}>
-                                                    {permission.enabled ? 'Habilitado' : 'Deshabilitado'}
+                                                <span className={`badge fs-6 px-3 py-2 ${permission.pEnabled ? 'bg-success' : 'bg-danger'}`}>
+                                                    {permission.pEnabled ? 'Habilitado' : 'Deshabilitado'}
                                                 </span>
                                             </div>
                                         </div>
@@ -191,20 +191,20 @@ export default function ViewPermissionPage() {
                                                 </div>
                                                 <div className="col-md-6">
                                                     <small className="text-muted d-block">Nombre</small>
-                                                    <span className="fw-semibold">{permission.name}</span>
+                                                    <span className="fw-semibold">{permission.pName}</span>
                                                 </div>
                                                 <div className="col-md-6">
                                                     <small className="text-muted d-block">Módulo</small>
-                                                    <span className="badge bg-info">{permission.module}</span>
+                                                    <span className="badge bg-info">{permission.pModule}</span>
                                                 </div>
                                                 <div className="col-md-6">
                                                     <small className="text-muted d-block">Acción</small>
-                                                    <span className="badge bg-warning">{permission.action}</span>
+                                                    <span className="badge bg-warning">{permission.pAction}</span>
                                                 </div>
                                                 <div className="col-md-6">
                                                     <small className="text-muted d-block">Estado</small>
-                                                    <span className={`fw-semibold ${permission.enabled ? 'text-success' : 'text-danger'}`}>
-                                                        {permission.enabled ? 'Habilitado' : 'Deshabilitado'}
+                                                    <span className={`fw-semibold ${permission.pEnabled ? 'text-success' : 'text-danger'}`}>
+                                                        {permission.pEnabled ? 'Habilitado' : 'Deshabilitado'}
                                                     </span>
                                                 </div>
                                                 {permission.createdAt && (
@@ -223,7 +223,7 @@ export default function ViewPermissionPage() {
                                                 <i className="bi bi-file-text me-2 text-secondary"></i>
                                                 Descripción Detallada
                                             </h6>
-                                            <p className="mb-0">{permission.description}</p>
+                                            <p className="mb-0">{permission.pDescription}</p>
                                         </div>
                                     </div>
                                 </div>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { PermissionUtils } from '../../../utils/permissionUtils';
-import { permissionService } from '../../../services/permissionService';
+import { usePermissions } from '../../../utils/permissionUtils';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UpdateRoleData } from '../../../types/user';
 import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
@@ -22,6 +22,7 @@ export default function EditRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+    const { canManageRoles } = usePermissions();
     const [formData, setFormData] = useState<RoleFormData>({
         rName: '',
         rDescription: '',
@@ -43,6 +44,7 @@ export default function EditRolePage() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [originalPermissions, setOriginalPermissions] = useState<Permission[]>([]);
+    const [permissionCatalog, setPermissionCatalog] = useState<Array<{ id: number; pModule: string; pAction: string }>>([]);
     const [permissionsLoading, setPermissionsLoading] = useState(false);
 
     // Verificar permisos y cargar datos del rol al montar el componente
@@ -56,7 +58,7 @@ export default function EditRolePage() {
 
             try {
                 // Verificar permisos
-                const canManage = await PermissionUtils.canManageRoles();
+                const canManage = canManageRoles();
                 setHasPermission(canManage);
 
                 if (!canManage) {
@@ -81,11 +83,28 @@ export default function EditRolePage() {
                     setFormData(roleData);
                     setOriginalData(roleData);
 
-                    // Cargar permisos del rol
+                    // Cargar catálogo de permisos y permisos efectivos del rol desde el backend
                     setPermissionsLoading(true);
-                    const rolePermissions = permissionService.getRolePermissionsByName(result.role.rName);
-                    setPermissions(rolePermissions);
-                    setOriginalPermissions(JSON.parse(JSON.stringify(rolePermissions))); // Deep copy
+                    const [apiPermissions, rolePerms] = await Promise.all([
+                        permissionApiService.getAll(),
+                        permissionApiService.getByRole(result.role.id),
+                    ]);
+                    const catalog = apiPermissions.map(p => ({
+                        id: p.id,
+                        pModule: p.pModule,
+                        pAction: p.pAction,
+                    }));
+                    setPermissionCatalog(catalog);
+                    const grantedIds = new Set(
+                        rolePerms.filter(rp => rp.rpGranted).map(rp => rp.permissionId)
+                    );
+                    const mapped: Permission[] = apiPermissions.map(p => ({
+                        module: p.pModule as PermissionModuleType,
+                        action: p.pAction as PermissionActionType,
+                        enabled: grantedIds.has(p.id),
+                    }));
+                    setPermissions(mapped);
+                    setOriginalPermissions(JSON.parse(JSON.stringify(mapped)));
                     setPermissionsLoading(false);
                 } else {
                     setError(result.error || 'Error al cargar rol');
@@ -99,7 +118,7 @@ export default function EditRolePage() {
         };
 
         checkPermissionsAndLoadData();
-    }, [id]);
+    }, [id, canManageRoles]);
 
     useEffect(() => {
         // Verificar si hay cambios en formData o permisos
@@ -174,7 +193,13 @@ export default function EditRolePage() {
                 // Guardar permisos si han cambiado
                 if (JSON.stringify(permissions) !== JSON.stringify(originalPermissions)) {
                     try {
-                        await permissionService.updateRolePermissions(result.role.id, permissions);
+                        const enabledIds = permissions
+                            .filter(p => p.enabled)
+                            .map(p => permissionCatalog.find(
+                                cp => cp.pModule === p.module && cp.pAction === p.action
+                            )?.id)
+                            .filter((id): id is number => typeof id === 'number');
+                        await permissionApiService.setRolePermissions(result.role.id, enabledIds);
                         setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
                     } catch (permError) {
                         console.error('Error guardando permisos:', permError);
