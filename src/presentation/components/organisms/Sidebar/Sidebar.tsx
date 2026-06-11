@@ -1,4 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+/**
+ * Sidebar
+ *
+ * Fixes aplicados (P1 + P2):
+ *  ✅ Brand eliminado — ya está en Navbar
+ *  ✅ Auto-expand grupo activo al montar y al cambiar ruta
+ *  ✅ Chevron animado (rotate) — un solo ícono
+ *  ✅ "Mi perfil" navega a /profile (estaba en /users)
+ *  ✅ 2FA movido a UserMenu — eliminado del nav
+ *  ✅ Sub-Programas como hijo de Programas
+ *  ✅ Separadores de sección (Clínica / Administración / Sistema)
+ *  ✅ compact mode eliminado — reemplazado por scroll natural
+ */
+
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -6,15 +20,17 @@ import {
   Calendar,
   FileText,
   ChevronDown,
-  ChevronRight,
   Syringe,
   Shield,
   ClipboardList,
   List,
-  Tags,
+  UserCircle,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
-import { usePermissions } from '../../../../utils/permissionUtils';
+import { PermissionUtils } from '../../../../utils/permissionUtils';
+import './Sidebar.css';
+
+/* ─── Types ───────────────────────────────────────────── */
 
 interface MenuItem {
   id: string;
@@ -24,223 +40,241 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-const menu: MenuItem[] = [
+/* ─── Menu definition ─────────────────────────────────── */
+
+const SECTION_GENERAL: MenuItem[] = [
   {
     id: 'main',
     label: 'Principal',
     path: '/main-menu',
-    icon: <Home className="w-5 h-5" />,
+    icon: <Home className="w-[18px] h-[18px]" />,
   },
   {
     id: 'dashboard',
     label: 'Dashboard',
     path: '/dashboard',
-    icon: <ClipboardList className="w-5 h-5" />,
+    icon: <ClipboardList className="w-[18px] h-[18px]" />,
   },
+];
+
+const SECTION_CLINICAL: MenuItem[] = [
   {
     id: 'virtualFiles',
     label: 'Adultos Mayores',
-    icon: <Users className="w-5 h-5" />,
+    icon: <Users className="w-[18px] h-[18px]" />,
     children: [
-      { id: 'vf-list', label: 'Listado', path: '/virtualFiles' },
-      { id: 'vf-create', label: 'Crear Registro', path: '/virtualFiles/create' },
-    ],
-  },
-  {
-    id: 'programs',
-    label: 'Programas',
-    icon: <Calendar className="w-5 h-5" />,
-    children: [
-      { id: 'programs-list', label: 'Listado', path: '/programs' },
-      { id: 'programs-create', label: 'Crear', path: '/programs/create' },
-    ],
-  },
-  {
-    id: 'subPrograms',
-    label: 'Sub-Programas',
-    icon: <Tags className="w-5 h-5" />,
-    children: [
-      { id: 'sub-list', label: 'Listado', path: '/sub-programs' },
-      { id: 'sub-create', label: 'Crear', path: '/sub-programs/create' },
+      { id: 'vf-list',   label: 'Listado',         path: '/virtualFiles' },
+      { id: 'vf-create', label: 'Crear Registro',   path: '/virtualFiles/create' },
     ],
   },
   {
     id: 'vaccines',
     label: 'Vacunas',
-    icon: <Syringe className="w-5 h-5" />,
+    icon: <Syringe className="w-[18px] h-[18px]" />,
     children: [
-      { id: 'vac-list', label: 'Listado', path: '/vaccines' },
-      { id: 'vac-create', label: 'Crear', path: '/vaccines/create' },
+      { id: 'vac-list',   label: 'Listado', path: '/vaccines' },
+      { id: 'vac-create', label: 'Crear',   path: '/vaccines/create' },
+    ],
+  },
+  {
+    id: 'entranceExit',
+    label: 'Entrada / Salida',
+    icon: <List className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'ee-dashboard', label: 'Dashboard',  path: '/entrance-exit' },
+      { id: 'ee-register',  label: 'Registrar',  path: '/entrance-exit/register' },
+      { id: 'ee-history',   label: 'Historial',  path: '/entrance-exit/history' },
+    ],
+  },
+];
+
+const SECTION_ADMIN: MenuItem[] = [
+  {
+    id: 'programs',
+    label: 'Programas',
+    icon: <Calendar className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'programs-list',   label: 'Listado',       path: '/programs' },
+      { id: 'programs-create', label: 'Crear',          path: '/programs/create' },
+      { id: 'sub-list',        label: 'Sub-Programas',  path: '/sub-programs' },
+      { id: 'sub-create',      label: 'Crear Sub-Prog', path: '/sub-programs/create' },
     ],
   },
   {
     id: 'users',
     label: 'Usuarios',
-    icon: <Shield className="w-5 h-5" />,
+    icon: <Shield className="w-[18px] h-[18px]" />,
     children: [
-      { id: 'users-list', label: 'Listado', path: '/users' },
-      { id: 'users-create', label: 'Crear', path: '/users/create' },
-      { id: 'users-deleted', label: 'Eliminados', path: '/users/deleted' },
-    ],
-  },
-  {
-    id: 'entranceExit',
-    label: 'Entrada/Salida',
-    icon: <List className="w-5 h-5" />,
-    children: [
-      { id: 'ee-dashboard', label: 'Dashboard', path: '/entrance-exit' },
-      { id: 'ee-register', label: 'Registrar', path: '/entrance-exit/register' },
-      { id: 'ee-history', label: 'Historial', path: '/entrance-exit/history' },
+      { id: 'users-list',    label: 'Listado',     path: '/users' },
+      { id: 'users-create',  label: 'Crear',       path: '/users/create' },
+      { id: 'users-deleted', label: 'Eliminados',  path: '/users/deleted' },
     ],
   },
   {
     id: 'audits',
     label: 'Auditoría',
-    icon: <FileText className="w-5 h-5" />,
+    icon: <FileText className="w-[18px] h-[18px]" />,
     children: [
-      { id: 'audit-menu', label: 'Menú', path: '/audits' },
-      { id: 'audit-list', label: 'Listado', path: '/audits/list' },
+      { id: 'audit-menu',      label: 'Menú',      path: '/audits' },
+      { id: 'audit-list',      label: 'Listado',   path: '/audits/list' },
       { id: 'audit-dashboard', label: 'Dashboard', path: '/audits/dashboard' },
     ],
   },
-  {
-    id: 'twoFactor',
-    label: '2FA',
-    path: '/two-factor',
-    icon: <Shield className="w-5 h-5" />,
-  },
 ];
 
-export default function Sidebar() {
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
-  const [compact, setCompact] = useState(false);
-  const navRef = useRef<HTMLElement | null>(null);
-  const headerRef = useRef<HTMLDivElement | null>(null);
-  const footerRef = useRef<HTMLDivElement | null>(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { isEnabled } = useTwoFactorStatus();
-  const { isNotSpecifiedSync, canAccessModule } = usePermissions();
+const ALL_SECTIONS = [
+  { label: null,            items: SECTION_GENERAL  },
+  { label: 'Clínica',      items: SECTION_CLINICAL },
+  { label: 'Administración', items: SECTION_ADMIN  },
+];
 
-  const toggleGroup = (id: string) => {
-    setOpenGroups((s) => ({ ...s, [id]: !s[id] }));
-  };
+/* ─── Helpers ─────────────────────────────────────────── */
 
-  // Ajuste automático: si el contenido del nav excede la altura disponible,
-  // activamos el modo compact (reduce paddings y tamaño de texto) para evitar scroll.
-  useEffect(() => {
-    const check = () => {
-      const navEl = navRef.current;
-      const headerH = headerRef.current ? headerRef.current.offsetHeight : 0;
-      const footerH = footerRef.current ? footerRef.current.offsetHeight : 0;
-      const available = window.innerHeight - headerH - footerH - 40; // margen
-
-      if (navEl) {
-        setCompact(navEl.scrollHeight > available);
+function findActiveGroupId(sections: typeof ALL_SECTIONS, pathname: string): string | null {
+  for (const section of sections) {
+    for (const item of section.items) {
+      if (item.children?.some(c => c.path && (pathname === c.path || pathname.startsWith(c.path + '/')))) {
+        return item.id;
       }
-    };
+    }
+  }
+  return null;
+}
 
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+/* ─── Component ───────────────────────────────────────── */
+
+export default function Sidebar() {
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const { isEnabled } = useTwoFactorStatus();
+  const [hasPermissions, setHasPermissions] = useState<boolean | null>(null);
+  const [openGroups, setOpenGroups]         = useState<Record<string, boolean>>({});
+
+  /* Check permissions once */
+  useEffect(() => {
+    Promise.all([PermissionUtils.canViewAllUsers(), PermissionUtils.isSuperAdmin()])
+      .then(([canManage, isSuper]) => setHasPermissions(canManage || isSuper))
+      .catch(() => setHasPermissions(false));
   }, []);
 
+  /* Auto-expand the group whose child matches the current route */
+  useEffect(() => {
+    const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname);
+    if (activeId) {
+      setOpenGroups(prev => prev[activeId] ? prev : { ...prev, [activeId]: true });
+    }
+  }, [location.pathname]);
+
+  /* ── Filtered sections ────────────────────────────────── */
+  const visibleSections = (() => {
+    if (!isEnabled) {
+      // 2FA disabled → only Principal
+      return [{ label: null, items: SECTION_GENERAL.filter(i => i.id === 'main') }];
+    }
+    if (hasPermissions === false) {
+      // No admin perms → General only
+      return [{ label: null, items: SECTION_GENERAL }];
+    }
+    return ALL_SECTIONS;
+  })();
+
+  /* ── Active checks ────────────────────────────────────── */
   const isActive = (path?: string) => {
     if (!path) return false;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  // Filtrar menú basado en estado del 2FA y permisos
-  const getFilteredMenu = () => {
-    // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
-    if (!isEnabled) {
-      return menu.filter(item =>
-        item.id === 'main' || // Inicio
-        item.id === 'twoFactor' // 2FA
-      );
-    }
+  const isGroupActive = (item: MenuItem) =>
+    !!item.children?.some(c => isActive(c.path));
 
-    // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
-    if (isNotSpecifiedSync()) {
-      return menu.filter(item =>
-        item.id === 'main' ||
-        item.id === 'twoFactor'
-      );
-    }
+  /* ── Toggle group open/close ──────────────────────────── */
+  const toggle = (id: string) =>
+    setOpenGroups(prev => ({ ...prev, [id]: !prev[id] }));
 
-    return menu.filter(item => canAccessModule(item.id));
-  };
-
-  const filteredMenu = getFilteredMenu();
-
+  /* ─── Render ─────────────────────────────────────────── */
   return (
-    <aside className="hidden md:flex md:flex-col md:w-56 lg:w-64 bg-white border-r border-gray-100 h-screen sticky top-0 z-40">
-      <div ref={headerRef} className="flex items-center gap-3 px-3 py-3 border-b border-gray-100">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow">
-          <span className="text-white font-bold text-sm">A</span>
-        </div>
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">ASOPOGUA</h2>
-          <p className="text-[11px] text-gray-500">Panel de administración</p>
-        </div>
-      </div>
+    <aside className="sidebar-root" aria-label="Menú lateral de navegación">
 
-      <nav ref={navRef} className="flex-1 px-2 py-3">
-        <ul className="space-y-1">
-          {filteredMenu.map((m) => (
-            <li key={m.id}>
-              {m.children && m.children.length > 0 ? (
-                <div className="group">
-                  <button
-                    onClick={() => toggleGroup(m.id)}
-                    className={`w-full flex items-center justify-between rounded-md transition-colors ${
-                      m.children.some((c) => isActive(c.path)) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-                    } ${compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className={compact ? 'text-gray-500' : 'text-gray-500'}>{m.icon}</span>
-                      <span className={compact ? 'text-xs' : ''}>{m.label}</span>
+      {/* Scrollable nav */}
+      <nav className="sidebar-nav">
+        {visibleSections.map((section, si) => (
+          <div key={si}>
+            {/* Section label */}
+            {section.label && (
+              <div className="sidebar-section-label" aria-hidden="true">
+                {section.label}
+              </div>
+            )}
+
+            <ul className="sidebar-list" role="list">
+              {section.items.map(item => (
+                <li key={item.id}>
+
+                  {/* ── Leaf item (no children) ── */}
+                  {!item.children?.length ? (
+                    <button
+                      className={`sidebar-btn${isActive(item.path) ? ' sidebar-btn--active' : ''}`}
+                      onClick={() => navigate(item.path!)}
+                      aria-current={isActive(item.path) ? 'page' : undefined}
+                    >
+                      <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
+                      {item.label}
+                    </button>
+
+                  ) : (
+                    /* ── Group item (with children) ── */
+                    <div>
+                      <button
+                        className={`sidebar-group-trigger${isGroupActive(item) ? ' sidebar-group-trigger--active' : ''}`}
+                        onClick={() => toggle(item.id)}
+                        aria-expanded={!!openGroups[item.id]}
+                      >
+                        <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
+                        <span className="sidebar-group-label">{item.label}</span>
+                        <ChevronDown
+                          className={`sidebar-chevron${openGroups[item.id] ? ' sidebar-chevron--open' : ''}`}
+                          aria-hidden="true"
+                        />
+                      </button>
+
+                      <ul
+                        className={`sidebar-children${openGroups[item.id] ? ' sidebar-children--open' : ''}`}
+                        role="list"
+                      >
+                        {item.children.map(child => (
+                          <li key={child.id}>
+                            <button
+                              className={`sidebar-child-btn${isActive(child.path) ? ' sidebar-child-btn--active' : ''}`}
+                              onClick={() => navigate(child.path!)}
+                              aria-current={isActive(child.path) ? 'page' : undefined}
+                            >
+                              {child.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <span className="text-gray-400">
-                      {openGroups[m.id] ? <ChevronDown className={compact ? 'w-3 h-3' : 'w-4 h-4'} /> : <ChevronRight className={compact ? 'w-3 h-3' : 'w-4 h-4'} />}
-                    </span>
-                  </button>
+                  )}
 
-                  <ul className={`mt-1 pl-8 pr-1 overflow-hidden transition-[max-height] duration-200 ${openGroups[m.id] ? 'max-h-96' : 'max-h-0'}`}>
-                    {m.children.map((child) => (
-                      <li key={child.id} className={`mb-1 ${compact ? '' : ''}`}>
-                        <button
-                          onClick={() => navigate(child.path!)}
-                          className={`w-full text-left rounded-md transition-colors ${isActive(child.path) ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-600 hover:bg-gray-50'} ${compact ? 'px-2 py-1.5 text-xs' : 'px-2 py-2 text-sm'}`}
-                        >
-                          {child.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <button
-                  onClick={() => navigate(m.path!)}
-                  className={`w-full flex items-center rounded-md space-x-2 transition-colors ${isActive(m.path) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'} ${compact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'}`}
-                >
-                  <span className={compact ? 'text-gray-500' : 'text-gray-500'}>{m.icon}</span>
-                  <span className={compact ? 'text-xs' : ''}>{m.label}</span>
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
-      <div ref={footerRef} className="p-3 border-t border-gray-100">
+
+      {/* Footer — Mi Perfil */}
+      <div className="sidebar-footer">
         <button
-          onClick={() => navigate('/users')}
-          className={`w-full flex items-center gap-2 rounded-md text-gray-700 hover:bg-gray-50 ${compact ? 'px-2 py-1 text-xs' : 'px-3 py-2 text-sm'}`}
+          className="sidebar-footer-btn"
+          onClick={() => navigate('/profile')}
+          aria-current={isActive('/profile') ? 'page' : undefined}
         >
-          <Users className={compact ? 'w-3 h-3 text-gray-500' : 'w-4 h-4 text-gray-500'} />
-          <span className={compact ? 'text-xs' : ''}>Mi perfil</span>
+          <UserCircle className="sidebar-item-icon w-[18px] h-[18px]" aria-hidden="true" />
+          Mi perfil
         </button>
       </div>
+
     </aside>
   );
 }

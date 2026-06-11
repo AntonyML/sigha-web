@@ -13,6 +13,7 @@ import {
   validateVerify2FAData,
   getTwoFactorErrorMessage
 } from './validation/twoFactorValidations';
+import type { AxiosError } from 'axios';
 
 /**
  * Resultado del flujo de obtención de estado 2FA

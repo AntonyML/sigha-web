@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { usePermissions } from '../../../utils/permissionUtils';
-import { permissionApiService } from '../../../services/permissionApiService';
+import { PermissionUtils } from '../../../utils/permissionUtils';
+import { permissionService } from '../../../services/permissionService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreateRoleData } from '../../../types/user';
 import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
@@ -25,32 +25,25 @@ export default function CreateRolePage() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [permissionsLoading, setPermissionsLoading] = useState(false);
-    const [permissionCatalog, setPermissionCatalog] = useState<Array<{ id: number; pModule: string; pAction: string }>>([]);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
-    const { canManageRoles } = usePermissions();
 
+    // Verificar permisos y cargar permisos por defecto al montar el componente
     useEffect(() => {
         const checkPermissionsAndLoadPermissions = async () => {
             try {
-                const canManage = canManageRoles();
+                // Verificar permisos
+                const canManage = await PermissionUtils.canManageRoles();
                 setHasPermission(canManage);
 
                 if (!canManage) {
                     return;
                 }
 
+                // Cargar permisos por defecto
                 setPermissionsLoading(true);
-                const apiPermissions = await permissionApiService.getAll();
-                setPermissionCatalog(
-                    apiPermissions.map(p => ({ id: p.id, pModule: p.pModule, pAction: p.pAction }))
-                );
-                const mapped: Permission[] = apiPermissions.map(p => ({
-                    module: p.pModule as PermissionModuleType,
-                    action: p.pAction as PermissionActionType,
-                    enabled: false
-                }));
-                setPermissions(mapped);
+                const defaultPermissions = permissionService.getDefaultPermissions();
+                setPermissions(defaultPermissions);
                 setPermissionsLoading(false);
             } catch (err) {
                 console.error('Error verificando permisos:', err);
@@ -59,7 +52,7 @@ export default function CreateRolePage() {
         };
 
         checkPermissionsAndLoadPermissions();
-    }, [canManageRoles]);
+    }, []);
 
     function onInputChange(field: keyof CreateRoleData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -99,15 +92,9 @@ export default function CreateRolePage() {
             const result = await roleFlow.createRole(formData);
 
             if (result.success && result.role) {
-                // Guardar permisos del rol: convertir permisos locales habilitados a IDs del backend
+                // Guardar permisos del rol
                 try {
-                    const enabledIds = permissions
-                        .filter(p => p.enabled)
-                        .map(p => permissionCatalog.find(
-                            cp => cp.pModule === p.module && cp.pAction === p.action
-                        )?.id)
-                        .filter((id): id is number => typeof id === 'number');
-                    await permissionApiService.setRolePermissions(result.role.id, enabledIds);
+                    await permissionService.updateRolePermissions(result.role.id, permissions);
                 } catch (permError) {
                     console.error('Error guardando permisos:', permError);
                     feedback.error('Rol creado pero error al guardar permisos');

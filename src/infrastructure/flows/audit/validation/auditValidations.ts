@@ -3,7 +3,7 @@
 
 import type { LogAuditRequest, SearchAuditReportsDto } from '../../../../types/audit';
 import { AuditReportType, AuditAction } from '../../../../types/audit';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 
 // Validaciones de negocio para registrar auditoría
@@ -254,7 +254,7 @@ export function getAuditErrorMessage(error: AxiosError | Error | unknown): strin
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError<any>;
+  const axiosError = error as AxiosError;
   if (axiosError?.response?.status === 400) {
     const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;

@@ -1,0 +1,59 @@
+/* ============================================================
+   NAVBAR DATE/TIME — Compact date + time indicator
+   ============================================================ */
+
+.navbar-datetime {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #374151;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.navbar-datetime-icon {
+  width: 14px;
+  height: 14px;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.navbar-datetime-date {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.navbar-datetime-sep {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.navbar-datetime-time {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Responsive ─────────────────────────────────────── */
+
+/* Hide date on medium screens, keep time */
+@media (max-width: 1024px) {
+  .navbar-datetime-date {
+    display: none;
+  }
+  .navbar-datetime-sep {
+    display: none;
+  }
+}
+
+/* Hide entirely on mobile (not needed in mobile top bar) */
+@media (max-width: 767px) {
+  .navbar-datetime {
+    display: none;
+  }
+}

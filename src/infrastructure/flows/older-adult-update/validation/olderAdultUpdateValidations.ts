@@ -8,32 +8,30 @@
 /**
  * Tipos de error para validaciones de actualizaciones de adultos mayores
  */
-export const OlderAdultUpdateValidationError = {
-    INVALID_ID: 'INVALID_ID',
-    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
-    INVALID_PATIENT_ID: 'INVALID_PATIENT_ID',
-    INVALID_UPDATE_TYPE: 'INVALID_UPDATE_TYPE',
-    INVALID_UPDATE_DATA: 'INVALID_UPDATE_DATA',
-    INVALID_DATE: 'INVALID_DATE',
-    INVALID_DESCRIPTION: 'INVALID_DESCRIPTION',
-    FUTURE_DATE: 'FUTURE_DATE'
-} as const;
-export type OlderAdultUpdateValidationError = typeof OlderAdultUpdateValidationError[keyof typeof OlderAdultUpdateValidationError];
+export enum OlderAdultUpdateValidationError {
+    INVALID_ID = 'INVALID_ID',
+    MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
+    INVALID_PATIENT_ID = 'INVALID_PATIENT_ID',
+    INVALID_UPDATE_TYPE = 'INVALID_UPDATE_TYPE',
+    INVALID_UPDATE_DATA = 'INVALID_UPDATE_DATA',
+    INVALID_DATE = 'INVALID_DATE',
+    INVALID_DESCRIPTION = 'INVALID_DESCRIPTION',
+    FUTURE_DATE = 'FUTURE_DATE'
+}
 
 /**
  * Tipos de actualización permitidos
  */
-export const UpdateType = {
-    PERSONAL_INFO: 'personal_info',
-    MEDICAL_INFO: 'medical_info',
-    CONTACT_INFO: 'contact_info',
-    EMERGENCY_CONTACT: 'emergency_contact',
-    HEALTH_STATUS: 'health_status',
-    MEDICATION: 'medication',
-    LIVING_SITUATION: 'living_situation',
-    OTHER: 'other'
-} as const;
-export type UpdateType = typeof UpdateType[keyof typeof UpdateType];
+export enum UpdateType {
+    PERSONAL_INFO = 'personal_info',
+    MEDICAL_INFO = 'medical_info',
+    CONTACT_INFO = 'contact_info',
+    EMERGENCY_CONTACT = 'emergency_contact',
+    HEALTH_STATUS = 'health_status',
+    MEDICATION = 'medication',
+    LIVING_SITUATION = 'living_situation',
+    OTHER = 'other'
+}
 
 /**
  * Resultado de validación

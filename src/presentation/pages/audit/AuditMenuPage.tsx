@@ -30,6 +30,30 @@ export default function AuditMenuPage() {
             route: '/audits/list',
             color: 'success'
         },
+        {
+            id: '3',
+            title: 'Registros de Actividad',
+            description: 'Historial de acciones del sistema por usuario, entidad, severidad y fecha',
+            icon: 'clipboard_document',
+            route: '/audits/activity-logs',
+            color: 'secondary'
+        },
+        {
+            id: '4',
+            title: 'Auditoría de Seguridad',
+            description: 'Eventos de seguridad, intentos de acceso sospechosos y resolución de incidentes',
+            icon: 'shield_exclamation',
+            route: '/audits/security',
+            color: 'danger'
+        },
+        {
+            id: '5',
+            title: 'Estado del Sistema',
+            description: 'Métricas en tiempo real: CPU, memoria, uptime, base de datos y rendimiento',
+            icon: 'cpu_chip',
+            route: '/audits/system-health',
+            color: 'info'
+        },
         // {
         //     id: '3',
         //     title: 'Historial de Adultos Mayores',

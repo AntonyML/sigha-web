@@ -1,211 +1,114 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, Bell, User } from 'lucide-react';
-import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
-import { usePermissions } from '../../../../utils/permissionUtils';
+/**
+ * Navbar
+ *
+ * Desktop layout (≥768px):
+ *   [Brand]  |  [GlobalSearch]  ——  [DateTime]  [Bell]  [divider]  [UserMenu]
+ *
+ * Mobile layout (<768px):
+ *   Top bar: [Brand]  ——  [Bell]
+ *   Bottom tab bar: <MobileBottomNav>
+ */
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  path: string;
-  mobileOnly?: boolean;
+import { useState, useEffect } from 'react';
+import type { AuthUser } from '../../../../types/auth';
+import UserMenu        from './UserMenu';
+import MobileBottomNav from './MobileBottomNav';
+import GlobalSearch    from './GlobalSearch';
+import NavbarDateTime  from './NavbarDateTime';
+import NavbarBell      from './NavbarBell';
+import './Navbar.css';
+
+/* ────────────────────────────────────────────────────── */
+
+function getStoredUser(): AuthUser | null {
+  try {
+    const raw = localStorage.getItem('user');
+    return raw ? (JSON.parse(raw) as AuthUser) : null;
+  } catch {
+    return null;
+  }
 }
 
+function buildDisplayName(user: AuthUser | null): string {
+  if (!user) return 'Usuario';
+  const parts = [user.uName, user.uFLastName].filter(Boolean);
+  return parts.join(' ') || user.uEmail || 'Usuario';
+}
+
+/* ────────────────────────────────────────────────────── */
+
 export default function Navbar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { isEnabled } = useTwoFactorStatus();
-  const { isNotSpecifiedSync, canAccessModule } = usePermissions();
+  const [user, setUser] = useState<AuthUser | null>(getStoredUser);
 
-  const navItems: NavItem[] = [
-    {
-      id: 'home',
-      label: 'Inicio',
-      icon: <Home className="w-5 h-5" />,
-      path: '/main-menu',
-    },
-    {
-      id: 'older-adults',
-      label: 'Adultos Mayores',
-      icon: <Users className="w-5 h-5" />,
-      path: '/virtualFiles',
-    },
-    {
-      id: 'activities',
-      label: 'Actividades',
-      icon: <Calendar className="w-5 h-5" />,
-      path: '/programs',
-    },
-    {
-      id: 'audits',
-      label: 'Auditoría',
-      icon: <Bell className="w-5 h-5" />,
-      path: '/audits',
-    },
-    {
-      id: 'profile',
-      label: 'Perfil',
-      icon: <User className="w-5 h-5" />,
-      path: '/profile',
-    },
-  ];
-
-  const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-  };
-
-  const handleLogout = async () => {
-    try {
-      // Limpiar storage y redirigir
-      localStorage.clear();
-      navigate('/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      // Continuar con el logout aunque falle
-      localStorage.clear();
-      navigate('/login');
-    }
-  };
-
-  // Filtrar items del navbar basado en estado del 2FA y permisos
-  const getFilteredNavItems = () => {
-    // Si el usuario no tiene 2FA activado, mostrar solo opciones limitadas
-    if (!isEnabled) {
-      return navItems.filter(item =>
-        item.id === 'home' || // Inicio
-        item.id === 'profile'  // Perfil
-      );
-    }
-
-    // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
-    if (isNotSpecifiedSync()) {
-      return navItems.filter(item =>
-        item.id === 'home' ||
-        item.id === 'profile'
-      );
-    }
-
-    const navItemModuleMap: Record<string, string> = {
-      'home': 'main',
-      'older-adults': 'virtualFiles',
-      'activities': 'programs',
-      'audits': 'audits',
-      'profile': 'profile'
+  useEffect(() => {
+    const refresh = () => setUser(getStoredUser());
+    window.addEventListener('authTokenChanged', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('authTokenChanged', refresh);
+      window.removeEventListener('storage', refresh);
     };
+  }, []);
 
-    return navItems.filter(item => {
-      const moduleName = navItemModuleMap[item.id];
-      return moduleName ? canAccessModule(moduleName) : false;
-    });
-  };
-
-  const filteredNavItems = getFilteredNavItems();
+  const displayName = buildDisplayName(user);
 
   return (
     <>
-      {/* Desktop Navbar - Top */}
-      <nav className="hidden md:block bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-end h-16">
-            {/* Desktop Nav Items (aligned right) */}
-            <div className="flex items-center space-x-1">
-              {filteredNavItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`
-                    flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200
-                    ${
-                      isActive(item.path)
-                        ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }
-                  `}
-                >
-                  <span className={isActive(item.path) ? 'scale-110' : ''}>
-                    {item.icon}
-                  </span>
-                  <span className="text-sm font-medium">{item.label}</span>
-                </button>
-              ))}
-            </div>
+      {/* ═══════════════════════════════════════════════════
+          DESKTOP  — sticky top bar
+      ═══════════════════════════════════════════════════ */}
+      <nav className="navbar-root" aria-label="Barra de navegación principal">
+        <div className="navbar-inner">
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-3 ml-4">
-              <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-gray-600 hover:text-red-600 font-medium transition-colors"
-              >
-                Salir
-              </button>
-            </div>
+          {/* ── Left: Brand ── */}
+          <div className="navbar-brand" aria-label="ASOPOGUA — Inicio">
+            <span className="navbar-brand-icon" aria-hidden="true">
+              <span>A</span>
+            </span>
+            <span className="navbar-brand-name">ASOPOGUA</span>
           </div>
+
+          {/* ── Center: Global search ── */}
+          <div className="navbar-center">
+            <GlobalSearch />
+          </div>
+
+          {/* ── Right: actions cluster ── */}
+          <div className="navbar-actions">
+            <NavbarDateTime />
+
+            <span className="navbar-divider" aria-hidden="true" />
+
+            <NavbarBell />
+
+            <span className="navbar-divider" aria-hidden="true" />
+
+            <UserMenu userName={displayName} />
+          </div>
+
         </div>
       </nav>
 
-      {/* Mobile Navbar - Bottom */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 safe-area-bottom">
-        <div className="grid grid-cols-5 h-16">
-          {filteredNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavigation(item.path)}
-              className={`
-                flex flex-col items-center justify-center space-y-1 transition-all duration-200
-                ${
-                  isActive(item.path)
-                    ? 'text-blue-600'
-                    : 'text-gray-600 active:scale-95'
-                }
-              `}
-            >
-              <span
-                className={`
-                  transition-transform duration-200
-                  ${isActive(item.path) ? 'scale-110 -translate-y-0.5' : ''}
-                `}
-              >
-                {item.icon}
-              </span>
-              <span
-                className={`
-                  text-xs font-medium transition-all duration-200
-                  ${isActive(item.path) ? 'opacity-100 font-semibold' : 'opacity-70'}
-                `}
-              >
-                {item.label}
-              </span>
-              {isActive(item.path) && (
-                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-600 rounded-t-full"></span>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      {/* Mobile Top Bar (optional info) */}
-      <div className="md:hidden bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 h-14">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
-            <span className="text-lg font-bold text-gray-900">ASOPOGUA</span>
+      {/* ═══════════════════════════════════════════════════
+          MOBILE — sticky top bar
+      ═══════════════════════════════════════════════════ */}
+      <div className="navbar-mobile-top" aria-label="Barra superior">
+        <div className="navbar-mobile-top-inner">
+          <div className="navbar-brand">
+            <span className="navbar-brand-icon" aria-hidden="true">
+              <span>A</span>
+            </span>
+            <span className="navbar-brand-name">ASOPOGUA</span>
           </div>
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+
+          <NavbarBell />
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════
+          MOBILE — bottom tab navigation
+      ═══════════════════════════════════════════════════ */}
+      <MobileBottomNav />
     </>
   );
 }

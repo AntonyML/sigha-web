@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { permissionFlow } from '../../../infrastructure/flows/permission';
+import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
+import type {  UpdatePermissionData } from '../../../types/permissionEntity';
 
 // Opciones disponibles para módulos y acciones
 const MODULE_OPTIONS = [
@@ -25,27 +26,31 @@ const ACTION_OPTIONS = [
 ];
 
 interface PermissionFormData {
-    pName: string;
-    pDescription: string;
-    pModule: string;
-    pAction: string;
-    pEnabled: boolean;
+    name: string;
+    description: string;
+    module: string;
+    action: string;
+    enabled: boolean;
 }
-
-const emptyFormData: PermissionFormData = {
-    pName: '',
-    pDescription: '',
-    pModule: '',
-    pAction: '',
-    pEnabled: true,
-};
 
 export default function EditPermissionPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
-    const [formData, setFormData] = useState<PermissionFormData>(emptyFormData);
-    const [originalData, setOriginalData] = useState<PermissionFormData>(emptyFormData);
+    const [formData, setFormData] = useState<PermissionFormData>({
+        name: '',
+        description: '',
+        module: '',
+        action: '',
+        enabled: true
+    });
+    const [originalData, setOriginalData] = useState<PermissionFormData>({
+        name: '',
+        description: '',
+        module: '',
+        action: '',
+        enabled: true
+    });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
     const [error, setError] = useState('');
@@ -63,15 +68,15 @@ export default function EditPermissionPage() {
             setError('');
 
             try {
-                const result = await permissionFlow.getPermissionById(Number(id));
+                const result = await permissionEntityFlow.getPermissionById(Number(id));
 
                 if (result.success && result.permission) {
-                    const permissionData: PermissionFormData = {
-                        pName: result.permission.pName,
-                        pDescription: result.permission.pDescription,
-                        pModule: result.permission.pModule,
-                        pAction: result.permission.pAction,
-                        pEnabled: result.permission.pEnabled,
+                    const permissionData = {
+                        name: result.permission.name,
+                        description: result.permission.description,
+                        module: result.permission.module,
+                        action: result.permission.action,
+                        enabled: result.permission.enabled
                     };
                     setFormData(permissionData);
                     setOriginalData(permissionData);
@@ -90,6 +95,7 @@ export default function EditPermissionPage() {
     }, [id]);
 
     useEffect(() => {
+        // Verificar si hay cambios
         const changes = JSON.stringify(formData) !== JSON.stringify(originalData);
         setHasChanges(changes);
     }, [formData, originalData]);
@@ -102,27 +108,27 @@ export default function EditPermissionPage() {
         e.preventDefault();
         setError('');
 
-        if (!formData.pName.trim()) {
+        if (!formData.name.trim()) {
             setError('Por favor ingresa el nombre del permiso');
             return;
         }
 
-        if (!formData.pDescription.trim()) {
+        if (!formData.description.trim()) {
             setError('Por favor ingresa la descripción del permiso');
             return;
         }
 
-        if (!formData.pModule.trim()) {
+        if (!formData.module.trim()) {
             setError('Por favor ingresa el módulo del permiso');
             return;
         }
 
-        if (!formData.pAction.trim()) {
+        if (!formData.action.trim()) {
             setError('Por favor ingresa la acción del permiso');
             return;
         }
 
-        if (formData.pName.trim().length < 3) {
+        if (formData.name.trim().length < 3) {
             setError('El nombre del permiso debe tener al menos 3 caracteres');
             return;
         }
@@ -135,20 +141,14 @@ export default function EditPermissionPage() {
         setLoading(true);
 
         try {
-            const updateData: {
-                pName?: string;
-                pDescription?: string;
-                pModule?: string;
-                pAction?: string;
-                pEnabled?: boolean;
-            } = {};
-            if (formData.pName !== originalData.pName) updateData.pName = formData.pName;
-            if (formData.pDescription !== originalData.pDescription) updateData.pDescription = formData.pDescription;
-            if (formData.pModule !== originalData.pModule) updateData.pModule = formData.pModule;
-            if (formData.pAction !== originalData.pAction) updateData.pAction = formData.pAction;
-            if (formData.pEnabled !== originalData.pEnabled) updateData.pEnabled = formData.pEnabled;
+            const updateData: UpdatePermissionData = {};
+            if (formData.name !== originalData.name) updateData.name = formData.name;
+            if (formData.description !== originalData.description) updateData.description = formData.description;
+            if (formData.module !== originalData.module) updateData.module = formData.module;
+            if (formData.action !== originalData.action) updateData.action = formData.action;
+            if (formData.enabled !== originalData.enabled) updateData.enabled = formData.enabled;
 
-            const result = await permissionFlow.updatePermission(Number(id), updateData);
+            const result = await permissionEntityFlow.updatePermission(Number(id), updateData);
 
             if (result.success && result.permission) {
                 feedback.success('Permiso actualizado exitosamente');
@@ -193,7 +193,7 @@ export default function EditPermissionPage() {
         );
     }
 
-    if (error && !formData.pName) {
+    if (error && !formData.name) {
         return (
             <div className="min-vh-100 bg-light">
                 <div className="container-fluid py-4">
@@ -266,15 +266,15 @@ export default function EditPermissionPage() {
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="pName" className="form-label fw-semibold">
+                                            <label htmlFor="name" className="form-label fw-semibold">
                                                 Nombre del Permiso <span className="text-danger">*</span>
                                             </label>
                                             <input
-                                                id="pName"
+                                                id="name"
                                                 type="text"
                                                 className="form-control form-control-lg"
-                                                value={formData.pName}
-                                                onChange={(e) => onInputChange('pName', e.target.value)}
+                                                value={formData.name}
+                                                onChange={(e) => onInputChange('name', e.target.value)}
                                                 placeholder="Ej: Ver Usuarios, Crear Roles"
                                                 required
                                                 disabled={loading}
@@ -287,14 +287,14 @@ export default function EditPermissionPage() {
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="pModule" className="form-label fw-semibold">
+                                            <label htmlFor="module" className="form-label fw-semibold">
                                                 Módulo <span className="text-danger">*</span>
                                             </label>
                                             <select
-                                                id="pModule"
+                                                id="module"
                                                 className="form-select form-select-lg"
-                                                value={formData.pModule}
-                                                onChange={(e) => onInputChange('pModule', e.target.value)}
+                                                value={formData.module}
+                                                onChange={(e) => onInputChange('module', e.target.value)}
                                                 required
                                                 disabled={loading}
                                             >
@@ -311,14 +311,14 @@ export default function EditPermissionPage() {
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="pAction" className="form-label fw-semibold">
+                                            <label htmlFor="action" className="form-label fw-semibold">
                                                 Acción <span className="text-danger">*</span>
                                             </label>
                                             <select
-                                                id="pAction"
+                                                id="action"
                                                 className="form-select form-select-lg"
-                                                value={formData.pAction}
-                                                onChange={(e) => onInputChange('pAction', e.target.value)}
+                                                value={formData.action}
+                                                onChange={(e) => onInputChange('action', e.target.value)}
                                                 required
                                                 disabled={loading}
                                             >
@@ -335,20 +335,20 @@ export default function EditPermissionPage() {
                                             </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="pEnabled" className="form-label fw-semibold">
+                                            <label htmlFor="enabled" className="form-label fw-semibold">
                                                 Estado
                                             </label>
                                             <div className="form-check form-switch">
                                                 <input
                                                     className="form-check-input"
                                                     type="checkbox"
-                                                    id="pEnabled"
-                                                    checked={formData.pEnabled}
-                                                    onChange={(e) => onInputChange('pEnabled', e.target.checked)}
+                                                    id="enabled"
+                                                    checked={formData.enabled}
+                                                    onChange={(e) => onInputChange('enabled', e.target.checked)}
                                                     disabled={loading}
                                                 />
-                                                <label className="form-check-label" htmlFor="pEnabled">
-                                                    {formData.pEnabled ? 'Habilitado' : 'Deshabilitado'}
+                                                <label className="form-check-label" htmlFor="enabled">
+                                                    {formData.enabled ? 'Habilitado' : 'Deshabilitado'}
                                                 </label>
                                             </div>
                                             <small className="text-muted d-block mt-2">
@@ -357,14 +357,14 @@ export default function EditPermissionPage() {
                                             </small>
                                         </div>
                                         <div className="col-12">
-                                            <label htmlFor="pDescription" className="form-label fw-semibold">
+                                            <label htmlFor="description" className="form-label fw-semibold">
                                                 Descripción <span className="text-danger">*</span>
                                             </label>
                                             <textarea
-                                                id="pDescription"
+                                                id="description"
                                                 className="form-control form-control-lg"
-                                                value={formData.pDescription}
-                                                onChange={(e) => onInputChange('pDescription', e.target.value)}
+                                                value={formData.description}
+                                                onChange={(e) => onInputChange('description', e.target.value)}
                                                 placeholder="Describe qué permite este permiso..."
                                                 required
                                                 disabled={loading}

@@ -1,7 +1,7 @@
 // authValidations.ts
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación
 
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 
 // Validaciones de negocio para login
@@ -72,7 +72,7 @@ export function getLoginErrorMessage(error: AxiosError | Error | unknown): strin
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError<any>;
+  const axiosError = error as AxiosError;
   if (axiosError?.response?.status === 400) {
     // Validación de datos desde backend
     const msg = axiosError?.response?.data?.message;
@@ -138,7 +138,7 @@ export function get2FAErrorMessage(error: AxiosError | Error | unknown): string 
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError<any>;
+  const axiosError = error as AxiosError;
   if (axiosError?.response?.status === 400) {
     const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;

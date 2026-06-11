@@ -1,333 +1,238 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
-import { getFullName } from '../../../utils/userUtils';
-import { usePermissions } from '../../../utils/permissionUtils';
-import { Icon } from '../../components/atoms';
-import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
-import type { User } from '../../../types/user';
+﻿import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Icon } from '../../components/atoms'
+import { userManagementFlow } from '../../../infrastructure/flows/userManagement'
+import { getFullName } from '../../../utils/userUtils'
+import { PermissionUtils } from '../../../utils/permissionUtils'
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
+import { usePagination } from '../../hooks/usePagination'
+import Pagination from '../../components/molecules/Pagination/Pagination'
+import type { User } from '../../../types/user'
+import '../../styles/lp.css'
 
 export default function UserListPage() {
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-    const [filterStatus] = useState<'all' | 'active'>('active');
-    const navigate = useNavigate();
-    const feedback = useFeedbackWithNotifications();
-    const { canDeleteUsers, canCreateUsers } = usePermissions();
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [canDeleteUsers, setCanDeleteUsers] = useState(false)
+  const [canCreateUsers, setCanCreateUsers] = useState(false)
+  const navigate = useNavigate()
+  const feedback = useFeedbackWithNotifications()
 
-    useEffect(() => {
-        loadUsers();
-    }, []);
+  useEffect(() => { loadUsersAndPermissions() }, [])
 
-    const loadUsers = async () => {
-        setLoading(true);
-        setError('');
+  const loadUsersAndPermissions = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const [canDelete, canCreate] = await Promise.all([
+        PermissionUtils.canDeleteUsers(),
+        PermissionUtils.canCreateUsers()
+      ])
+      setCanDeleteUsers(canDelete)
+      setCanCreateUsers(canCreate)
 
-        try {
-            const result = await userManagementFlow.getAllUsers();
-
-            if (result.success && result.users) {
-                setUsers(result.users);
-                setFilteredUsers(result.users);
-            } else {
-                setError(result.error || 'Error al cargar usuarios');
-            }
-        } catch (err) {
-            console.error('Error cargando usuarios:', err);
-            setError('Error inesperado al cargar usuarios');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        let filtered = users;
-
-        if (filterStatus !== 'all') {
-            filtered = filtered.filter(user =>
-                user.uIsActive === true
-            );
-        }
-
-        if (searchTerm.trim()) {
-            filtered = filtered.filter(user =>
-                user.uName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.uEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (user.uIdentification || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        setFilteredUsers(filtered);
-    }, [users, searchTerm, filterStatus]);
-
-    // Función para limpiar la búsqueda
-    const handleClearSearch = () => {
-        setSearchTerm('');
-    };
-
-    const handleView = (user: User) => {
-        navigate(`/users/view/${user.id}`);
-    };
-
-    const handleEdit = (user: User) => {
-        navigate(`/users/edit/${user.id}`);
-    };
-
-    const handleDeleteClick = async (user: User) => {
-        // Verificar permisos antes de eliminar
-        if (!canDeleteUsers()) {
-            feedback.error('No tienes permisos para eliminar usuarios', 'Acceso denegado');
-            return;
-        }
-
-        const fullName = getFullName(user);
-        const confirmed = await feedback.confirm(
-            `¿Estás seguro que deseas eliminar al usuario "${fullName}"?`,
-            'Esta acción no se puede deshacer.'
-        );
-
-        if (!confirmed) return;
-
-        setLoading(true);
-        const result = await userManagementFlow.deleteUser(user.id);
-
-        if (result.success) {
-            // Recargar la lista de usuarios
-            await loadUsers();
-            feedback.success(result.message || 'Usuario eliminado exitosamente');
-            feedback.showNotification({
-                title: 'Usuario eliminado',
-                message: `El usuario "${fullName}" ha sido eliminado del sistema`,
-                variant: 'success',
-                icon: 'bi-person-dash-fill'
-            });
-        } else {
-            feedback.error(result.error || 'Error al eliminar usuario', 'Error de eliminación');
-        }
-        setLoading(false);
-    };
-
-    if (loading) {
-        return (
-            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-                <div className="text-center">
-                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                    </div>
-                    <p className="text-muted fw-medium">Cargando usuarios...</p>
-                </div>
-            </div>
-        );
+      const result = await userManagementFlow.getAllUsers()
+      if (result.success && result.users) {
+        setUsers(result.users)
+      } else {
+        setError(result.error || 'Error al cargar usuarios')
+      }
+    } catch (err) {
+      console.error('Error cargando usuarios y permisos:', err)
+      setError('Error inesperado al cargar usuarios')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    if (error) {
-        return (
-            <div className="container py-4">
-                <div className="alert alert-danger" role="alert">
-                    <h4 className="alert-heading">Error</h4>
-                    <p>{error}</p>
-                    <hr />
-                    <div className="d-flex gap-2">
-                        <button className="btn btn-secondary" onClick={() => navigate('/main-menu')}>
-                            Volver al menú
-                        </button>
-                        <button className="btn btn-primary" onClick={loadUsers}>
-                            Reintentar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+  const handleDeleteClick = async (user: User) => {
+    if (!canDeleteUsers) {
+      feedback.error('No tienes permisos para eliminar usuarios', 'Acceso denegado')
+      return
     }
+    const fullName = getFullName(user)
+    const confirmed = await feedback.confirm(
+      'Eliminar usuario',
+      `¿Estás seguro que deseas eliminar al usuario "${fullName}"?\n\nEsta acción no se puede deshacer.`
+    )
+    if (!confirmed) return
 
+    setLoading(true)
+    const result = await userManagementFlow.deleteUser(user.id)
+    if (result.success) {
+      await loadUsersAndPermissions()
+      feedback.success(result.message || 'Usuario eliminado exitosamente')
+      feedback.showNotification({
+        title: 'Usuario eliminado',
+        message: `El usuario "${fullName}" ha sido eliminado del sistema`,
+        variant: 'success'
+      })
+    } else {
+      feedback.error(result.error || 'Error al eliminar usuario', 'Error de eliminación')
+    }
+    setLoading(false)
+  }
+
+  const filteredUsers = users.filter(user => {
+    if (!searchTerm.trim()) return true
+    const q = searchTerm.toLowerCase()
     return (
-        <div className="min-vh-100 bg-light">
-            <div className="container-fluid py-4">
-                <div className="row mb-4">
-                    <div className="col-12">
-                        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-                            <div>
-                                <h1 className="h3 fw-bold mb-1">Gestión de Usuarios</h1>
-                                <p className="text-muted mb-0">Administra los usuarios del sistema</p>
-                            </div>
-                            <div className="d-flex gap-2">
-                                <button
-                                    className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                                    onClick={() => navigate('/main-menu')}
-                                >
-                                    <Icon name="arrow_back" size="sm" />
-                                    Regresar
-                                </button>
-                                <button
-                                    className="btn btn-outline-warning d-inline-flex align-items-center gap-2"
-                                    onClick={() => navigate('/users/deleted')}
-                                    
-                                >
-                                    <Icon name="refresh" size="sm" />
-                                    Recuperar Eliminados
-                                </button>
-                                <button
-                                    className="btn btn-primary d-flex align-items-center gap-2"
-                                    onClick={() => navigate('/users/create')}
-                                    disabled={!canCreateUsers()}
-                                    title={!canCreateUsers() ? 'No tienes permisos para crear usuarios' : 'Crear nuevo usuario'}
-                                >
-                                    <Icon name="add" size="sm" />
-                                    Nuevo Usuario
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      user.uName.toLowerCase().includes(q) ||
+      user.uEmail.toLowerCase().includes(q) ||
+      (user.uIdentification || '').toString().toLowerCase().includes(q)
+    )
+  })
 
-                <div className="row mb-4">
-                    <div className="col-12">
-                        <div className="card shadow-sm border-0">
-                            <div className="card-body">
-                                <div className="row g-3">
-                                    <div className="col-12 col-lg-6">
-                                        <div className="input-group input-group-lg">
-                                            <span className="input-group-text bg-white border-end-0">
-                                                <Icon name="search" size="sm" className="text-muted" />
-                                            </span>
-                                            <input
-                                                type="text"
-                                                className="form-control border-start-0 ps-0"
-                                                placeholder="Buscar por nombre, correo o identificación..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                            {searchTerm && (
-                                                <button
-                                                    className="btn btn-outline-secondary"
-                                                    type="button"
-                                                    onClick={handleClearSearch}
-                                                >
-                                                    <Icon name="close" size="sm" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                
-                                    <div className="col-12 col-lg-3">
-                                        <div className="d-flex align-items-center h-100">
-                                            <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6 d-inline-flex align-items-center">
-                                                <Icon name="users" size="sm" className="me-2" />
-                                                {filteredUsers.length} usuarios
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  const { paginatedItems, page, totalPages, total, pageSize, goToPage } = usePagination(filteredUsers)
 
-                <div className="row">
-                    <div className="col-12">
-                        <div className="card shadow-sm border-0">
-                            <div className="card-body p-0">
-                                {filteredUsers.length === 0 && searchTerm ? (
-                                    <div className="text-center py-5">
-                                        <Icon name="search" size="xl" className="display-4 text-muted mb-3 d-block" />
-                                        <h5 className="text-muted">No se encontraron resultados</h5>
-                                        <p className="text-muted">Intenta con otros términos de búsqueda</p>
-                                    </div>
-                                ) : filteredUsers.length === 0 ? (
-                                        <div className="text-center py-5">
-                                            <Icon name="person" size="xl" className="display-4 text-muted mb-3 d-block" />
-                                            <h5 className="text-muted mb-3">No hay usuarios registrados</h5>
-                                            <button
-                                                className="btn btn-primary"
-                                                onClick={() => navigate('/users/create')}
-                                                disabled={!canCreateUsers()}
-                                            >
-                                                <Icon name="add" size="sm" className="me-2" />
-                                                Crear primer usuario
-                                            </button>
-                                        </div>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-hover align-middle mb-0">
-                                            <thead className="bg-light">
-                                                <tr>
-                                                    <th className="ps-4 py-3 fw-semibold text-muted text-uppercase small">#</th>
-                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Identificación</th>
-                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Nombre Completo</th>
-                                                    <th className="py-3 fw-semibold text-muted text-uppercase small">Correo</th>
-                                                    <th className="pe-4 py-3 fw-semibold text-muted text-uppercase small text-end">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredUsers.map((user, index) => (
-                                                    <tr key={user.id} className="border-bottom">
-                                                        <td className="ps-4 py-3">
-                                                            <span className="badge bg-light text-dark">{index + 1}</span>
-                                                        </td>
-                                                        <td className="py-3">
-                                                            <span className="fw-medium">{user.uIdentification}</span>
-                                                        </td>
-                                                        <td className="py-3">
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
-                                                                    <Icon name="person" size="md" className="text-primary" />
-                                                                </div>
-                                                                <div>
-                                                                    <div className="fw-medium">{getFullName(user)}</div>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3">
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <Icon name="email" size="sm" className="text-muted" />
-                                                                <span>{user.uEmail}</span>
-                                                                {user.uEmailVerified && (
-                                                                    <span className="badge bg-info bg-opacity-10 text-info" title="Email verificado">
-                                                                        <Icon name="verified" size="sm" />
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                        <td className="pe-4 py-3">
-                                                            <div className="d-flex justify-content-end gap-2">
-                                                                <button
-                                                                    className="btn btn-sm btn-light"
-                                                                    onClick={() => handleView(user)}
-                                                                    title="Ver detalles"
-                                                                >
-                                                                    <Icon name="visibility" size="sm" />
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-light"
-                                                                    onClick={() => handleEdit(user)}
-                                                                    title="Editar"
-                                                                >
-                                                                    <Icon name="edit" size="sm" />
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-danger"
-                                                                    onClick={() => handleDeleteClick(user)}
-                                                                    title={canDeleteUsers() ? "Eliminar" : "No tienes permisos para eliminar usuarios"}
-                                                                    disabled={!canDeleteUsers()}
-                                                                >
-                                                                    <Icon name="delete" size="sm" />
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  if (loading) {
+    return (
+      <div className="lp-loading" style={{ minHeight: '100vh' }}>
+        <div className="lp-spinner" style={{ width: '3rem', height: '3rem' }} />
+        <span>Cargando usuarios...</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="lp-page">
+        <div className="lp-error" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+          <strong>Error</strong>
+          <p style={{ margin: 0 }}>{error}</p>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="lp-btn lp-btn--back" onClick={() => navigate('/main-menu')}>Volver al menú</button>
+            <button className="lp-btn lp-btn--primary" onClick={loadUsersAndPermissions}>Reintentar</button>
+          </div>
         </div>
-    );
+      </div>
+    )
+  }
+
+  return (
+    <div className="lp-page">
+      <div className="lp-header">
+        <div>
+          <h2 className="lp-title">
+            <Icon name="group" size="md" />
+            Gestión de Usuarios
+          </h2>
+          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>Administra los usuarios del sistema</p>
+        </div>
+        <div className="lp-actions">
+          <button className="lp-btn lp-btn--warning" onClick={() => navigate('/users/deleted')}>
+            <Icon name="refresh" size="sm" /> Recuperar Eliminados
+          </button>
+          <button
+            className="lp-btn lp-btn--primary"
+            onClick={() => navigate('/users/create')}
+            disabled={!canCreateUsers}
+            title={!canCreateUsers ? 'No tienes permisos para crear usuarios' : 'Crear nuevo usuario'}
+          >
+            <Icon name="add" size="sm" /> Nuevo Usuario
+          </button>
+        </div>
+      </div>
+
+      <div className="lp-search-card">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div className="lp-search-wrap" style={{ flex: 1, minWidth: '220px' }}>
+            <Icon name="search" size="sm" className="lp-search-icon" />
+            <input
+              type="text"
+              className="lp-search-input"
+              placeholder="Buscar por nombre, correo o identificación..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button className="lp-search-clear" onClick={() => setSearchTerm('')}>
+                <Icon name="close" size="sm" />
+              </button>
+            )}
+          </div>
+          <span className="lp-count">
+            <Icon name="group" size="sm" />
+            {filteredUsers.length} usuarios
+          </span>
+        </div>
+      </div>
+
+      {filteredUsers.length === 0 ? (
+        <div className="lp-empty">
+          <Icon name="person" size="xl" className="lp-empty__icon" />
+          <p>{searchTerm ? 'No se encontraron resultados. Intenta con otros términos.' : 'No hay usuarios registrados.'}</p>
+          {!searchTerm && (
+            <button className="lp-btn lp-btn--primary" onClick={() => navigate('/users/create')} disabled={!canCreateUsers}>
+              <Icon name="add" size="sm" /> Crear primer usuario
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="lp-card">
+          <div className="lp-table-wrap">
+            <table className="lp-table">
+              <thead className="lp-table-head">
+                <tr>
+                  <th>#</th>
+                  <th>Identificación</th>
+                  <th>Nombre Completo</th>
+                  <th>Correo</th>
+                  <th className="center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.map((user, index) => (
+                  <tr key={user.id}>
+                    <td><span className="lp-badge lp-badge--secondary">{(page - 1) * pageSize + index + 1}</span></td>
+                    <td><span style={{ fontWeight: 500 }}>{user.uIdentification}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon name="person" size="md" style={{ color: '#2563eb' }} />
+                        </div>
+                        <span style={{ fontWeight: 500 }}>{getFullName(user)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Icon name="email" size="sm" style={{ color: '#94a3b8' }} />
+                        <span>{user.uEmail}</span>
+                        {user.uEmailVerified && (
+                          <span className="lp-badge lp-badge--info" title="Email verificado">
+                            <Icon name="verified" size="sm" />
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="center">
+                      <div className="lp-table-actions">
+                        <button className="lp-icon-btn lp-icon-btn--view" title="Ver detalles" onClick={() => navigate(`/users/view/${user.id}`)}>
+                          <Icon name="visibility" size="sm" />
+                        </button>
+                        <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/users/edit/${user.id}`)}>
+                          <Icon name="edit" size="sm" />
+                        </button>
+                        <button
+                          className="lp-icon-btn lp-icon-btn--delete"
+                          title={canDeleteUsers ? 'Eliminar' : 'No tienes permisos para eliminar usuarios'}
+                          disabled={!canDeleteUsers}
+                          onClick={() => handleDeleteClick(user)}
+                        >
+                          <Icon name="delete" size="sm" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
+        </div>
+      )}
+    </div>
+  )
 }

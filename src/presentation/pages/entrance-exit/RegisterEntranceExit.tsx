@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import EntranceExitNav from './EntranceExitNav';
+import { useCedulaLookup } from '../../hooks/useCedulaLookup';
 
 import { entranceExitService } from '../../../services/entranceExitService';
 import { defaultEntranceExitForm, type AccessType, type EntranceExitApiPayload, type EntranceExitForm, type EntranceExitType } from '../../../types/entranceExit';
@@ -21,7 +23,18 @@ export default function RegisterEntranceExit() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const accessType = searchParams.get('type') as AccessType || 'entrance';
- 
+
+  const { status: cedulaStatus, helperText: cedulaHelper, showForeignDialog, confirmForeign, denyForeign } =
+    useCedulaLookup(formData.identification, (fullName) => {
+      const parts = fullName.trim().split(/\s+/);
+      setFormData(prev => ({
+        ...prev,
+        name: parts[0] ?? '',
+        firstLastName: parts[1] ?? '',
+        secondLastName: parts.slice(2).join(' ') ?? '',
+      }));
+    });
+
   useEffect(() => {
     const now = new Date().toISOString().slice(0, 16);
     setFormData(prev => ({
@@ -212,6 +225,7 @@ export default function RegisterEntranceExit() {
 
   return (
     <div className="container py-4">
+      <EntranceExitNav />
       <form onSubmit={handleSubmit}>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h3 className="mb-0">
@@ -248,16 +262,34 @@ export default function RegisterEntranceExit() {
 
           <div className="col-12 col-md-6">
             <label htmlFor="identification" className="form-label">Identificación *</label>
-            <input
-              id="identification"
-              type="text"
-              className={`form-control ${errors.identification ? 'is-invalid' : ''}`}
-              value={formData.identification}
-              onChange={(e) => handleInputChange('identification', e.target.value)}
-              placeholder="Número de identificación"
-              required
-            />
-            {errors.identification && <div className="invalid-feedback">{errors.identification}</div>}
+            <div className="input-group">
+              <input
+                id="identification"
+                type="text"
+                className={`form-control ${errors.identification ? 'is-invalid' : cedulaStatus === 'found' ? 'is-valid' : cedulaStatus === 'not-found' || cedulaStatus === 'error' ? 'is-invalid' : ''}`}
+                value={formData.identification}
+                onChange={(e) => handleInputChange('identification', e.target.value)}
+                placeholder="Número de identificación"
+                required
+              />
+              {cedulaStatus === 'loading' && (
+                <span className="input-group-text">
+                  <span className="spinner-border spinner-border-sm text-secondary" />
+                </span>
+              )}
+              {cedulaStatus === 'found' && (
+                <span className="input-group-text text-success"><i className="bi bi-check-circle-fill" /></span>
+              )}
+              {(cedulaStatus === 'not-found' || cedulaStatus === 'error') && (
+                <span className="input-group-text text-danger"><i className="bi bi-x-circle-fill" /></span>
+              )}
+              {errors.identification && <div className="invalid-feedback">{errors.identification}</div>}
+            </div>
+            {cedulaHelper && !errors.identification && (
+              <div className={`form-text ${cedulaStatus === 'found' ? 'text-success' : cedulaStatus === 'not-found' || cedulaStatus === 'error' ? 'text-danger' : 'text-muted'}`}>
+                {cedulaHelper}
+              </div>
+            )}
           </div>
         </div>
 
@@ -379,6 +411,28 @@ export default function RegisterEntranceExit() {
           </button>
         </div>
       </form>
+
+      {showForeignDialog && (
+        <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">¿Identificación extranjera?</h5>
+              </div>
+              <div className="modal-body">
+                <p>
+                  El número <strong>{formData.identification}</strong> parece ser una cédula DIMEX u otro
+                  tipo de identificación extranjera. ¿Desea buscar el nombre en el Registro de Extranjeros?
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={denyForeign}>No, ingresar manualmente</button>
+                <button className="btn btn-primary" onClick={confirmForeign}>Sí, buscar nombre</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

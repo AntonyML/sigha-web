@@ -2,7 +2,7 @@ import { auditService } from '../../../services/auditService';
 import type { AuditFlowResult, GetAuditReportFlowResult } from './interfaces';
 import { validateAuditReportId } from './validation/reportsValidations';
 import type { SearchAuditReportsDto, PaginatedAuditReportsResponse } from '../../../types/audit';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 /**
  * Flujo para obtener reportes de auditoría generados
@@ -25,7 +25,7 @@ export async function getAuditReports(params?: SearchAuditReportsDto): Promise<A
     };
   } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditReports:', error);
-    const axiosError = error as AxiosError<any>;
+    const axiosError = error as AxiosError;
     return {
       success: false,
       error: axiosError.response?.data?.message || 'Error al obtener reportes de auditoría',
@@ -60,7 +60,7 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
   } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditReportById:', error);
 
-    const axiosError = error as AxiosError<any>;
+    const axiosError = error as AxiosError;
     if (axiosError.response?.status === 404) {
       return {
         success: false,
@@ -94,7 +94,7 @@ export async function generateAuditReport(generateDto: { type: string; startDate
     };
   } catch (error: unknown) {
     console.error('Error en auditFlow.generateAuditReport:', error);
-    const axiosError = error as AxiosError<any>;
+    const axiosError = error as AxiosError;
     return {
       success: false,
       error: axiosError.response?.data?.message || 'Error al generar reporte de auditoría',
@@ -128,7 +128,7 @@ export async function deleteAuditReport(id: number): Promise<AuditFlowResult> {
   } catch (error: unknown) {
     console.error('Error en auditFlow.deleteAuditReport:', error);
 
-    const axiosError = error as AxiosError<any>;
+    const axiosError = error as AxiosError;
     if (axiosError.response?.status === 404) {
       return {
         success: false,

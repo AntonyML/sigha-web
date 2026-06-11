@@ -1,276 +1,182 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { roleFlow } from '../../../infrastructure/flows/role';
-import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
-import type { UserRole } from '../../../types/user';
+﻿import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ShieldCheck, ArrowLeft, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { roleFlow } from '../../../infrastructure/flows/role'
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
+import type { UserRole } from '../../../types/user'
+import { usePagination } from '../../hooks/usePagination'
+import Pagination from '../../components/molecules/Pagination/Pagination'
+import '../../styles/lp.css'
 
 export default function RoleListPage() {
-    const [roles, setRoles] = useState<UserRole[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filteredRoles, setFilteredRoles] = useState<UserRole[]>([]);
-    const navigate = useNavigate();
-    const feedback = useFeedbackWithNotifications();
+  const [roles, setRoles] = useState<UserRole[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const navigate = useNavigate()
+  const feedback = useFeedbackWithNotifications()
 
-    // Cargar roles al montar el componente
-    useEffect(() => {
-        loadRoles();
-    }, []);
+  useEffect(() => { loadRoles() }, [])
 
-    const loadRoles = async () => {
-        setLoading(true);
-        setError('');
+  const loadRoles = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const result = await roleFlow.getAllRoles()
+      if (result.success && result.roles) {
+        setRoles(result.roles)
+      } else {
+        setError(result.error || 'Error al cargar roles')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Error inesperado al cargar roles')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-        try {
-            const result = await roleFlow.getAllRoles();
+  const handleDeleteRole = async (role: UserRole) => {
+    if (role.id <= 10) {
+      feedback.error('No se pueden eliminar los roles del sistema.')
+      return
+    }
+    const ok = await feedback.confirm('Eliminar rol', `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`)
+    if (!ok) return
+    setError('')
+    try {
+      const result = await roleFlow.deleteRole(role.id)
+      if (result.success) {
+        feedback.success('Rol eliminado exitosamente')
+        feedback.showNotification({ title: 'Rol eliminado', message: `El rol "${role.rName}" ha sido eliminado exitosamente.`, variant: 'success' })
+        await loadRoles()
+      } else {
+        setError(result.error || 'Error al eliminar rol')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Error inesperado al eliminar rol')
+    }
+  }
 
-            if (result.success && result.roles) {
-                setRoles(result.roles);
-                setFilteredRoles(result.roles);
-            } else {
-                setError(result.error || 'Error al cargar roles');
-            }
-        } catch (err) {
-            console.error('Error cargando roles:', err);
-            setError('Error inesperado al cargar roles');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const filteredRoles = roles.filter(role =>
+    !searchTerm.trim() || role.rName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-    // Filtrar roles por término de búsqueda
-    useEffect(() => {
-        if (!searchTerm.trim()) {
-            setFilteredRoles(roles);
-        } else {
-            const filtered = roles.filter(role =>
-                role.rName.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setFilteredRoles(filtered);
-        }
-    }, [searchTerm, roles]);
+  const { paginatedItems, page, totalPages, total, pageSize, goToPage } = usePagination(filteredRoles)
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
-    };
-
-    const handleViewRole = (roleId: number) => {
-        navigate(`/roles/view/${roleId}`);
-    };
-
-    const handleEditRole = (roleId: number) => {
-        navigate(`/roles/edit/${roleId}`);
-    };
-
-    const handleDeleteRole = async (role: UserRole) => {
-        // Solo permitir eliminar roles que no sean del sistema (ID > 10 o verificar si no es admin del sistema)
-        if (role.id <= 10) {
-            feedback.error('No se pueden eliminar los roles del sistema.');
-            return;
-        }
-
-        const confirmed = await feedback.confirm(
-            'Eliminar rol',
-            `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`
-        );
-
-        if (!confirmed) return;
-
-        setError('');
-
-        try {
-            const result = await roleFlow.deleteRole(role.id);
-
-            if (result.success) {
-                feedback.success('Rol eliminado exitosamente');
-                feedback.showNotification({
-                    title: 'Rol eliminado',
-                    message: `El rol "${role.rName}" ha sido eliminado exitosamente.`,
-                    variant: 'success'
-                });
-                // Recargar la lista de roles
-                await loadRoles();
-            } else {
-                setError(result.error || 'Error al eliminar rol');
-            }
-        } catch (err) {
-            console.error('Error eliminando rol:', err);
-            setError('Error inesperado al eliminar rol');
-        }
-    };
-
-    const handleCreateRole = () => {
-        navigate('/roles/create');
-    };
-
-    return (
-        <div className="min-vh-100 bg-light">
-            <div className="container-fluid py-4">
-                <div className="row mb-4">
-                    <div className="col-12">
-                        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-                            <div>
-                                <h1 className="h3 fw-bold mb-1">Gestión de Roles</h1>
-                                <p className="text-muted mb-0">Administra los roles y permisos del sistema</p>
-                            </div>
-                            <button
-                                className="btn btn-primary d-flex align-items-center gap-2"
-                                onClick={handleCreateRole}
-                            >
-                                <i className="bi bi-plus-circle"></i>
-                                Nuevo Rol
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {error && (
-                    <div className="row mb-4">
-                        <div className="col-12">
-                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                                {error}
-                                <button type="button" className="btn-close" onClick={() => setError('')}></button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div className="row">
-                    <div className="col-12">
-                        <div className="card shadow-sm border-0">
-                            <div className="card-header bg-white border-bottom py-3">
-                                <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-shield-check me-2 text-primary"></i>
-                                        Lista de Roles
-                                    </h5>
-                                    <div className="d-flex gap-2 w-100 w-md-auto">
-                                        <div className="input-group">
-                                            <span className="input-group-text">
-                                                <i className="bi bi-search"></i>
-                                            </span>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                placeholder="Buscar roles..."
-                                                value={searchTerm}
-                                                onChange={handleSearch}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="card-body p-0">
-                                {loading ? (
-                                    <div className="text-center py-5">
-                                        <div className="spinner-border text-primary" role="status">
-                                            <span className="visually-hidden">Cargando...</span>
-                                        </div>
-                                        <p className="text-muted mt-2">Cargando roles...</p>
-                                    </div>
-                                ) : filteredRoles.length === 0 ? (
-                                    <div className="text-center py-5">
-                                        <i className="bi bi-shield-x display-4 text-muted mb-3"></i>
-                                        <h5 className="text-muted">No se encontraron roles</h5>
-                                        <p className="text-muted">
-                                            {searchTerm ? 'Intenta con otros términos de búsqueda.' : 'Aún no hay roles registrados.'}
-                                        </p>
-                                        {!searchTerm && (
-                                            <button
-                                                className="btn btn-primary mt-3"
-                                                onClick={handleCreateRole}
-                                            >
-                                                <i className="bi bi-plus-circle me-2"></i>
-                                                Crear Primer Rol
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="table-responsive">
-                                        <table className="table table-hover mb-0">
-                                            <thead className="table-light">
-                                                <tr>
-                                                    <th className="border-0 fw-semibold px-4 py-3">ID</th>
-                                                    <th className="border-0 fw-semibold px-4 py-3">Nombre del Rol</th>
-                                                    <th className="border-0 fw-semibold px-4 py-3 text-center">Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredRoles.map((role) => (
-                                                    <tr key={role.id} className="align-middle">
-                                                        <td className="px-4 py-3">
-                                                            <span className="badge bg-secondary fs-6 px-3 py-2">
-                                                                #{role.id}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <div className="d-flex align-items-center">
-                                                                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style={{width: '40px', height: '40px'}}>
-                                                                    <i className="bi bi-shield-check"></i>
-                                                                </div>
-                                                                <div>
-                                                                    <h6 className="mb-0 fw-semibold">{role.rName}</h6>
-                                                                    <small className="text-muted">Rol del sistema</small>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <div className="btn-group" role="group">
-                                                                <button
-                                                                    className="btn btn-sm btn-outline-primary"
-                                                                    onClick={() => handleViewRole(role.id)}
-                                                                    title="Ver detalles"
-                                                                >
-                                                                    <i className="bi bi-eye"></i>
-                                                                </button>
-                                                                <button
-                                                                    className="btn btn-sm btn-outline-warning"
-                                                                    onClick={() => handleEditRole(role.id)}
-                                                                    title="Editar rol"
-                                                                >
-                                                                    <i className="bi bi-pencil"></i>
-                                                                </button>
-                                                                {role.id > 10 && (
-                                                                    <button
-                                                                        className="btn btn-sm btn-outline-danger"
-                                                                        onClick={() => handleDeleteRole(role)}
-                                                                        title="Eliminar rol"
-                                                                    >
-                                                                        <i className="bi bi-trash"></i>
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                            {!loading && filteredRoles.length > 0 && (
-                                <div className="card-footer bg-white border-top py-3">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <small className="text-muted">
-                                            Mostrando {filteredRoles.length} de {roles.length} roles
-                                        </small>
-                                        <button
-                                            className="btn btn-outline-secondary btn-sm"
-                                            onClick={loadRoles}
-                                            disabled={loading}
-                                        >
-                                            <i className="bi bi-arrow-clockwise me-1"></i>
-                                            Actualizar
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="lp-page">
+      <div className="lp-header">
+        <div>
+          <h2 className="lp-title">
+            <ShieldCheck size={22} color="#2563eb" />
+            Gestión de Roles
+          </h2>
+          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>Administra los roles y permisos del sistema</p>
         </div>
-    );
+        <div className="lp-actions">
+          <button className="lp-btn lp-btn--primary" onClick={() => navigate('/roles/create')}>
+            <Plus size={16} /> Nuevo Rol
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="lp-error">
+          <AlertCircle size={18} />
+          {error}
+          <button className="lp-error__retry" onClick={() => setError('')}>Cerrar</button>
+        </div>
+      )}
+
+      <div className="lp-search-card">
+        <div className="lp-search-wrap">
+          <Search size={16} className="lp-search-icon" />
+          <input
+            type="text"
+            className="lp-search-input"
+            placeholder="Buscar roles..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="lp-search-clear" onClick={() => setSearchTerm('')}>
+              <X size={15} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="lp-loading">
+          <div className="lp-spinner" />
+          <span>Cargando roles...</span>
+        </div>
+      ) : filteredRoles.length === 0 ? (
+        <div className="lp-empty">
+          <ShieldCheck size={48} className="lp-empty__icon" />
+          <p>{searchTerm ? 'Intenta con otros términos de búsqueda.' : 'Aún no hay roles registrados.'}</p>
+          {!searchTerm && (
+            <button className="lp-btn lp-btn--primary" onClick={() => navigate('/roles/create')}>
+              <Plus size={15} /> Crear Primer Rol
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="lp-card">
+          <div className="lp-table-wrap">
+            <table className="lp-table">
+              <thead className="lp-table-head">
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre del Rol</th>
+                  <th className="center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.map(role => (
+                  <tr key={role.id}>
+                    <td><span className="lp-badge lp-badge--id">#{role.id}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <ShieldCheck size={16} color="#2563eb" />
+                        </div>
+                        <div>
+                          <strong>{role.rName}</strong>
+                          <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Rol del sistema</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="center">
+                      <div className="lp-table-actions">
+                        <button className="lp-icon-btn lp-icon-btn--view" title="Ver detalles" onClick={() => navigate(`/roles/view/${role.id}`)}>
+                          <Eye size={14} />
+                        </button>
+                        <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/roles/edit/${role.id}`)}>
+                          <Pencil size={14} />
+                        </button>
+                        {role.id > 10 && (
+                          <button className="lp-icon-btn lp-icon-btn--delete" title="Eliminar" onClick={() => handleDeleteRole(role)}>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', padding: '0.5rem 1rem', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+            <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
+            <button className="lp-btn lp-btn--back lp-btn--sm" onClick={loadRoles} disabled={loading}>
+              <RefreshCw size={13} /> Actualizar
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }

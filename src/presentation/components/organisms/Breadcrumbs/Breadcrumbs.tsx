@@ -25,6 +25,37 @@ const routeNameMap: Record<string, string> = {
   'entrance-exit': 'Entradas y Salidas',
   'register': 'Registrar',
   'history': 'Historial',
+  // Clinical modules
+  'nursing': 'Enfermería',
+  'physiotherapy': 'Fisioterapia',
+  'psychology': 'Psicología',
+  'social-work': 'Trabajo Social',
+  'medical-records': 'Registros Médicos',
+  'specialized-appointments': 'Citas',
+  'specialized-areas': 'Áreas Especializadas',
+  'clinical-history': 'Condiciones Clínicas',
+  'clinical-medication': 'Medicamentos Clínicos',
+  'emergency-contacts': 'Contactos de Emergencia',
+  'older-adult-family': 'Familiares',
+  'older-adult-updates': 'Historial de Cambios',
+  // Admin modules
+  'roles': 'Roles',
+  'permissions': 'Permisos',
+  'notifications': 'Notificaciones',
+  'profile': 'Mi Perfil',
+  // Sub-routes
+  'appointments': 'Citas',
+  'patients': 'Pacientes',
+  'pending': 'Pendientes',
+  'completed': 'Completadas',
+  'cancelled': 'Canceladas',
+  'new': 'Nueva',
+  'results': 'Resultados',
+  'complete': 'Completar',
+  'deleted': 'Eliminados',
+  'security': 'Seguridad',
+  'activity-logs': 'Logs de Actividad',
+  'system-health': 'Salud del Sistema',
 };
 
 export default function Breadcrumbs() {

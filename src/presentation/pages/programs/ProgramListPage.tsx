@@ -1,182 +1,169 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { Program } from '../../../types/program';
-import { programService } from '../../../services/programService';
+﻿import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { LayoutGrid, ArrowLeft, Plus, Search, X, AlertCircle, Eye, Pencil, GitBranch, Trash2 } from 'lucide-react'
+import type { Program } from '../../../types/program'
+import { programService } from '../../../services/programService'
+import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
+import { usePagination } from '../../hooks/usePagination'
+import Pagination from '../../components/molecules/Pagination/Pagination'
+import '../../styles/lp.css'
 
 export default function ProgramListPage() {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const navigate = useNavigate();
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+  const navigate = useNavigate()
+  const feedback = useFeedbackWithNotifications()
 
-  useEffect(() => {
-    loadPrograms();
-  }, []);
+  useEffect(() => { loadPrograms() }, [])
 
   async function loadPrograms() {
+    setLoading(true)
+    setError('')
     try {
-      setLoading(true);
-      const data = await programService.getAllPrograms();
-      setPrograms(data);
-    } catch (error) {
-      console.error('❌ Error cargando programas:', error);
-      alert('Error al cargar los programas');
+      const data = await programService.getAllPrograms()
+      setPrograms(data)
+    } catch (err) {
+      console.error(err)
+      setError('Error al cargar los programas')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   async function handleDelete(id: number) {
-    if (window.confirm('¿Está seguro de que desea eliminar este programa?')) {
-      try {
-        await programService.deleteProgram(id);
-        await loadPrograms();
-        alert('Programa eliminado exitosamente');
-      } catch (error) {
-        console.error('❌ Error eliminando programa:', error);
-        alert('Error al eliminar el programa');
-      }
-    }
+    const ok = await feedback.confirm('Eliminar programa', '¿Está seguro de que desea eliminar este programa?')
+    if (!ok) return
+    feedback.error('La eliminación de programas no está disponible en esta versión.')
   }
 
-  const filteredPrograms = programs.filter(program =>
-    program.pName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = programs.filter(p =>
+    p.pName.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
-
+  const { paginatedItems, page, totalPages, total, pageSize, goToPage } = usePagination(filtered)
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">
-          <i className="bi bi-diagram-3 me-2"></i>
+    <div className="lp-page">
+      <div className="lp-header">
+        <h2 className="lp-title">
+          <LayoutGrid size={22} color="#2563eb" />
           Gestión de Programas
         </h2>
-        <div className="d-flex gap-2">
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/programs/create')}
-          >
-            <i className="bi bi-plus-lg me-2"></i>
-            Nuevo Programa
+        <div className="lp-actions">
+          <button className="lp-btn lp-btn--back" onClick={() => navigate('/main-menu')}>
+            <ArrowLeft size={16} /> Menú Principal
           </button>
-          <button
-            className="btn btn-secondary"
-            onClick={() => navigate('/main-menu')}
-          >
-            <i className="bi bi-arrow-left me-2"></i>
-            Menú Principal
+          <button className="lp-btn lp-btn--primary" onClick={() => navigate('/programs/create')}>
+            <Plus size={16} /> Nuevo Programa
           </button>
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div className="row align-items-center">
-            <div className="col-md-6">
-              <h5 className="mb-0">Lista de Programas</h5>
-            </div>
-            <div className="col-md-6">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Buscar programas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+      {error && (
+        <div className="lp-error">
+          <AlertCircle size={18} />
+          {error}
+          <button className="lp-error__retry" onClick={loadPrograms}>Reintentar</button>
         </div>
+      )}
 
-        <div className="card-body p-0">
-          {loading ? (
-            <div className="text-center p-4">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Cargando...</span>
-              </div>
-            </div>
-          ) : filteredPrograms.length === 0 ? (
-            <div className="text-center p-4">
-              <i className="bi bi-inbox display-1 text-muted"></i>
-              <p className="mt-3 text-muted">
-                {searchTerm ? 'No se encontraron programas que coincidan con la búsqueda' : 'No hay programas registrados'}
-              </p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-hover mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Fecha Creación</th>
-                    <th>Subprogramas</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPrograms.map((program) => (
-                    <tr key={program.id}>
-                      <td>
-                        <div>
-                          <strong>{program.pName}</strong>
-                          <div className="text-muted small">
-                            Programa creado el {program.createAt ? new Date(program.createAt).toLocaleDateString() : 'N/A'}
-                          </div>
-                          {program.subPrograms && program.subPrograms.length > 0 && (
-                            <div className="mt-1">
-                              <small className="text-info">
-                                <i className="bi bi-diagram-3 me-1"></i>
-                                Subprogramas: {program.subPrograms?.map(sp => sp.spName).join(', ') || 'Ninguno'}
-                              </small>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        {program.createAt ? new Date(program.createAt).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td>
-                        <span className="badge bg-info text-dark">
-                          {program.subPrograms?.length || 0} subprogramas
-                        </span>
-                      </td>
-                      <td>
-                        <div className="btn-group btn-group-sm">
-                          <button
-                            className="btn btn-outline-primary"
-                            onClick={() => navigate(`/programs/view/${program.id}`)}
-                            title="Ver detalles"
-                          >
-                            <i className="bi bi-eye"></i>
-                          </button>
-                          <button
-                            className="btn btn-outline-success"
-                            onClick={() => navigate(`/programs/edit/${program.id}`)}
-                            title="Editar"
-                          >
-                            <i className="bi bi-pencil"></i>
-                          </button>
-                          <button
-                            className="btn btn-outline-danger"
-                            onClick={() => handleDelete(program.id!)}
-                            title="Eliminar"
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <div className="lp-search-card">
+        <div className="lp-search-wrap">
+          <Search size={16} className="lp-search-icon" />
+          <input
+            type="text"
+            className="lp-search-input"
+            placeholder="Buscar programas..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button className="lp-search-clear" onClick={() => setSearchTerm('')}>
+              <X size={15} />
+            </button>
           )}
         </div>
       </div>
 
-      <div className="mt-3 text-muted small">
-        Total: {filteredPrograms.length} programa(s)
-      </div>
+      {loading ? (
+        <div className="lp-loading">
+          <div className="lp-spinner" />
+          <span>Cargando programas...</span>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="lp-empty">
+          <LayoutGrid size={48} className="lp-empty__icon" />
+          <p>{searchTerm ? 'No se encontraron programas con esa búsqueda.' : 'No hay programas registrados.'}</p>
+        </div>
+      ) : (
+        <div className="lp-card">
+          <div className="lp-table-wrap">
+            <table className="lp-table">
+              <thead className="lp-table-head">
+                <tr>
+                  <th>Nombre</th>
+                  <th>Fecha Creación</th>
+                  <th>Subprogramas</th>
+                  <th className="center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedItems.map(program => (
+                  <tr key={program.id}>
+                    <td>
+                      <strong>{program.pName}</strong>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                        Creado {program.createAt ? new Date(program.createAt).toLocaleDateString() : 'N/A'}
+                      </div>
+                      {program.subPrograms && program.subPrograms.length > 0 && (
+                        <div style={{ fontSize: '0.78rem', color: '#0891b2', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <GitBranch size={11} />
+                          {program.subPrograms.map(sp => sp.spName).join(', ')}
+                        </div>
+                      )}
+                    </td>
+                    <td>{program.createAt ? new Date(program.createAt).toLocaleDateString() : 'N/A'}</td>
+                    <td>
+                      <span className="lp-badge lp-badge--info">
+                        {program.subPrograms?.length ?? 0} subprogramas
+                      </span>
+                    </td>
+                    <td className="center">
+                      <div className="lp-table-actions">
+                        <button
+                          className="lp-icon-btn lp-icon-btn--view"
+                          title="Ver detalles"
+                          onClick={() => navigate(`/programs/view/${program.id}`)}
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          className="lp-icon-btn lp-icon-btn--edit"
+                          title="Editar"
+                          onClick={() => navigate(`/programs/edit/${program.id}`)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          className="lp-icon-btn lp-icon-btn--delete"
+                          title="Eliminar"
+                          onClick={() => handleDelete(program.id!)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
+        </div>
+      )}
+      {!loading && <div className="lp-count">Total: {filtered.length} programa(s)</div>}
     </div>
-  );
+  )
 }

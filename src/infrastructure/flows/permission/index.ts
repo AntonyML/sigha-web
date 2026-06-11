@@ -1,11 +1,14 @@
 export { permissionFlow } from './permissionFlow';
+export { permissionEntityFlow } from './permissionEntityFlow';
+export type {
+  PermissionCheckFlowResult,
+  GetRolePermissionsFlowResult,
+  GetAllRolesFlowResult
+} from './permissionFlow';
 export type {
   GetPermissionsFlowResult,
   GetPermissionFlowResult,
   CreatePermissionFlowResult,
   UpdatePermissionFlowResult,
-  DeletePermissionFlowResult,
-  GetRolePermissionsFlowResult,
-  SetRolePermissionsFlowResult,
-  LoadCurrentUserResult,
-} from './permissionFlow';
+  DeletePermissionFlowResult
+} from './permissionEntityFlow';

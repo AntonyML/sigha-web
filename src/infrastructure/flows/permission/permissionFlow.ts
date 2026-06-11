@@ -1,149 +1,252 @@
-import { permissionApiService } from '../../../services/permissionApiService';
-import type { PermissionApi, RolePermissionApi } from '../../../services/permissionApiService';
-import { authStorage } from '../../../infrastructure/storage/authStorage';
-import { roleFlow } from '../../../infrastructure/flows/role';
-import type { UserRole } from '../../../types/user';
-import { getPermissionErrorMessage } from './validation/permissionValidations';
+import { permissionService } from '../../../services/permissionService';
+import type {
+  PermissionCheckResult,
+  PermissionModuleType,
+  PermissionActionType,
+  RolePermissions
+} from '../../../types/permissions';
 
-export interface GetPermissionsFlowResult {
-  success: boolean;
-  permissions?: PermissionApi[];
-  error?: string;
-}
-
-export interface GetPermissionFlowResult {
-  success: boolean;
-  permission?: PermissionApi;
-  error?: string;
-}
-
-export interface CreatePermissionFlowResult {
-  success: boolean;
-  permission?: PermissionApi;
-  error?: string;
-}
-
-export interface UpdatePermissionFlowResult {
-  success: boolean;
-  permission?: PermissionApi;
-  error?: string;
-}
-
-export interface DeletePermissionFlowResult {
+/**
+ * Resultado de verificación de permisos
+ */
+export interface PermissionCheckFlowResult extends PermissionCheckResult {
   success: boolean;
   error?: string;
 }
 
+/**
+ * Resultado de obtención de permisos de rol
+ */
 export interface GetRolePermissionsFlowResult {
   success: boolean;
-  permissions?: RolePermissionApi[];
+  rolePermissions?: RolePermissions;
   error?: string;
 }
 
-export interface SetRolePermissionsFlowResult {
+/**
+ * Resultado de obtención de todos los roles
+ */
+export interface GetAllRolesFlowResult {
   success: boolean;
-  permissions?: RolePermissionApi[];
+  roles?: RolePermissions[];
   error?: string;
 }
 
-export interface LoadCurrentUserResult {
-  success: boolean;
-  roleId?: number;
-  error?: string;
-}
-
+/**
+ * PermissionFlow - Flujo de gestión de permisos
+ *
+ * Encapsula toda la lógica de permisos, incluyendo verificación,
+ * obtención de permisos por rol y validaciones.
+ */
 export const permissionFlow = {
-  // ──────────────── Catálogo ────────────────
-
-  async getAllPermissions(): Promise<GetPermissionsFlowResult> {
+  /**
+   * Inicializa el sistema de permisos
+   * Debe llamarse al inicio de la aplicación
+   */
+  async initialize(): Promise<{ success: boolean; error?: string }> {
     try {
-      const permissions = await permissionApiService.getAll();
-      return { success: true, permissions };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  async getPermissionById(id: number): Promise<GetPermissionFlowResult> {
-    try {
-      const permission = await permissionApiService.getById(id);
-      return { success: true, permission };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  async createPermission(
-    payload: Parameters<typeof permissionApiService.create>[0]
-  ): Promise<CreatePermissionFlowResult> {
-    try {
-      const permission = await permissionApiService.create(payload);
-      return { success: true, permission };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  async updatePermission(
-    id: number,
-    payload: Parameters<typeof permissionApiService.update>[1]
-  ): Promise<UpdatePermissionFlowResult> {
-    try {
-      const permission = await permissionApiService.update(id, payload);
-      return { success: true, permission };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  async deletePermission(id: number): Promise<DeletePermissionFlowResult> {
-    try {
-      await permissionApiService.remove(id);
+      await permissionService.initialize();
       return { success: true };
     } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
+      console.error('Error initializing permission system:', error);
+      return {
+        success: false,
+        error: 'Error al inicializar el sistema de permisos'
+      };
     }
   },
-
-  // ──────────────── Por rol ────────────────
-
-  async getRolePermissions(roleId: number): Promise<GetRolePermissionsFlowResult> {
-    try {
-      const permissions = await permissionApiService.getByRole(roleId);
-      return { success: true, permissions };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  async setRolePermissions(
-    roleId: number,
-    permissionIds: number[]
-  ): Promise<SetRolePermissionsFlowResult> {
-    try {
-      const permissions = await permissionApiService.setRolePermissions(roleId, permissionIds);
-      return { success: true, permissions };
-    } catch (error) {
-      return { success: false, error: getPermissionErrorMessage(error) };
-    }
-  },
-
-  // ──────────────── Sesión actual ────────────────
 
   /**
-   * Resuelve el roleId del usuario autenticado a partir del rol (id o nombre)
-   * almacenado en authStorage. Devuelve `null` si no hay usuario o no se puede
-   * mapear a un ID.
+   * Verifica si un usuario tiene un permiso específico
+   *
+   * @param userRoleId - ID del rol del usuario
+   * @param module - Módulo del sistema
+   * @param action - Acción a verificar
+   * @returns Resultado de la verificación
    */
-  async resolveCurrentRoleId(rolesCache?: UserRole[] | null): Promise<number | null> {
-    const user = authStorage.getUser();
-    if (!user || user.role === undefined || user.role === null) return null;
-
-    if (typeof user.role === 'number') return user.role;
-
-    const roleName = String(user.role).toLowerCase();
-    const roles = rolesCache ?? (await roleFlow.getAllRoles()).roles ?? null;
-    const found = roles?.find(r => r.rName.toLowerCase() === roleName);
-    return found?.id ?? null;
+  checkPermission(
+    userRoleId: number,
+    module: PermissionModuleType,
+    action: PermissionActionType
+  ): PermissionCheckFlowResult {
+    try {
+      const result = permissionService.checkPermission(userRoleId, module, action);
+      return {
+        success: true,
+        ...result
+      };
+    } catch (error) {
+      console.error('Error checking permission:', error);
+      return {
+        success: false,
+        hasPermission: false,
+        error: 'Error al verificar permisos'
+      };
+    }
   },
+
+  /**
+   * Verifica si un usuario puede acceder a un módulo
+   * (al menos tiene permiso de vista)
+   *
+   * @param userRoleId - ID del rol del usuario
+   * @param module - Módulo del sistema
+   * @returns true si puede acceder al módulo
+   */
+  canAccessModule(userRoleId: number, module: PermissionModuleType): boolean {
+    try {
+      return permissionService.canAccessModule(userRoleId, module);
+    } catch (error) {
+      console.error('Error checking module access:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Verifica si un usuario puede realizar una acción específica
+   *
+   * @param userRoleId - ID del rol del usuario
+   * @param module - Módulo del sistema
+   * @param action - Acción a verificar
+   * @returns true si puede realizar la acción
+   */
+  canPerformAction(
+    userRoleId: number,
+    module: PermissionModuleType,
+    action: PermissionActionType
+  ): boolean {
+    try {
+      return permissionService.canPerformAction(userRoleId, module, action);
+    } catch (error) {
+      console.error('Error checking action permission:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Obtiene todos los permisos de un rol específico
+   *
+   * @param roleId - ID del rol
+   * @returns Resultado con los permisos del rol
+   */
+  getRolePermissions(roleId: number): GetRolePermissionsFlowResult {
+    try {
+      const roleInfo = permissionService.getRoleInfo(roleId);
+
+      if (!roleInfo) {
+        return {
+          success: false,
+          error: `Rol con ID ${roleId} no encontrado`
+        };
+      }
+
+      return {
+        success: true,
+        rolePermissions: roleInfo
+      };
+    } catch (error) {
+      console.error('Error getting role permissions:', error);
+      return {
+        success: false,
+        error: 'Error al obtener permisos del rol'
+      };
+    }
+  },
+
+  /**
+   * Obtiene información de todos los roles disponibles
+   *
+   * @returns Resultado con todos los roles
+   */
+  getAllRoles(): GetAllRolesFlowResult {
+    try {
+      const roles = permissionService.getAllRoles();
+      return {
+        success: true,
+        roles
+      };
+    } catch (error) {
+      console.error('Error getting all roles:', error);
+      return {
+        success: false,
+        error: 'Error al obtener roles'
+      };
+    }
+  },
+
+  /**
+   * Verifica múltiples permisos a la vez
+   *
+   * @param userRoleId - ID del rol del usuario
+   * @param permissions - Lista de permisos a verificar
+   * @returns Objeto con resultados de cada verificación
+   */
+  checkMultiplePermissions(
+    userRoleId: number,
+    permissions: Array<{ module: PermissionModuleType; action: PermissionActionType }>
+  ): Record<string, boolean> {
+    try {
+      return permissionService.checkMultiplePermissions(userRoleId, permissions);
+    } catch (error) {
+      console.error('Error checking multiple permissions:', error);
+      // Retorna false para todos los permisos en caso de error
+      const result: Record<string, boolean> = {};
+      permissions.forEach(({ module, action }) => {
+        result[`${module}:${action}`] = false;
+      });
+      return result;
+    }
+  },
+
+  /**
+   * Verifica si un módulo es público (accesible sin autenticación)
+   *
+   * @param module - Módulo del sistema
+   * @returns true si es público
+   */
+  isPublicModule(module: PermissionModuleType): boolean {
+    try {
+      return permissionService.isPublicModule(module);
+    } catch (error) {
+      console.error('Error checking public module:', error);
+      return false;
+    }
+  },
+
+  // ==================== Helpers ====================
+
+  /**
+   * Obtiene los módulos disponibles en el sistema
+   */
+  getAvailableModules(): PermissionModuleType[] {
+    try {
+      return permissionService.getAvailableModules();
+    } catch (error) {
+      console.error('Error getting available modules:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Obtiene las acciones disponibles en el sistema
+   */
+  getAvailableActions(): PermissionActionType[] {
+    try {
+      return permissionService.getAvailableActions();
+    } catch (error) {
+      console.error('Error getting available actions:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Valida que un módulo y acción sean válidos
+   */
+  isValidPermission(module: string, action: string): boolean {
+    const availableModules = this.getAvailableModules();
+    const availableActions = this.getAvailableActions();
+
+    return availableModules.includes(module as PermissionModuleType) &&
+           availableActions.includes(action as PermissionActionType);
+  }
 };

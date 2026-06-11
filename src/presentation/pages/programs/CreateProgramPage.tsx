@@ -7,6 +7,7 @@ import { defaultProgram, PROGRAM_TYPE_MAP, PROGRAM_STATUS_MAP } from '../../../t
 export default function CreateProgramPage() {
   const [formData, setFormData] = useState<CreateProgramData>(defaultProgram);
   const [loading, setLoading] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [subPrograms, setSubPrograms] = useState<Pick<SubProgram, 'spName'>[]>([]);
   const [newSubProgramName, setNewSubProgramName] = useState('');
   const navigate = useNavigate();
@@ -50,15 +51,20 @@ export default function CreateProgramPage() {
 
     try {
       setLoading(true);
+      setSubmitError('');
       console.log('📤 Creando programa:', formData);
-      
+
       await programService.createProgram(formData);
-      
-      alert('Programa creado exitosamente');
+
       navigate('/programs');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error creando programa:', error);
-      alert('Error al crear el programa. Por favor, inténtelo de nuevo.');
+      const status = error?.response?.status
+      if (status === 409) {
+        setSubmitError('Ya existe un programa con ese nombre. Por favor elija un nombre diferente.')
+      } else {
+        setSubmitError('Error al crear el programa. Por favor, inténtelo de nuevo.')
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +87,14 @@ export default function CreateProgramPage() {
             Regresar
           </button>
         </div>
+
+        {submitError && (
+          <div className="alert alert-danger alert-dismissible" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {submitError}
+            <button type="button" className="btn-close" onClick={() => setSubmitError('')} />
+          </div>
+        )}
 
         <div className="row">
           <div className="col-lg-8">

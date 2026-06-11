@@ -1,331 +1,610 @@
-
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import type { FormData } from '../../../types/formData'
-import { defaultFormData } from '../../../types/formData'
+import type { VirtualFile, UpdateVirtualFileData } from '../../../types/virtualFile'
+import { defaultVirtualFile } from '../../../types/virtualFile'
+import { virtualFileService } from '../../../services/virtualFileService'
+import { clinicalConditionService } from '../../../services/clinicalConditionService'
+import type { ClinicalCondition } from '../../../types/clinicalCondition'
+import { useCedulaLookup } from '../../hooks/useCedulaLookup'
 
+/* ── Helpers ──────────────────────────────────────────────── */
+const BLOOD_TYPES = ['A+','A-','B+','B-','AB+','AB-','O+','O-','UNKNOWN']
+const RCVG_OPTIONS: [string, string][] = [
+  ['< 10%',     '< 10%'],
+  ['e /10y20%', '10 – 20%'],
+  ['e /20y30%', '20 – 30%'],
+  ['e /40y40%', '30 – 40%'],
+  ['> 40%',     '> 40%'],
+  ['UNKNOWN',   'N/E'],
+]
+
+function formatColones(v: number | string): string {
+  const n = typeof v === 'string' ? parseFloat(v.replace(/\./g, '').replace(',', '.')) : v
+  if (!n && n !== 0) return ''
+  return n.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
+function parseColones(s: string): number {
+  return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
+}
+
+function imcColor(imc: string) {
+  const v = parseFloat(imc)
+  if (isNaN(v)) return { bg: '#f1f5f9', fg: '#64748b', label: '' }
+  if (v < 18.5) return { bg: '#dbeafe', fg: '#1d4ed8', label: 'Bajo peso' }
+  if (v < 25)   return { bg: '#dcfce7', fg: '#15803d', label: 'Normal' }
+  if (v < 30)   return { bg: '#fef9c3', fg: '#a16207', label: 'Sobrepeso' }
+  return              { bg: '#fee2e2', fg: '#b91c1c', label: 'Obesidad' }
+}
+
+/* ══════════════════════════════════════════════════════════ */
 export default function EditVirtualFile() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [formData, setFormData] = useState<FormData>(defaultFormData)
-  const [loading, setLoading] = useState<boolean>(true)
 
+  const [formData,     setFormData]     = useState<VirtualFile>(defaultVirtualFile)
+  const [conditions,   setConditions]   = useState<ClinicalCondition[]>([])
+  const [condIds,      setCondIds]      = useState<number[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [saving,       setSaving]       = useState(false)
+  const [error,        setError]        = useState<string | null>(null)
+  const [saveOk,       setSaveOk]       = useState(false)
+  const [ingresoDisplay, setIngresoDisplay] = useState('')
+
+  /* ── Cédula: validación, normalización y consulta Hacienda ── */
+  const {
+    status:           cedulaStatus,
+    helperText:       cedulaHelper,
+    normalizedRaw:    cedulaNormalized,
+    showForeignDialog,
+    confirmForeign,
+    denyForeign,
+  } = useCedulaLookup(
+    formData.cedula,
+    (nombre, normalized) => setFormData(p => ({ ...p, nombreApellido: nombre, cedula: normalized })),
+    { skipFirstRun: true }
+  )
+
+  /* ── Load data ─────────────────────────────────────────── */
   useEffect(() => {
-    console.log('EditVirtualFile mounted, id=', id)
-    if (!id) {
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    const t = setTimeout(() => {
-      const mock: FormData = {
-        ...defaultFormData,
-        fecha: new Date().toISOString().slice(0, 10),
-        cedula: `ID-${id}`,
-        nombreApellido: 'Paciente Ejemplo',
-        edad: '75',
-        fechaNacimiento: '1950-01-01',
-        estadoCivil: 'viudo',
-        vivienda: 'Propia',
-        anosEscolaridad: '6',
-        trabajoPrevio: 'jubilacion',
-        programa: 'programa1',
-        zonaProcedencia: 'Zona A',
-        cantHijos: '2',
-        familiarACargo: 'María',
-        vinculo: 'Hija',
-        telefono: '0987654321',
-        ingresoHogar: '500',
-        email: 'paciente@ejemplo.com',
-        ta: '120/80',
-        peso: '70',
-        talla: '170',
-        imc: '24.2',
-        hta: true,
-        dbt: false,
-        dislip: false,
-        irc: false,
-        cardioIsq: false,
-        acv: false,
-        amputacion: false,
-        tabaquismo: false,
-        alcoholismo: false,
-        parkinson: false,
-        demencia: false,
-        prostatismo: false,
-        incontinenciaUrinaria: false,
-        caidasFrecuentes: false,
-        neoplasias: false,
-        neoplasiasDetalle: '',
-        otrasCondiciones: '',
-        rcvg: '<10%',
-        vacunaCt: false,
-        vacunaHepB: false,
-        vacunaGripe: true,
-        vacunaNeumococo: false,
-        dificultadesVision: 'NO',
-        problemasAudicion: 'NO'
-      }
-      setFormData(mock)
-      setLoading(false)
-    }, 300)
-    return () => clearTimeout(t)
+    if (!id) { setLoading(false); return }
+    Promise.all([
+      virtualFileService.getVirtualFileById(Number(id)),
+      clinicalConditionService.getAllClinicalConditions(),
+    ]).then(([file, conds]) => {
+      setFormData(file)
+      setConditions(conds)
+      setIngresoDisplay(formatColones(file.ingresoEconomico ?? 0))
+      // Reconstruct condIds from the boolean flags set by mapApiToVirtualFile
+      const COND_FLAGS: [keyof typeof file, number][] = [
+        ['hta',1],['dbt',2],['dislip',3],['irc',4],['cardioIsq',5],
+        ['acv',6],['amputacion',7],['tabaquismo',8],['alcoholismo',9],
+        ['parkinson',10],['demencia',11],['prostatismo',12],
+        ['incontinenciaUrinaria',13],['caidasFrecuentes',14],['neoplasias',15],
+      ]
+      setCondIds(COND_FLAGS.filter(([k]) => file[k] === true).map(([,id]) => id))
+    }).catch(() => setError('No se pudo cargar el expediente.'))
+      .finally(() => setLoading(false))
   }, [id])
+  /* ── Auto-calc IMC ─────────────────────────────────────── */
+  useEffect(() => {
+    const peso = parseFloat(formData.peso)
+    const cm   = parseFloat(formData.talla)
+    if (!isNaN(peso) && !isNaN(cm) && cm > 0) {
+      const m = cm / 100
+      setFormData(p => ({ ...p, imc: (peso / (m * m)).toFixed(1) }))
+    }
+  }, [formData.peso, formData.talla])
 
-  function onInputChange(field: keyof FormData, value: string | boolean) {
-    setFormData((prev) => ({ ...prev, [field]: value } as FormData))
+  /* ── Helpers ───────────────────────────────────────────── */
+  const COND_ID_TO_KEY: Record<number, keyof VirtualFile> = {
+    1:'hta', 2:'dbt', 3:'dislip', 4:'irc', 5:'cardioIsq',
+    6:'acv', 7:'amputacion', 8:'tabaquismo', 9:'alcoholismo',
+    10:'parkinson', 11:'demencia', 12:'prostatismo',
+    13:'incontinenciaUrinaria', 14:'caidasFrecuentes', 15:'neoplasias',
+  }
+  function set(field: keyof VirtualFile, value: string | boolean | number) {
+    setFormData(p => ({ ...p, [field]: value } as VirtualFile))
+  }
+  function toggleCond(id: number) {
+    setCondIds(prev => {
+      const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      const key = COND_ID_TO_KEY[id]
+      if (key) setFormData(p => ({ ...p, [key]: !prev.includes(id) } as VirtualFile))
+      return next
+    })
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  /* ── Submit ────────────────────────────────────────────── */
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-
-    navigate('/virtualFiles')
+    if (!id) return
+    setSaving(true)
+    setSaveOk(false)
+    try {
+      await virtualFileService.updateVirtualFile(Number(id), formData as UpdateVirtualFileData)
+      setSaveOk(true)
+      setTimeout(() => navigate('/virtualFiles'), 1200)
+    } catch (err) {
+      console.error(err)
+      setError('Error al guardar cambios.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  if (!id) {
-    return (
-      <div className="container py-4">
-        <h3 className="mb-3">ID no proporcionado</h3>
-        <p>No se encontró el identificador del expediente. Puedes crear uno nuevo o volver a la lista.</p>
-        <div className="d-flex gap-2">
-          <button className="btn btn-primary" onClick={() => navigate('/virtualFiles/new')}>Crear nuevo</button>
-          <button className="btn btn-secondary" onClick={() => navigate('/virtualFiles')}>Volver a la lista</button>
-        </div>
-      </div>
-    )
-  }
+  const imc = imcColor(formData.imc)
 
-  if (loading) {
-    return <div className="container py-4">Cargando registro...</div>
-  }
+  /* ─── Loading / Error states ─────────────────────────── */
+  if (!id) return (
+    <div style={wrapStyle}>
+      <p style={{ color: '#64748b' }}>No se proporcionó ID del expediente.</p>
+      <button onClick={() => navigate('/virtualFiles')} style={btnSecondary}>← Volver</button>
+    </div>
+  )
 
+  if (loading) return (
+    <div style={{ ...wrapStyle, display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#64748b' }}>
+      <span style={{ fontSize: '1.5rem', animation: 'spin 0.8s linear infinite', display: 'inline-block' }}>⏳</span>
+      Cargando expediente…
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+
+  if (error && loading === false && !formData.cedula) return (
+    <div style={wrapStyle}>
+      <div style={{ padding: '1rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '0.75rem', color: '#b91c1c', marginBottom: '1rem' }}>{error}</div>
+      <button onClick={() => navigate('/virtualFiles')} style={btnSecondary}>← Volver</button>
+    </div>
+  )
+
+  /* ══════════════════════════════════════════════════════ */
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="mb-0">Editar Expediente Virtual {id ? `#${id}` : ''}</h3>
-        <button className="btn btn-secondary" onClick={() => navigate('/virtualFiles')}>
-          <i className="bi bi-arrow-left me-2"></i>
-          Regresar
-        </button>
+    <div style={wrapStyle}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* ── Top bar ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button onClick={() => navigate('/virtualFiles')} style={btnSecondary}>← Volver</button>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>
+              Editar expediente
+            </h1>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#94a3b8' }}>
+              {formData.nombreApellido || `#${id}`} · Cédula {formData.cedula || '–'}
+            </p>
+          </div>
+        </div>
+        {saveOk && (
+          <div style={{ padding: '0.5rem 1rem', background: '#dcfce7', border: '1px solid #86efac', borderRadius: '0.625rem', color: '#15803d', fontWeight: 600, fontSize: '0.875rem' }}>
+            ✓ Guardado exitosamente
+          </div>
+        )}
       </div>
-      <form onSubmit={handleSubmit}>
-        <div className="row g-3 mb-4">
-          <div className="col-12 col-md-4">
-            <label htmlFor="cedula" className="form-label">CÉDULA</label>
-            <input id="cedula" className="form-control" value={formData.cedula}
-              onChange={(e) => onInputChange('cedula', e.target.value)} placeholder="Número de cédula" />
-          </div>
-          <div className="col-12 col-md-4">
-            <label htmlFor="edad" className="form-label">EDAD</label>
-            <input id="edad" type="text" className="form-control" readOnly value={formData.edad} />
-          </div>
-          <div className="col-12 col-md-4">
-            <label htmlFor="fechaNacimiento" className="form-label">FECHA NACIMIENTO</label>
-            <input id="fechaNacimiento" type="date" className="form-control"
-              value={formData.fechaNacimiento}
-              onChange={(e) => {
-                onInputChange('fechaNacimiento', e.target.value)
-                const fd = e.target.value ? new Date(e.target.value) : null
-                if (fd) {
-                  const diff = Date.now() - fd.getTime()
-                  const age = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))
-                  onInputChange('edad', String(age))
-                } else {
-                  onInputChange('edad', '')
-                }
-              }} />
-          </div>
-        </div>
-        <div className="row g-3 mb-4">
-          <div className="col-12 col-md-6">
-            <label htmlFor="nombreApellido" className="form-label">NOMBRE Y APELLIDO</label>
-            <input id="nombreApellido" className="form-control"
-              value={formData.nombreApellido} onChange={(e) => onInputChange('nombreApellido', e.target.value)} placeholder="Nombre completo" />
-          </div>
-          <div className="col-12 col-md-6">
-            <label htmlFor="estadoCivil" className="form-label">ESTADO CIVIL</label>
-            <select id="estadoCivil" className="form-select" value={formData.estadoCivil}
-              onChange={(e) => onInputChange('estadoCivil', e.target.value)}>
-              <option value="">Seleccionar</option>
-              <option value="soltero">Soltero(a)</option>
-              <option value="casado">Casado(a)</option>
-              <option value="viudo">Viudo(a)</option>
-              <option value="divorciado">Divorciado(a)</option>
-              <option value="union-libre">Unión Libre</option>
-            </select>
-          </div>
-        </div>
 
-        <div className="row g-3 mb-4">
-          <div className="col-12 col-md-4">
-            <label className="form-label">VIVIENDA</label>
-            <input className="form-control" value={formData.vivienda} onChange={(e) => onInputChange('vivienda', e.target.value)} />
-          </div>
-          <div className="col-12 col-md-4">
-            <label className="form-label">AÑOS DE ESCOLARIDAD</label>
-            <input type="number" className="form-control" value={formData.anosEscolaridad}
-              onChange={(e) => onInputChange('anosEscolaridad', e.target.value)} />
-          </div>
-          <div className="col-12 col-md-4">
-            <label className="form-label">TRABAJO PREVIO</label>
-            <select className="form-select" value={formData.trabajoPrevio} onChange={(e) => onInputChange('trabajoPrevio', e.target.value)}>
-              <option value="">Seleccionar</option>
-              <option value="jubilacion">Jubilación</option>
-              <option value="pension">Pensión</option>
-              <option value="otros">Otros</option>
-            </select>
-          </div>
+      {error && (
+        <div style={{ padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '0.625rem', color: '#b91c1c', marginBottom: '1rem', fontSize: '0.875rem' }}>
+          {error}
         </div>
+      )}
 
-        <hr />
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-        <div className="row g-3 mb-3">
-          <div className="col-12 col-md-3">
-            <label className="form-label">TA (mmHg)</label>
-            <input className="form-control" value={formData.ta} onChange={(e) => onInputChange('ta', e.target.value)} placeholder="120/80" />
-          </div>
-          <div className="col-12 col-md-3">
-            <label className="form-label">PESO (kg)</label>
-            <input type="number" step="0.1" className="form-control" value={formData.peso}
-              onChange={(e) => onInputChange('peso', e.target.value)} placeholder="70.5" />
-          </div>
-          <div className="col-12 col-md-3">
-            <label className="form-label">TALLA (cm)</label>
-            <input type="number" className="form-control" value={formData.talla}
-              onChange={(e) => onInputChange('talla', e.target.value)} placeholder="170" />
-          </div>
-          <div className="col-12 col-md-3">
-            <label className="form-label">IMC</label>
-            <input readOnly className="form-control" value={formData.imc} placeholder="Calculado automáticamente" />
-          </div>
-        </div>
-        <div className="mb-3">
-          <h6>Condiciones Médicas</h6>
-          <div className="row">
-            {[
-              ['hta', 'HTA'],
-              ['dbt', 'DBT'],
-              ['dislip', 'DISLIP'],
-              ['irc', 'IRC'],
-              ['cardioIsq', 'CARDIO ISQ'],
-              ['acv', 'ACV'],
-              ['amputacion', 'AMPUTACIÓN'],
-              ['tabaquismo', 'TABAQUISMO'],
-              ['alcoholismo', 'ALCOHOLISMO'],
-              ['parkinson', 'PARKINSON'],
-              ['demencia', 'DEMENCIA'],
-              ['prostatismo', 'PROSTATISMO'],
-              ['incontinenciaUrinaria', 'INCONTINENCIA URINARIA'],
-              ['caidasFrecuentes', 'CAÍDAS FRECUENTES'],
-              ['neoplasias', 'NEOPLASIAS']
-            ].map(([key, label]) => (
-              <div className="col-6 col-md-3" key={String(key)}>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id={String(key)}
-                    checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof FormData, e.target.checked)} />
-                  <label className="form-check-label" htmlFor={String(key)}>{label}</label>
-                </div>
+        {/* ── Datos personales ── */}
+        <Section title="👤 Datos personales">
+          <Grid cols={3}>
+            <Field label="Cédula *">
+              <CedulaInput
+                value={formData.cedula}
+                status={cedulaStatus}
+                helperText={cedulaHelper}
+                normalized={cedulaNormalized}
+                onChange={v => set('cedula', v)}
+              />
+            </Field>
+            {showForeignDialog && (
+              <ForeignConfirmDialog
+                onConfirm={confirmForeign}
+                onDeny={denyForeign}
+              />
+            )}
+            <Field label="Fecha de nacimiento">
+              <input type="date" className="form-control" value={formData.fechaNacimiento}
+                onChange={e => {
+                  set('fechaNacimiento', e.target.value)
+                  const d = e.target.value ? new Date(e.target.value) : null
+                  if (d) {
+                    const age = Math.floor((Date.now() - d.getTime()) / (1000*60*60*24*365.25))
+                    set('edad', String(age))
+                  }
+                }} />
+            </Field>
+            <Field label="Edad">
+              <input type="number" min={0} max={130} className="form-control" value={formData.edad}
+                onChange={e => set('edad', e.target.value)} />
+            </Field>
+          </Grid>
+
+          <Grid cols={2}>
+            <Field label="Nombre completo *">
+              <input className="form-control" value={formData.nombreApellido}
+                onChange={e => set('nombreApellido', e.target.value)} />
+            </Field>
+            <Field label="Estado civil">
+              <select className="form-select" value={formData.estadoCivil}
+                onChange={e => set('estadoCivil', e.target.value)}>
+                <option value="">Seleccionar</option>
+                <option value="soltero">Soltero(a)</option>
+                <option value="casado">Casado(a)</option>
+                <option value="viudo">Viudo(a)</option>
+                <option value="divorciado">Divorciado(a)</option>
+                <option value="union-libre">Unión libre</option>
+              </select>
+            </Field>
+          </Grid>
+
+          <Grid cols={2}>
+            <Field label="Género">
+              <div style={{ display: 'flex', gap: '0.625rem', paddingTop: '0.25rem', flexWrap: 'wrap' }}>
+                {[['male','Masculino'],['female','Femenino'],['not specified','N/E']].map(([v,l]) => (
+                  <PillBtn key={v} active={formData.genero === v} onClick={() => set('genero', v)}>{l}</PillBtn>
+                ))}
               </div>
-            ))}
-          </div>
+            </Field>
+            <Field label="Tipo de sangre">
+              <div style={{ display: 'flex', gap: '0.5rem', paddingTop: '0.25rem', flexWrap: 'wrap' }}>
+                {BLOOD_TYPES.map(bt => (
+                  <PillBtn key={bt} active={formData.tipoSangre === bt} onClick={() => set('tipoSangre', bt)}
+                    variant={bt === 'UNKNOWN' ? 'neutral' : 'red'}>{bt === 'UNKNOWN' ? '?' : bt}</PillBtn>
+                ))}
+              </div>
+            </Field>
+          </Grid>
 
-          {(formData as any).neoplasias && (
-            <div className="mt-3">
-              <label className="form-label">¿Cuál?</label>
-              <input className="form-control" value={formData.neoplasiasDetalle}
-                onChange={(e) => onInputChange('neoplasiasDetalle', e.target.value)} />
-            </div>
+          <Grid cols={3}>
+            <Field label="Teléfono">
+              <input className="form-control" value={formData.telefono || ''}
+                onChange={e => set('telefono', e.target.value)} />
+            </Field>
+            <Field label="Correo electrónico">
+              <input type="email" className="form-control" value={formData.email || ''}
+                onChange={e => set('email', e.target.value)} />
+            </Field>
+            <Field label="Zona de procedencia">
+              <input className="form-control" value={formData.zonaProcedencia || ''}
+                onChange={e => set('zonaProcedencia', e.target.value)} />
+            </Field>
+          </Grid>
+
+          <Grid cols={3}>
+            <Field label="Vivienda">
+              <input className="form-control" value={formData.vivienda}
+                onChange={e => set('vivienda', e.target.value)} />
+            </Field>
+            <Field label="Años de escolaridad">
+              <select className="form-select" value={formData.anosEscolaridad}
+                onChange={e => set('anosEscolaridad', e.target.value)}>
+                <option value="">Seleccionar</option>
+                {['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18'].map(n => (
+                  <option key={n} value={n}>{n === '0' ? 'Sin escolaridad' : `${n} años`}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Trabajo previo">
+              <select className="form-select" value={formData.trabajoPrevio}
+                onChange={e => set('trabajoPrevio', e.target.value)}>
+                <option value="">Seleccionar</option>
+                <option value="jubilacion">Jubilación</option>
+                <option value="pension">Pensión</option>
+                <option value="otros">Otros</option>
+              </select>
+            </Field>
+          </Grid>
+
+          <Grid cols={2}>
+            <Field label="Cantidad de hijos">
+              <input type="number" min={0} className="form-control" value={formData.cantidadHijos || 0}
+                onChange={e => set('cantidadHijos', parseInt(e.target.value) || 0)} />
+            </Field>
+            <Field label="Ingreso económico (₡)">
+              <input type="text" inputMode="numeric" className="form-control"
+                value={ingresoDisplay}
+                onChange={e => {
+                  const raw = e.target.value.replace(/[^0-9.,]/g, '')
+                  setIngresoDisplay(raw)
+                  set('ingresoEconomico', parseColones(raw))
+                }}
+                onBlur={() => setIngresoDisplay(formatColones(formData.ingresoEconomico as number))}
+                onFocus={() => {
+                  const raw = String(formData.ingresoEconomico || '')
+                  setIngresoDisplay(raw === '0' ? '' : raw)
+                }} />
+            </Field>
+          </Grid>
+        </Section>
+
+        {/* ── Antecedentes clínicos ── */}
+        <Section title="🩺 Antecedentes clínicos">
+          <SubTitle>Signos vitales</SubTitle>
+          <Grid cols={4}>
+            <Field label="TA – Sistólica / Diastólica (mmHg)">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                <input
+                  type="number" min={0} max={300} className="form-control"
+                  value={formData.ta?.split('/')[0] ?? ''}
+                  onChange={e => {
+                    const dia = formData.ta?.split('/')[1] ?? ''
+                    set('ta', `${e.target.value}/${dia}`)
+                  }}
+                  placeholder="120"
+                  style={{ textAlign: 'center' }}
+                />
+                <span style={{ fontWeight: 700, color: '#94a3b8', fontSize: '1.1rem', flexShrink: 0 }}>/</span>
+                <input
+                  type="number" min={0} max={200} className="form-control"
+                  value={formData.ta?.split('/')[1] ?? ''}
+                  onChange={e => {
+                    const sys = formData.ta?.split('/')[0] ?? ''
+                    set('ta', `${sys}/${e.target.value}`)
+                  }}
+                  placeholder="80"
+                  style={{ textAlign: 'center' }}
+                />
+              </div>
+            </Field>
+            <Field label="Peso (kg)">
+              <input type="number" step="0.1" className="form-control" value={formData.peso}
+                onChange={e => set('peso', e.target.value)} />
+            </Field>
+            <Field label="Talla (cm)">
+              <input type="number" className="form-control" value={formData.talla}
+                onChange={e => set('talla', e.target.value)} />
+            </Field>
+            <Field label="IMC">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 38 }}>
+                <span style={{ fontWeight: 700, fontSize: '1.1rem', color: imc.fg }}>{formData.imc || '–'}</span>
+                {imc.label && (
+                  <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '999px', background: imc.bg, color: imc.fg, fontWeight: 600 }}>{imc.label}</span>
+                )}
+              </div>
+            </Field>
+          </Grid>
+
+          {conditions.length > 0 && (
+            <>
+              <SubTitle>Condiciones médicas</SubTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '0.5rem' }}>
+                {conditions.filter(c => c.ccName && c.id).map(c => (
+                  <label key={c.id} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem',
+                    borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.875rem',
+                    background: condIds.includes(c.id!) ? '#eff6ff' : '#f8fafc',
+                    border: `1px solid ${condIds.includes(c.id!) ? '#93c5fd' : '#e2e8f0'}`,
+                    color: condIds.includes(c.id!) ? '#1d4ed8' : '#475569',
+                    fontWeight: condIds.includes(c.id!) ? 600 : 400, transition: 'all 150ms',
+                  }}>
+                    <input type="checkbox" checked={condIds.includes(c.id!)}
+                      onChange={() => toggleCond(c.id!)}
+                      style={{ accentColor: '#3b82f6', width: 15, height: 15 }} />
+                    {c.ccName}
+                  </label>
+                ))}
+              </div>
+            </>
           )}
 
-          <div className="mt-3">
-            <label className="form-label">OTROS</label>
-            <input className="form-control" value={formData.otrasCondiciones}
-              onChange={(e) => onInputChange('otrasCondiciones', e.target.value)} />
-          </div>
-        </div>
-        <div className="mb-4">
-          <h6>RCVG</h6>
-          <div className="d-flex flex-wrap gap-3">
-            {[
-              ['<10%', 'Menos de 10%'],
-              ['e/10 y 20%', 'Entre 10 y 20%'],
-              ['e/20 y 30%', 'Entre 20 y 30%'],
-              ['e/30 y 40%', 'Entre 30 y 40%'],
-              ['>40%', 'Más de 40%']
-            ].map(([value, label]) => (
-              <div className="form-check me-3" key={String(value)}>
-                <input className="form-check-input" type="radio" name="rcvg" id={`rcvg_${String(value)}`}
-                  value={String(value)} checked={formData.rcvg === value}
-                  onChange={(e) => onInputChange('rcvg', e.target.value)} />
-                <label className="form-check-label" htmlFor={`rcvg_${String(value)}`}>{label}</label>
-              </div>
+          <Grid cols={2} style={{ marginTop: '1rem' }}>
+            <Field label="Neoplasias (detalle)">
+              <input className="form-control" value={formData.neoplasiasDetalle}
+                onChange={e => set('neoplasiasDetalle', e.target.value)} />
+            </Field>
+            <Field label="Otras condiciones">
+              <input className="form-control" value={formData.otrasCondiciones}
+                onChange={e => set('otrasCondiciones', e.target.value)} />
+            </Field>
+          </Grid>
+
+          <SubTitle style={{ marginTop: '1.25rem' }}>Riesgo cardiovascular global (RCVG)</SubTitle>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            {RCVG_OPTIONS.map(([v, l]) => (
+              <PillBtn key={v} active={formData.rcvg === v} onClick={() => set('rcvg', v)} size="md">{l}</PillBtn>
             ))}
           </div>
-        </div>
 
-        <div className="mb-4">
-          <h6>VACUNACIÓN</h6>
-          <div className="row">
-            {[
-              ['vacunaCt', 'cT'],
-              ['vacunaHepB', 'Hep B'],
-              ['vacunaGripe', 'Gripe'],
-              ['vacunaNeumococo', 'Neumococo']
-            ].map(([key, label]) => (
-              <div className="col-6 col-md-3" key={String(key)}>
-                <div className="form-check">
-                  <input className="form-check-input" type="checkbox" id={String(key)}
-                    checked={!!(formData as any)[String(key)]}
-                    onChange={(e) => onInputChange(key as keyof FormData, e.target.checked)} />
-                  <label className="form-check-label" htmlFor={String(key)}>{label}</label>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <h6>VISIÓN</h6>
-          <div className="d-flex gap-4">
-            <div className="form-check">
-              <input className="form-check-input" type="radio" id="visionSi" name="vision" value="SI"
-                checked={formData.dificultadesVision === 'SI'}
-                onChange={(e) => onInputChange('dificultadesVision', e.target.value)} />
-              <label className="form-check-label" htmlFor="visionSi">SI</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1.25rem' }}>
+            <div>
+              <SubTitle>Dificultades de visión</SubTitle>
+              <ToggleYesNo value={formData.dificultadesVision} onChange={v => set('dificultadesVision', v)} name="vision" />
             </div>
-            <div className="form-check">
-              <input className="form-check-input" type="radio" id="visionNo" name="vision" value="NO"
-                checked={formData.dificultadesVision === 'NO'}
-                onChange={(e) => onInputChange('dificultadesVision', e.target.value)} />
-              <label className="form-check-label" htmlFor="visionNo">NO</label>
+            <div>
+              <SubTitle>Problemas de audición</SubTitle>
+              <ToggleYesNo value={formData.problemasAudicion} onChange={v => set('problemasAudicion', v)} name="audicion" />
             </div>
           </div>
-        </div>
+        </Section>
 
-        <div className="mb-4">
-          <h6>AUDICIÓN</h6>
-          <div className="d-flex gap-4">
-            <div className="form-check">
-              <input className="form-check-input" type="radio" id="audicionSi" name="audicion" value="SI"
-                checked={formData.problemasAudicion === 'SI'}
-                onChange={(e) => onInputChange('problemasAudicion', e.target.value)} />
-              <label className="form-check-label" htmlFor="audicionSi">SI</label>
-            </div>
-            <div className="form-check">
-              <input className="form-check-input" type="radio" id="audicionNo" name="audicion" value="NO"
-                checked={formData.problemasAudicion === 'NO'}
-                onChange={(e) => onInputChange('problemasAudicion', e.target.value)} />
-              <label className="form-check-label" htmlFor="audicionNo">NO</label>
-            </div>
-          </div>
-        </div>
-
-        <div className="d-flex gap-2">
-          <button type="submit" className="btn btn-primary"><i className="bi bi-save me-2"></i>Guardar</button>
-          <button type="button" className="btn btn-secondary" onClick={() => navigate('/virtualFiles')}> <i className="bi bi-arrow-left me-2"></i>Regresar</button>
+        {/* ── Botones ── */}
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <button type="button" onClick={() => navigate('/virtualFiles')} style={btnSecondary}>
+            Cancelar
+          </button>
+          <button type="submit" disabled={saving} style={{
+            padding: '0.625rem 1.75rem', background: saving ? '#86efac' : '#16a34a', color: '#fff',
+            border: 'none', borderRadius: '0.625rem', cursor: saving ? 'not-allowed' : 'pointer',
+            fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem',
+          }}>
+            {saving
+              ? <><span style={{ animation: 'spin 0.8s linear infinite', display: 'inline-block' }}>⏳</span> Guardando…</>
+              : '✓ Guardar cambios'}
+          </button>
         </div>
       </form>
+    </div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* Sub-components                                              */
+/* ═══════════════════════════════════════════════════════════ */
+
+const wrapStyle: React.CSSProperties = { maxWidth: 860, margin: '0 auto', padding: '1.5rem 1rem 4rem', fontFamily: 'inherit' }
+
+const btnSecondary: React.CSSProperties = { padding: '0.375rem 0.875rem', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '0.5rem', cursor: 'pointer', color: '#475569', fontSize: '0.8125rem', fontWeight: 500 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.875rem', padding: '1.5rem' }}>
+      <h2 style={{ margin: '0 0 1.25rem', fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>{title}</h2>
+      {children}
+    </div>
+  )
+}
+
+function SubTitle({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <p style={{ margin: '0 0 0.625rem', fontWeight: 600, fontSize: '0.8125rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', ...style }}>{children}</p>
+}
+
+function Grid({ cols, children, style }: { cols: number; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: '1rem', marginBottom: '1rem', ...style }}>
+      {children}
+    </div>
+  )
+}
+
+function Field({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
+  return (
+    <div style={style}>
+      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.375rem' }}>{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function PillBtn({ active, onClick, children, variant = 'blue', size = 'sm' }: {
+  active: boolean; onClick: () => void; children: React.ReactNode;
+  variant?: 'blue' | 'red' | 'neutral'; size?: 'sm' | 'md'
+}) {
+  const colors = {
+    blue:    { on: { bg: '#eff6ff', border: '#93c5fd', color: '#1d4ed8' }, off: { bg: '#f8fafc', border: '#e2e8f0', color: '#64748b' } },
+    red:     { on: { bg: '#fee2e2', border: '#fca5a5', color: '#b91c1c' }, off: { bg: '#f8fafc', border: '#e2e8f0', color: '#64748b' } },
+    neutral: { on: { bg: '#f1f5f9', border: '#94a3b8', color: '#475569' }, off: { bg: '#f8fafc', border: '#e2e8f0', color: '#94a3b8' } },
+  }
+  const c = active ? colors[variant].on : colors[variant].off
+  const pad = size === 'md' ? '0.45rem 1rem' : '0.3rem 0.75rem'
+  return (
+    <button type="button" onClick={onClick} style={{
+      padding: pad, borderRadius: '999px', border: `1px solid ${c.border}`,
+      background: c.bg, color: c.color, cursor: 'pointer', fontSize: '0.8125rem',
+      fontWeight: active ? 700 : 400, transition: 'all 150ms',
+    }}>{children}</button>
+  )
+}
+
+function ToggleYesNo({ value, onChange }: { value: string; onChange: (v: string) => void; name?: string }) {
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem' }}>
+      {['SI','NO'].map(v => (
+        <button key={v} type="button" onClick={() => onChange(v)} style={{
+          flex: 1, padding: '0.5rem', borderRadius: '0.5rem', border: `2px solid ${value === v ? (v === 'SI' ? '#f87171' : '#86efac') : '#e2e8f0'}`,
+          background: value === v ? (v === 'SI' ? '#fee2e2' : '#dcfce7') : '#f8fafc',
+          color: value === v ? (v === 'SI' ? '#b91c1c' : '#15803d') : '#94a3b8',
+          fontWeight: value === v ? 700 : 400, cursor: 'pointer', fontSize: '0.9375rem', transition: 'all 150ms',
+        }}>{v}</button>
+      ))}
+    </div>
+  )
+}
+
+/* ── CedulaInput ───────────────────────────────────────────────── */
+function CedulaInput({
+  value, status, helperText, normalized, onChange,
+}: {
+  value:      string
+  status:     'idle' | 'loading' | 'found' | 'notfound' | 'error'
+  helperText: string
+  normalized: string
+  onChange:   (v: string) => void
+}) {
+  const borderColor =
+    status === 'found'    ? '#86efac' :
+    status === 'notfound' ? '#fca5a5' :
+    status === 'error'    ? '#f87171' : undefined
+
+  const helperColor =
+    status === 'found'  ? '#15803d' :
+    status === 'error'  ? '#b91c1c' : '#b45309'
+
+  const showNormalized =
+    normalized.length === 9 &&
+    normalized !== value.replace(/[^0-9]/g, '') &&
+    status !== 'idle'
+
+  return (
+    <div>
+      <div style={{ position: 'relative' }}>
+        <input
+          className="form-control"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="1-2345-6789"
+          style={{ paddingRight: '2.25rem', borderColor }}
+        />
+        <span style={{ position: 'absolute', right: '0.625rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', pointerEvents: 'none' }}>
+          {status === 'loading'  && <span style={{ animation: 'spin 0.7s linear infinite', display: 'inline-block' }}>⏳</span>}
+          {status === 'found'    && '✅'}
+          {status === 'notfound' && '❓'}
+          {status === 'error'    && '⛔'}
+        </span>
+      </div>
+      {showNormalized && (
+        <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: '#6366f1' }}>
+          Número normalizado: <strong>{normalized}</strong> (ceros completados)
+        </p>
+      )}
+      {helperText && (
+        <p style={{ margin: '0.2rem 0 0', fontSize: '0.7rem', color: helperColor }}>{helperText}</p>
+      )}
+    </div>
+  )
+}
+
+/* ── ForeignConfirmDialog ─────────────────────────────────── */
+function ForeignConfirmDialog({ onConfirm, onDeny }: { onConfirm: () => void; onDeny: () => void }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+    }}>
+      <div style={{
+        background: '#fff', borderRadius: '1rem', padding: '2rem',
+        maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+      }}>
+        <div style={{ fontSize: '2rem', textAlign: 'center', marginBottom: '0.75rem' }}>🌍</div>
+        <h3 style={{ margin: '0 0 0.5rem', textAlign: 'center', fontSize: '1.0625rem', color: '#1e293b' }}>
+          ¿Cédula extranjera (DIMEX)?
+        </h3>
+        <p style={{ margin: '0 0 1.5rem', fontSize: '0.875rem', color: '#64748b', textAlign: 'center', lineHeight: 1.5 }}>
+          El número tiene <strong>11 o más dígitos</strong>, lo que corresponde a un DIMEX (extranjero
+          residente en Costa Rica). ¿Confirma que esta persona es extranjera?
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button type="button" onClick={onDeny} style={{
+            flex: 1, padding: '0.625rem 1rem', borderRadius: '0.5rem',
+            border: '1.5px solid #e2e8f0', background: '#f8fafc',
+            color: '#64748b', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem',
+          }}>
+            No, corregir cédula
+          </button>
+          <button type="button" onClick={onConfirm} style={{
+            flex: 1, padding: '0.625rem 1rem', borderRadius: '0.5rem',
+            border: 'none', background: '#3b82f6',
+            color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem',
+          }}>
+            Sí, es extranjero
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

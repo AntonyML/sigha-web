@@ -2,7 +2,7 @@
 // Centraliza las validaciones y mensajes de error para los flujos de gestión de usuarios
 
 import type { CreateUserData, UpdateUserData, UserChangePasswordData, UserSearchParams } from '../../../../types/user';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 
 // Validaciones de negocio para crear usuario
@@ -350,7 +350,7 @@ export function getUserManagementErrorMessage(error: AxiosError | Error | unknow
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError<any>;
+  const axiosError = error as AxiosError;
   if (axiosError?.response?.status === 400) {
     const msg = axiosError?.response?.data?.message;
     if (typeof msg === 'string') return msg;

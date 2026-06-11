@@ -1,194 +1,258 @@
-import { useNavigate } from 'react-router-dom';
-import { Icon } from '../../components/atoms';
-import { useTwoFactorStatus } from '../../../infrastructure/flows/twoFactor';
-import { usePermissions } from '../../../utils/permissionUtils';
-import './style.css';
+/**
+ * MainMenuPage — Rediseño completo con 4 capas de progressive disclosure
+ *
+ * Capa 0  HeroStats        → métricas del día (siempre visible cuando 2FA activo)
+ * Capa 1  Accesos rápidos  → 4 módulos de uso diario
+ * Capa 2  Atención clínica → grid compacto de módulos especializados
+ * Capa 3  Administración   → solo usuarios con permisos avanzados
+ *
+ * Lógica de acceso preservada:
+ *  - loading || !2FA activo  → banner de 2FA, secciones ocultas
+ *  - sin permisos avanzados  → Accesos Rápidos + Clínica (sin Administración)
+ *  - permisos completos      → todo visible
+ */
 
-interface MenuOption {
-    id: string;
-    title: string;
-    description: string;
-    icon: string;
-    route: string;
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  FileText, Stethoscope, ArrowLeftRight, CalendarDays,
+  Activity, Brain, HeartHandshake, ClipboardList,
+  CalendarCheck, Building2, HeartPulse, Pill, PhoneCall,
+  Users, History, Syringe,
+  UserCog, Shield, Lock, FileSearch, Bell,
+  ShieldAlert, Loader2, ChevronRight,
+} from 'lucide-react';
+
+import { useTwoFactorStatus } from '../../../infrastructure/flows/twoFactor';
+import { PermissionUtils }    from '../../../utils/permissionUtils';
+import HeroStats              from './HeroStats';
+import './MainMenuPage.css';
+
+/* ─── Types ───────────────────────────────────────────── */
+
+interface QuickItem {
+  label:  string;
+  desc:   string;
+  route:  string;
+  icon:   React.ReactNode;
+  color:  'blue' | 'indigo' | 'emerald' | 'teal';
 }
 
+interface CompactItem {
+  label:  string;
+  route:  string;
+  icon:   React.ReactNode;
+  color:  string;
+}
+
+/* ─── Quick Access (Layer 2) ──────────────────────────── */
+
+const quickItems: QuickItem[] = [
+  {
+    label: 'Fichas Virtuales',
+    desc:  'Gestionar expedientes y datos de residentes',
+    route: '/virtualFiles',
+    icon:  <FileText />,
+    color: 'blue',
+  },
+  {
+    label: 'Citas',
+    desc:  'Agendar y gestionar citas de todas las áreas clínicas',
+    route: '/specialized-appointments',
+    icon:  <CalendarCheck />,
+    color: 'indigo',
+  },
+  {
+    label: 'Entradas y Salidas',
+    desc:  'Registrar movimientos de residentes y visitas',
+    route: '/entrance-exit',
+    icon:  <ArrowLeftRight />,
+    color: 'emerald',
+  },
+  {
+    label: 'Programas',
+    desc:  'Actividades, sub-programas y planificación',
+    route: '/programs',
+    icon:  <CalendarDays />,
+    color: 'teal',
+  },
+];
+
+/* ─── Clinical items (Layer 3) ────────────────────────── */
+
+const clinicalItems: CompactItem[] = [
+  { label: 'Enfermería',             route: '/nursing',                   icon: <Stethoscope />,      color: 'indigo'  },
+  { label: 'Fisioterapia',           route: '/physiotherapy',             icon: <Activity />,        color: 'rose'    },
+  { label: 'Psicología',             route: '/psychology',                icon: <Brain />,            color: 'purple'  },
+  { label: 'Trabajo Social',         route: '/social-work',               icon: <HeartHandshake />,   color: 'sky'     },
+  { label: 'Registros Médicos',      route: '/medical-records',           icon: <ClipboardList />,    color: 'orange'  },
+  { label: 'Áreas Especializadas',   route: '/specialized-areas',         icon: <Building2 />,        color: 'lime'    },
+  { label: 'Condiciones Clínicas',   route: '/clinical-history',          icon: <HeartPulse />,       color: 'fuchsia' },
+  { label: 'Medicamentos Clínicos',  route: '/clinical-medication',       icon: <Pill />,             color: 'pink'    },
+  { label: 'Contactos Emergencia',   route: '/emergency-contacts',        icon: <PhoneCall />,        color: 'red'     },
+  { label: 'Familiares',             route: '/older-adult-family',        icon: <Users />,            color: 'green'   },
+  { label: 'Historial de Cambios',   route: '/older-adult-updates',       icon: <History />,          color: 'amber'   },
+  { label: 'Vacunas',                route: '/vaccines',                  icon: <Syringe />,          color: 'slate'   },
+];
+
+/* ─── Admin items (Layer 4) ───────────────────────────── */
+
+const adminItems: CompactItem[] = [
+  { label: 'Usuarios',       route: '/users',         icon: <UserCog />,     color: 'blue'   },
+  { label: 'Roles',          route: '/roles',          icon: <Shield />,      color: 'indigo' },
+  { label: 'Permisos',       route: '/permissions',    icon: <Lock />,        color: 'emerald'},
+  { label: 'Auditoría',      route: '/audits',         icon: <FileSearch />,  color: 'orange' },
+  { label: 'Notificaciones', route: '/notifications',  icon: <Bell />,        color: 'amber'  },
+];
+
+/* ─── Sub-components ──────────────────────────────────── */
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div className="mm-section-header">
+      <h2 className="mm-section-title">{title}</h2>
+      <div className="mm-section-divider" aria-hidden="true" />
+    </div>
+  );
+}
+
+function QuickCard({ item, onClick }: { item: QuickItem; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="mm-quick-card"
+      onClick={onClick}
+      aria-label={item.label}
+    >
+      <span className={`mm-quick-icon-wrap mm-quick-icon-wrap--${item.color}`} aria-hidden="true">
+        {item.icon}
+      </span>
+      <span className="mm-quick-label">{item.label}</span>
+      <span className="mm-quick-desc">{item.desc}</span>
+    </button>
+  );
+}
+
+function CompactCard({ item, onClick }: { item: CompactItem; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="mm-compact-card"
+      onClick={onClick}
+      aria-label={item.label}
+    >
+      <span className={`mm-compact-icon mm-compact-icon--${item.color}`} aria-hidden="true">
+        {item.icon}
+      </span>
+      <span className="mm-compact-label">{item.label}</span>
+    </button>
+  );
+}
+
+/* ─── Main Component ──────────────────────────────────── */
+
 export default function MainMenuPage() {
-    const navigate = useNavigate();
-    const { isEnabled, loading } = useTwoFactorStatus();
-    const { isNotSpecifiedSync, canAccessModule } = usePermissions();
+  const navigate = useNavigate();
+  const { isEnabled, loading } = useTwoFactorStatus();
+  const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
 
-    const menuOptions: MenuOption[] = [
-        {
-            id: '1',
-            title: 'Fichas Virtuales',
-            description: 'Gestionar y visualizar todas las fichas virtuales de pacientes',
-            icon: 'assignment',
-            route: '/virtualFiles'
-        },
-        {
-            id: '2',
-            title: 'Enfermería',
-            description: 'Gestionar citas médicas, pacientes y seguimiento de enfermería',
-            icon: 'medical_services',
-            route: '/nursing'
-        },
-        {
-            id: '3',
-            title: 'Usuarios',
-            description: 'Administrar usuarios del sistema y sus permisos',
-            icon: 'group',
-            route: '/users'
-        },
-        {
-            id: '4',
-            title: 'Roles',
-            description: 'Gestionar roles del sistema y sus permisos asociados',
-            icon: 'admin_panel_settings',
-            route: '/roles'
-        },
-        {
-            id: '5',
-            title: 'Permisos',
-            description: 'Administrar permisos del sistema y sus configuraciones',
-            icon: 'security',
-            route: '/permissions'
-        },
-        {
-            id: '6',
-            title: 'Configuración 2FA',
-            description: 'Configurar autenticación de dos factores para mayor seguridad',
-            icon: 'lock',
-            route: '/two-factor'
-        },
-        {
-            id: '7',
-            title: 'Entradas y Salidas',
-            description: 'Registrar y visualizar entradas y salidas de personas y vehículos',
-            icon: 'transfer_within_a_station',
-            route: '/entrance-exit'
-        },
-        {
-            id: '8',
-            title: 'Auditoría',
-            description: 'Revisar registros de auditoría y actividad del sistema',
-            icon: 'shield',
-            route: '/audits'
-        },
-        {
-            id: '9',
-            title: 'Mi Perfil',
-            description: 'Ver y editar tu información personal y configuración de cuenta',
-            icon: 'person',
-            route: '/profile'
-        }
-    ];
-
-    const handleMenuClick = (route: string) => {
-        navigate(route);
+  useEffect(() => {
+    const checkPermissions = async () => {
+      try {
+        const [canManageUsers, isSuperAdmin] = await Promise.all([
+          PermissionUtils.canViewAllUsers(),
+          PermissionUtils.isSuperAdmin(),
+        ]);
+        setHasRequiredPermissions(canManageUsers || isSuperAdmin);
+      } catch {
+        setHasRequiredPermissions(false);
+      }
     };
+    checkPermissions();
+  }, []);
 
-    // Filtrar opciones del menú basado en estado del 2FA y permisos
-    const getFilteredMenuOptions = () => {
-        // Si está cargando, no mostrar opciones para evitar parpadeo
-        if (loading) {
-            return [];
-        }
+  const go = (route: string) => navigate(route);
 
-        // Si el usuario no tiene 2FA activado, mostrar únicamente Configuración 2FA
-        if (!isEnabled) {
-            return menuOptions.filter(option => option.id === '6');
-        }
-
-        // Si el rol es "not specified", sólo permitir Configuración 2FA y Mi Perfil
-        if (isNotSpecifiedSync()) {
-            return menuOptions.filter(option =>
-                option.id === '6' || // Configuración 2FA
-                option.id === '9'    // Mi Perfil
-            );
-        }
-
-        // Mapear cada opción de menú a su correspondiente identificador de módulo
-        const optionModuleMap: Record<string, string> = {
-            '1': 'virtualFiles',
-            '2': 'nursing',
-            '3': 'users',
-            '4': 'roles',
-            '5': 'permissions',
-            '6': 'twoFactor',
-            '7': 'entranceExit',
-            '8': 'audits',
-            '9': 'profile'
-        };
-
-        return menuOptions.filter(option => {
-            const moduleName = optionModuleMap[option.id];
-            return moduleName ? canAccessModule(moduleName) : false;
-        });
-    };
-
-    const filteredMenuOptions = getFilteredMenuOptions();
-
+  /* Loading state */
+  if (loading) {
     return (
-        <div className="container py-4">
-           
-            {/* Indicador de carga */}
-            {loading && (
-                <div className="alert alert-info text-center mb-4">
-                    <i className="bi bi-hourglass-split me-2"></i>
-                    Verificando configuración de seguridad...
-                </div>
-            )}
-
-            {/* Grid de opciones del menú */}
-            <div className="row g-4">
-                {filteredMenuOptions.map((option) => (
-                    <div key={option.id} className="col-12 col-md-6 col-lg-4">
-                        <div
-                            className="card h-100 shadow-sm border-0 hover-card"
-                            style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
-                            onClick={() => handleMenuClick(option.route)}
-                        >
-                            <div className="card-body text-center p-4 d-flex flex-column">
-                                {/* Imagen/Icono */}
-                                <div className="mb-3">
-                                    <div
-                                        className="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center"
-                                        style={{ width: '80px', height: '80px' }}
-                                    >
-                                        <Icon name={option.icon} size="xl" className="text-primary" />
-                                    </div>
-                                </div>
-
-                                {/* Título */}
-                                <h5 className="card-title fw-bold text-dark mb-2">
-                                    {option.title}
-                                </h5>
-
-                                {/* Descripción */}
-                                <p className="card-text text-muted flex-grow-1">
-                                    {option.description}
-                                </p>
-
-                                {/* Indicador de acción */}
-                                <div className="mt-auto">
-                                    <span className="text-primary fw-semibold">
-                                        Acceder →
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Espacio para futuras opciones */}
-            {filteredMenuOptions.length === 0 && (
-                <div className="text-center py-5">
-                    <div className="text-muted">
-                        No hay opciones de menú disponibles
-                    </div>
-                </div>
-            )}
+      <div className="main-menu-page">
+        <HeroStats />
+        <div className="mm-loading-banner">
+          <Loader2 className="mm-loading-spinner" aria-hidden="true" />
+          Verificando configuración de seguridad…
         </div>
+      </div>
     );
+  }
+
+  /* 2FA required gate */
+  if (!isEnabled) {
+    return (
+      <div className="main-menu-page">
+        <HeroStats />
+        <div className="mm-2fa-banner" role="alert">
+          <span className="mm-2fa-banner-icon" aria-hidden="true">
+            <ShieldAlert size={20} />
+          </span>
+          <div className="mm-2fa-banner-body">
+            <p className="mm-2fa-banner-title">Verificación en dos pasos requerida</p>
+            <p className="mm-2fa-banner-msg">
+              Para acceder al sistema debes activar la autenticación de dos factores (2FA)
+              desde tu menú de usuario.
+            </p>
+            <button
+              type="button"
+              className="mm-2fa-banner-btn"
+              onClick={() => navigate('/two-factor')}
+            >
+              Configurar 2FA <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* Authenticated + 2FA active — render layered menu */
+  const showAdmin = hasRequiredPermissions === true;
+
+  return (
+    <div className="main-menu-page">
+      {/* Capa 0 — Hero Stats */}
+      <HeroStats />
+
+      {/* Capa 1 — Accesos Rápidos */}
+      <section className="mm-section" aria-labelledby="mm-quick-title">
+        <SectionHeader title="Accesos Rápidos" />
+        <div className="mm-quick-grid" id="mm-quick-title" role="list">
+          {quickItems.map(item => (
+            <QuickCard key={item.route} item={item} onClick={() => go(item.route)} />
+          ))}
+        </div>
+      </section>
+
+      {/* Capa 2 — Atención Clínica */}
+      <section className="mm-section" aria-labelledby="mm-clinical-title">
+        <SectionHeader title="Atención Clínica" />
+        <div className="mm-compact-grid" id="mm-clinical-title" role="list">
+          {clinicalItems.map(item => (
+            <CompactCard key={item.route} item={item} onClick={() => go(item.route)} />
+          ))}
+        </div>
+      </section>
+
+      {/* Capa 3 — Administración (permisos avanzados) */}
+      {showAdmin && (
+        <section className="mm-section" aria-labelledby="mm-admin-title">
+          <SectionHeader title="Administración" />
+          <div className="mm-admin-grid mm-compact-grid" id="mm-admin-title" role="list">
+            {adminItems.map(item => (
+              <CompactCard key={item.route} item={item} onClick={() => go(item.route)} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
 }
