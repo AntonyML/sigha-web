@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { PermissionUtils } from '../../../utils/permissionUtils';
-import { permissionService } from '../../../services/permissionService';
+import { usePermissions } from '../../../utils/permissionUtils';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole, CreateUserData } from '../../../types/user';
-import type { Permission, PermissionModuleType } from '../../../types/permissions';
+import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
 import { PermissionModule } from '../../../types/permissions';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
@@ -40,25 +40,22 @@ export default function CreateUserPage() {
     const [roles, setRoles] = useState<UserRole[]>([]);
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [permissions, setPermissions] = useState<Permission[]>([]);
-    const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({});
     const [permissionsLoading, setPermissionsLoading] = useState(false);
     const [permissionsError, setPermissionsError] = useState<string>('');
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+    const { canCreateUsers } = usePermissions();
 
-    // Verificar permisos y cargar roles al montar el componente
     useEffect(() => {
         const checkPermissionsAndLoadData = async () => {
             try {
-                // Verificar permisos
-                const canCreate = await PermissionUtils.canCreateUsers();
+                const canCreate = canCreateUsers();
                 setHasPermission(canCreate);
 
                 if (!canCreate) {
                     return;
                 }
 
-                // Cargar roles
                 const result = await roleFlow.getAllRoles();
                 if (result.success && result.roles) {
                     setRoles(result.roles);
@@ -71,7 +68,7 @@ export default function CreateUserPage() {
         };
 
         checkPermissionsAndLoadData();
-    }, []);
+    }, [canCreateUsers]);
 
     function onInputChange(field: keyof UserFormData, value: string | number) {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -95,7 +92,6 @@ export default function CreateUserPage() {
     async function loadRolePermissions(roleId: number) {
         if (roleId === 0) {
             setPermissions([]);
-            setSelectedPermissions({});
             setPermissionsError('');
             return;
         }
@@ -107,47 +103,36 @@ export default function CreateUserPage() {
         const timeoutId = setTimeout(() => {
             console.warn('Timeout cargando permisos del rol:', roleId);
             setPermissions([]);
-            setSelectedPermissions({});
             setPermissionsLoading(false);
             setPermissionsError('Tiempo de espera agotado al cargar permisos del rol');
         }, 5000); // 5 segundos timeout
 
         try {
-            // Encontrar el nombre del rol seleccionado
-            const selectedRole = roles.find(role => role.id === roleId);
-            if (!selectedRole) {
-                throw new Error('Rol no encontrado');
-            }
+            const rolePermissionsResponse = await permissionApiService.getByRole(roleId);
+            clearTimeout(timeoutId);
 
-            const rolePermissions = permissionService.getRolePermissionsByName(selectedRole.rName);
-            clearTimeout(timeoutId); // Limpiar timeout si se completa exitosamente
+            const grantedIds = new Set(
+                rolePermissionsResponse
+                    .filter(rp => rp.rpGranted && rp.permission.pEnabled)
+                    .map(rp => rp.permissionId)
+            );
 
-            setPermissions(rolePermissions);
+            const catalog = await permissionApiService.getAll();
+            const mapped: Permission[] = catalog.map(p => ({
+                module: p.pModule as PermissionModuleType,
+                action: p.pAction as PermissionActionType,
+                enabled: grantedIds.has(p.id),
+            }));
+
+            setPermissions(mapped);
             setPermissionsLoading(false);
-
-            // Inicializar selectedPermissions con los valores actuales
-            const initialSelected: Record<string, boolean> = {};
-            rolePermissions.forEach(permission => {
-                const key = `${permission.module}:${permission.action}`;
-                initialSelected[key] = permission.enabled;
-            });
-            setSelectedPermissions(initialSelected);
         } catch (error) {
             clearTimeout(timeoutId);
             console.error('Error cargando permisos del rol:', error);
             setPermissions([]);
-            setSelectedPermissions({});
             setPermissionsLoading(false);
             setPermissionsError('Error al cargar los permisos del rol seleccionado');
         }
-    }
-
-    function handlePermissionChange(module: string, action: string, enabled: boolean) {
-        const key = `${module}:${action}`;
-        setSelectedPermissions(prev => ({
-            ...prev,
-            [key]: enabled
-        }));
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -447,7 +432,6 @@ export default function CreateUserPage() {
                                                             <div className="d-flex flex-column gap-2">
                                                                 {modulePermissions.map(permission => {
                                                                     const key = `${permission.module}:${permission.action}`;
-                                                                    const isChecked = selectedPermissions[key] ?? permission.enabled;
 
                                                                     return (
                                                                         <div key={key} className="form-check">
@@ -455,9 +439,11 @@ export default function CreateUserPage() {
                                                                                 className="form-check-input"
                                                                                 type="checkbox"
                                                                                 id={key}
-                                                                                checked={isChecked}
-                                                                                onChange={(e) => handlePermissionChange(permission.module, permission.action, e.target.checked)}
-                                                                                disabled={loading}
+                                                                                checked={permission.enabled}
+                                                                                onChange={() => {
+                                                                                    /* read-only preview */
+                                                                                }}
+                                                                                disabled
                                                                             />
                                                                             <label className="form-check-label text-capitalize" htmlFor={key}>
                                                                                 {permission.action}

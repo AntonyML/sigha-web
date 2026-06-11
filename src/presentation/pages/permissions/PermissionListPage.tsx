@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { permissionFlow } from '../../../infrastructure/flows/permission';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
-import type { PermissionEntity } from '../../../types/permissionEntity';
+import type { PermissionApi } from '../../../services/permissionApiService';
 
 export default function PermissionListPage() {
-    const [permissions, setPermissions] = useState<PermissionEntity[]>([]);
+    const [permissions, setPermissions] = useState<PermissionApi[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [filteredPermissions, setFilteredPermissions] = useState<PermissionEntity[]>([]);
+    const [filteredPermissions, setFilteredPermissions] = useState<PermissionApi[]>([]);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
 
-    // Cargar permisos al montar el componente
     useEffect(() => {
         loadPermissions();
     }, []);
@@ -23,7 +22,7 @@ export default function PermissionListPage() {
         setError('');
 
         try {
-            const result = await permissionEntityFlow.getAllPermissions();
+            const result = await permissionFlow.getAllPermissions();
 
             if (result.success && result.permissions) {
                 setPermissions(result.permissions);
@@ -39,16 +38,16 @@ export default function PermissionListPage() {
         }
     };
 
-    // Filtrar permisos por término de búsqueda
     useEffect(() => {
         if (!searchTerm.trim()) {
             setFilteredPermissions(permissions);
         } else {
+            const term = searchTerm.toLowerCase();
             const filtered = permissions.filter(permission =>
-                permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                permission.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                permission.module.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                permission.action.toLowerCase().includes(searchTerm.toLowerCase())
+                permission.pName.toLowerCase().includes(term) ||
+                permission.pDescription.toLowerCase().includes(term) ||
+                permission.pModule.toLowerCase().includes(term) ||
+                permission.pAction.toLowerCase().includes(term)
             );
             setFilteredPermissions(filtered);
         }
@@ -66,16 +65,10 @@ export default function PermissionListPage() {
         navigate(`/permissions/edit/${permissionId}`);
     };
 
-    const handleDeletePermission = async (permission: PermissionEntity) => {
-        // Solo permitir eliminar permisos con ID > 23 (permisos agregados después de los iniciales)
-        if (permission.id <= 23) {
-            feedback.error('No se pueden eliminar los permisos predefinidos del sistema.');
-            return;
-        }
-
+    const handleDeletePermission = async (permission: PermissionApi) => {
         const confirmed = await feedback.confirm(
             'Eliminar permiso',
-            `¿Estás seguro de que deseas eliminar el permiso "${permission.name}"?\n\nEsta acción no se puede deshacer.`
+            `¿Estás seguro de que deseas eliminar el permiso "${permission.pName}"?\n\nEsta acción no se puede deshacer.`
         );
 
         if (!confirmed) return;
@@ -83,16 +76,15 @@ export default function PermissionListPage() {
         setError('');
 
         try {
-            const result = await permissionEntityFlow.deletePermission(permission.id);
+            const result = await permissionFlow.deletePermission(permission.id);
 
             if (result.success) {
                 feedback.success('Permiso eliminado exitosamente');
                 feedback.showNotification({
                     title: 'Permiso eliminado',
-                    message: `El permiso "${permission.name}" ha sido eliminado exitosamente.`,
+                    message: `El permiso "${permission.pName}" ha sido eliminado exitosamente.`,
                     variant: 'success'
                 });
-                // Recargar la lista de permisos
                 await loadPermissions();
             } else {
                 setError(result.error || 'Error al eliminar permiso');
@@ -107,25 +99,6 @@ export default function PermissionListPage() {
         navigate('/permissions/create');
     };
 
-    const handleExportPermissions = async () => {
-        try {
-            const result = await permissionEntityFlow.downloadPermissionsAsJson('permisos_actualizados.json');
-            if (result.success) {
-                feedback.success('Archivo JSON descargado exitosamente');
-                feedback.showNotification({
-                    title: 'Exportación completada',
-                    message: 'Los permisos han sido exportados correctamente a un archivo JSON.',
-                    variant: 'success'
-                });
-            } else {
-                setError(result.error || 'Error al exportar permisos');
-            }
-        } catch (err) {
-            console.error('Error exportando permisos:', err);
-            setError('Error inesperado al exportar permisos');
-        }
-    };
-
     return (
         <div className="min-vh-100 bg-light">
             <div className="container-fluid py-4">
@@ -137,14 +110,6 @@ export default function PermissionListPage() {
                                 <p className="text-muted mb-0">Administra los permisos del sistema</p>
                             </div>
                             <div className="d-flex gap-2">
-                                <button
-                                    className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                                    onClick={handleExportPermissions}
-                                    title="Exportar permisos a JSON"
-                                >
-                                    <i className="bi bi-download"></i>
-                                    Exportar JSON
-                                </button>
                                 <button
                                     className="btn btn-primary d-flex align-items-center gap-2"
                                     onClick={handleCreatePermission}
@@ -246,20 +211,20 @@ export default function PermissionListPage() {
                                                                     <i className="bi bi-shield-check"></i>
                                                                 </div>
                                                                 <div>
-                                                                    <h6 className="mb-0 fw-semibold">{permission.name}</h6>
-                                                                    <small className="text-muted">{permission.description}</small>
+                                                                    <h6 className="mb-0 fw-semibold">{permission.pName}</h6>
+                                                                    <small className="text-muted">{permission.pDescription}</small>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            <span className="badge bg-info">{permission.module}</span>
+                                                            <span className="badge bg-info">{permission.pModule}</span>
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            <span className="badge bg-warning">{permission.action}</span>
+                                                            <span className="badge bg-warning">{permission.pAction}</span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
-                                                            <span className={`badge ${permission.enabled ? 'bg-success' : 'bg-danger'}`}>
-                                                                {permission.enabled ? 'Habilitado' : 'Deshabilitado'}
+                                                            <span className={`badge ${permission.pEnabled ? 'bg-success' : 'bg-danger'}`}>
+                                                                {permission.pEnabled ? 'Habilitado' : 'Deshabilitado'}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
@@ -278,15 +243,13 @@ export default function PermissionListPage() {
                                                                 >
                                                                     <i className="bi bi-pencil"></i>
                                                                 </button>
-                                                                {permission.id > 23 && (
-                                                                    <button
-                                                                        className="btn btn-sm btn-outline-danger"
-                                                                        onClick={() => handleDeletePermission(permission)}
-                                                                        title="Eliminar permiso"
-                                                                    >
-                                                                        <i className="bi bi-trash"></i>
-                                                                    </button>
-                                                                )}
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() => handleDeletePermission(permission)}
+                                                                    title="Eliminar permiso"
+                                                                >
+                                                                    <i className="bi bi-trash"></i>
+                                                                </button>
                                                             </div>
                                                         </td>
                                                     </tr>

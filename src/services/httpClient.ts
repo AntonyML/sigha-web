@@ -1,5 +1,5 @@
 // src/services/httpClient.ts
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
 

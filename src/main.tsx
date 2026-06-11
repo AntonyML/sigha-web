@@ -6,21 +6,24 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './assets/styles/global.css';
 
-import { permissionEntityService } from './services/permissionEntityService';
 import { FeedbackProvider } from './presentation/context/FeedbackContext';
 import { Toast } from './presentation/components/molecules/Toast/Toast';
+import { PermissionUtils } from './utils/permissionUtils';
+import { authStorage } from './infrastructure/storage/authStorage';
 
-// Inicializar servicios no críticos sin bloquear el render
-const initializeApp = async (): Promise<void> => {
+const preloadPermissions = async (): Promise<void> => {
+  if (!authStorage.isAuthenticated()) return;
   try {
-    await permissionEntityService.initialize();
+    await PermissionUtils.load();
   } catch (error) {
-    console.error(
-      '[App Initialization] Failed to initialize permissionEntityService',
-      error
-    );
+    console.error('[App Initialization] Failed to load user permissions', error);
   }
 };
+
+window.addEventListener('authTokenChanged', () => {
+  PermissionUtils.clearCache();
+  void preloadPermissions();
+});
 
 const isFileProtocol = window.location.protocol === 'file:';
 
@@ -39,5 +42,4 @@ createRoot(document.getElementById('root')!).render(
   </FeedbackProvider>
 );
 
-// Ejecutar después del render sin bloquear la carga inicial
-void initializeApp();
+void preloadPermissions();

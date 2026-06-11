@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { PermissionUtils } from '../../../utils/permissionUtils';
+import { usePermissions } from '../../../utils/permissionUtils';
 import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreateRoleData } from '../../../types/user';
@@ -28,20 +28,18 @@ export default function CreateRolePage() {
     const [permissionCatalog, setPermissionCatalog] = useState<Array<{ id: number; pModule: string; pAction: string }>>([]);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+    const { canManageRoles } = usePermissions();
 
-    // Verificar permisos y cargar permisos por defecto al montar el componente
     useEffect(() => {
         const checkPermissionsAndLoadPermissions = async () => {
             try {
-                // Verificar permisos
-                const canManage = await PermissionUtils.canManageRoles();
+                const canManage = canManageRoles();
                 setHasPermission(canManage);
 
                 if (!canManage) {
                     return;
                 }
 
-                // Cargar catálogo de permisos desde el backend y mapear a la estructura local
                 setPermissionsLoading(true);
                 const apiPermissions = await permissionApiService.getAll();
                 setPermissionCatalog(
@@ -61,7 +59,7 @@ export default function CreateRolePage() {
         };
 
         checkPermissionsAndLoadPermissions();
-    }, []);
+    }, [canManageRoles]);
 
     function onInputChange(field: keyof CreateRoleData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));

@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../../components/atoms';
 import { useTwoFactorStatus } from '../../../infrastructure/flows/twoFactor';
-import { PermissionUtils } from '../../../utils/permissionUtils';
+import { usePermissions } from '../../../utils/permissionUtils';
 import './style.css';
 
 interface MenuOption {
@@ -16,25 +15,7 @@ interface MenuOption {
 export default function MainMenuPage() {
     const navigate = useNavigate();
     const { isEnabled, loading } = useTwoFactorStatus();
-    const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
-
-    // Verificar permisos del usuario
-    useEffect(() => {
-        const checkPermissions = async () => {
-            try {
-                const [canManageUsers, isSuperAdmin] = await Promise.all([
-                    PermissionUtils.canViewAllUsers(),
-                    PermissionUtils.isSuperAdmin()
-                ]);
-                setHasRequiredPermissions(canManageUsers || isSuperAdmin);
-            } catch (error) {
-                console.error('Error checking permissions:', error);
-                setHasRequiredPermissions(false);
-            }
-        };
-
-        checkPermissions();
-    }, []);
+    const { isNotSpecifiedSync, canAccessModule } = usePermissions();
 
     const menuOptions: MenuOption[] = [
         {
@@ -119,7 +100,7 @@ export default function MainMenuPage() {
         }
 
         // Si el rol es "not specified", sólo permitir Configuración 2FA y Mi Perfil
-        if (PermissionUtils.isNotSpecifiedSync()) {
+        if (isNotSpecifiedSync()) {
             return menuOptions.filter(option =>
                 option.id === '6' || // Configuración 2FA
                 option.id === '9'    // Mi Perfil
@@ -139,10 +120,9 @@ export default function MainMenuPage() {
             '9': 'profile'
         };
 
-        // Filtrar según el rol usando canAccessModule
         return menuOptions.filter(option => {
             const moduleName = optionModuleMap[option.id];
-            return moduleName ? PermissionUtils.canAccessModule(moduleName) : false;
+            return moduleName ? canAccessModule(moduleName) : false;
         });
     };
 

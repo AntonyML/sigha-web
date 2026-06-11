@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, Users, Calendar, Bell, User } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
-import { PermissionUtils } from '../../../../utils/permissionUtils';
+import { usePermissions } from '../../../../utils/permissionUtils';
 
 interface NavItem {
   id: string;
@@ -16,25 +15,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isEnabled } = useTwoFactorStatus();
-  const [hasRequiredPermissions, setHasRequiredPermissions] = useState<boolean | null>(null);
-
-  // Verificar permisos del usuario
-  useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        const [canManageUsers, isSuperAdmin] = await Promise.all([
-          PermissionUtils.canViewAllUsers(),
-          PermissionUtils.isSuperAdmin()
-        ]);
-        setHasRequiredPermissions(canManageUsers || isSuperAdmin);
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setHasRequiredPermissions(false);
-      }
-    };
-
-    checkPermissions();
-  }, []);
+  const { isNotSpecifiedSync, canAccessModule } = usePermissions();
 
   const navItems: NavItem[] = [
     {
@@ -101,14 +82,13 @@ export default function Navbar() {
     }
 
     // Si tiene 2FA activado pero su rol es "not specified", mostrar sólo opciones básicas
-    if (PermissionUtils.isNotSpecifiedSync()) {
+    if (isNotSpecifiedSync()) {
       return navItems.filter(item =>
         item.id === 'home' ||
         item.id === 'profile'
       );
     }
 
-    // Mapear cada nav item a su correspondiente identificador de módulo
     const navItemModuleMap: Record<string, string> = {
       'home': 'main',
       'older-adults': 'virtualFiles',
@@ -117,10 +97,9 @@ export default function Navbar() {
       'profile': 'profile'
     };
 
-    // Filtrar según el rol usando canAccessModule
     return navItems.filter(item => {
       const moduleName = navItemModuleMap[item.id];
-      return moduleName ? PermissionUtils.canAccessModule(moduleName) : false;
+      return moduleName ? canAccessModule(moduleName) : false;
     });
   };
 
