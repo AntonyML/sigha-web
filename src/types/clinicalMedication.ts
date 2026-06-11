@@ -8,60 +8,64 @@
 /**
  * Estado de una prescripción de medicamento
  */
-export enum MedicationStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  SUSPENDED = 'suspended',
-  CANCELLED = 'cancelled',
-  EXPIRED = 'expired'
-}
+export const MedicationStatus = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  SUSPENDED: 'suspended',
+  CANCELLED: 'cancelled',
+  EXPIRED: 'expired'
+} as const;
+export type MedicationStatus = typeof MedicationStatus[keyof typeof MedicationStatus];
 
 /**
  * Frecuencia de administración del medicamento
  */
-export enum MedicationFrequency {
-  ONCE_DAILY = 'once_daily',
-  TWICE_DAILY = 'twice_daily',
-  THREE_TIMES_DAILY = 'three_times_daily',
-  FOUR_TIMES_DAILY = 'four_times_daily',
-  EVERY_4_HOURS = 'every_4_hours',
-  EVERY_6_HOURS = 'every_6_hours',
-  EVERY_8_HOURS = 'every_8_hours',
-  EVERY_12_HOURS = 'every_12_hours',
-  AS_NEEDED = 'as_needed',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly'
-}
+export const MedicationFrequency = {
+  ONCE_DAILY: 'once_daily',
+  TWICE_DAILY: 'twice_daily',
+  THREE_TIMES_DAILY: 'three_times_daily',
+  FOUR_TIMES_DAILY: 'four_times_daily',
+  EVERY_4_HOURS: 'every_4_hours',
+  EVERY_6_HOURS: 'every_6_hours',
+  EVERY_8_HOURS: 'every_8_hours',
+  EVERY_12_HOURS: 'every_12_hours',
+  AS_NEEDED: 'as_needed',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly'
+} as const;
+export type MedicationFrequency = typeof MedicationFrequency[keyof typeof MedicationFrequency];
 
 /**
  * Vía de administración del medicamento
  */
-export enum MedicationRoute {
-  ORAL = 'oral',
-  INTRAVENOUS = 'intravenous',
-  INTRAMUSCULAR = 'intramuscular',
-  SUBCUTANEOUS = 'subcutaneous',
-  TOPICAL = 'topical',
-  INHALATION = 'inhalation',
-  RECTAL = 'rectal',
-  OPHTHALMIC = 'ophthalmic',
-  OTIC = 'otic',
-  NASAL = 'nasal'
-}
+export const MedicationRoute = {
+  ORAL: 'oral',
+  INTRAVENOUS: 'intravenous',
+  INTRAMUSCULAR: 'intramuscular',
+  SUBCUTANEOUS: 'subcutaneous',
+  TOPICAL: 'topical',
+  INHALATION: 'inhalation',
+  RECTAL: 'rectal',
+  OPHTHALMIC: 'ophthalmic',
+  OTIC: 'otic',
+  NASAL: 'nasal'
+} as const;
+export type MedicationRoute = typeof MedicationRoute[keyof typeof MedicationRoute];
 
 /**
  * Unidad de dosificación
  */
-export enum DosageUnit {
-  MG = 'mg',
-  ML = 'ml',
-  MCG = 'mcg',
-  IU = 'iu',
-  TABLETS = 'tablets',
-  CAPSULES = 'capsules',
-  DROPS = 'drops',
-  UNITS = 'units'
-}
+export const DosageUnit = {
+  MG: 'mg',
+  ML: 'ml',
+  MCG: 'mcg',
+  IU: 'iu',
+  TABLETS: 'tablets',
+  CAPSULES: 'capsules',
+  DROPS: 'drops',
+  UNITS: 'units'
+} as const;
+export type DosageUnit = typeof DosageUnit[keyof typeof DosageUnit];
 
 /**
  * Interface principal del medicamento clínico

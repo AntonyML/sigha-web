@@ -6,7 +6,6 @@
  */
 
 import type { CreateSpecializedAreaData, UpdateSpecializedAreaData } from '../../../../types/specializedArea';
-import type { AxiosError } from 'axios';
 
 /**
  * Valida los datos para crear un área especializada

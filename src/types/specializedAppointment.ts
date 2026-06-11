@@ -8,38 +8,41 @@
 /**
  * Estado de una cita especializada
  */
-export enum AppointmentStatus {
-  SCHEDULED = 'scheduled',
-  CONFIRMED = 'confirmed',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show',
-  RESCHEDULED = 'rescheduled'
-}
+export const AppointmentStatus = {
+  SCHEDULED: 'scheduled',
+  CONFIRMED: 'confirmed',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  RESCHEDULED: 'rescheduled'
+} as const;
+export type AppointmentStatus = typeof AppointmentStatus[keyof typeof AppointmentStatus];
 
 /**
  * Tipo de cita especializada
  */
-export enum AppointmentType {
-  CONSULTATION = 'consultation',
-  FOLLOW_UP = 'follow_up',
-  PROCEDURE = 'procedure',
-  EMERGENCY = 'emergency',
-  SPECIALIST_REFERRAL = 'specialist_referral',
-  THERAPY_SESSION = 'therapy_session',
-  DIAGNOSTIC_TEST = 'diagnostic_test'
-}
+export const AppointmentType = {
+  CONSULTATION: 'consultation',
+  FOLLOW_UP: 'follow_up',
+  PROCEDURE: 'procedure',
+  EMERGENCY: 'emergency',
+  SPECIALIST_REFERRAL: 'specialist_referral',
+  THERAPY_SESSION: 'therapy_session',
+  DIAGNOSTIC_TEST: 'diagnostic_test'
+} as const;
+export type AppointmentType = typeof AppointmentType[keyof typeof AppointmentType];
 
 /**
  * Prioridad de la cita
  */
-export enum AppointmentPriority {
-  LOW = 'low',
-  NORMAL = 'normal',
-  HIGH = 'high',
-  URGENT = 'urgent'
-}
+export const AppointmentPriority = {
+  LOW: 'low',
+  NORMAL: 'normal',
+  HIGH: 'high',
+  URGENT: 'urgent'
+} as const;
+export type AppointmentPriority = typeof AppointmentPriority[keyof typeof AppointmentPriority];
 
 /**
  * Interface principal de la cita especializada

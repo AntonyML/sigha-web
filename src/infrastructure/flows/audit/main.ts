@@ -17,7 +17,7 @@ import type {
   GetAuditReportsFlowResult,
   GetAuditStatisticsFlowResult,
 } from './interfaces';
-import type { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 
 /**
  * Flujo para buscar reportes de auditoría con filtros

@@ -8,44 +8,47 @@
 /**
  * Estado de una sesión de fisioterapia
  */
-export enum PhysiotherapySessionStatus {
-  SCHEDULED = 'scheduled',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show',
-  POSTPONED = 'postponed'
-}
+export const PhysiotherapySessionStatus = {
+  SCHEDULED: 'scheduled',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+  NO_SHOW: 'no_show',
+  POSTPONED: 'postponed'
+} as const;
+export type PhysiotherapySessionStatus = typeof PhysiotherapySessionStatus[keyof typeof PhysiotherapySessionStatus];
 
 /**
  * Tipo de terapia de fisioterapia
  */
-export enum PhysiotherapyType {
-  MANUAL_THERAPY = 'manual_therapy',
-  EXERCISE_THERAPY = 'exercise_therapy',
-  ELECTROTHERAPY = 'electrotherapy',
-  ULTRASOUND = 'ultrasound',
-  HEAT_COLD_THERAPY = 'heat_cold_therapy',
-  MASSAGE = 'massage',
-  STRETCHING = 'stretching',
-  STRENGTH_TRAINING = 'strength_training',
-  BALANCE_TRAINING = 'balance_training',
-  GAIT_TRAINING = 'gait_training'
-}
+export const PhysiotherapyType = {
+  MANUAL_THERAPY: 'manual_therapy',
+  EXERCISE_THERAPY: 'exercise_therapy',
+  ELECTROTHERAPY: 'electrotherapy',
+  ULTRASOUND: 'ultrasound',
+  HEAT_COLD_THERAPY: 'heat_cold_therapy',
+  MASSAGE: 'massage',
+  STRETCHING: 'stretching',
+  STRENGTH_TRAINING: 'strength_training',
+  BALANCE_TRAINING: 'balance_training',
+  GAIT_TRAINING: 'gait_training'
+} as const;
+export type PhysiotherapyType = typeof PhysiotherapyType[keyof typeof PhysiotherapyType];
 
 /**
  * Área del cuerpo tratada
  */
-export enum BodyArea {
-  HEAD_NECK = 'head_neck',
-  UPPER_LIMBS = 'upper_limbs',
-  LOWER_LIMBS = 'lower_limbs',
-  TRUNK = 'trunk',
-  BACK = 'back',
-  JOINTS = 'joints',
-  MUSCLES = 'muscles',
-  GENERAL = 'general'
-}
+export const BodyArea = {
+  HEAD_NECK: 'head_neck',
+  UPPER_LIMBS: 'upper_limbs',
+  LOWER_LIMBS: 'lower_limbs',
+  TRUNK: 'trunk',
+  BACK: 'back',
+  JOINTS: 'joints',
+  MUSCLES: 'muscles',
+  GENERAL: 'general'
+} as const;
+export type BodyArea = typeof BodyArea[keyof typeof BodyArea];
 
 /**
  * Nivel de dolor (escala 0-10)
