@@ -1,151 +1,261 @@
-import type {
-  PermissionCheckResult,
-  PermissionModuleType,
-  PermissionActionType,
-  RolePermissions,
-  Permission
+import {
+  PermissionModule,
+  PermissionAction,
+  type PermissionModuleType,
+  type PermissionActionType,
+  type Permission,
+  type RolePermissions,
+  type PermissionCheckResult,
 } from '../types/permissions';
-import { PermissionModule } from '../types/permissions';
-import { permissionStorage } from '../infrastructure/storage/permissionStorage';
 
 /**
- * PermissionService - Servicio para gestión de permisos
+ * PermissionService - Resolvedor estático de permisos por rol.
  *
- * Proporciona métodos para verificar permisos de usuarios y gestionar
- * la configuración de permisos del sistema.
+ * Mantiene una configuración interna de permisos por nombre de rol
+ * (espejo de las reglas de `permissionUtils.canAccessModule`).
+ * Los roles se identifican por nombre porque es lo que llega desde
+ * el backend y lo que ya consumen las pages existentes.
  */
-export const permissionService = {
-  /**
-   * Inicializa el servicio cargando la configuración de permisos
-   */
+
+type RolePolicy = Record<string, Partial<Record<PermissionModuleType, PermissionActionType[]>>>;
+
+const ALL_ACTIONS: PermissionActionType[] = [
+  PermissionAction.VIEW,
+  PermissionAction.CREATE,
+  PermissionAction.EDIT,
+  PermissionAction.DELETE,
+];
+
+const PUBLIC_MODULES: PermissionModuleType[] = [
+  PermissionModule.DASHBOARD,
+  PermissionModule.TWO_FACTOR,
+];
+
+const ROLE_POLICY: Record<string, RolePolicy> = {
+  'super admin': {
+    [PermissionModule.USERS]: ALL_ACTIONS,
+    [PermissionModule.ROLES]: ALL_ACTIONS,
+    [PermissionModule.AUDITS]: ALL_ACTIONS,
+    [PermissionModule.VIRTUAL_FILES]: ALL_ACTIONS,
+    [PermissionModule.PROGRAMS]: ALL_ACTIONS,
+    [PermissionModule.SUB_PROGRAMS]: ALL_ACTIONS,
+    [PermissionModule.VACCINES]: ALL_ACTIONS,
+    [PermissionModule.ENTRANCE_EXIT]: ALL_ACTIONS,
+    [PermissionModule.TWO_FACTOR]: ALL_ACTIONS,
+    [PermissionModule.DASHBOARD]: ALL_ACTIONS,
+  },
+  admin: {
+    [PermissionModule.USERS]: ALL_ACTIONS,
+    [PermissionModule.ROLES]: ALL_ACTIONS,
+    [PermissionModule.AUDITS]: ALL_ACTIONS,
+    [PermissionModule.VIRTUAL_FILES]: ALL_ACTIONS,
+    [PermissionModule.PROGRAMS]: ALL_ACTIONS,
+    [PermissionModule.SUB_PROGRAMS]: ALL_ACTIONS,
+    [PermissionModule.VACCINES]: ALL_ACTIONS,
+    [PermissionModule.ENTRANCE_EXIT]: ALL_ACTIONS,
+    [PermissionModule.TWO_FACTOR]: ALL_ACTIONS,
+    [PermissionModule.DASHBOARD]: ALL_ACTIONS,
+  },
+  director: {
+    [PermissionModule.VIRTUAL_FILES]: [PermissionAction.VIEW],
+    [PermissionModule.PROGRAMS]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.SUB_PROGRAMS]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.ENTRANCE_EXIT]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.DASHBOARD]: [PermissionAction.VIEW],
+    [PermissionModule.AUDITS]: [PermissionAction.VIEW],
+  },
+  nurse: {
+    [PermissionModule.NURSING]: ALL_ACTIONS,
+    [PermissionModule.VACCINES]: ALL_ACTIONS,
+    [PermissionModule.VIRTUAL_FILES]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.ENTRANCE_EXIT]: [PermissionAction.VIEW, PermissionAction.CREATE],
+    [PermissionModule.DASHBOARD]: [PermissionAction.VIEW],
+    [PermissionModule.PROGRAMS]: [PermissionAction.VIEW],
+    [PermissionModule.SUB_PROGRAMS]: [PermissionAction.VIEW],
+  },
+  physiotherapist: {
+    [PermissionModule.VIRTUAL_FILES]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.ENTRANCE_EXIT]: [PermissionAction.VIEW, PermissionAction.CREATE],
+    [PermissionModule.DASHBOARD]: [PermissionAction.VIEW],
+    [PermissionModule.PROGRAMS]: [PermissionAction.VIEW],
+    [PermissionModule.SUB_PROGRAMS]: [PermissionAction.VIEW],
+  },
+  psychologist: {
+    [PermissionModule.VIRTUAL_FILES]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.ENTRANCE_EXIT]: [PermissionAction.VIEW, PermissionAction.CREATE],
+    [PermissionModule.DASHBOARD]: [PermissionAction.VIEW],
+    [PermissionModule.PROGRAMS]: [PermissionAction.VIEW],
+    [PermissionModule.SUB_PROGRAMS]: [PermissionAction.VIEW],
+  },
+  'social worker': {
+    [PermissionModule.VIRTUAL_FILES]: [PermissionAction.VIEW, PermissionAction.CREATE, PermissionAction.EDIT],
+    [PermissionModule.ENTRANCE_EXIT]: [PermissionAction.VIEW, PermissionAction.CREATE],
+    [PermissionModule.DASHBOARD]: [PermissionAction.VIEW],
+    [PermissionModule.PROGRAMS]: [PermissionAction.VIEW],
+    [PermissionModule.SUB_PROGRAMS]: [PermissionAction.VIEW],
+  },
+  'not specified': {},
+};
+
+const DEFAULT_ROLE_ID = 0;
+
+class PermissionService {
+  private initialized = false;
+  private rolesByName: Map<string, RolePermissions> = new Map();
+  private roleIdByName: Map<string, number> = new Map();
+  private roleNameById: Map<number, string> = new Map();
+  private rolePermissionsByName: Map<string, Permission[]> = new Map();
+
   async initialize(): Promise<void> {
-    await permissionStorage.loadPermissions();
-  },
+    this.rebuild();
+    this.initialized = true;
+  }
 
-  /**
-   * Verifica si un usuario tiene un permiso específico
-   * @param userRoleId - ID del rol del usuario
-   * @param module - Módulo del sistema
-   * @param action - Acción a verificar
-   * @returns Resultado de la verificación de permisos
-   */
-  checkPermission(
-    userRoleId: number,
-    module: PermissionModuleType,
-    action: PermissionActionType
-  ): PermissionCheckResult {
-    const hasPermission = permissionStorage.hasPermission(userRoleId, module, action);
-    const userPermissions = permissionStorage.getAllPermissionsForRole(userRoleId);
+  private ensureReady(): void {
+    if (!this.initialized) this.rebuild();
+  }
 
-    return {
-      hasPermission,
-      userPermissions,
-    };
-  },
+  private rebuild(): void {
+    this.rolesByName.clear();
+    this.roleIdByName.clear();
+    this.roleNameById.clear();
+    this.rolePermissionsByName.clear();
 
-  /**
-   * Verifica si un usuario puede acceder a un módulo completo
-   * (al menos tiene permiso de vista)
-   * @param userRoleId - ID del rol del usuario
-   * @param module - Módulo del sistema
-   * @returns true si puede ver el módulo
-   */
+    Object.entries(ROLE_POLICY).forEach(([roleName], idx) => {
+      const roleId = idx + 1;
+      this.roleIdByName.set(roleName, roleId);
+      this.roleNameById.set(roleId, roleName);
+
+      const policy = ROLE_POLICY[roleName] ?? {};
+      const permissions: Permission[] = [];
+      Object.entries(policy).forEach(([module, actions]) => {
+        (actions as PermissionActionType[]).forEach(action => {
+          permissions.push({
+            module: module as PermissionModuleType,
+            action,
+            enabled: true,
+          });
+        });
+      });
+
+      const rolePermissions: RolePermissions = {
+        roleId,
+        roleName,
+        permissions,
+      };
+      this.rolesByName.set(roleName, rolePermissions);
+      this.rolePermissionsByName.set(roleName, permissions);
+    });
+  }
+
+  // ==================== Helpers internos ====================
+
+  private permissionsForRoleName(roleName: string | null | undefined): Permission[] {
+    this.ensureReady();
+    if (!roleName) return [];
+    const key = roleName.toLowerCase();
+    const direct = this.rolePermissionsByName.get(roleName) ?? this.rolePermissionsByName.get(key);
+    if (direct) return direct.map(p => ({ ...p }));
+    return [];
+  }
+
+  private isPublic(module: PermissionModuleType): boolean {
+    return PUBLIC_MODULES.includes(module);
+  }
+
+  // ==================== API pública ====================
+
+  getRoleInfo(roleId: number): RolePermissions | null {
+    this.ensureReady();
+    const name = this.roleNameById.get(roleId);
+    if (!name) return null;
+    return this.rolesByName.get(name) ?? null;
+  }
+
+  getAllRoles(): RolePermissions[] {
+    this.ensureReady();
+    return Array.from(this.rolesByName.values()).map(r => ({
+      ...r,
+      permissions: r.permissions.map(p => ({ ...p })),
+    }));
+  }
+
+  getRolePermissionsByName(roleName: string): Permission[] {
+    return this.permissionsForRoleName(roleName);
+  }
+
+  getAvailableModules(): PermissionModuleType[] {
+    this.ensureReady();
+    return Object.values(PermissionModule) as PermissionModuleType[];
+  }
+
+  getAvailableActions(): PermissionActionType[] {
+    return Object.values(PermissionAction) as PermissionActionType[];
+  }
+
+  isPublicModule(module: PermissionModuleType): boolean {
+    return this.isPublic(module);
+  }
+
   canAccessModule(userRoleId: number, module: PermissionModuleType): boolean {
-    return permissionStorage.hasPermission(userRoleId, module, 'view' as PermissionActionType);
-  },
+    if (this.isPublic(module)) return true;
+    const role = this.getRoleInfo(userRoleId);
+    if (!role) return false;
+    return role.permissions.some(p => p.module === module && p.enabled);
+  }
 
-  /**
-   * Verifica si un usuario puede realizar una acción específica
-   * @param userRoleId - ID del rol del usuario
-   * @param module - Módulo del sistema
-   * @param action - Acción a verificar
-   * @returns true si puede realizar la acción
-   */
   canPerformAction(
     userRoleId: number,
     module: PermissionModuleType,
     action: PermissionActionType
   ): boolean {
-    return permissionStorage.hasPermission(userRoleId, module, action);
-  },
+    if (this.isPublic(module) && action === PermissionAction.VIEW) return true;
+    const role = this.getRoleInfo(userRoleId);
+    if (!role) return false;
+    return role.permissions.some(p => p.module === module && p.action === action && p.enabled);
+  }
 
-  /**
-   * Obtiene todos los permisos de un rol por nombre
-   * @param roleName - Nombre del rol
-   * @returns Lista de permisos del rol
-   */
-  getRolePermissionsByName(roleName: string): Permission[] {
-    return permissionStorage.getAllPermissionsForRoleByName(roleName);
-  },
+  checkPermission(
+    userRoleId: number,
+    module: PermissionModuleType,
+    action: PermissionActionType
+  ): PermissionCheckResult {
+    const role = this.getRoleInfo(userRoleId);
+    const hasPermission = this.canPerformAction(userRoleId, module, action);
+    return {
+      hasPermission,
+      requiredPermission: { module, action, enabled: true },
+      userPermissions: role ? role.permissions.map(p => ({ ...p })) : [],
+    };
+  }
 
-  /**
-   * Obtiene información completa de un rol por nombre
-   * @param roleName - Nombre del rol
-   * @returns Información del rol con permisos
-   */
-  getRoleInfoByName(roleName: string): RolePermissions | null {
-    return permissionStorage.getRolePermissionsByName(roleName);
-  },
-
-  /**
-   * Obtiene todos los roles disponibles
-   * @returns Lista de todos los roles
-   */
-  getAllRoles(): RolePermissions[] {
-    return permissionStorage.getAllRoles();
-  },
-
-  /**
-   * Verifica si un módulo es público
-   * @param module - Módulo del sistema
-   * @returns true si es accesible sin autenticación
-   */
-  isPublicModule(module: PermissionModuleType): boolean {
-    return permissionStorage.isPublicModule(module);
-  },
-
-  /**
-   * Obtiene los permisos por defecto para nuevos roles
-   * @returns Lista de permisos por defecto
-   */
-  getDefaultPermissions(): Permission[] {
-    return permissionStorage.getDefaultPermissions();
-  },
-
-  /**
-   * Verifica múltiples permisos a la vez
-   * @param userRoleId - ID del rol del usuario
-   * @param permissions - Lista de permisos a verificar
-   * @returns Objeto con resultados de cada verificación
-   */
   checkMultiplePermissions(
     userRoleId: number,
     permissions: Array<{ module: PermissionModuleType; action: PermissionActionType }>
   ): Record<string, boolean> {
-    const results: Record<string, boolean> = {};
-
+    const result: Record<string, boolean> = {};
     permissions.forEach(({ module, action }) => {
-      const key = `${module}:${action}`;
-      results[key] = permissionStorage.hasPermission(userRoleId, module, action);
+      result[`${module}:${action}`] = this.canPerformAction(userRoleId, module, action);
     });
-
-    return results;
-  },
-
-  /**
-   * Obtiene todos los módulos disponibles
-   * @returns Lista de módulos del sistema
-   */
-  getAvailableModules(): PermissionModuleType[] {
-    return Object.values(PermissionModule) as PermissionModuleType[];
-  },
+    return result;
+  }
 
   /**
-   * Actualiza los permisos de un rol
-   * @param roleId - ID del rol
-   * @param permissions - Lista de permisos actualizados
+   * Persiste los permisos de un rol (en memoria).
+   * Devuelve la lista actualizada para mantener la API previa.
    */
-  updateRolePermissions(roleId: number, permissions: Permission[]): Promise<void> {
-    return permissionStorage.updateRolePermissions(roleId, permissions);
-  },
-};
+  async updateRolePermissions(roleId: number, permissions: Permission[]): Promise<Permission[]> {
+    this.ensureReady();
+    const name = this.roleNameById.get(roleId);
+    if (!name) return permissions;
+    this.rolePermissionsByName.set(name, permissions.map(p => ({ ...p })));
+    const existing = this.rolesByName.get(name);
+    if (existing) {
+      this.rolesByName.set(name, { ...existing, permissions: permissions.map(p => ({ ...p })) });
+    }
+    return permissions.map(p => ({ ...p }));
+  }
+}
+
+export const permissionService = new PermissionService();
+export { DEFAULT_ROLE_ID };

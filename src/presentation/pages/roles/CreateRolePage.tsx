@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
-import { permissionService } from '../../../services/permissionService';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreateRoleData } from '../../../types/user';
 import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
@@ -25,6 +25,7 @@ export default function CreateRolePage() {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [permissionsLoading, setPermissionsLoading] = useState(false);
+    const [permissionCatalog, setPermissionCatalog] = useState<Array<{ id: number; pModule: string; pAction: string }>>([]);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
 
@@ -40,10 +41,18 @@ export default function CreateRolePage() {
                     return;
                 }
 
-                // Cargar permisos por defecto
+                // Cargar catálogo de permisos desde el backend y mapear a la estructura local
                 setPermissionsLoading(true);
-                const defaultPermissions = permissionService.getDefaultPermissions();
-                setPermissions(defaultPermissions);
+                const apiPermissions = await permissionApiService.getAll();
+                setPermissionCatalog(
+                    apiPermissions.map(p => ({ id: p.id, pModule: p.pModule, pAction: p.pAction }))
+                );
+                const mapped: Permission[] = apiPermissions.map(p => ({
+                    module: p.pModule as PermissionModuleType,
+                    action: p.pAction as PermissionActionType,
+                    enabled: false
+                }));
+                setPermissions(mapped);
                 setPermissionsLoading(false);
             } catch (err) {
                 console.error('Error verificando permisos:', err);
@@ -92,9 +101,15 @@ export default function CreateRolePage() {
             const result = await roleFlow.createRole(formData);
 
             if (result.success && result.role) {
-                // Guardar permisos del rol
+                // Guardar permisos del rol: convertir permisos locales habilitados a IDs del backend
                 try {
-                    await permissionService.updateRolePermissions(result.role.id, permissions);
+                    const enabledIds = permissions
+                        .filter(p => p.enabled)
+                        .map(p => permissionCatalog.find(
+                            cp => cp.pModule === p.module && cp.pAction === p.action
+                        )?.id)
+                        .filter((id): id is number => typeof id === 'number');
+                    await permissionApiService.setRolePermissions(result.role.id, enabledIds);
                 } catch (permError) {
                     console.error('Error guardando permisos:', permError);
                     feedback.error('Rol creado pero error al guardar permisos');
