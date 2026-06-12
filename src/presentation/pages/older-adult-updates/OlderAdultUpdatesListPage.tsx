@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { olderAdultUpdatesService } from '../../../services/olderAdultUpdatesService';
-import type { OlderAdultUpdate } from '../../../types/olderAdultUpdates';
+import { olderAdultUpdatesService, type OlderAdultUpdateApi } from '../../../services/olderAdultUpdatesService';
 
 export default function OlderAdultUpdatesListPage() {
-  const [items, setItems] = useState<OlderAdultUpdate[]>([]);
+  const [items, setItems] = useState<OlderAdultUpdateApi[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -22,7 +21,9 @@ export default function OlderAdultUpdatesListPage() {
   const filtered = items.filter(i => {
     if (!search.trim()) return true;
     const t = search.toLowerCase();
-    return (i.fieldChanged ?? '').toLowerCase().includes(t) || (i.oldValue ?? '').toLowerCase().includes(t) || (i.newValue ?? '').toLowerCase().includes(t);
+    return (i.oauFieldChanged ?? '').toLowerCase().includes(t)
+      || (i.oauOldValue ?? '').toLowerCase().includes(t)
+      || (i.oauNewValue ?? '').toLowerCase().includes(t);
   });
 
   const formatDate = (d?: string) => d ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -61,11 +62,11 @@ export default function OlderAdultUpdatesListPage() {
                 <tr key={item.id}>
                   <td><span className="badge bg-secondary">{item.id}</span></td>
                   <td>{item.idOlderAdult ?? <span className="text-muted">—</span>}</td>
-                  <td><span className="badge bg-primary bg-opacity-75">{item.fieldChanged ?? '—'}</span></td>
-                  <td><span className="text-muted small">{item.oldValue ?? '—'}</span></td>
-                  <td><span className="text-success small">{item.newValue ?? '—'}</span></td>
+                  <td><span className="badge bg-primary bg-opacity-75">{item.oauFieldChanged ?? '—'}</span></td>
+                  <td><span className="text-muted small">{item.oauOldValue ?? '—'}</span></td>
+                  <td><span className="text-success small">{item.oauNewValue ?? '—'}</span></td>
                   <td>{item.changedBy ?? <span className="text-muted">—</span>}</td>
-                  <td><small className="text-muted">{formatDate(item.createdAt)}</small></td>
+                  <td><small className="text-muted">{formatDate(item.changedAt)}</small></td>
                 </tr>
               ))}
             </tbody>

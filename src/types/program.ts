@@ -15,44 +15,11 @@ export interface SubProgram {
 
 // Interfaz para crear/editar programas (mantiene la estructura original del frontend)
 export interface CreateProgramData {
-  p_name: string;
-  p_description: string;
-  p_type: 'health' | 'recreation' | 'education' | 'community' | 'research' | 'other';
-  p_observations?: string;
-  p_start_date: string;
-  p_end_date?: string;
-  p_budget?: number;
-  p_status: 'planned' | 'in progress' | 'completed' | 'cancelled';
-}
-
-export interface CreateProgramData {
-  p_name: string;
-  p_description: string;
-  p_type: 'health' | 'recreation' | 'education' | 'community' | 'research' | 'other';
-  p_observations?: string;
-  p_start_date: string;
-  p_end_date?: string;
-  p_budget?: number;
-  p_status: 'planned' | 'in progress' | 'completed' | 'cancelled';
+  pName: string;
 }
 
 export interface UpdateProgramData {
-  p_name?: string;
-  p_description?: string;
-  p_type?: 'health' | 'recreation' | 'education' | 'community' | 'research' | 'other';
-  p_observations?: string;
-  p_start_date?: string;
-  p_end_date?: string;
-  p_budget?: number;
-  p_status?: 'planned' | 'in progress' | 'completed' | 'cancelled';
-}
-
-export interface ProgramSearchParams {
-  p_name?: string;
-  p_type?: string;
-  p_status?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  pName?: string;
 }
 
 export interface ProgramApiResponse {
@@ -64,30 +31,5 @@ export interface ProgramApiResponse {
 
 // Programa por defecto para formularios
 export const defaultProgram: CreateProgramData = {
-  p_name: '',
-  p_description: '',
-  p_type: 'other',
-  p_observations: '',
-  p_start_date: '',
-  p_end_date: '',
-  p_budget: 0,
-  p_status: 'planned'
-};
-
-// Mapeo de tipos de programas para mostrar en español
-export const PROGRAM_TYPE_MAP: Record<string, string> = {
-  health: 'Salud',
-  recreation: 'Recreación',
-  education: 'Educación',
-  community: 'Comunitario',
-  research: 'Investigación',
-  other: 'Otro'
-};
-
-// Mapeo de estados de programas
-export const PROGRAM_STATUS_MAP: Record<string, string> = {
-  planned: 'Planeado',
-  'in progress': 'En Progreso',
-  completed: 'Completado',
-  cancelled: 'Cancelado'
+  pName: ''
 };

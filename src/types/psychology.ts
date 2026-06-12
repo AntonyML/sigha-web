@@ -65,7 +65,6 @@ export interface PsychologySession {
     };
   };
 }
-}
 
 export interface CreatePsychologySessionDto {
   psy_date?: string;

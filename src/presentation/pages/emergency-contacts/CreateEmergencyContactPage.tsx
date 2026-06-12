@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { emergencyContactsService } from '../../../services/emergencyContactsService';
-import type { CreateEmergencyContactDto } from '../../../types/emergencyContact';
+import { emergencyContactService } from '../../../services/emergencyContactService';
+import type { CreateEmergencyContactDto } from '../../../services/emergencyContactService';
 
 const initial: CreateEmergencyContactDto = { enPhoneNumber: '', idOlderAdult: undefined };
 
@@ -17,7 +17,7 @@ export default function CreateEmergencyContactPage() {
     if (!form.enPhoneNumber.trim()) { setError('El número de teléfono es requerido'); return; }
     setLoading(true); setError(''); setSuccess('');
     try {
-      await emergencyContactsService.create(form);
+      await emergencyContactService.create(form);
       setSuccess('Contacto de emergencia creado exitosamente');
       setTimeout(() => navigate('/emergency-contacts'), 1500);
     } catch (err: any) {

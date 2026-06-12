@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { emergencyContactsService } from '../../../services/emergencyContactsService';
-import type { UpdateEmergencyContactDto } from '../../../types/emergencyContact';
+import { emergencyContactService } from '../../../services/emergencyContactService';
+import type { UpdateEmergencyContactDto } from '../../../services/emergencyContactService';
 
 export default function EditEmergencyContactPage() {
   const { id } = useParams<{ id: string }>();
@@ -14,7 +14,7 @@ export default function EditEmergencyContactPage() {
 
   useEffect(() => {
     if (!id) return;
-    emergencyContactsService.getById(Number(id)).then(d => { setForm({ enPhoneNumber: d.enPhoneNumber, idOlderAdult: d.idOlderAdult }); setLoading(false); })
+    emergencyContactService.getById(Number(id)).then(d => { setForm({ enPhoneNumber: d.enPhoneNumber, idOlderAdult: d.idOlderAdult }); setLoading(false); })
       .catch(() => { setError('Error al cargar contacto'); setLoading(false); });
   }, [id]);
 
@@ -22,7 +22,7 @@ export default function EditEmergencyContactPage() {
     e.preventDefault();
     setSaving(true); setError(''); setSuccess('');
     try {
-      await emergencyContactsService.update(Number(id), form);
+      await emergencyContactService.update(Number(id), form);
       setSuccess('Contacto actualizado exitosamente');
       setTimeout(() => navigate('/emergency-contacts'), 1500);
     } catch (err: any) {

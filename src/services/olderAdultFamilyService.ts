@@ -1,48 +1,88 @@
 // src/services/olderAdultFamilyService.ts
-// CRUD for older-adult family members.
+// CRUD sincronizado con backend: controller/older-adult-family/older-adult-family.controller.ts
+// Endpoints:
+//   POST   /older-adult-family
+//   GET    /older-adult-family
+//   GET    /older-adult-family/:id
+//   PATCH  /older-adult-family/:id
+//   DELETE /older-adult-family/:id
 
 import { httpClient } from './httpClient';
 
-export interface OlderAdultFamily {
-  id?: number;
-  pf_identification: string;
-  pf_name: string;
-  pf_f_last_name: string;
-  pf_s_last_name: string;
-  pf_phone_number?: string | null;
-  pf_email?: string | null;
-  pf_kinship:
-    | 'son' | 'daughter' | 'grandson' | 'granddaughter' | 'brother' | 'sister'
-    | 'nephew' | 'niece' | 'husband' | 'wife' | 'legal guardian' | 'other' | 'not specified';
-  pf_is_active?: boolean;
-  create_at?: string;
+export type KinshipType =
+  | 'son'
+  | 'daughter'
+  | 'grandson'
+  | 'granddaughter'
+  | 'brother'
+  | 'sister'
+  | 'nephew'
+  | 'niece'
+  | 'husband'
+  | 'wife'
+  | 'legal guardian'
+  | 'other'
+  | 'not specified';
+
+export interface OlderAdultFamilyApi {
+  id: number;
+  pfIdentification: string;
+  pfName: string;
+  pfFLastName: string;
+  pfSLastName: string;
+  pfPhoneNumber?: string | null;
+  pfEmail?: string | null;
+  pfKinship: KinshipType;
+  pfIsActive?: boolean;
+  createAt?: string;
+}
+
+export interface CreateOlderAdultFamilyDto {
+  pfIdentification: string;
+  pfName: string;
+  pfFLastName: string;
+  pfSLastName: string;
+  pfKinship: KinshipType;
+  pfPhoneNumber?: string;
+  pfEmail?: string;
+}
+
+export interface UpdateOlderAdultFamilyDto {
+  pfIdentification?: string;
+  pfName?: string;
+  pfFLastName?: string;
+  pfSLastName?: string;
+  pfKinship?: KinshipType;
+  pfPhoneNumber?: string;
+  pfEmail?: string;
 }
 
 export const olderAdultFamilyService = {
-  getAll: () =>
-    httpClient.get<OlderAdultFamily[]>('/older-adult-family').then((r) => r.data),
+  getAll(): Promise<OlderAdultFamilyApi[]> {
+    return httpClient
+      .get<OlderAdultFamilyApi[]>('/older-adult-family')
+      .then((r) => r.data?.data ?? r.data ?? []);
+  },
 
-  getById: (id: number) =>
-    httpClient.get<OlderAdultFamily>(`/older-adult-family/${id}`).then((r) => r.data),
+  getById(id: number): Promise<OlderAdultFamilyApi> {
+    return httpClient
+      .get<OlderAdultFamilyApi>(`/older-adult-family/${id}`)
+      .then((r) => r.data?.data ?? r.data);
+  },
 
-  getByPatient: (olderAdultId: number) =>
-    httpClient
-      .get<OlderAdultFamily[]>(`/virtual-records/${olderAdultId}/family`)
-      .then((r) => r.data),
+  create(payload: CreateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
+    return httpClient
+      .post<OlderAdultFamilyApi>('/older-adult-family', payload)
+      .then((r) => r.data?.data ?? r.data);
+  },
 
-  create: (payload: Partial<OlderAdultFamily>) =>
-    httpClient.post<OlderAdultFamily>('/older-adult-family', payload).then((r) => r.data),
+  update(id: number, payload: UpdateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
+    return httpClient
+      .patch<OlderAdultFamilyApi>(`/older-adult-family/${id}`, payload)
+      .then((r) => r.data?.data ?? r.data);
+  },
 
-  update: (id: number, payload: Partial<OlderAdultFamily>) =>
-    httpClient
-      .patch<OlderAdultFamily>(`/older-adult-family/${id}`, payload)
-      .then((r) => r.data),
-
-  remove: (id: number) =>
-    httpClient.delete(`/older-adult-family/${id}`).then((r) => r.data),
-
-  toggle: (id: number) =>
-    httpClient
-      .patch<OlderAdultFamily>(`/older-adult-family/${id}/toggle`)
-      .then((r) => r.data),
+  remove(id: number): Promise<void> {
+    return httpClient.delete(`/older-adult-family/${id}`).then(() => undefined);
+  },
 };

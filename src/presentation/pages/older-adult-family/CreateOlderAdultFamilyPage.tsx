@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
-import type { CreateOlderAdultFamilyDto } from '../../../types/olderAdultFamily';
-import { KinshipTypeApi } from '../../../types/olderAdultFamily';
+import type { CreateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamily';
 
 const initial: CreateOlderAdultFamilyDto = {
-  pfIdentification: '', pfName: '', pfFLastName: '', pfSLastName: '', pfPhoneNumber: '', pfEmail: '', pfKinship: KinshipTypeApi.NOT_SPECIFIED,
+  pfIdentification: '', pfName: '', pfFLastName: '', pfSLastName: '', pfPhoneNumber: '', pfEmail: '',   pfKinship: 'not specified' as KinshipType,
 };
 
 export default function CreateOlderAdultFamilyPage() {
@@ -63,7 +62,7 @@ export default function CreateOlderAdultFamilyPage() {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Parentesco</label>
                 <select name="pfKinship" className="form-select" value={form.pfKinship} onChange={handleChange} disabled={loading}>
-                  {Object.entries(KinshipTypeApi).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
+                  {(['son','daughter','grandson','granddaughter','brother','sister','nephew','niece','husband','wife','legal guardian','other','not specified'] as KinshipType[]).map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div className="col-md-6">

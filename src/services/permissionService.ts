@@ -5,7 +5,7 @@ import type {
   RolePermissions,
   Permission
 } from '../types/permissions';
-import { PermissionModule } from '../types/permissions';
+import { PermissionModule, PermissionAction } from '../types/permissions';
 import { permissionStorage } from '../infrastructure/storage/permissionStorage';
 
 /**
@@ -147,5 +147,21 @@ export const permissionService = {
    */
   updateRolePermissions(roleId: number, permissions: Permission[]): Promise<void> {
     return permissionStorage.updateRolePermissions(roleId, permissions);
+  },
+
+  /**
+   * Obtiene los permisos de un rol por id
+   * @param roleId - ID del rol
+   * @returns Permisos del rol o null
+   */
+  getRoleInfo(roleId: number): RolePermissions | null {
+    return permissionStorage.getRolePermissions(roleId);
+  },
+
+  /**
+   * Obtiene todas las acciones disponibles en el sistema
+   */
+  getAvailableActions(): PermissionActionType[] {
+    return Object.values(PermissionAction) as PermissionActionType[];
   },
 };

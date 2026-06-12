@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
-import type { UpdateOlderAdultFamilyDto } from '../../../types/olderAdultFamily';
-import { KinshipTypeApi } from '../../../types/olderAdultFamily';
+import type { UpdateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamily';
 
 export default function EditOlderAdultFamilyPage() {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +69,7 @@ export default function EditOlderAdultFamilyPage() {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Parentesco</label>
                 <select name="pfKinship" className="form-select" value={form.pfKinship ?? ''} onChange={handleChange} disabled={saving}>
-                  {Object.entries(KinshipTypeApi).map(([k, v]) => <option key={k} value={v}>{v}</option>)}
+                  {(['son','daughter','grandson','granddaughter','brother','sister','nephew','niece','husband','wife','legal guardian','other','not specified'] as KinshipType[]).map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div className="col-md-6">
