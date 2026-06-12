@@ -56,6 +56,7 @@ const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined
 
 export { FeedbackContext };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useFeedback = () => {
   const context = useContext(FeedbackContext);
   if (!context) {

@@ -14,7 +14,7 @@
  * @param data - Datos del medicamento clínico
  * @returns Mensaje de error o null si es válido
  */
-export function validateClinicalMedicationData(data: any): string | null {
+export function validateClinicalMedicationData(data: unknown): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 

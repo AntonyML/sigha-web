@@ -77,7 +77,7 @@ export interface CreatePsychologySessionDto {
   id_appointment: number;
 }
 
-export interface UpdatePsychologySessionDto extends Partial<Omit<CreatePsychologySessionDto, 'id_appointment'>> {}
+export type UpdatePsychologySessionDto = Partial<Omit<CreatePsychologySessionDto, 'id_appointment'>>;
 
 export interface PsychologySessionApiResponse {
   message: string;

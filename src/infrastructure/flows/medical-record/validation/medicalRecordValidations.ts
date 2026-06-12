@@ -14,7 +14,7 @@
  * @param data - Datos del registro médico
  * @returns Mensaje de error o null si es válido
  */
-export function validateMedicalRecordData(data: any): string | null {
+export function validateMedicalRecordData(data: unknown): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 

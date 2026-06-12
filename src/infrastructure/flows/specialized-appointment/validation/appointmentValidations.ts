@@ -14,7 +14,7 @@
  * @param data - Datos de la cita especializada
  * @returns Mensaje de error o null si es válido
  */
-export function validateSpecializedAppointmentData(data: any): string | null {
+export function validateSpecializedAppointmentData(data: unknown): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 
@@ -117,7 +117,7 @@ export function validateSpecializedAppointmentPermissions(_operation: string, _u
  * @param appointmentData - Datos de la cita
  * @returns Mensaje de error o null si puede ser cancelada
  */
-export function validateAppointmentCancellation(_appointmentData: any): string | null {
+export function validateAppointmentCancellation(_appointmentData: unknown): string | null {
     // TODO: Implementar validaciones específicas de negocio para cancelación
     // Por ejemplo: no permitir cancelar citas que ya pasaron, etc.
 
@@ -130,7 +130,7 @@ export function validateAppointmentCancellation(_appointmentData: any): string |
  * @param appointmentData - Datos de la cita
  * @returns Mensaje de error o null si puede ser completada
  */
-export function validateAppointmentCompletion(_appointmentData: any): string | null {
+export function validateAppointmentCompletion(_appointmentData: unknown): string | null {
     // TODO: Implementar validaciones específicas de negocio para completación
     // Por ejemplo: verificar que la cita esté en estado programada, etc.
 

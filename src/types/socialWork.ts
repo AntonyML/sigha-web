@@ -538,7 +538,7 @@ export interface CreateSocialWorkReportDto {
   id_appointment?: number;
 }
 
-export interface UpdateSocialWorkReportDto extends Partial<CreateSocialWorkReportDto> {}
+export type UpdateSocialWorkReportDto = Partial<CreateSocialWorkReportDto>;
 
 export interface SocialWorkReportBackendResponse {
   message: string;

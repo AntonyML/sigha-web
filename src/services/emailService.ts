@@ -34,7 +34,6 @@ emailClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (config.features.enableDebugLogs) {
-      // eslint-disable-next-line no-console
       console.error('[emailService] error:', error);
     }
     return Promise.reject(error);

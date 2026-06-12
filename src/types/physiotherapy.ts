@@ -72,7 +72,7 @@ export interface CreatePhysiotherapySessionDto {
   id_appointment: number;
 }
 
-export interface UpdatePhysiotherapySessionDto extends Partial<Omit<CreatePhysiotherapySessionDto, 'id_appointment'>> {}
+export type UpdatePhysiotherapySessionDto = Partial<Omit<CreatePhysiotherapySessionDto, 'id_appointment'>>;
 
 export interface PhysiotherapySessionApiResponse {
   message: string;
