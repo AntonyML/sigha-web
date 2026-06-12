@@ -8,35 +8,37 @@
 /**
  * Tipos de error para validaciones de familia de adultos mayores
  */
-export enum OlderAdultFamilyValidationError {
-    INVALID_ID = 'INVALID_ID',
-    MISSING_REQUIRED_FIELD = 'MISSING_REQUIRED_FIELD',
-    INVALID_PATIENT_ID = 'INVALID_PATIENT_ID',
-    INVALID_NAME = 'INVALID_NAME',
-    INVALID_RELATIONSHIP = 'INVALID_RELATIONSHIP',
-    INVALID_PHONE = 'INVALID_PHONE',
-    INVALID_EMAIL = 'INVALID_EMAIL',
-    INVALID_ADDRESS = 'INVALID_ADDRESS',
-    DUPLICATE_FAMILY_MEMBER = 'DUPLICATE_FAMILY_MEMBER',
-    INVALID_EMERGENCY_CONTACT = 'INVALID_EMERGENCY_CONTACT'
-}
+export const OlderAdultFamilyValidationError = {
+    INVALID_ID: 'INVALID_ID',
+    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+    INVALID_PATIENT_ID: 'INVALID_PATIENT_ID',
+    INVALID_NAME: 'INVALID_NAME',
+    INVALID_RELATIONSHIP: 'INVALID_RELATIONSHIP',
+    INVALID_PHONE: 'INVALID_PHONE',
+    INVALID_EMAIL: 'INVALID_EMAIL',
+    INVALID_ADDRESS: 'INVALID_ADDRESS',
+    DUPLICATE_FAMILY_MEMBER: 'DUPLICATE_FAMILY_MEMBER',
+    INVALID_EMERGENCY_CONTACT: 'INVALID_EMERGENCY_CONTACT',
+} as const;
+export type OlderAdultFamilyValidationError = typeof OlderAdultFamilyValidationError[keyof typeof OlderAdultFamilyValidationError];
 
 /**
  * Tipos de relación familiar permitidos
  */
-export enum FamilyRelationship {
-    SPOUSE = 'spouse',
-    CHILD = 'child',
-    PARENT = 'parent',
-    SIBLING = 'sibling',
-    GRANDCHILD = 'grandchild',
-    GRANDPARENT = 'grandparent',
-    AUNT_UNCLE = 'aunt_uncle',
-    NIECE_NEPHEW = 'niece_nephew',
-    COUSIN = 'cousin',
-    IN_LAW = 'in_law',
-    OTHER = 'other'
-}
+export const FamilyRelationship = {
+    SPOUSE: 'spouse',
+    CHILD: 'child',
+    PARENT: 'parent',
+    SIBLING: 'sibling',
+    GRANDCHILD: 'grandchild',
+    GRANDPARENT: 'grandparent',
+    AUNT_UNCLE: 'aunt_uncle',
+    NIECE_NEPHEW: 'niece_nephew',
+    COUSIN: 'cousin',
+    IN_LAW: 'in_law',
+    OTHER: 'other',
+} as const;
+export type FamilyRelationship = typeof FamilyRelationship[keyof typeof FamilyRelationship];
 
 /**
  * Resultado de validación
@@ -234,14 +236,14 @@ export function validateFamilyAddress(address: string | null | undefined): Valid
  * @param relationship - Relación familiar
  * @returns Resultado de la validación
  */
-export function validateEmergencyContactStatus(isEmergencyContact: boolean | null | undefined, relationship: string): ValidationResult {
+export function validateEmergencyContactStatus(isEmergencyContact: boolean | null | undefined, relationship: FamilyRelationship | string): ValidationResult {
     // Si no es contacto de emergencia, no hay validación adicional
     if (!isEmergencyContact) {
         return { isValid: true };
     }
 
     // Si es contacto de emergencia, debe tener una relación que lo permita
-    const allowedRelationships = [
+    const allowedRelationships: FamilyRelationship[] = [
         FamilyRelationship.SPOUSE,
         FamilyRelationship.CHILD,
         FamilyRelationship.PARENT,

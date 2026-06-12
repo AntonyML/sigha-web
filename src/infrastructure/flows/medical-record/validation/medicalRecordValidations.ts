@@ -14,7 +14,7 @@
  * @param data - Datos del registro médico
  * @returns Mensaje de error o null si es válido
  */
-export function validateMedicalRecordData(data: any): string | null {
+export function validateMedicalRecordData(data: unknown): string | null {
     // TODO: Implementar validaciones específicas cuando se definan los tipos
     // Validaciones básicas por ahora
 
@@ -101,7 +101,7 @@ export function getMedicalRecordErrorMessage(operation: string, error: unknown):
  * @param userRole - Rol del usuario
  * @returns true si tiene permisos, false si no
  */
-export function validateMedicalRecordPermissions(operation: string, userRole?: string): boolean {
+export function validateMedicalRecordPermissions(_operation: string, _userRole?: string): boolean {
     // TODO: Implementar validaciones de permisos cuando se defina el sistema de roles
     // Por ahora, permitir todas las operaciones
     return true;

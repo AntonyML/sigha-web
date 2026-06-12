@@ -54,7 +54,8 @@ function avatarColor(name?: string): [string, string] {
   if (!name) return ['#f1f5f9', '#94a3b8']
   let h = 0
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]
+  const pair = AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length] ?? ['#f1f5f9', '#94a3b8']
+  return [pair[0] ?? '#f1f5f9', pair[1] ?? '#94a3b8']
 }
 
 function BloodBadge({ type }: { type?: string }) {

@@ -1,7 +1,29 @@
+// src/services/olderAdultUpdatesService.ts
+// Sincronizado con backend: controller/older-adult-updates/older-adult-updates.controller.ts
+// Endpoints:
+//   GET  /older-adult-updates?olderAdultId=&fieldChanged=&changedBy=
+//   GET  /older-adult-updates/by-older-adult/:olderAdultId
+//   GET  /older-adult-updates/:id
+
 import axios from 'axios';
-import type { OlderAdultUpdate } from '../types/olderAdultUpdates';
 import { config } from '../config/app.config';
-import { navigateTo } from '../utils/navigationUtils';
+
+export interface OlderAdultUpdateApi {
+  id: number;
+  oauFieldChanged: string;
+  oauOldValue?: string | null;
+  oauNewValue?: string | null;
+  changedAt: string;
+  idOlderAdult: number;
+  changedBy: number;
+  changedByUser?: { id: number; uName: string; uFLastName: string; uEmail: string };
+}
+
+export interface OlderAdultUpdatesFilterParams {
+  olderAdultId?: number;
+  fieldChanged?: string;
+  changedBy?: number;
+}
 
 const apiClient = axios.create({
   baseURL: config.api.baseUrl,
@@ -14,35 +36,24 @@ apiClient.interceptors.request.use((cfg) => {
   return cfg;
 });
 
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tempToken');
-      navigateTo('/login');
-    }
-    return Promise.reject(error);
-  }
-);
-
 export const olderAdultUpdatesService = {
-  getAll: async (olderAdultId?: number, fieldChanged?: string, changedBy?: number): Promise<OlderAdultUpdate[]> => {
+  async getAll(filters: OlderAdultUpdatesFilterParams = {}): Promise<OlderAdultUpdateApi[]> {
     const params: Record<string, unknown> = {};
-    if (olderAdultId) params.olderAdultId = olderAdultId;
-    if (fieldChanged) params.fieldChanged = fieldChanged;
-    if (changedBy) params.changedBy = changedBy;
+    if (filters.olderAdultId !== undefined) params.olderAdultId = filters.olderAdultId;
+    if (filters.fieldChanged) params.fieldChanged = filters.fieldChanged;
+    if (filters.changedBy !== undefined) params.changedBy = filters.changedBy;
     const response = await apiClient.get('/older-adult-updates', { params });
-    return response.data?.data ?? response.data ?? [];
+    const data = response.data;
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
-  getByOlderAdult: async (olderAdultId: number): Promise<OlderAdultUpdate[]> => {
+  async getByOlderAdult(olderAdultId: number): Promise<OlderAdultUpdateApi[]> {
     const response = await apiClient.get(`/older-adult-updates/by-older-adult/${olderAdultId}`);
-    return response.data?.data ?? response.data ?? [];
+    const data = response.data;
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
-  getById: async (id: number): Promise<OlderAdultUpdate> => {
+  async getById(id: number): Promise<OlderAdultUpdateApi> {
     const response = await apiClient.get(`/older-adult-updates/${id}`);
     return response.data?.data ?? response.data;
   },

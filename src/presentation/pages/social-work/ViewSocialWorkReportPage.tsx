@@ -2,46 +2,16 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Users, ArrowLeft, Pencil, User, Calendar, AlertCircle,
-  ClipboardList, Home, DollarSign, Network, FileText, UserCheck, Zap
+  ClipboardList, DollarSign, Network,
 } from 'lucide-react'
-import { socialWorkService } from '../../../services/socialWorkService'
-import type { SocialWorkReportApi } from '../../../types/socialWork'
+import { socialWorkService, type SocialWorkReportApi } from '../../../services/socialWorkService'
 import '../../styles/lp.css'
 
-const TYPE_LABELS: Record<string, string> = {
-  initial_assessment: 'Valoración Inicial',
-  follow_up:          'Seguimiento',
-  family_meeting:     'Reunión Familiar',
-  crisis_intervention:'Intervención en Crisis',
-  discharge_planning: 'Planificación de Alta',
-  resource_referral:  'Referencia de Recursos',
-}
-
-const SUPPORT_LABELS: Record<string, string> = {
-  high:     'Alto',
-  moderate: 'Moderado',
-  low:      'Bajo',
-  none:     'Ninguno',
-}
-
-const SUPPORT_COLORS: Record<string, { bg: string; color: string }> = {
-  high:     { bg: '#dcfce7', color: '#15803d' },
-  moderate: { bg: '#fef9c3', color: '#854d0e' },
-  low:      { bg: '#fee2e2', color: '#b91c1c' },
-  none:     { bg: '#f1f5f9', color: '#64748b' },
-}
-
-const LIVING_LABELS: Record<string, string> = {
-  nursing_home:    'Hogar de adultos mayores',
-  family_home:     'Hogar familiar',
-  independent:     'Independiente',
-  assisted_living: 'Vida asistida',
-  other:           'Otro',
-}
-
-const getPatientName = (r: SocialWorkReportApi) => {
-  const p = r.patient
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : '—'
+const VISIT_TYPE_LABELS: Record<string, string> = {
+  'home visit':          'Visita domiciliar',
+  'institutional visit': 'Visita institucional',
+  'interview':           'Entrevista',
+  'follow_up':           'Seguimiento',
 }
 
 const fmt     = (v?: string | null) => v || '—'
@@ -102,8 +72,6 @@ export default function ViewSocialWorkReportPage() {
     </div>
   )
 
-  const sc = SUPPORT_COLORS[report.family_support_level ?? ''] ?? { bg: '#f1f5f9', color: '#64748b' }
-
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '1.5rem 1.25rem 3rem' }}>
 
@@ -119,8 +87,7 @@ export default function ViewSocialWorkReportPage() {
               <Users size={20} color="#0891b2" /> Reporte de Trabajo Social #{report.id}
             </h1>
             <p style={{ margin: '0.125rem 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-              Creado el {fmtDT(report.created_at)}
-              {report.updated_at ? ` · Actualizado ${fmtDT(report.updated_at)}` : ''}
+              Creado el {fmtDT(report.create_at)}
             </p>
           </div>
         </div>
@@ -136,83 +103,38 @@ export default function ViewSocialWorkReportPage() {
           <User size={24} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Paciente</p>
-          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>{getPatientName(report)}</p>
-          {report.patient?.identification && (
-            <p style={{ margin: '0.125rem 0 0', fontSize: '0.8125rem', opacity: 0.85 }}>Cédula: {report.patient.identification}</p>
-          )}
+          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Cita vinculada</p>
+          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>#{report.id_appointment}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Fecha del reporte</p>
           <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-            <Calendar size={14} /> {fmtDate(report.report_date)}
+            <Calendar size={14} /> {fmtDate(report.sw_date)}
           </p>
           <div style={{ marginTop: '0.375rem' }}>
             <span style={{ background: 'rgba(255,255,255,0.25)', borderRadius: '999px', padding: '0.2rem 0.75rem', fontSize: '0.75rem', fontWeight: 700 }}>
-              {TYPE_LABELS[report.report_type] ?? report.report_type}
+              {VISIT_TYPE_LABELS[report.sw_visit_type] ?? report.sw_visit_type}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Quick badges */}
-      <div style={{ display: 'flex', gap: '0.625rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        {report.family_support_level && (
-          <span style={{ background: sc.bg, color: sc.color, borderRadius: '999px', padding: '0.3rem 0.875rem', fontSize: '0.8125rem', fontWeight: 600 }}>
-            Apoyo familiar: {SUPPORT_LABELS[report.family_support_level] ?? report.family_support_level}
-          </span>
-        )}
-        {report.current_living_arrangement && (
-          <span style={{ background: '#f0f9ff', color: '#0369a1', borderRadius: '999px', padding: '0.3rem 0.875rem', fontSize: '0.8125rem', fontWeight: 600 }}>
-            Vivienda: {LIVING_LABELS[report.current_living_arrangement] ?? report.current_living_arrangement}
-          </span>
-        )}
-        {report.follow_up_date && (
-          <span style={{ background: '#fef9c3', color: '#92400e', borderRadius: '999px', padding: '0.3rem 0.875rem', fontSize: '0.8125rem', fontWeight: 600 }}>
-            Seguimiento: {fmtDate(report.follow_up_date)}
-          </span>
-        )}
-      </div>
-
-      {/* Staff */}
-      {report.staff && (
-        <Section title="Trabajador/a Social" icon={<UserCheck size={16} />}>
-          <Field label="Nombre" value={[report.staff.name, report.staff.firstLastName].filter(Boolean).join(' ')} />
-          {report.staff.email && <Field label="Correo" value={report.staff.email} />}
-        </Section>
-      )}
-
-      {/* Evaluación social */}
-      <Section title="Evaluación social" icon={<ClipboardList size={16} />}>
-        <Field label="Evaluación social" value={fmt(report.social_assessment)} wide />
-        <Field label="Dinámica familiar" value={fmt(report.family_dynamics)} wide />
+      {/* Relación familiar */}
+      <Section title="Relación familiar" icon={<ClipboardList size={16} />}>
+        <Field label="Relación familiar" value={fmt(report.sw_family_relationship)} wide />
       </Section>
 
-      {/* Situación económica y vivienda */}
-      <Section title="Situación económica y vivienda" icon={<DollarSign size={16} />}>
-        <Field label="Situación financiera" value={fmt(report.financial_situation)} wide />
-        <Field label="Vivienda actual" value={report.current_living_arrangement ? (LIVING_LABELS[report.current_living_arrangement] ?? report.current_living_arrangement) : '—'} />
+      {/* Situación económica y apoyo */}
+      <Section title="Situación económica y apoyo" icon={<DollarSign size={16} />}>
+        <Field label="Evaluación económica" value={fmt(report.sw_economic_assessment)} wide />
+        <Field label="Apoyo social" value={fmt(report.sw_social_support)} wide />
       </Section>
 
-      {/* Recursos y servicios */}
-      <Section title="Recursos y servicios" icon={<Network size={16} />}>
-        <Field label="Recursos comunitarios" value={fmt(report.community_resources)} wide />
-        <Field label="Servicios sociales requeridos" value={fmt(report.social_services_needed)} wide />
+      {/* Observaciones y recomendaciones */}
+      <Section title="Observaciones y recomendaciones" icon={<Network size={16} />}>
+        <Field label="Observaciones" value={fmt(report.sw_observations)} wide />
+        <Field label="Recomendaciones" value={fmt(report.sw_recommendations)} wide />
       </Section>
-
-      {/* Recomendaciones y plan */}
-      <Section title="Recomendaciones y plan de acción" icon={<FileText size={16} />}>
-        <Field label="Recomendaciones" value={fmt(report.recommendations)} wide />
-        <Field label="Plan de acción" value={fmt(report.action_plan)} wide />
-      </Section>
-
-      {/* Cita vinculada */}
-      {report.appointment && (
-        <Section title="Cita vinculada" icon={<Zap size={16} />}>
-          <Field label="ID de cita" value={String(report.appointment.id)} />
-          <Field label="Fecha de la cita" value={fmtDate(report.appointment.appointmentDate)} />
-        </Section>
-      )}
 
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>

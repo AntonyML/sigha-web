@@ -1,62 +1,48 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { socialWorkService } from '../../../services/socialWorkService';
-import type { CreateSocialWorkReportDto } from '../../../types/socialWork';
+import {
+  socialWorkService,
+  type CreateSocialWorkReportDto,
+  type SocialWorkVisitType,
+} from '../../../services/socialWorkService';
 
-const REPORT_TYPES = [
-  { value: 'initial_assessment', label: 'Valoración Inicial' },
-  { value: 'follow_up', label: 'Seguimiento' },
-  { value: 'family_intervention', label: 'Intervención Familiar' },
-  { value: 'resource_coordination', label: 'Coordinación de Recursos' },
-  { value: 'discharge_planning', label: 'Planificación de Alta' },
-  { value: 'crisis_intervention', label: 'Intervención en Crisis' },
-];
-
-const SUPPORT_LEVELS = [
-  { value: 'high', label: 'Alto' },
-  { value: 'medium', label: 'Medio' },
-  { value: 'low', label: 'Bajo' },
-  { value: 'none', label: 'Ninguno' },
-];
-
-const LIVING_ARRANGEMENTS = [
-  { value: 'institution', label: 'Institución' },
-  { value: 'family', label: 'Familia' },
-  { value: 'alone', label: 'Solo' },
-  { value: 'assisted_living', label: 'Vida Asistida' },
+const VISIT_TYPES: { value: SocialWorkVisitType; label: string }[] = [
+  { value: 'home visit',          label: 'Visita domiciliar' },
+  { value: 'institutional visit', label: 'Visita institucional' },
+  { value: 'interview',           label: 'Entrevista' },
+  { value: 'follow_up',           label: 'Seguimiento' },
 ];
 
 export default function CreateSocialWorkReportPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState<Partial<CreateSocialWorkReportDto>>({
-    report_type: 'initial_assessment',
-    support_level: 'medium',
-    living_arrangement: 'institution',
-    observations: '',
-    recommendations: '',
-    family_contact: '',
-    notes: '',
-    report_date: new Date().toISOString().split('T')[0],
-    patient_id: '',
+  const [form, setForm] = useState<CreateSocialWorkReportDto>({
+    sw_visit_type: 'home visit',
+    sw_date: new Date().toISOString().split('T')[0],
+    sw_family_relationship: '',
+    sw_economic_assessment: '',
+    sw_social_support: '',
+    sw_observations: '',
+    sw_recommendations: '',
+    id_appointment: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.patient_id?.trim()) {
-      setError('El ID del paciente es obligatorio');
+    if (!form.id_appointment) {
+      setError('El ID de la cita es obligatorio');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      await socialWorkService.createReport(form as CreateSocialWorkReportDto);
+      await socialWorkService.createReport(form);
       navigate('/social-work');
     } catch (err) {
       console.error('Error creating social work report:', err);
@@ -90,41 +76,22 @@ export default function CreateSocialWorkReportPage() {
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">ID del Paciente <span className="text-danger">*</span></label>
+                <label className="form-label fw-semibold">ID de Cita (Appointment) <span className="text-danger">*</span></label>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
-                  name="patient_id"
-                  value={form.patient_id || ''}
+                  name="id_appointment"
+                  value={form.id_appointment}
                   onChange={handleChange}
-                  placeholder="UUID del paciente"
                   required
                 />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Tipo de Reporte</label>
-                <select className="form-select" name="report_type" value={form.report_type} onChange={handleChange}>
-                  {REPORT_TYPES.map((t) => (
+                <label className="form-label fw-semibold">Tipo de Visita</label>
+                <select className="form-select" name="sw_visit_type" value={form.sw_visit_type} onChange={handleChange} required>
+                  {VISIT_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Nivel de Apoyo Social</label>
-                <select className="form-select" name="support_level" value={form.support_level} onChange={handleChange}>
-                  {SUPPORT_LEVELS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Condición de Vivienda</label>
-                <select className="form-select" name="living_arrangement" value={form.living_arrangement} onChange={handleChange}>
-                  {LIVING_ARRANGEMENTS.map((l) => (
-                    <option key={l.value} value={l.value}>{l.label}</option>
                   ))}
                 </select>
               </div>
@@ -134,21 +101,45 @@ export default function CreateSocialWorkReportPage() {
                 <input
                   type="date"
                   className="form-control"
-                  name="report_date"
-                  value={form.report_date || ''}
+                  name="sw_date"
+                  value={form.sw_date || ''}
                   onChange={handleChange}
                 />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Contacto Familiar</label>
+                <label className="form-label fw-semibold">Relación Familiar</label>
                 <input
                   type="text"
                   className="form-control"
-                  name="family_contact"
-                  value={form.family_contact || ''}
+                  name="sw_family_relationship"
+                  value={form.sw_family_relationship || ''}
                   onChange={handleChange}
-                  placeholder="Nombre y teléfono del contacto familiar"
+                  placeholder="Descripción de la relación familiar"
+                />
+              </div>
+
+              <div className="col-12">
+                <label className="form-label fw-semibold">Evaluación Económica</label>
+                <textarea
+                  className="form-control"
+                  name="sw_economic_assessment"
+                  value={form.sw_economic_assessment || ''}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Descripción de la situación económica"
+                />
+              </div>
+
+              <div className="col-12">
+                <label className="form-label fw-semibold">Apoyo Social</label>
+                <textarea
+                  className="form-control"
+                  name="sw_social_support"
+                  value={form.sw_social_support || ''}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Servicios sociales de apoyo"
                 />
               </div>
 
@@ -156,8 +147,8 @@ export default function CreateSocialWorkReportPage() {
                 <label className="form-label fw-semibold">Observaciones</label>
                 <textarea
                   className="form-control"
-                  name="observations"
-                  value={form.observations || ''}
+                  name="sw_observations"
+                  value={form.sw_observations || ''}
                   onChange={handleChange}
                   rows={3}
                   placeholder="Observaciones del trabajador social"
@@ -168,23 +159,11 @@ export default function CreateSocialWorkReportPage() {
                 <label className="form-label fw-semibold">Recomendaciones</label>
                 <textarea
                   className="form-control"
-                  name="recommendations"
-                  value={form.recommendations || ''}
+                  name="sw_recommendations"
+                  value={form.sw_recommendations || ''}
                   onChange={handleChange}
                   rows={3}
                   placeholder="Recomendaciones y plan de acción"
-                />
-              </div>
-
-              <div className="col-12">
-                <label className="form-label fw-semibold">Notas</label>
-                <textarea
-                  className="form-control"
-                  name="notes"
-                  value={form.notes || ''}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder="Notas adicionales"
                 />
               </div>
             </div>

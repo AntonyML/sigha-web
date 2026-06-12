@@ -52,23 +52,8 @@ export const authService = {
       uPassword: credentials.uPassword,
     };
 
-    if (!config.features.enable2FA) {
-      requestBody.twoFactorCode = import.meta.env.VITE_2FA_DUMMY_CODE || '000000';
-    }
-
     const response = await apiClient.post<LoginResponse>('/auth/login', requestBody);
     const { requiresTwoFactor, accessToken, user, tempToken } = response.data;
-
-    if (!config.features.enable2FA) {
-      if (accessToken && user) {
-        localStorage.setItem('authToken', accessToken);
-        localStorage.setItem('user', JSON.stringify(user));
-        if (response.data.refreshToken) {
-          localStorage.setItem('refreshToken', response.data.refreshToken);
-        }
-      }
-      return response.data;
-    }
 
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
@@ -82,6 +67,9 @@ export const authService = {
     if (accessToken && user) {
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('user', JSON.stringify(user));
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
     }
 
     return response.data;

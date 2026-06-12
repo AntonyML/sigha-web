@@ -20,6 +20,13 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
     const [loading, setLoading] = useState(true);
 
     const check2FAStatus = useCallback(async () => {
+        // No hay sesión activa: no llamar a un endpoint que requiere JWT.
+        if (!localStorage.getItem('authToken')) {
+            setIsEnabled(false);
+            setLoading(false);
+            return;
+        }
+
         try {
             const result = await twoFactorService.get2FAStatus();
             setIsEnabled(result.enabled || false);

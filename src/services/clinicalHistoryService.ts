@@ -1,11 +1,13 @@
 // src/services/clinicalHistoryService.ts
-// CRUD for clinical history (per-older-adult medical history).
-// Endpoints verified against backend/docs/api-endpoints.md.
+// ⚠️ No existe un endpoint /clinical-histories en el backend.
+// El historial clínico del adulto mayor es parte del expediente virtual y se gestiona
+// mediante GET /virtual-records/:id (response.clinicalHistory). Para evitar puntos
+// de acoplamiento inexistentes este servicio expone solo helpers basados en el
+// expediente virtual.
 
 import { httpClient } from './httpClient';
 
 export interface ClinicalHistory {
-  id?: number;
   ch_frequent_falls: boolean;
   ch_weight?: number | null;
   ch_height?: number | null;
@@ -17,48 +19,18 @@ export interface ClinicalHistory {
   ch_rcvg?: string;
   ch_vision_problems: boolean;
   ch_vision_hearing: boolean;
-  id_older_adult?: number | null;
-  create_at?: string;
+  conditions?: Array<{ id: number }>;
+  vaccines?: Array<{ id: number }>;
+  medications?: Array<{
+    m_medication: string;
+    m_dosage: string;
+    m_treatment_type: string;
+  }>;
 }
 
 export const clinicalHistoryService = {
-  getAll: () =>
-    httpClient.get<ClinicalHistory[]>('/clinical-histories').then((r) => r.data),
-
-  getById: (id: number) =>
-    httpClient.get<ClinicalHistory>(`/clinical-histories/${id}`).then((r) => r.data),
-
-  getByPatient: (olderAdultId: number) =>
-    httpClient
-      .get<ClinicalHistory>(`/virtual-records/${olderAdultId}/clinical-history`)
-      .then((r) => r.data),
-
-  create: (payload: Partial<ClinicalHistory>) =>
-    httpClient.post<ClinicalHistory>('/clinical-histories', payload).then((r) => r.data),
-
-  update: (id: number, payload: Partial<ClinicalHistory>) =>
-    httpClient.patch<ClinicalHistory>(`/clinical-histories/${id}`, payload).then((r) => r.data),
-
-  remove: (id: number) =>
-    httpClient.delete(`/clinical-histories/${id}`).then((r) => r.data),
-
-  addCondition: (historyId: number, conditionId: number) =>
-    httpClient
-      .post(`/clinical-histories/${historyId}/conditions/${conditionId}`)
-      .then((r) => r.data),
-
-  removeCondition: (historyId: number, conditionId: number) =>
-    httpClient
-      .delete(`/clinical-histories/${historyId}/conditions/${conditionId}`)
-      .then((r) => r.data),
-
-  addVaccine: (historyId: number, vaccineId: number) =>
-    httpClient
-      .post(`/clinical-histories/${historyId}/vaccines/${vaccineId}`)
-      .then((r) => r.data),
-
-  removeVaccine: (historyId: number, vaccineId: number) =>
-    httpClient
-      .delete(`/clinical-histories/${historyId}/vaccines/${vaccineId}`)
-      .then((r) => r.data),
+  async getByOlderAdult(olderAdultId: number): Promise<ClinicalHistory | null> {
+    const response = await httpClient.get(`/virtual-records/${olderAdultId}`);
+    return response.data?.data?.clinicalHistory ?? response.data?.clinicalHistory ?? null;
+  },
 };

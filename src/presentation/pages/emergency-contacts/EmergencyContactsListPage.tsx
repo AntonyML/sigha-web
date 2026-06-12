@@ -1,8 +1,8 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Phone, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
-import { emergencyContactsService } from '../../../services/emergencyContactsService'
-import type { EmergencyContactApi } from '../../../types/emergencyContact'
+import { emergencyContactService } from '../../../services/emergencyContactService'
+import type { EmergencyContactApi } from '../../../services/emergencyContactService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
@@ -20,7 +20,7 @@ export default function EmergencyContactsListPage() {
     setLoading(true)
     setError('')
     try {
-      setItems(await emergencyContactsService.getAll())
+      setItems(await emergencyContactService.getAll())
     } catch {
       setError('Error al cargar contactos de emergencia')
     } finally {
@@ -34,7 +34,7 @@ export default function EmergencyContactsListPage() {
     const ok = await feedback.confirm('Eliminar contacto', '¿Eliminar este contacto de emergencia?')
     if (!ok) return
     try {
-      await emergencyContactsService.remove(id)
+      await emergencyContactService.remove(id)
       setItems(prev => prev.filter(i => i.id !== id))
       feedback.success('Contacto eliminado exitosamente.')
     } catch {

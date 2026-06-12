@@ -1,28 +1,26 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
-import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService'
-import type { OlderAdultFamilyApi } from '../../../types/olderAdultFamily'
-import { KinshipTypeApi } from '../../../types/olderAdultFamily'
+import { olderAdultFamilyService, type OlderAdultFamilyApi, type KinshipType } from '../../../services/olderAdultFamilyService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
 import '../../styles/lp.css'
 
-const kinshipLabels: Record<KinshipTypeApi, string> = {
-  [KinshipTypeApi.SON]: 'Hijo',
-  [KinshipTypeApi.DAUGHTER]: 'Hija',
-  [KinshipTypeApi.GRANDSON]: 'Nieto',
-  [KinshipTypeApi.GRANDDAUGHTER]: 'Nieta',
-  [KinshipTypeApi.BROTHER]: 'Hermano',
-  [KinshipTypeApi.SISTER]: 'Hermana',
-  [KinshipTypeApi.NEPHEW]: 'Sobrino',
-  [KinshipTypeApi.NIECE]: 'Sobrina',
-  [KinshipTypeApi.HUSBAND]: 'Esposo',
-  [KinshipTypeApi.WIFE]: 'Esposa',
-  [KinshipTypeApi.LEGAL_GUARDIAN]: 'Tutor Legal',
-  [KinshipTypeApi.OTHER]: 'Otro',
-  [KinshipTypeApi.NOT_SPECIFIED]: 'No especificado',
+const kinshipLabels: Record<KinshipType, string> = {
+  'son': 'Hijo',
+  'daughter': 'Hija',
+  'grandson': 'Nieto',
+  'granddaughter': 'Nieta',
+  'brother': 'Hermano',
+  'sister': 'Hermana',
+  'nephew': 'Sobrino',
+  'niece': 'Sobrina',
+  'husband': 'Esposo',
+  'wife': 'Esposa',
+  'legal guardian': 'Tutor Legal',
+  'other': 'Otro',
+  'not specified': 'No especificado',
 }
 
 export default function OlderAdultFamilyListPage() {

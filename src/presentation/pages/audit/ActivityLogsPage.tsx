@@ -1,17 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { activityLogsService } from '../../../services/activityLogsService';
-import type { ActivityLog } from '../../../types/activityLog';
-
-const severityBadge: Record<string, string> = {
-  low: 'bg-success',
-  medium: 'bg-warning text-dark',
-  high: 'bg-danger',
-  critical: 'bg-danger',
-};
+import { auditService, type DigitalRecord } from '../../../services/auditService';
+import type { AuditAction } from '../../../types/audit';
 
 export default function ActivityLogsPage() {
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
+  const [logs, setLogs] = useState<DigitalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,14 +16,15 @@ export default function ActivityLogsPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await activityLogsService.getActivityLogs({
+      const data = await auditService.searchAuditRecords({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
+        limit: 100,
       });
-      setLogs(data.logs ?? []);
+      setLogs(data.records ?? []);
     } catch (err) {
-      console.error('Error loading activity logs:', err);
-      setError('Error al cargar los registros de actividad');
+      console.error('Error loading audit records:', err);
+      setError('Error al cargar los registros de auditoría');
     } finally {
       setLoading(false);
     }
@@ -44,10 +38,10 @@ export default function ActivityLogsPage() {
     if (!searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase();
     return (
-      log.activityType?.toLowerCase().includes(term) ||
-      log.entityType?.toLowerCase().includes(term) ||
+      log.action?.toLowerCase().includes(term) ||
+      log.tableName?.toLowerCase().includes(term) ||
       log.description?.toLowerCase().includes(term) ||
-      log.ipAddress?.toLowerCase().includes(term)
+      log.userName?.toLowerCase().includes(term)
     );
   });
 
@@ -129,7 +123,7 @@ export default function ActivityLogsPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-5 text-muted">
           <i className="bi bi-inbox fs-1 d-block mb-2"></i>
-          No se encontraron registros de actividad
+          No se encontraron registros
         </div>
       ) : (
         <div className="card shadow-sm">
@@ -141,23 +135,19 @@ export default function ActivityLogsPage() {
                   <th>Entidad</th>
                   <th>Usuario</th>
                   <th>IP</th>
-                  <th>Severidad</th>
+                  <th>Descripción</th>
                   <th>Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((log) => (
                   <tr key={log.id}>
-                    <td><code className="text-primary">{log.activityType}</code></td>
-                    <td>{log.entityType ? <><small className="text-muted">({log.entityType})</small></> : <span className="text-muted">—</span>}</td>
-                    <td><small className="text-muted">{log.userId ?? '—'}</small></td>
+                    <td><code className="text-primary">{(log.action ?? 'other') as AuditAction}</code></td>
+                    <td>{log.tableName ?? <span className="text-muted">—</span>}</td>
+                    <td><small>{log.userName ?? log.userId ?? '—'}</small></td>
                     <td><small className="text-muted">{log.ipAddress || '—'}</small></td>
-                    <td>
-                      <span className={`badge ${severityBadge[log.severity] ?? 'bg-secondary'}`}>
-                        {log.severity}
-                      </span>
-                    </td>
-                    <td><small>{log.createdAt ? formatDate(log.createdAt) : '—'}</small></td>
+                    <td><small>{log.description ?? '—'}</small></td>
+                    <td><small>{log.timestamp ? formatDate(log.timestamp) : '—'}</small></td>
                   </tr>
                 ))}
               </tbody>

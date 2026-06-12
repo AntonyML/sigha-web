@@ -5,7 +5,7 @@
  */
 
 import { clinicalMedicationService } from '../../../services/clinicalMedicationService';
-import type { ClinicalMedicationApi, CreateClinicalMedicationDto, UpdateClinicalMedicationDto } from '../../../types/clinicalMedication';
+import type { ClinicalMedicationApi, CreateClinicalMedicationDto, UpdateClinicalMedicationDto } from '../../../services/clinicalMedicationService';
 import { validateClinicalMedicationData, validateClinicalMedicationId, getClinicalMedicationErrorMessage } from './validation/medicationValidations';
 
 export interface ClinicalMedicationFlowResult<T = any> {
@@ -17,7 +17,9 @@ export interface ClinicalMedicationFlowResult<T = any> {
 export const clinicalMedicationFlow = {
     async getAllMedications(clinicalHistoryId?: number): Promise<ClinicalMedicationFlowResult<ClinicalMedicationApi[]>> {
         try {
-            const data = await clinicalMedicationService.getAll(clinicalHistoryId);
+            const data = clinicalHistoryId !== undefined
+                ? await clinicalMedicationService.getByHistory(clinicalHistoryId)
+                : await clinicalMedicationService.getAll();
             return { success: true, data };
         } catch (error: unknown) {
             console.error('Error en clinicalMedicationFlow.getAllMedications:', error);

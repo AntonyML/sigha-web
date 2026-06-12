@@ -8,52 +8,56 @@
 /**
  * Estado de un reporte de trabajo social
  */
-export enum SocialWorkReportStatus {
-  DRAFT = 'draft',
-  SUBMITTED = 'submitted',
-  UNDER_REVIEW = 'under_review',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  ARCHIVED = 'archived'
-}
+export const SocialWorkReportStatus = {
+  DRAFT: 'draft',
+  SUBMITTED: 'submitted',
+  UNDER_REVIEW: 'under_review',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  ARCHIVED: 'archived',
+} as const;
+export type SocialWorkReportStatus = typeof SocialWorkReportStatus[keyof typeof SocialWorkReportStatus];
 
 /**
  * Tipo de intervención social
  */
-export enum SocialWorkInterventionType {
-  FAMILY_SUPPORT = 'family_support',
-  ECONOMIC_ASSISTANCE = 'economic_assistance',
-  HOUSING_SUPPORT = 'housing_support',
-  LEGAL_AID = 'legal_aid',
-  PSYCHOLOGICAL_SUPPORT = 'psychological_support',
-  HEALTHCARE_COORDINATION = 'healthcare_coordination',
-  EDUCATIONAL_SUPPORT = 'educational_support',
-  COMMUNITY_INTEGRATION = 'community_integration',
-  ELDER_CARE = 'elder_care',
-  DISABILITY_SUPPORT = 'disability_support',
-  CRISIS_INTERVENTION = 'crisis_intervention',
-  OTHER = 'other'
-}
+export const SocialWorkInterventionType = {
+  FAMILY_SUPPORT: 'family_support',
+  ECONOMIC_ASSISTANCE: 'economic_assistance',
+  HOUSING_SUPPORT: 'housing_support',
+  LEGAL_AID: 'legal_aid',
+  PSYCHOLOGICAL_SUPPORT: 'psychological_support',
+  HEALTHCARE_COORDINATION: 'healthcare_coordination',
+  EDUCATIONAL_SUPPORT: 'educational_support',
+  COMMUNITY_INTEGRATION: 'community_integration',
+  ELDER_CARE: 'elder_care',
+  DISABILITY_SUPPORT: 'disability_support',
+  CRISIS_INTERVENTION: 'crisis_intervention',
+  OTHER: 'other',
+} as const;
+export type SocialWorkInterventionType = typeof SocialWorkInterventionType[keyof typeof SocialWorkInterventionType];
 
 /**
  * Nivel de prioridad de la intervención
  */
-export enum SocialWorkPriorityLevel {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  URGENT = 'urgent'
-}
+export const SocialWorkPriorityLevel = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  URGENT: 'urgent',
+} as const;
+export type SocialWorkPriorityLevel = typeof SocialWorkPriorityLevel[keyof typeof SocialWorkPriorityLevel];
 
 /**
  * Tipo de beneficiario
  */
-export enum BeneficiaryType {
-  ELDERLY_PERSON = 'elderly_person',
-  FAMILY_MEMBER = 'family_member',
-  CAREGIVER = 'caregiver',
-  COMMUNITY_MEMBER = 'community_member'
-}
+export const BeneficiaryType = {
+  ELDERLY_PERSON: 'elderly_person',
+  FAMILY_MEMBER: 'family_member',
+  CAREGIVER: 'caregiver',
+  COMMUNITY_MEMBER: 'community_member',
+} as const;
+export type BeneficiaryType = typeof BeneficiaryType[keyof typeof BeneficiaryType];
 
 /**
  * Interface principal del reporte de trabajo social
@@ -534,14 +538,14 @@ export interface CreateSocialWorkReportDto {
   id_appointment?: number;
 }
 
-export interface UpdateSocialWorkReportDto extends Partial<CreateSocialWorkReportDto> {}
+export type UpdateSocialWorkReportDto = Partial<CreateSocialWorkReportDto>;
 
-export interface SocialWorkReportApiResponse {
+export interface SocialWorkReportBackendResponse {
   message: string;
   data: SocialWorkReportApi[];
 }
 
-export interface SingleSocialWorkReportApiResponse {
+export interface SingleSocialWorkReportBackendResponse {
   message: string;
   data: SocialWorkReportApi;
 }

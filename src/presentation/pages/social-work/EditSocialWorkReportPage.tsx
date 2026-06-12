@@ -1,30 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { socialWorkService } from '../../../services/socialWorkService'
-import type { UpdateSocialWorkReportDto } from '../../../types/socialWork'
+import {
+  socialWorkService,
+  type UpdateSocialWorkReportDto,
+  type SocialWorkVisitType,
+} from '../../../services/socialWorkService'
 
-const REPORT_TYPES = [
-  { value: 'initial_assessment',  label: 'Valoración Inicial' },
+const VISIT_TYPES: { value: SocialWorkVisitType; label: string }[] = [
+  { value: 'home visit',          label: 'Visita domiciliar' },
+  { value: 'institutional visit', label: 'Visita institucional' },
+  { value: 'interview',           label: 'Entrevista' },
   { value: 'follow_up',           label: 'Seguimiento' },
-  { value: 'family_meeting',      label: 'Reunión Familiar' },
-  { value: 'crisis_intervention', label: 'Intervención en Crisis' },
-  { value: 'discharge_planning',  label: 'Planificación de Alta' },
-  { value: 'resource_referral',   label: 'Referencia de Recursos' },
-]
-
-const SUPPORT_LEVELS = [
-  { value: 'high',     label: 'Alto' },
-  { value: 'moderate', label: 'Moderado' },
-  { value: 'low',      label: 'Bajo' },
-  { value: 'none',     label: 'Ninguno' },
-]
-
-const LIVING_ARRANGEMENTS = [
-  { value: 'nursing_home',    label: 'Hogar de ancianos' },
-  { value: 'family_home',     label: 'Hogar familiar' },
-  { value: 'independent',     label: 'Independiente' },
-  { value: 'assisted_living', label: 'Vivienda asistida' },
-  { value: 'other',           label: 'Otro' },
 ]
 
 // ─── styles ────────────────────────────────────────────────────────────────────────────
@@ -103,18 +89,13 @@ export default function EditSocialWorkReportPage() {
       try {
         const r = await socialWorkService.getReportById(Number(id))
         setForm({
-          report_type:              r.report_type,
-          report_date:              r.report_date?.slice(0, 10),
-          social_assessment:        r.social_assessment,
-          family_dynamics:          r.family_dynamics,
-          family_support_level:     r.family_support_level,
-          current_living_arrangement: r.current_living_arrangement,
-          financial_situation:      r.financial_situation,
-          community_resources:      r.community_resources,
-          social_services_needed:   r.social_services_needed,
-          recommendations:          r.recommendations,
-          action_plan:              r.action_plan,
-          follow_up_date:           r.follow_up_date?.slice(0, 10),
+          sw_visit_type:           r.sw_visit_type,
+          sw_date:                 r.sw_date?.slice(0, 10),
+          sw_family_relationship:  r.sw_family_relationship ?? undefined,
+          sw_economic_assessment:  r.sw_economic_assessment ?? undefined,
+          sw_social_support:       r.sw_social_support ?? undefined,
+          sw_observations:         r.sw_observations ?? undefined,
+          sw_recommendations:      r.sw_recommendations ?? undefined,
         })
       } catch (err) {
         console.error(err)
@@ -127,8 +108,8 @@ export default function EditSocialWorkReportPage() {
   }, [id])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
+    const { name, value, type } = e.target
+    setForm(prev => ({ ...prev, [name]: type === 'number' ? (value === '' ? undefined : Number(value)) : value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -181,72 +162,41 @@ export default function EditSocialWorkReportPage() {
         <form onSubmit={handleSubmit}>
           <div style={grid}>
             <div>
-              <label style={labelStyle}>Tipo de reporte</label>
-              <select style={inputStyle} name="report_type" value={form.report_type ?? ''} onChange={handleChange}>
+              <label style={labelStyle}>Tipo de visita</label>
+              <select style={inputStyle} name="sw_visit_type" value={form.sw_visit_type ?? ''} onChange={handleChange}>
                 <option value="">Seleccionar tipo</option>
-                {REPORT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                {VISIT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
 
             <div>
               <label style={labelStyle}>Fecha del reporte</label>
-              <input style={inputStyle} type="date" name="report_date" value={form.report_date ?? ''} onChange={handleChange} />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Apoyo familiar</label>
-              <select style={inputStyle} name="family_support_level" value={form.family_support_level ?? ''} onChange={handleChange}>
-                <option value="">Seleccionar nivel</option>
-                {SUPPORT_LEVELS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label style={labelStyle}>Condición de vivienda</label>
-              <select style={inputStyle} name="current_living_arrangement" value={form.current_living_arrangement ?? ''} onChange={handleChange}>
-                <option value="">Seleccionar condición</option>
-                {LIVING_ARRANGEMENTS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-              </select>
-            </div>
-
-            <div>
-              <label style={labelStyle}>Fecha de seguimiento</label>
-              <input style={inputStyle} type="date" name="follow_up_date" value={form.follow_up_date ?? ''} onChange={handleChange} />
+              <input style={inputStyle} type="date" name="sw_date" value={form.sw_date ?? ''} onChange={handleChange} />
             </div>
 
             <div style={fullRow}>
-              <label style={labelStyle}>Evaluación social</label>
-              <textarea style={textareaStyle} name="social_assessment" value={form.social_assessment ?? ''} onChange={handleChange} placeholder="Evaluación de la situación social del paciente..." />
+              <label style={labelStyle}>Relación familiar</label>
+              <input style={inputStyle} type="text" name="sw_family_relationship" value={form.sw_family_relationship ?? ''} onChange={handleChange} placeholder="Descripción de la relación familiar" />
             </div>
 
             <div style={fullRow}>
-              <label style={labelStyle}>Dinámica familiar</label>
-              <textarea style={textareaStyle} name="family_dynamics" value={form.family_dynamics ?? ''} onChange={handleChange} placeholder="Descripción de la dinámica y relaciones familiares..." />
+              <label style={labelStyle}>Evaluación económica</label>
+              <textarea style={textareaStyle} name="sw_economic_assessment" value={form.sw_economic_assessment ?? ''} onChange={handleChange} placeholder="Descripción de la situación financiera..." />
             </div>
 
             <div style={fullRow}>
-              <label style={labelStyle}>Situación económica</label>
-              <textarea style={textareaStyle} name="financial_situation" value={form.financial_situation ?? ''} onChange={handleChange} placeholder="Descripción de la situación financiera..." />
+              <label style={labelStyle}>Apoyo social</label>
+              <textarea style={textareaStyle} name="sw_social_support" value={form.sw_social_support ?? ''} onChange={handleChange} placeholder="Servicios sociales de apoyo..." />
             </div>
 
             <div style={fullRow}>
-              <label style={labelStyle}>Recursos comunitarios</label>
-              <textarea style={textareaStyle} name="community_resources" value={form.community_resources ?? ''} onChange={handleChange} placeholder="Recursos disponibles en la comunidad..." />
-            </div>
-
-            <div style={fullRow}>
-              <label style={labelStyle}>Servicios sociales necesarios</label>
-              <textarea style={textareaStyle} name="social_services_needed" value={form.social_services_needed ?? ''} onChange={handleChange} placeholder="Servicios sociales que se requieren..." />
+              <label style={labelStyle}>Observaciones</label>
+              <textarea style={textareaStyle} name="sw_observations" value={form.sw_observations ?? ''} onChange={handleChange} placeholder="Observaciones del trabajador social..." />
             </div>
 
             <div style={fullRow}>
               <label style={labelStyle}>Recomendaciones</label>
-              <textarea style={textareaStyle} name="recommendations" value={form.recommendations ?? ''} onChange={handleChange} placeholder="Recomendaciones del trabajador social..." />
-            </div>
-
-            <div style={fullRow}>
-              <label style={labelStyle}>Plan de acción</label>
-              <textarea style={textareaStyle} name="action_plan" value={form.action_plan ?? ''} onChange={handleChange} placeholder="Plan de acción detallado..." />
+              <textarea style={textareaStyle} name="sw_recommendations" value={form.sw_recommendations ?? ''} onChange={handleChange} placeholder="Recomendaciones del trabajador social..." />
             </div>
           </div>
 

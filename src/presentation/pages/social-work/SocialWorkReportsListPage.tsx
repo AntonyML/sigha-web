@@ -1,8 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
-import { socialWorkService } from '../../../services/socialWorkService'
-import type { SocialWorkReportApi, SocialWorkVisitType } from '../../../types/socialWork'
+import { socialWorkService, type SocialWorkReportApi, type SocialWorkVisitType } from '../../../services/socialWorkService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
@@ -22,9 +21,8 @@ const VISIT_TYPE_COLORS: Record<SocialWorkVisitType, string> = {
   'follow_up':          '',
 }
 
-const getPatientName = (r: SocialWorkReportApi) => {
-  const p = r.id_appointment?.patient
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : ''
+const getPatientName = (_r: SocialWorkReportApi) => {
+  return ''
 }
 
 export default function SocialWorkReportsListPage() {
@@ -69,11 +67,7 @@ export default function SocialWorkReportsListPage() {
     const matchType = !visitTypeFilter || r.sw_visit_type === visitTypeFilter
     if (!searchTerm.trim()) return matchType
     const term = searchTerm.toLowerCase()
-    const patientName = getPatientName(r).toLowerCase()
-    const identification = (r.id_appointment?.patient?.identification ?? '').toLowerCase()
     const matchText = (
-      patientName.includes(term) ||
-      identification.includes(term) ||
       (VISIT_TYPE_LABELS[r.sw_visit_type as SocialWorkVisitType] ?? r.sw_visit_type ?? '').toLowerCase().includes(term) ||
       (r.sw_observations ?? '').toLowerCase().includes(term)
     )
@@ -115,7 +109,7 @@ export default function SocialWorkReportsListPage() {
           <input
             type="text"
             className="lp-search-input"
-            placeholder="Buscar por nombre de paciente, cédula u observaciones"
+            placeholder="Buscar por tipo de visita u observaciones"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -188,11 +182,6 @@ export default function SocialWorkReportsListPage() {
                       <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
                         {getPatientName(report) || <span className="lp-muted">Sin paciente</span>}
                       </div>
-                      {report.id_appointment?.patient?.identification && (
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.125rem' }}>
-                          {report.id_appointment.patient.identification}
-                        </div>
-                      )}
                     </td>
                     <td>
                       {report.sw_visit_type

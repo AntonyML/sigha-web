@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Brain, ArrowLeft, Pencil, User, Calendar, AlertCircle,
-  ClipboardList, Target, TrendingUp, Zap, UserCheck
+  ClipboardList, Target, TrendingUp,
 } from 'lucide-react'
-import { psychologyService } from '../../../services/psychologyService'
-import type { PsychologySession } from '../../../types/psychology'
+import { psychologyService, type PsychologySessionApi } from '../../../services/psychologyService'
 import '../../styles/lp.css'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -45,14 +44,6 @@ const COGNITIVE_COLORS: Record<string, { bg: string; color: string }> = {
   'severe impairment':   { bg: '#fce7f3', color: '#9d174d' },
 }
 
-const getPatientName = (s: PsychologySession) => {
-  const p = s.appointment?.patient
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : '—'
-}
-const getStaffName = (s: PsychologySession) => {
-  const st = s.appointment?.staff
-  return st ? [st.name, st.firstLastName].filter(Boolean).join(' ') : '—'
-}
 const fmt     = (v?: string | null) => v || '—'
 const fmtDate = (v?: string) => v ? new Date(v).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 const fmtDT   = (v?: string) => v ? new Date(v).toLocaleString('es-CR') : '—'
@@ -83,7 +74,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 export default function ViewPsychologySessionPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [session, setSession] = useState<PsychologySession | null>(null)
+  const [session, setSession] = useState<PsychologySessionApi | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
 
@@ -126,11 +117,10 @@ export default function ViewPsychologySessionPage() {
           </button>
           <div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Brain size={20} color="#7c3aed" /> Sesión de Psicología
+              <Brain size={20} color="#7c3aed" /> Sesión de Psicología #{session.id}
             </h1>
             <p style={{ margin: '0.125rem 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-              Creada el {fmtDT(session.created_at)}
-              {session.updated_at ? ` · Actualizada ${fmtDT(session.updated_at)}` : ''}
+              Creada el {fmtDT(session.create_at)}
             </p>
           </div>
         </div>
@@ -146,8 +136,8 @@ export default function ViewPsychologySessionPage() {
           <User size={24} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Paciente</p>
-          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>{getPatientName(session)}</p>
+          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Cita vinculada</p>
+          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>#{session.id_appointment}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Fecha de sesión</p>
@@ -172,13 +162,6 @@ export default function ViewPsychologySessionPage() {
         </span>
       </div>
 
-      {/* Staff */}
-      {session.appointment?.staff && (
-        <Section title="Psicólogo/a" icon={<UserCheck size={16} />}>
-          <Field label="Nombre" value={getStaffName(session)} />
-        </Section>
-      )}
-
       {/* Observaciones */}
       <Section title="Observaciones de la sesión" icon={<ClipboardList size={16} />}>
         <Field label="Observaciones clínicas" value={fmt(session.psy_observations)} wide />
@@ -193,13 +176,6 @@ export default function ViewPsychologySessionPage() {
       <Section title="Progreso y evolución" icon={<TrendingUp size={16} />}>
         <Field label="Notas de progreso" value={fmt(session.psy_progress)} wide />
       </Section>
-
-      {/* Cita vinculada */}
-      {session.appointment && (
-        <Section title="Cita vinculada" icon={<Zap size={16} />}>
-          <Field label="Fecha de la cita" value={fmtDate(session.appointment.appointmentDate)} />
-        </Section>
-      )}
 
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>

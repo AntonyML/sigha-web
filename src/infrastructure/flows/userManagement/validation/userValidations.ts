@@ -350,9 +350,10 @@ export function getUserManagementErrorMessage(error: AxiosError | Error | unknow
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError;
+  const axiosError = error as AxiosError<{ message?: string | string[] }>;
+  const data = axiosError?.response?.data as { message?: string | string[] } | undefined;
   if (axiosError?.response?.status === 400) {
-    const msg = axiosError?.response?.data?.message;
+    const msg = data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Datos enviados no válidos.';
@@ -378,8 +379,8 @@ export function getUserManagementErrorMessage(error: AxiosError | Error | unknow
   if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (axiosError?.response?.data?.message) {
-    return axiosError.response.data.message;
+  if (data?.message) {
+    return Array.isArray(data.message) ? data.message.join(' ') : data.message;
   }
   return 'Error desconocido en la gestión de usuarios. Intenta nuevamente.';
 }

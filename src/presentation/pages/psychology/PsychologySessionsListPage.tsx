@@ -1,8 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Brain, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
-import { psychologyService } from '../../../services/psychologyService'
-import type { PsychologySession } from '../../../types/psychology'
+import { psychologyService, type PsychologySessionApi } from '../../../services/psychologyService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
@@ -31,13 +30,12 @@ const MOOD_COLORS: Record<string, string> = {
   other:     '',
 }
 
-const getPatientName = (s: PsychologySession) => {
-  const p = (s.id_appointment ?? s.appointment)?.patient
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : ''
+const getPatientName = (_s: PsychologySessionApi) => {
+  return ''
 }
 
 export default function PsychologySessionsListPage() {
-  const [sessions, setSessions] = useState<PsychologySession[]>([])
+  const [sessions, setSessions] = useState<PsychologySessionApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,10 +76,7 @@ export default function PsychologySessionsListPage() {
     const matchMood = !moodFilter || s.psy_mood === moodFilter
     if (!searchTerm.trim()) return matchMood
     const term = searchTerm.toLowerCase()
-    const patientName = getPatientName(s).toLowerCase()
     const matchText = (
-      patientName.includes(term) ||
-      (((s.id_appointment ?? s.appointment)?.patient?.identification) ?? '').toLowerCase().includes(term) ||
       (TYPE_LABELS[s.psy_session_type ?? ''] ?? s.psy_session_type ?? '').toLowerCase().includes(term) ||
       (s.psy_observations ?? '').toLowerCase().includes(term)
     )
@@ -123,7 +118,7 @@ export default function PsychologySessionsListPage() {
           <input
             type="text"
             className="lp-search-input"
-            placeholder="Buscar por nombre de paciente, cédula o tipo…"
+            placeholder="Buscar por tipo u observaciones…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -196,9 +191,6 @@ export default function PsychologySessionsListPage() {
                       <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
                         {getPatientName(session) || <span className="lp-muted">Sin paciente</span>}
                       </div>
-                      {(session.id_appointment ?? session.appointment)?.patient?.identification && (
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.125rem' }}>{(session.id_appointment ?? session.appointment)!.patient!.identification}</div>
-                      )}
                     </td>
                     <td>
                       <span className="lp-badge" style={{ background: '#ede9fe', color: '#5b21b6', border: '1px solid #ddd6fe' }}>

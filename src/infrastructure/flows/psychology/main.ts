@@ -4,9 +4,8 @@
  * Conectado a psychologyService — CRÍTICO-1 resuelto.
  */
 
-import { psychologyService } from '../../../services/psychologyService';
-import type { PsychologySession, CreatePsychologySessionDto, UpdatePsychologySessionDto } from '../../../types/psychology';
-import { validatePsychologyData, validatePsychologyId, getPsychologyErrorMessage } from './validation/psychologyValidations';
+import { psychologyService, type PsychologySessionApi, type CreatePsychologySessionDto, type UpdatePsychologySessionDto } from '../../../services/psychologyService';
+import { validatePsychologyData, validatePsychologyId } from './validation/psychologyValidations';
 
 export interface PsychologyFlowResult<T = any> {
     success: boolean;
@@ -15,7 +14,7 @@ export interface PsychologyFlowResult<T = any> {
 }
 
 export const psychologyFlow = {
-    async getAllSessions(appointmentId?: number): Promise<PsychologyFlowResult<PsychologySession[]>> {
+    async getAllSessions(appointmentId?: number): Promise<PsychologyFlowResult<PsychologySessionApi[]>> {
         try {
             const data = await psychologyService.getSessions(appointmentId);
             return { success: true, data };
@@ -25,10 +24,10 @@ export const psychologyFlow = {
         }
     },
 
-    async getSessionById(id: string | number): Promise<PsychologyFlowResult<PsychologySession>> {
+    async getSessionById(id: string | number): Promise<PsychologyFlowResult<PsychologySessionApi>> {
         try {
             const idValidation = validatePsychologyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPsychologyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de psicología inválido' };
             const data = await psychologyService.getSessionById(Number(id));
             return { success: true, data };
         } catch (error: unknown) {
@@ -37,7 +36,7 @@ export const psychologyFlow = {
         }
     },
 
-    async createSession(data: CreatePsychologySessionDto): Promise<PsychologyFlowResult<PsychologySession>> {
+    async createSession(data: CreatePsychologySessionDto): Promise<PsychologyFlowResult<PsychologySessionApi>> {
         try {
             const validationError = validatePsychologyData(data);
             if (validationError) return { success: false, error: validationError };
@@ -49,10 +48,10 @@ export const psychologyFlow = {
         }
     },
 
-    async updateSession(id: string | number, data: UpdatePsychologySessionDto): Promise<PsychologyFlowResult<PsychologySession>> {
+    async updateSession(id: string | number, data: UpdatePsychologySessionDto): Promise<PsychologyFlowResult<PsychologySessionApi>> {
         try {
             const idValidation = validatePsychologyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPsychologyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de psicología inválido' };
             const validationError = validatePsychologyData(data);
             if (validationError) return { success: false, error: validationError };
             const result = await psychologyService.updateSession(Number(id), data);
@@ -66,7 +65,7 @@ export const psychologyFlow = {
     async deleteSession(id: string | number): Promise<PsychologyFlowResult<void>> {
         try {
             const idValidation = validatePsychologyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPsychologyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de psicología inválido' };
             await psychologyService.deleteSession(Number(id));
             return { success: true };
         } catch (error: unknown) {

@@ -4,9 +4,8 @@
  * Conectado a socialWorkService — CRÍTICO-1 resuelto.
  */
 
-import { socialWorkService } from '../../../services/socialWorkService';
-import type { SocialWorkReportApi, CreateSocialWorkReportDto, UpdateSocialWorkReportDto } from '../../../types/socialWork';
-import { validateSocialWorkData, validateSocialWorkId, getSocialWorkErrorMessage } from './validation/socialWorkValidations';
+import { socialWorkService, type SocialWorkReportApi, type CreateSocialWorkReportDto, type UpdateSocialWorkReportDto } from '../../../services/socialWorkService';
+import { validateSocialWorkData, validateSocialWorkId } from './validation/socialWorkValidations';
 
 export interface SocialWorkFlowResult<T = any> {
     success: boolean;
@@ -28,7 +27,7 @@ export const socialWorkFlow = {
     async getReportById(id: string | number): Promise<SocialWorkFlowResult<SocialWorkReportApi>> {
         try {
             const idValidation = validateSocialWorkId(id);
-            if (!idValidation.isValid) return { success: false, error: getSocialWorkErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de reporte de trabajo social inválido' };
             const data = await socialWorkService.getReportById(Number(id));
             return { success: true, data };
         } catch (error: unknown) {
@@ -52,7 +51,7 @@ export const socialWorkFlow = {
     async updateReport(id: string | number, data: UpdateSocialWorkReportDto): Promise<SocialWorkFlowResult<SocialWorkReportApi>> {
         try {
             const idValidation = validateSocialWorkId(id);
-            if (!idValidation.isValid) return { success: false, error: getSocialWorkErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de reporte de trabajo social inválido' };
             const validationError = validateSocialWorkData(data);
             if (validationError) return { success: false, error: validationError };
             const result = await socialWorkService.updateReport(Number(id), data);
@@ -66,7 +65,7 @@ export const socialWorkFlow = {
     async deleteReport(id: string | number): Promise<SocialWorkFlowResult<void>> {
         try {
             const idValidation = validateSocialWorkId(id);
-            if (!idValidation.isValid) return { success: false, error: getSocialWorkErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de reporte de trabajo social inválido' };
             await socialWorkService.deleteReport(Number(id));
             return { success: true };
         } catch (error: unknown) {

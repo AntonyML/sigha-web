@@ -1,41 +1,66 @@
 // src/services/emergencyContactService.ts
-// CRUD for emergency contacts of an older adult.
+// CRUD sincronizado con backend: controller/emergency-contacts/emergency-contacts.controller.ts
+// Endpoints:
+//   POST   /emergency-contacts
+//   GET    /emergency-contacts?olderAdultId=
+//   GET    /emergency-contacts/by-older-adult/:olderAdultId
+//   GET    /emergency-contacts/:id
+//   PATCH  /emergency-contacts/:id
+//   DELETE /emergency-contacts/:id
 
 import { httpClient } from './httpClient';
 
-export interface EmergencyContact {
-  id?: number;
-  en_phone_number: string;
-  en_contact_name?: string | null;
-  id_older_adult: number;
-  create_at?: string;
+export interface EmergencyContactApi {
+  id: number;
+  enPhoneNumber: string;
+  enContactName?: string | null;
+  idOlderAdult?: number;
+  createAt?: string;
+}
+
+export interface CreateEmergencyContactDto {
+  enPhoneNumber: string;
+  idOlderAdult?: number;
+}
+
+export interface UpdateEmergencyContactDto {
+  enPhoneNumber?: string;
+  idOlderAdult?: number;
 }
 
 export const emergencyContactService = {
-  getAll: () =>
-    httpClient.get<EmergencyContact[]>('/emergency-contacts').then((r) => r.data),
+  getAll(olderAdultId?: number): Promise<EmergencyContactApi[]> {
+    const params = olderAdultId !== undefined ? { olderAdultId } : undefined;
+    return httpClient
+      .get<EmergencyContactApi[]>('/emergency-contacts', { params })
+      .then((r) => r.data ?? []);
+  },
 
-  getById: (id: number) =>
-    httpClient.get<EmergencyContact>(`/emergency-contacts/${id}`).then((r) => r.data),
+  getById(id: number): Promise<EmergencyContactApi> {
+    return httpClient
+      .get<EmergencyContactApi>(`/emergency-contacts/${id}`)
+      .then((r) => r.data);
+  },
 
-  getByPatient: (olderAdultId: number) =>
-    httpClient
-      .get<EmergencyContact[]>(`/virtual-records/${olderAdultId}/emergency-contacts`)
-      .then((r) => r.data),
+  getByOlderAdult(olderAdultId: number): Promise<EmergencyContactApi[]> {
+    return httpClient
+      .get<EmergencyContactApi[]>(`/emergency-contacts/by-older-adult/${olderAdultId}`)
+      .then((r) => r.data ?? []);
+  },
 
-  create: (payload: Partial<EmergencyContact>) =>
-    httpClient.post<EmergencyContact>('/emergency-contacts', payload).then((r) => r.data),
+  create(payload: CreateEmergencyContactDto): Promise<EmergencyContactApi> {
+    return httpClient
+      .post<EmergencyContactApi>('/emergency-contacts', payload)
+      .then((r) => r.data);
+  },
 
-  update: (id: number, payload: Partial<EmergencyContact>) =>
-    httpClient
-      .patch<EmergencyContact>(`/emergency-contacts/${id}`, payload)
-      .then((r) => r.data),
+  update(id: number, payload: UpdateEmergencyContactDto): Promise<EmergencyContactApi> {
+    return httpClient
+      .patch<EmergencyContactApi>(`/emergency-contacts/${id}`, payload)
+      .then((r) => r.data);
+  },
 
-  remove: (id: number) =>
-    httpClient.delete(`/emergency-contacts/${id}`).then((r) => r.data),
-
-  toggle: (id: number) =>
-    httpClient
-      .patch<EmergencyContact>(`/emergency-contacts/${id}/toggle`)
-      .then((r) => r.data),
+  remove(id: number): Promise<void> {
+    return httpClient.delete(`/emergency-contacts/${id}`).then(() => undefined);
+  },
 };

@@ -1,21 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { medicalRecordService } from '../../../services/medicalRecordService';
-import type { CreateMedicalRecordDto } from '../../../types/medicalRecord';
+import { medicalRecordService, type CreateMedicalRecordDto } from '../../../services/medicalRecordService';
 
-const RECORD_TYPES = [
-  { value: 'routine_check', label: 'Control Rutinario' },
-  { value: 'emergency', label: 'Emergencia' },
-  { value: 'follow_up', label: 'Seguimiento' },
-  { value: 'specialist', label: 'Especialista' },
-  { value: 'surgery', label: 'Cirugía' },
-  { value: 'hospitalization', label: 'Hospitalización' },
-];
-
-const VITAL_SIGNS_STATUS = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'abnormal', label: 'Anormal' },
-  { value: 'critical', label: 'Crítico' },
+const ORIGIN_AREAS = [
+  { value: 'nursing', label: 'Enfermería' },
+  { value: 'physiotherapy', label: 'Fisioterapia' },
+  { value: 'psychology', label: 'Psicología' },
+  { value: 'social_work', label: 'Trabajo Social' },
+  { value: 'general_medicine', label: 'Medicina General' },
 ];
 
 export default function CreateMedicalRecordPage() {
@@ -23,14 +15,9 @@ export default function CreateMedicalRecordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<Partial<CreateMedicalRecordDto>>({
-    record_type: 'routine_check',
-    vital_signs_status: 'normal',
-    diagnosis: '',
-    treatment: '',
-    notes: '',
-    record_date: new Date().toISOString().split('T')[0],
-    patient_id: '',
-    staff_id: '',
+    mr_origin_area: 'nursing',
+    mr_summary: '',
+    id_older_adult: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -40,8 +27,12 @@ export default function CreateMedicalRecordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.patient_id?.trim()) {
-      setError('El ID del paciente es obligatorio');
+    if (!form.mr_summary?.trim()) {
+      setError('El resumen clínico es obligatorio');
+      return;
+    }
+    if (!form.id_older_adult || form.id_older_adult <= 0) {
+      setError('El ID del adulto mayor es obligatorio');
       return;
     }
     setLoading(true);
@@ -81,68 +72,73 @@ export default function CreateMedicalRecordPage() {
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">ID del Paciente <span className="text-danger">*</span></label>
+                <label className="form-label fw-semibold">ID del Adulto Mayor <span className="text-danger">*</span></label>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
-                  name="patient_id"
-                  value={form.patient_id || ''}
-                  onChange={handleChange}
-                  placeholder="UUID del paciente"
+                  name="id_older_adult"
+                  value={form.id_older_adult ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, id_older_adult: e.target.value ? Number(e.target.value) : 0 }))}
+                  min={1}
                   required
                 />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">ID del Personal Médico</label>
+                <label className="form-label fw-semibold">Área de Origen</label>
+                <select className="form-select" name="mr_origin_area" value={form.mr_origin_area ?? 'nursing'} onChange={handleChange}>
+                  {ORIGIN_AREAS.map((a) => (
+                    <option key={a.value} value={a.value}>{a.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">Firmado por</label>
                 <input
                   type="text"
                   className="form-control"
-                  name="staff_id"
-                  value={form.staff_id || ''}
+                  name="mr_signed_by"
+                  value={form.mr_signed_by ?? ''}
                   onChange={handleChange}
-                  placeholder="UUID del médico/enfermero"
+                  placeholder="Lic. María Solís"
                 />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Tipo de Registro</label>
-                <select className="form-select" name="record_type" value={form.record_type} onChange={handleChange}>
-                  {RECORD_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Fecha del Registro</label>
+                <label className="form-label fw-semibold">ID de Cita Especializada</label>
                 <input
-                  type="date"
+                  type="number"
                   className="form-control"
-                  name="record_date"
-                  value={form.record_date || ''}
-                  onChange={handleChange}
+                  name="id_appointment"
+                  value={form.id_appointment ?? ''}
+                  onChange={(e) => setForm((p) => ({ ...p, id_appointment: e.target.value ? Number(e.target.value) : undefined }))}
+                  min={1}
                 />
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Estado de Signos Vitales</label>
-                <select className="form-select" name="vital_signs_status" value={form.vital_signs_status} onChange={handleChange}>
-                  {VITAL_SIGNS_STATUS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
+              <div className="col-12">
+                <label className="form-label fw-semibold">Resumen Clínico <span className="text-danger">*</span></label>
+                <textarea
+                  className="form-control"
+                  name="mr_summary"
+                  value={form.mr_summary ?? ''}
+                  onChange={handleChange}
+                  rows={3}
+                  placeholder="Resumen del encuentro clínico"
+                  required
+                />
               </div>
 
               <div className="col-12">
                 <label className="form-label fw-semibold">Diagnóstico</label>
-                <input
-                  type="text"
+                <textarea
                   className="form-control"
-                  name="diagnosis"
-                  value={form.diagnosis || ''}
+                  name="mr_diagnosis"
+                  value={form.mr_diagnosis ?? ''}
                   onChange={handleChange}
-                  placeholder="Descripción del diagnóstico"
+                  rows={2}
+                  placeholder="Diagnóstico o diferencial"
                 />
               </div>
 
@@ -150,20 +146,20 @@ export default function CreateMedicalRecordPage() {
                 <label className="form-label fw-semibold">Tratamiento</label>
                 <textarea
                   className="form-control"
-                  name="treatment"
-                  value={form.treatment || ''}
+                  name="mr_treatment"
+                  value={form.mr_treatment ?? ''}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="Descripción del tratamiento indicado"
+                  rows={2}
+                  placeholder="Tratamiento aplicado o recomendado"
                 />
               </div>
 
               <div className="col-12">
-                <label className="form-label fw-semibold">Notas Adicionales</label>
+                <label className="form-label fw-semibold">Observaciones</label>
                 <textarea
                   className="form-control"
-                  name="notes"
-                  value={form.notes || ''}
+                  name="mr_observations"
+                  value={form.mr_observations ?? ''}
                   onChange={handleChange}
                   rows={3}
                   placeholder="Observaciones adicionales"

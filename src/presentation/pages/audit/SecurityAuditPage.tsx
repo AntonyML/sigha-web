@@ -1,35 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { securityAuditService } from '../../../services/securityAuditService';
-import type { SecurityEvent } from '../../../types/securityAudit';
+import { auditService, type DigitalRecord } from '../../../services/auditService';
 
 const severityBadge: Record<string, string> = {
-  low: 'bg-success',
-  medium: 'bg-warning text-dark',
-  high: 'bg-danger',
-  critical: 'bg-danger',
+  create: 'bg-success',
+  update: 'bg-info text-dark',
+  delete: 'bg-danger',
+  view: 'bg-secondary',
+  login: 'bg-primary',
+  logout: 'bg-warning text-dark',
+  export: 'bg-warning text-dark',
+  other: 'bg-light text-dark',
 };
 
-const statusBadge: Record<string, string> = {
-  pending: 'bg-warning text-dark',
-  resolved: 'bg-success',
-  investigating: 'bg-info text-dark',
-  false_positive: 'bg-secondary',
-};
-
-const statusLabel: Record<string, string> = {
-  pending: 'Pendiente',
-  resolved: 'Resuelto',
-  investigating: 'Investigando',
-  false_positive: 'Falso Positivo',
+const severityLabel: Record<string, string> = {
+  create: 'Creación',
+  update: 'Actualización',
+  delete: 'Eliminación',
+  view: 'Consulta',
+  login: 'Inicio de sesión',
+  logout: 'Cierre de sesión',
+  export: 'Exportación',
+  other: 'Otro',
 };
 
 export default function SecurityAuditPage() {
-  const [events, setEvents] = useState<SecurityEvent[]>([]);
+  const [events, setEvents] = useState<DigitalRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterSeverity, setFilterSeverity] = useState('ALL');
   const navigate = useNavigate();
 
@@ -37,32 +36,33 @@ export default function SecurityAuditPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await securityAuditService.getSecurityEvents({
-        status: filterStatus !== 'ALL' ? filterStatus as never : undefined,
-        severity: filterSeverity !== 'ALL' ? filterSeverity as never : undefined,
-      });
-      setEvents(data.events ?? data as unknown as SecurityEvent[]);
+      const data = await auditService.searchAuditRecords({ limit: 200 });
+      setEvents(data.records ?? []);
     } catch (err) {
       console.error('Error loading security events:', err);
-      setError('Error al cargar los eventos de seguridad');
+      setError('Error al cargar los eventos de auditoría');
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterSeverity]);
+  }, []);
 
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
 
-  const filtered = events.filter((e) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      e.event_type?.toLowerCase().includes(term) ||
-      e.description?.toLowerCase().includes(term) ||
-      e.ip_address?.toLowerCase().includes(term)
-    );
-  });
+  const filtered = events
+    .filter((e) => ['login', 'logout', 'create', 'update', 'delete'].includes(e.action ?? ''))
+    .filter((e) => {
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        e.action?.toLowerCase().includes(term) ||
+        e.description?.toLowerCase().includes(term) ||
+        e.userName?.toLowerCase().includes(term) ||
+        e.ipAddress?.toLowerCase().includes(term)
+      );
+    })
+    .filter((e) => filterSeverity === 'ALL' || e.action === filterSeverity);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString('es-ES', {
@@ -92,40 +92,32 @@ export default function SecurityAuditPage() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <div className="row g-3">
-            <div className="col-md-4">
+            <div className="col-md-5">
               <div className="input-group">
                 <span className="input-group-text"><i className="bi bi-search"></i></span>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Buscar por tipo, descripción, IP..."
+                  placeholder="Buscar por acción, usuario, IP..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
-            <div className="col-md-3">
-              <select className="form-select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-                <option value="ALL">Todos los estados</option>
-                <option value="pending">Pendiente</option>
-                <option value="resolved">Resuelto</option>
-                <option value="investigating">Investigando</option>
-                <option value="false_positive">Falso Positivo</option>
-              </select>
-            </div>
-            <div className="col-md-3">
+            <div className="col-md-4">
               <select className="form-select" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)}>
-                <option value="ALL">Toda severidad</option>
-                <option value="low">Baja</option>
-                <option value="medium">Media</option>
-                <option value="high">Alta</option>
-                <option value="critical">Crítica</option>
+                <option value="ALL">Toda acción</option>
+                <option value="login">Inicio de sesión</option>
+                <option value="logout">Cierre de sesión</option>
+                <option value="create">Creación</option>
+                <option value="update">Actualización</option>
+                <option value="delete">Eliminación</option>
               </select>
             </div>
-            <div className="col-md-2">
+            <div className="col-md-3">
               <button
                 className="btn btn-secondary w-100"
-                onClick={() => { setSearchTerm(''); setFilterStatus('ALL'); setFilterSeverity('ALL'); }}
+                onClick={() => { setSearchTerm(''); setFilterSeverity('ALL'); }}
               >
                 <i className="bi bi-x-circle me-1"></i>Limpiar
               </button>
@@ -150,31 +142,25 @@ export default function SecurityAuditPage() {
             <table className="table table-hover align-middle mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Tipo de Evento</th>
+                  <th>Acción</th>
                   <th>Descripción</th>
+                  <th>Usuario</th>
                   <th>IP</th>
-                  <th>Severidad</th>
-                  <th>Estado</th>
                   <th>Fecha</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((event) => (
                   <tr key={event.id}>
-                    <td><code className="text-danger">{event.event_type}</code></td>
-                    <td className="text-truncate" style={{ maxWidth: '200px' }}>{event.description || <span className="text-muted">—</span>}</td>
-                    <td><small className="text-muted">{event.ip_address || '—'}</small></td>
                     <td>
-                      <span className={`badge ${severityBadge[event.severity] ?? 'bg-secondary'}`}>
-                        {event.severity}
+                      <span className={`badge ${severityBadge[event.action ?? 'other'] ?? 'bg-secondary'}`}>
+                        {severityLabel[event.action ?? 'other'] ?? event.action}
                       </span>
                     </td>
-                    <td>
-                      <span className={`badge ${statusBadge[event.status] ?? 'bg-secondary'}`}>
-                        {statusLabel[event.status] ?? event.status}
-                      </span>
-                    </td>
-                    <td><small>{event.created_at ? formatDate(event.created_at) : '—'}</small></td>
+                    <td className="text-truncate" style={{ maxWidth: '300px' }}>{event.description || <span className="text-muted">—</span>}</td>
+                    <td><small>{event.userName ?? event.userId ?? '—'}</small></td>
+                    <td><small className="text-muted">{event.ipAddress || '—'}</small></td>
+                    <td><small>{event.timestamp ? formatDate(event.timestamp) : '—'}</small></td>
                   </tr>
                 ))}
               </tbody>

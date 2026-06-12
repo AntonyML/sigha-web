@@ -1,7 +1,7 @@
-import { auditService } from '../../../services/auditService';
+import { auditService, type PaginatedDigitalRecords, type SearchAuditRecordsParams } from '../../../services/auditService';
 import type {
   SearchAuditReportsDto,
-  PaginatedAuditReportsResponse,
+  AuditReport,
   AuditStatistics,
 } from '../../../types/audit';
 import {
@@ -45,7 +45,7 @@ export async function searchAuditReports(params?: SearchAuditReportsDto): Promis
       }
     }
 
-    const response: PaginatedAuditReportsResponse = await auditService.searchAuditReports(params);
+    const response: PaginatedDigitalRecords = await auditService.searchAuditRecords(params as SearchAuditRecordsParams);
 
     // Backend SIEMPRE retorna: { records, total, page, limit, totalPages }
     const records = response.records || [];
@@ -66,7 +66,7 @@ export async function searchAuditReports(params?: SearchAuditReportsDto): Promis
 
     return {
       success: true,
-      records,
+      records: records as unknown as AuditReport[],
       total,
       page,
       totalPages,
@@ -204,9 +204,25 @@ export async function exportAuditReports(
   filename: string = 'auditorias.csv'
 ): Promise<AuditFlowResult> {
   try {
-    const blob = await auditService.exportAuditReports(params);
+    const data = await auditService.searchAuditRecords({ ...(params as SearchAuditRecordsParams ?? {}), limit: 10000 });
 
-    // Crear link de descarga
+    const headers = ['ID', 'Acción', 'Tabla', 'ID Registro', 'Descripción', 'Usuario', 'IP', 'Fecha'];
+    const rows = data.records.map((r) => [
+      r.id,
+      r.action,
+      r.tableName ?? '',
+      r.recordId ?? '',
+      r.description ?? '',
+      r.userName ?? '',
+      r.ipAddress ?? '',
+      r.timestamp,
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((cells) => cells.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

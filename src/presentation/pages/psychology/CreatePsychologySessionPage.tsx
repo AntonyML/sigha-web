@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Brain, ArrowLeft } from 'lucide-react';
-import { psychologyService } from '../../../services/psychologyService';
+import {
+  psychologyService,
+  type CreatePsychologySessionDto,
+  type PsychologySessionType,
+  type Mood,
+  type CognitiveStatus,
+} from '../../../services/psychologyService';
 import { specializedAppointmentsService } from '../../../services/specializedAppointmentsService';
 import { virtualFileService } from '../../../services/virtualFileService';
-import type { CreatePsychologySessionDto } from '../../../types/psychology';
 import type { SpecializedAppointmentApi } from '../../../types/specializedAppointment';
 import type { VirtualFile } from '../../../types/virtualFile';
 
-const SESSION_TYPES = [
+const SESSION_TYPES: { value: PsychologySessionType; label: string }[] = [
   { value: 'evaluation',    label: 'Evaluación' },
   { value: 'therapy',       label: 'Terapia' },
   { value: 'follow_up',     label: 'Seguimiento' },
   { value: 'group therapy', label: 'Terapia Grupal' },
 ];
 
-const MOODS = [
+const MOODS: { value: Mood; label: string }[] = [
   { value: 'stable',    label: 'Estable' },
   { value: 'anxious',   label: 'Ansioso' },
   { value: 'depressed', label: 'Deprimido' },
@@ -23,7 +28,7 @@ const MOODS = [
   { value: 'other',     label: 'Otro' },
 ];
 
-const COGNITIVE_STATES = [
+const COGNITIVE_STATES: { value: CognitiveStatus; label: string }[] = [
   { value: 'normal',              label: 'Normal' },
   { value: 'mild impairment',     label: 'Deterioro Leve' },
   { value: 'moderate impairment', label: 'Deterioro Moderado' },

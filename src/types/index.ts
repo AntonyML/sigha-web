@@ -33,7 +33,10 @@ export * from './socialWork';
 
 export * from './specializedArea';
 
-export * from './specializedAppointment';
+// ⚠️ specializedAppointment.ts contiene enums legacy con nombres que colisionan con nursing.ts.
+// Se importa explícitamente desde './types/specializedAppointment' en los consumidores que lo
+// necesiten. Los nombres AppointmentStatus/Type/Priority exportados desde este módulo son los
+// definidos en nursing.ts (la fuente de verdad sincronizada con el backend).
 
 export * from './entranceExit';
 
@@ -46,6 +49,8 @@ export * from './vaccine';
 export * from './medicalRecord';
 
 export * from './notifuse';
+
+export * from './email';
 
 export * from './nursing';
 

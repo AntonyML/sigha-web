@@ -5,8 +5,8 @@
  */
 
 import { specializedAppointmentsService } from '../../../services/specializedAppointmentsService';
-import type { SpecializedAppointmentApi, CreateSpecializedAppointmentDto, UpdateSpecializedAppointmentDto } from '../../../types/specializedAppointment';
-import { validateSpecializedAppointmentData, validateSpecializedAppointmentId, getSpecializedAppointmentErrorMessage } from './validation/appointmentValidations';
+import type { SpecializedAppointmentApi, CreateSpecializedAppointmentDto, UpdateSpecializedAppointmentDto } from '../../../services/specializedAppointmentsService';
+import { validateSpecializedAppointmentData, validateSpecializedAppointmentId } from './validation/appointmentValidations';
 
 export interface SpecializedAppointmentFlowResult<T = any> {
     success: boolean;
@@ -28,7 +28,7 @@ export const specializedAppointmentFlow = {
     async getAppointmentsByPatient(patientId: number): Promise<SpecializedAppointmentFlowResult<SpecializedAppointmentApi[]>> {
         try {
             const idValidation = validateSpecializedAppointmentId(patientId);
-            if (!idValidation.isValid) return { success: false, error: getSpecializedAppointmentErrorMessage(idValidation.error!) };
+            if (idValidation) return { success: false, error: idValidation };
             const data = await specializedAppointmentsService.getByPatient(patientId);
             return { success: true, data };
         } catch (error: unknown) {
@@ -40,7 +40,7 @@ export const specializedAppointmentFlow = {
     async getAppointmentById(id: string | number): Promise<SpecializedAppointmentFlowResult<SpecializedAppointmentApi>> {
         try {
             const idValidation = validateSpecializedAppointmentId(id);
-            if (!idValidation.isValid) return { success: false, error: getSpecializedAppointmentErrorMessage(idValidation.error!) };
+            if (idValidation) return { success: false, error: idValidation };
             const data = await specializedAppointmentsService.getById(Number(id));
             return { success: true, data };
         } catch (error: unknown) {
@@ -64,7 +64,7 @@ export const specializedAppointmentFlow = {
     async updateAppointment(id: string | number, data: UpdateSpecializedAppointmentDto): Promise<SpecializedAppointmentFlowResult<SpecializedAppointmentApi>> {
         try {
             const idValidation = validateSpecializedAppointmentId(id);
-            if (!idValidation.isValid) return { success: false, error: getSpecializedAppointmentErrorMessage(idValidation.error!) };
+            if (idValidation) return { success: false, error: idValidation };
             const validationError = validateSpecializedAppointmentData(data);
             if (validationError) return { success: false, error: validationError };
             const result = await specializedAppointmentsService.update(Number(id), data);
@@ -78,7 +78,7 @@ export const specializedAppointmentFlow = {
     async deleteAppointment(id: string | number): Promise<SpecializedAppointmentFlowResult<void>> {
         try {
             const idValidation = validateSpecializedAppointmentId(id);
-            if (!idValidation.isValid) return { success: false, error: getSpecializedAppointmentErrorMessage(idValidation.error!) };
+            if (idValidation) return { success: false, error: idValidation };
             await specializedAppointmentsService.remove(Number(id));
             return { success: true };
         } catch (error: unknown) {

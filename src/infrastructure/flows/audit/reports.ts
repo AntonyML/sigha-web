@@ -1,7 +1,8 @@
 import { auditService } from '../../../services/auditService';
+import { AuditReportType, type AuditReport } from '../../../types/audit';
+import type { SearchAuditRecordsParams } from '../../../services/auditService';
 import type { AuditFlowResult, GetAuditReportFlowResult } from './interfaces';
 import { validateAuditReportId } from './validation/reportsValidations';
-import type { SearchAuditReportsDto, PaginatedAuditReportsResponse } from '../../../types/audit';
 import type { AxiosError } from 'axios';
 
 /**
@@ -12,23 +13,20 @@ import type { AxiosError } from 'axios';
  * @param params - Filtros de reportes (opcional)
  * @returns Resultado con reportes generados
  */
-export async function getAuditReports(params?: SearchAuditReportsDto): Promise<AuditFlowResult & { reports?: PaginatedAuditReportsResponse['records'], total?: number, page?: number, totalPages?: number }> {
+export async function getAuditReports(params?: SearchAuditRecordsParams): Promise<AuditFlowResult & { reports?: AuditReport[] }> {
   try {
-    const response = await auditService.getAuditReports(params);
+    const reports = await auditService.getAuditReports(params);
 
     return {
       success: true,
-      reports: response.records || [],
-      total: response.total || 0,
-      page: response.page || 1,
-      totalPages: response.totalPages || 1,
+      reports,
     };
   } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditReports:', error);
-    const axiosError = error as AxiosError;
+    const axiosError = error as AxiosError<{ message?: string }>;
     return {
       success: false,
-      error: axiosError.response?.data?.message || 'Error al obtener reportes de auditoría',
+      error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener reportes de auditoría',
     };
   }
 }
@@ -60,7 +58,7 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
   } catch (error: unknown) {
     console.error('Error en auditFlow.getAuditReportById:', error);
 
-    const axiosError = error as AxiosError;
+    const axiosError = error as AxiosError<{ message?: string }>;
     if (axiosError.response?.status === 404) {
       return {
         success: false,
@@ -70,7 +68,7 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
 
     return {
       success: false,
-      error: axiosError.response?.data?.message || 'Error al obtener el reporte de auditoría',
+      error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener el reporte de auditoría',
     };
   }
 }
@@ -83,7 +81,7 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
  * @param generateDto - Datos para generar el reporte
  * @returns Resultado con reporte generado
  */
-export async function generateAuditReport(generateDto: { type: string; startDate: string; endDate: string }): Promise<AuditFlowResult & { report?: any }> {
+export async function generateAuditReport(generateDto: { type: AuditReportType; startDate: string; endDate: string; description?: string }): Promise<AuditFlowResult & { report?: any }> {
   try {
     const report = await auditService.generateAuditReport(generateDto);
 
@@ -94,10 +92,10 @@ export async function generateAuditReport(generateDto: { type: string; startDate
     };
   } catch (error: unknown) {
     console.error('Error en auditFlow.generateAuditReport:', error);
-    const axiosError = error as AxiosError;
+    const axiosError = error as AxiosError<{ message?: string }>;
     return {
       success: false,
-      error: axiosError.response?.data?.message || 'Error al generar reporte de auditoría',
+      error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al generar reporte de auditoría',
     };
   }
 }
@@ -128,7 +126,7 @@ export async function deleteAuditReport(id: number): Promise<AuditFlowResult> {
   } catch (error: unknown) {
     console.error('Error en auditFlow.deleteAuditReport:', error);
 
-    const axiosError = error as AxiosError;
+    const axiosError = error as AxiosError<{ message?: string }>;
     if (axiosError.response?.status === 404) {
       return {
         success: false,
@@ -138,7 +136,7 @@ export async function deleteAuditReport(id: number): Promise<AuditFlowResult> {
 
     return {
       success: false,
-      error: axiosError.response?.data?.message || 'Error al eliminar el reporte de auditoría',
+      error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al eliminar el reporte de auditoría',
     };
   }
 }

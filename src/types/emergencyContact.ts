@@ -8,40 +8,42 @@
 /**
  * Relación familiar o conocida con el paciente
  */
-export enum EmergencyContactRelationship {
-  PADRE = 'padre',
-  MADRE = 'madre',
-  HIJO = 'hijo',
-  HIJA = 'hija',
-  HERMANO = 'hermano',
-  HERMANA = 'hermana',
-  ESPOSO = 'esposo',
-  ESPOSA = 'esposa',
-  PAREJA = 'pareja',
-  AMIGO = 'amigo',
-  AMIGA = 'amiga',
-  TIO = 'tío',
-  TIA = 'tía',
-  SOBRINO = 'sobrino',
-  SOBRINA = 'sobrina',
-  ABUELo = 'abuelo',
-  ABUELA = 'abuela',
-  VECINO = 'vecino',
-  VECINA = 'vecina',
-  CUIDADOR = 'cuidador',
-  CUIDADORA = 'cuidadora',
-  OTRO = 'otro'
-}
+export const EmergencyContactRelationship = {
+  PADRE: 'padre',
+  MADRE: 'madre',
+  HIJO: 'hijo',
+  HIJA: 'hija',
+  HERMANO: 'hermano',
+  HERMANA: 'hermana',
+  ESPOSO: 'esposo',
+  ESPOSA: 'esposa',
+  PAREJA: 'pareja',
+  AMIGO: 'amigo',
+  AMIGA: 'amiga',
+  TIO: 'tío',
+  TIA: 'tía',
+  SOBRINO: 'sobrino',
+  SOBRINA: 'sobrina',
+  ABUELo: 'abuelo',
+  ABUELA: 'abuela',
+  VECINO: 'vecino',
+  VECINA: 'vecina',
+  CUIDADOR: 'cuidador',
+  CUIDADORA: 'cuidadora',
+  OTRO: 'otro',
+} as const;
+export type EmergencyContactRelationship = typeof EmergencyContactRelationship[keyof typeof EmergencyContactRelationship];
 
 /**
  * Estado del contacto de emergencia
  */
-export enum EmergencyContactStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DECEASED = 'deceased',
-  UNREACHABLE = 'unreachable'
-}
+export const EmergencyContactStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  DECEASED: 'deceased',
+  UNREACHABLE: 'unreachable',
+} as const;
+export type EmergencyContactStatus = typeof EmergencyContactStatus[keyof typeof EmergencyContactStatus];
 
 /**
  * Prioridad del contacto (1 = primario, 2 = secundario, etc.)

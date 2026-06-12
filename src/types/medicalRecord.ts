@@ -43,7 +43,7 @@ export interface CreateMedicalRecordDto {
   id_appointment?: number;
 }
 
-export interface UpdateMedicalRecordDto extends Partial<CreateMedicalRecordDto> {}
+export type UpdateMedicalRecordDto = Partial<CreateMedicalRecordDto>;
 
 export interface MedicalRecordFilterDto {
   patientId?: number;

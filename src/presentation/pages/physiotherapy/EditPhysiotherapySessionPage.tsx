@@ -1,25 +1,25 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { physiotherapyService } from '../../../services/physiotherapyService';
-import type { UpdatePhysiotherapySessionDto } from '../../../types/physiotherapy';
+import {
+  physiotherapyService,
+  type UpdatePhysiotherapySessionDto,
+  type PhysiotherapyType,
+  type MobilityLevel,
+} from '../../../services/physiotherapyService';
 import { ArrowLeft, Activity, Save, AlertCircle } from 'lucide-react';
 import '../../styles/lp.css';
 
-const SESSION_TYPES = [
-  { value: 'therapy',           label: 'Terapia' },
-  { value: 'evaluation',        label: 'Evaluación' },
-  { value: 'follow_up',         label: 'Seguimiento' },
-  { value: 'exercise_program',  label: 'Programa de Ejercicios' },
-  { value: 'pain_management',   label: 'Manejo del Dolor' },
-  { value: 'rehabilitation',    label: 'Rehabilitación' },
+const SESSION_TYPES: { value: PhysiotherapyType; label: string }[] = [
+  { value: 'evaluation', label: 'Evaluación' },
+  { value: 'therapy',    label: 'Terapia' },
+  { value: 'follow_up',  label: 'Seguimiento' },
 ];
 
-const MOBILITY_LEVELS = [
-  { value: 'independent',        label: 'Independiente' },
-  { value: 'minimal_assistance', label: 'Asistencia Mínima' },
-  { value: 'moderate',           label: 'Moderado' },
-  { value: 'maximum_assistance', label: 'Asistencia Máxima' },
-  { value: 'total_dependence',   label: 'Dependencia Total' },
+const MOBILITY_LEVELS: { value: MobilityLevel; label: string }[] = [
+  { value: 'high',     label: 'Alta' },
+  { value: 'moderate', label: 'Moderada' },
+  { value: 'low',      label: 'Baja' },
+  { value: 'none',     label: 'Ninguna' },
 ];
 
 const inputStyle: React.CSSProperties = {
@@ -49,11 +49,11 @@ export default function EditPhysiotherapySessionPage() {
         setForm({
           ps_type:                 s.ps_type,
           ps_mobility_level:       s.ps_mobility_level,
-          ps_pain_level:           s.ps_pain_level,
-          ps_treatment_description:s.ps_treatment_description,
-          ps_exercise_plan:        s.ps_exercise_plan,
-          ps_progress_notes:       s.ps_progress_notes,
-          ps_date:                 s.ps_date ? s.ps_date.slice(0, 10) : '',
+          ps_pain_level:           s.ps_pain_level ?? undefined,
+          ps_treatment_description:s.ps_treatment_description ?? undefined,
+          ps_exercise_plan:        s.ps_exercise_plan ?? undefined,
+          ps_progress_notes:       s.ps_progress_notes ?? undefined,
+          ps_date:                 s.ps_date ? s.ps_date.slice(0, 10) : undefined,
         });
       } catch {
         setError('Error al cargar la sesión de fisioterapia');
@@ -132,9 +132,9 @@ export default function EditPhysiotherapySessionPage() {
             </div>
 
             <div style={fieldStyle}>
-              <label style={labelStyle}>Nivel de dolor (010)</label>
+              <label style={labelStyle}>Nivel de dolor (0-10)</label>
               <input type="number" name="ps_pain_level" value={form.ps_pain_level ?? ''} onChange={handleChange}
-                min={0} max={10} style={inputStyle} placeholder="010" />
+                min={0} max={10} style={inputStyle} placeholder="0-10" />
             </div>
 
             <div style={{ ...fieldStyle, gridColumn: '1 / -1' }}>
