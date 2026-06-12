@@ -51,25 +51,25 @@ export const physiotherapyService = {
     const params = appointmentId !== undefined ? { appointmentId } : undefined;
     return httpClient
       .get<PhysiotherapySessionApi[]>('/physiotherapy/sessions', { params })
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getSessionById(id: number): Promise<PhysiotherapySessionApi> {
     return httpClient
       .get<PhysiotherapySessionApi>(`/physiotherapy/sessions/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   createSession(payload: CreatePhysiotherapySessionDto): Promise<PhysiotherapySessionApi> {
     return httpClient
       .post<PhysiotherapySessionApi>('/physiotherapy/sessions', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   updateSession(id: number, payload: UpdatePhysiotherapySessionDto): Promise<PhysiotherapySessionApi> {
     return httpClient
       .put<PhysiotherapySessionApi>(`/physiotherapy/sessions/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   deleteSession(id: number): Promise<void> {

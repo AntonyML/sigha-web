@@ -61,6 +61,7 @@ describe('Pruebas Unitarias Entrada/Salida', () => {
         eeSLastName: 'Test',
         eeClose: false
       };
+      expect(data.eeType).toBe(type);
       expect(validTypes).toContain('visitor');
     });
   });

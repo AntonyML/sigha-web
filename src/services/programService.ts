@@ -3,7 +3,6 @@ import type {
   Program,
   CreateProgramData,
   UpdateProgramData,
-  ProgramSearchParams,
   ProgramApiResponse
 } from '../types/program';
 import { config } from '../config/app.config';
@@ -119,7 +118,7 @@ export const programService = {
     }
   },
 
-  searchPrograms: async (params: ProgramSearchParams): Promise<ProgramApiResponse> => {
+  searchPrograms: async (params: { pName?: string; [k: string]: unknown }): Promise<ProgramApiResponse> => {
     try {
       const response = await apiClient.get<ProgramApiResponse>('/programs/search', { params });
       return response.data;

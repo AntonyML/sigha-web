@@ -61,25 +61,25 @@ export const olderAdultFamilyService = {
   getAll(): Promise<OlderAdultFamilyApi[]> {
     return httpClient
       .get<OlderAdultFamilyApi[]>('/older-adult-family')
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getById(id: number): Promise<OlderAdultFamilyApi> {
     return httpClient
       .get<OlderAdultFamilyApi>(`/older-adult-family/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   create(payload: CreateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
     return httpClient
       .post<OlderAdultFamilyApi>('/older-adult-family', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   update(id: number, payload: UpdateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
     return httpClient
       .patch<OlderAdultFamilyApi>(`/older-adult-family/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   remove(id: number): Promise<void> {

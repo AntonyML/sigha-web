@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { clinicalMedicationService } from '../../../services/clinicalMedicationService';
-import type { UpdateClinicalMedicationDto } from '../../../types/clinicalMedication';
-import { TreatmentType } from '../../../types/clinicalMedication';
+import { clinicalMedicationService, type UpdateClinicalMedicationDto } from '../../../services/clinicalMedicationService';
 
 export default function EditClinicalMedicationPage() {
   const { id } = useParams<{ id: string }>();
@@ -62,10 +60,10 @@ export default function EditClinicalMedicationPage() {
               <label className="form-label fw-semibold">Tipo de Tratamiento</label>
               <select name="mTreatmentType" className="form-select" value={form.mTreatmentType ?? ''} onChange={handleChange} disabled={saving}>
                 <option value="">— Seleccionar —</option>
-                <option value={TreatmentType.TEMPORARY}>Temporal</option>
-                <option value={TreatmentType.CHRONIC}>Crónico</option>
-                <option value={TreatmentType.PREVENTIVE}>Preventivo</option>
-                <option value={TreatmentType.OTHER}>Otro</option>
+                <option value="temporary">Temporal</option>
+                <option value="chronic">Crónico</option>
+                <option value="preventive">Preventivo</option>
+                <option value="other">Otro</option>
               </select>
             </div>
             <div className="mb-4">

@@ -36,7 +36,7 @@ export default function SecurityAuditPage() {
     setLoading(true);
     setError('');
     try {
-      const data = await auditService.searchAuditRecords({ limit: '200' });
+      const data = await auditService.searchAuditRecords({ limit: 200 });
       setEvents(data.records ?? []);
     } catch (err) {
       console.error('Error loading security events:', err);

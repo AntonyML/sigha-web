@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, ArrowLeft, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { ShieldCheck, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { roleFlow } from '../../../infrastructure/flows/role'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import type { UserRole } from '../../../types/user'

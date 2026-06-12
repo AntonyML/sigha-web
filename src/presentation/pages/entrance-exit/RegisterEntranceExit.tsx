@@ -266,7 +266,7 @@ export default function RegisterEntranceExit() {
               <input
                 id="identification"
                 type="text"
-                className={`form-control ${errors.identification ? 'is-invalid' : cedulaStatus === 'found' ? 'is-valid' : cedulaStatus === 'not-found' || cedulaStatus === 'error' ? 'is-invalid' : ''}`}
+                className={`form-control ${errors.identification ? 'is-invalid' : cedulaStatus === 'found' ? 'is-valid' : cedulaStatus === 'notfound' || cedulaStatus === 'error' ? 'is-invalid' : ''}`}
                 value={formData.identification}
                 onChange={(e) => handleInputChange('identification', e.target.value)}
                 placeholder="Número de identificación"
@@ -280,13 +280,13 @@ export default function RegisterEntranceExit() {
               {cedulaStatus === 'found' && (
                 <span className="input-group-text text-success"><i className="bi bi-check-circle-fill" /></span>
               )}
-              {(cedulaStatus === 'not-found' || cedulaStatus === 'error') && (
+              {(cedulaStatus === 'notfound' || cedulaStatus === 'error') && (
                 <span className="input-group-text text-danger"><i className="bi bi-x-circle-fill" /></span>
               )}
               {errors.identification && <div className="invalid-feedback">{errors.identification}</div>}
             </div>
             {cedulaHelper && !errors.identification && (
-              <div className={`form-text ${cedulaStatus === 'found' ? 'text-success' : cedulaStatus === 'not-found' || cedulaStatus === 'error' ? 'text-danger' : 'text-muted'}`}>
+              <div className={`form-text ${cedulaStatus === 'found' ? 'text-success' : cedulaStatus === 'notfound' || cedulaStatus === 'error' ? 'text-danger' : 'text-muted'}`}>
                 {cedulaHelper}
               </div>
             )}

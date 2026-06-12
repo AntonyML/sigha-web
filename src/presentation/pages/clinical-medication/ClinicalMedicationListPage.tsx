@@ -1,19 +1,17 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Pill, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
-import { clinicalMedicationService } from '../../../services/clinicalMedicationService'
-import type { ClinicalMedicationApi } from '../../../types/clinicalMedication'
-import { TreatmentType } from '../../../types/clinicalMedication'
+import { clinicalMedicationService, type ClinicalMedicationApi, type TreatmentType } from '../../../services/clinicalMedicationService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
 import '../../styles/lp.css'
 
 const treatmentLabels: Record<TreatmentType, string> = {
-  [TreatmentType.TEMPORARY]: 'Temporal',
-  [TreatmentType.CHRONIC]: 'Crónico',
-  [TreatmentType.PREVENTIVE]: 'Preventivo',
-  [TreatmentType.OTHER]: 'Otro',
+  'temporary': 'Temporal',
+  'chronic': 'Crónico',
+  'preventive': 'Preventivo',
+  'other': 'Otro',
 }
 
 export default function ClinicalMedicationListPage() {

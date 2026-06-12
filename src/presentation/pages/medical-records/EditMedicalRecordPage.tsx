@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { medicalRecordService } from '../../../services/medicalRecordService';
-import type { UpdateMedicalRecordDto } from '../../../types/medicalRecord';
+import { medicalRecordService, type MedicalRecord, type UpdateMedicalRecordDto } from '../../../services/medicalRecordService';
 
-const RECORD_TYPES = [
-  { value: 'routine_check', label: 'Control Rutinario' },
-  { value: 'emergency', label: 'Emergencia' },
-  { value: 'follow_up', label: 'Seguimiento' },
-  { value: 'specialist', label: 'Especialista' },
-  { value: 'surgery', label: 'Cirugía' },
-  { value: 'hospitalization', label: 'Hospitalización' },
-];
-
-const VITAL_SIGNS_STATUS = [
-  { value: 'normal', label: 'Normal' },
-  { value: 'abnormal', label: 'Anormal' },
-  { value: 'critical', label: 'Crítico' },
+const ORIGIN_AREAS = [
+  { value: 'nursing', label: 'Enfermería' },
+  { value: 'physiotherapy', label: 'Fisioterapia' },
+  { value: 'psychology', label: 'Psicología' },
+  { value: 'social_work', label: 'Trabajo Social' },
+  { value: 'general_medicine', label: 'Medicina General' },
 ];
 
 export default function EditMedicalRecordPage() {
@@ -31,14 +23,16 @@ export default function EditMedicalRecordPage() {
     const loadRecord = async () => {
       setFetching(true);
       try {
-        const record = await medicalRecordService.getMedicalRecordById(id);
+        const record: MedicalRecord = await medicalRecordService.getMedicalRecordById(Number(id));
         setForm({
-          record_type: record.record_type,
-          vital_signs_status: record.vital_signs_status,
-          diagnosis: record.diagnosis,
-          treatment: record.treatment,
-          notes: record.notes,
-          record_date: record.record_date,
+          mr_summary: record.mr_summary,
+          mr_origin_area: record.mr_origin_area,
+          mr_diagnosis: record.mr_diagnosis ?? undefined,
+          mr_treatment: record.mr_treatment ?? undefined,
+          mr_observations: record.mr_observations ?? undefined,
+          mr_signed_by: record.mr_signed_by ?? undefined,
+          id_appointment: record.id_appointment?.id,
+          id_staff: record.id_staff?.id,
         });
       } catch (err) {
         console.error('Error loading medical record:', err);
@@ -61,7 +55,7 @@ export default function EditMedicalRecordPage() {
     setLoading(true);
     setError('');
     try {
-      await medicalRecordService.updateMedicalRecord(id, form);
+      await medicalRecordService.updateMedicalRecord(Number(id), form);
       navigate('/medical-records');
     } catch (err) {
       console.error('Error updating medical record:', err);
@@ -104,43 +98,45 @@ export default function EditMedicalRecordPage() {
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Tipo de Registro</label>
-                <select className="form-select" name="record_type" value={form.record_type || ''} onChange={handleChange}>
-                  {RECORD_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                <label className="form-label fw-semibold">Área de Origen</label>
+                <select className="form-select" name="mr_origin_area" value={form.mr_origin_area ?? 'nursing'} onChange={handleChange}>
+                  {ORIGIN_AREAS.map((a) => (
+                    <option key={a.value} value={a.value}>{a.label}</option>
                   ))}
                 </select>
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Fecha del Registro</label>
+                <label className="form-label fw-semibold">Firmado por</label>
                 <input
-                  type="date"
+                  type="text"
                   className="form-control"
-                  name="record_date"
-                  value={form.record_date || ''}
+                  name="mr_signed_by"
+                  value={form.mr_signed_by ?? ''}
                   onChange={handleChange}
                 />
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label fw-semibold">Estado de Signos Vitales</label>
-                <select className="form-select" name="vital_signs_status" value={form.vital_signs_status || ''} onChange={handleChange}>
-                  {VITAL_SIGNS_STATUS.map((s) => (
-                    <option key={s.value} value={s.value}>{s.label}</option>
-                  ))}
-                </select>
+              <div className="col-12">
+                <label className="form-label fw-semibold">Resumen Clínico</label>
+                <textarea
+                  className="form-control"
+                  name="mr_summary"
+                  value={form.mr_summary ?? ''}
+                  onChange={handleChange}
+                  rows={3}
+                  required
+                />
               </div>
 
               <div className="col-12">
                 <label className="form-label fw-semibold">Diagnóstico</label>
-                <input
-                  type="text"
+                <textarea
                   className="form-control"
-                  name="diagnosis"
-                  value={form.diagnosis || ''}
+                  name="mr_diagnosis"
+                  value={form.mr_diagnosis ?? ''}
                   onChange={handleChange}
-                  placeholder="Descripción del diagnóstico"
+                  rows={2}
                 />
               </div>
 
@@ -148,23 +144,21 @@ export default function EditMedicalRecordPage() {
                 <label className="form-label fw-semibold">Tratamiento</label>
                 <textarea
                   className="form-control"
-                  name="treatment"
-                  value={form.treatment || ''}
+                  name="mr_treatment"
+                  value={form.mr_treatment ?? ''}
                   onChange={handleChange}
-                  rows={3}
-                  placeholder="Descripción del tratamiento"
+                  rows={2}
                 />
               </div>
 
               <div className="col-12">
-                <label className="form-label fw-semibold">Notas Adicionales</label>
+                <label className="form-label fw-semibold">Observaciones</label>
                 <textarea
                   className="form-control"
-                  name="notes"
-                  value={form.notes || ''}
+                  name="mr_observations"
+                  value={form.mr_observations ?? ''}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Observaciones adicionales"
                 />
               </div>
             </div>

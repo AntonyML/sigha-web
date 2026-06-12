@@ -236,7 +236,7 @@ export function validateFamilyAddress(address: string | null | undefined): Valid
  * @param relationship - Relación familiar
  * @returns Resultado de la validación
  */
-export function validateEmergencyContactStatus(isEmergencyContact: boolean | null | undefined, relationship: string): ValidationResult {
+export function validateEmergencyContactStatus(isEmergencyContact: boolean | null | undefined, relationship: FamilyRelationship | string): ValidationResult {
     // Si no es contacto de emergencia, no hay validación adicional
     if (!isEmergencyContact) {
         return { isValid: true };
@@ -252,7 +252,7 @@ export function validateEmergencyContactStatus(isEmergencyContact: boolean | nul
         FamilyRelationship.IN_LAW
     ];
 
-    if (!allowedRelationships.includes(relationship)) {
+    if (!allowedRelationships.includes(relationship as FamilyRelationship)) {
         return { isValid: false, error: OlderAdultFamilyValidationError.INVALID_EMERGENCY_CONTACT };
     }
 

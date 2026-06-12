@@ -33,31 +33,31 @@ export const emergencyContactService = {
     const params = olderAdultId !== undefined ? { olderAdultId } : undefined;
     return httpClient
       .get<EmergencyContactApi[]>('/emergency-contacts', { params })
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getById(id: number): Promise<EmergencyContactApi> {
     return httpClient
       .get<EmergencyContactApi>(`/emergency-contacts/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   getByOlderAdult(olderAdultId: number): Promise<EmergencyContactApi[]> {
     return httpClient
       .get<EmergencyContactApi[]>(`/emergency-contacts/by-older-adult/${olderAdultId}`)
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   create(payload: CreateEmergencyContactDto): Promise<EmergencyContactApi> {
     return httpClient
       .post<EmergencyContactApi>('/emergency-contacts', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   update(id: number, payload: UpdateEmergencyContactDto): Promise<EmergencyContactApi> {
     return httpClient
       .patch<EmergencyContactApi>(`/emergency-contacts/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   remove(id: number): Promise<void> {

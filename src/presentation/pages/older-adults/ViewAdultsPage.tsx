@@ -27,7 +27,6 @@ function fmtDateTime(s?: string): string {
   const d = new Date(s)
   return isNaN(d.getTime()) ? s : d.toLocaleString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
-function yesNo(v?: boolean): string { return v ? 'Sí' : 'No' }
 function badge(v?: boolean) {
   return (
     <span style={{ display: 'inline-block', padding: '0.125rem 0.5rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: 600, background: v ? '#dcfce7' : '#f1f5f9', color: v ? '#15803d' : '#64748b' }}>

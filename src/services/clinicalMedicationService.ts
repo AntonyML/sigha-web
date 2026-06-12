@@ -36,27 +36,27 @@ export interface UpdateClinicalMedicationDto {
 
 export const clinicalMedicationService = {
   getAll: (): Promise<ClinicalMedicationApi[]> =>
-    httpClient.get<ClinicalMedicationApi[]>('/clinical-medication').then((r) => r.data?.data ?? r.data ?? []),
+    httpClient.get<ClinicalMedicationApi[]>('/clinical-medication').then((r) => r.data ?? []),
 
   getById: (id: number): Promise<ClinicalMedicationApi> =>
     httpClient
       .get<ClinicalMedicationApi>(`/clinical-medication/${id}`)
-      .then((r) => r.data?.data ?? r.data),
+      .then((r) => r.data),
 
   getByHistory: (clinicalHistoryId: number): Promise<ClinicalMedicationApi[]> =>
     httpClient
       .get<ClinicalMedicationApi[]>(`/clinical-medication/by-clinical-history/${clinicalHistoryId}`)
-      .then((r) => r.data?.data ?? r.data ?? []),
+      .then((r) => r.data ?? []),
 
   create: (payload: CreateClinicalMedicationDto): Promise<ClinicalMedicationApi> =>
     httpClient
       .post<ClinicalMedicationApi>('/clinical-medication', payload)
-      .then((r) => r.data?.data ?? r.data),
+      .then((r) => r.data),
 
   update: (id: number, payload: UpdateClinicalMedicationDto): Promise<ClinicalMedicationApi> =>
     httpClient
       .patch<ClinicalMedicationApi>(`/clinical-medication/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data),
+      .then((r) => r.data),
 
   remove: (id: number): Promise<void> =>
     httpClient.delete(`/clinical-medication/${id}`).then(() => undefined),

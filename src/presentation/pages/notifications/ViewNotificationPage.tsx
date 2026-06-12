@@ -3,20 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { notificationService } from '../../../services/notificationService';
 import type { Notification } from '../../../types/notification';
 
-const typeLabel: Record<string, string> = {
-  info: 'Información',
-  warning: 'Advertencia',
-  error: 'Error',
-  success: 'Éxito',
-  alert: 'Alerta',
+const statusLabel: Record<string, string> = {
+  pending: 'Pendiente',
+  sent: 'Enviada',
 };
 
-const typeBadge: Record<string, string> = {
-  info: 'bg-info text-dark',
-  warning: 'bg-warning text-dark',
-  error: 'bg-danger',
-  success: 'bg-success',
-  alert: 'bg-danger',
+const statusBadge: Record<string, string> = {
+  pending: 'bg-warning text-dark',
+  sent: 'bg-info text-dark',
 };
 
 export default function ViewNotificationPage() {
@@ -31,7 +25,7 @@ export default function ViewNotificationPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const data = await notificationService.getNotificationById(id);
+        const data = await notificationService.getNotificationById(Number(id));
         setNotification(data);
       } catch (err) {
         console.error('Error loading notification:', err);
@@ -84,26 +78,18 @@ export default function ViewNotificationPage() {
       <div className="card shadow-sm">
         <div className="card-body p-4">
           <div className="d-flex align-items-center gap-2 mb-3">
-            <span className={`badge ${typeBadge[notification.type] ?? 'bg-secondary'}`}>
-              {typeLabel[notification.type] ?? notification.type}
+            <span className={`badge ${statusBadge[notification.nSent ? 'sent' : 'pending'] ?? 'bg-secondary'}`}>
+              {statusLabel[notification.nSent ? 'sent' : 'pending']}
             </span>
-            {notification.read ? (
-              <span className="badge bg-success"><i className="bi bi-check-circle me-1"></i>Leída</span>
+            {notification.nSent ? (
+              <span className="badge bg-info text-dark"><i className="bi bi-check-circle me-1"></i>Enviada</span>
             ) : (
-              <span className="badge bg-warning text-dark"><i className="bi bi-circle-fill me-1"></i>No leída</span>
+              <span className="badge bg-warning text-dark"><i className="bi bi-circle-fill me-1"></i>No enviada</span>
             )}
           </div>
 
-          <h4 className="fw-bold mb-3">{notification.title}</h4>
-          <p className="text-muted" style={{ whiteSpace: 'pre-wrap' }}>{notification.message}</p>
-
-          {notification.link && (
-            <div className="mt-3">
-              <a href={notification.link} className="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">
-                <i className="bi bi-box-arrow-up-right me-2"></i>Ver enlace
-              </a>
-            </div>
-          )}
+          <h4 className="fw-bold mb-3">{notification.nTitle}</h4>
+          <p className="text-muted" style={{ whiteSpace: 'pre-wrap' }}>{notification.nMessage}</p>
 
           <hr />
 
@@ -113,9 +99,9 @@ export default function ViewNotificationPage() {
                 <strong>Creada:</strong> {formatDate(notification.created_at)}
               </div>
             )}
-            {notification.recipient_id && (
+            {notification.nSendDate && (
               <div className="col-md-6">
-                <strong>Destinatario:</strong> {notification.recipient_id}
+                <strong>Programada:</strong> {formatDate(notification.nSendDate)}
               </div>
             )}
           </div>
@@ -125,10 +111,9 @@ export default function ViewNotificationPage() {
               <h6 className="fw-semibold">Archivos Adjuntos</h6>
               <ul className="list-group list-group-flush">
                 {notification.attachments.map((att) => (
-                  <li key={att.id} className="list-group-item px-0">
-                    <a href={att.url} target="_blank" rel="noopener noreferrer">
-                      <i className="bi bi-paperclip me-2"></i>{att.name}
-                    </a>
+                  <li key={att.id ?? att.naFileName} className="list-group-item px-0">
+                    <i className="bi bi-paperclip me-2"></i>
+                    {att.naFileName} <span className="text-muted small">({att.naFilePath})</span>
                   </li>
                 ))}
               </ul>

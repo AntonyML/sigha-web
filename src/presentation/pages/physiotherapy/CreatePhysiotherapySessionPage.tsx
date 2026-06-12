@@ -1,38 +1,37 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { physiotherapyService } from '../../../services/physiotherapyService';
-import type { CreatePhysiotherapySessionDto } from '../../../types/physiotherapy';
+import {
+  physiotherapyService,
+  type CreatePhysiotherapySessionDto,
+  type PhysiotherapyType,
+  type MobilityLevel,
+} from '../../../services/physiotherapyService';
 
-const SESSION_TYPES = [
-  { value: 'therapy', label: 'Terapia' },
+const SESSION_TYPES: { value: PhysiotherapyType; label: string }[] = [
   { value: 'evaluation', label: 'Evaluación' },
+  { value: 'therapy', label: 'Terapia' },
   { value: 'follow_up', label: 'Seguimiento' },
-  { value: 'initial_assessment', label: 'Valoración Inicial' },
-  { value: 'discharge', label: 'Alta' },
 ];
 
-const MOBILITY_LEVELS = [
-  { value: 'independent', label: 'Independiente' },
-  { value: 'minimal_assistance', label: 'Asistencia Mínima' },
-  { value: 'moderate_assistance', label: 'Asistencia Moderada' },
-  { value: 'full_assistance', label: 'Asistencia Total' },
-  { value: 'non_ambulatory', label: 'No Deambulatorio' },
+const MOBILITY_LEVELS: { value: MobilityLevel; label: string }[] = [
+  { value: 'high', label: 'Alta' },
+  { value: 'moderate', label: 'Moderada' },
+  { value: 'low', label: 'Baja' },
+  { value: 'none', label: 'Ninguna' },
 ];
 
 export default function CreatePhysiotherapySessionPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [form, setForm] = useState<Partial<CreatePhysiotherapySessionDto>>({
-    session_type: 'therapy',
-    mobility_level: 'independent',
-    objectives: '',
-    activities_performed: '',
-    patient_response: '',
-    notes: '',
-    duration_minutes: 60,
-    session_date: new Date().toISOString().split('T')[0],
-    appointment_id: '',
+  const [form, setForm] = useState<CreatePhysiotherapySessionDto>({
+    ps_type: 'evaluation',
+    ps_mobility_level: 'high',
+    ps_treatment_description: '',
+    ps_exercise_plan: '',
+    ps_progress_notes: '',
+    ps_date: new Date().toISOString().split('T')[0],
+    id_appointment: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -42,10 +41,14 @@ export default function CreatePhysiotherapySessionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.id_appointment) {
+      setError('El ID de la cita es obligatorio');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      await physiotherapyService.createSession(form as CreatePhysiotherapySessionDto);
+      await physiotherapyService.createSession(form);
       navigate('/physiotherapy');
     } catch (err) {
       console.error('Error creating physiotherapy session:', err);
@@ -81,18 +84,18 @@ export default function CreatePhysiotherapySessionPage() {
               <div className="col-md-6">
                 <label className="form-label fw-semibold">ID de Cita (Appointment)</label>
                 <input
-                  type="text"
+                  type="number"
                   className="form-control"
-                  name="appointment_id"
-                  value={form.appointment_id || ''}
+                  name="id_appointment"
+                  value={form.id_appointment}
                   onChange={handleChange}
-                  placeholder="UUID de la cita médica"
+                  required
                 />
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Tipo de Sesión</label>
-                <select className="form-select" name="session_type" value={form.session_type} onChange={handleChange}>
+                <select className="form-select" name="ps_type" value={form.ps_type} onChange={handleChange} required>
                   {SESSION_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
@@ -101,7 +104,13 @@ export default function CreatePhysiotherapySessionPage() {
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Nivel de Movilidad</label>
-                <select className="form-select" name="mobility_level" value={form.mobility_level} onChange={handleChange}>
+                <select
+                  className="form-select"
+                  name="ps_mobility_level"
+                  value={form.ps_mobility_level}
+                  onChange={handleChange}
+                  required
+                >
                   {MOBILITY_LEVELS.map((m) => (
                     <option key={m.value} value={m.value}>{m.label}</option>
                   ))}
@@ -113,70 +122,58 @@ export default function CreatePhysiotherapySessionPage() {
                 <input
                   type="date"
                   className="form-control"
-                  name="session_date"
-                  value={form.session_date || ''}
+                  name="ps_date"
+                  value={form.ps_date || ''}
                   onChange={handleChange}
                 />
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Duración (minutos)</label>
+                <label className="form-label fw-semibold">Nivel de Dolor (0-10)</label>
                 <input
                   type="number"
                   className="form-control"
-                  name="duration_minutes"
-                  value={form.duration_minutes || ''}
+                  name="ps_pain_level"
+                  value={form.ps_pain_level ?? ''}
                   onChange={handleChange}
-                  min={1}
-                  max={480}
+                  min={0}
+                  max={10}
                 />
               </div>
 
               <div className="col-12">
-                <label className="form-label fw-semibold">Objetivos</label>
+                <label className="form-label fw-semibold">Descripción del Tratamiento</label>
                 <textarea
                   className="form-control"
-                  name="objectives"
-                  value={form.objectives || ''}
+                  name="ps_treatment_description"
+                  value={form.ps_treatment_description || ''}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Objetivos terapéuticos de la sesión"
+                  placeholder="Procedimientos realizados"
                 />
               </div>
 
               <div className="col-12">
-                <label className="form-label fw-semibold">Actividades Realizadas</label>
+                <label className="form-label fw-semibold">Plan de Ejercicios</label>
                 <textarea
                   className="form-control"
-                  name="activities_performed"
-                  value={form.activities_performed || ''}
+                  name="ps_exercise_plan"
+                  value={form.ps_exercise_plan || ''}
                   onChange={handleChange}
                   rows={3}
-                  placeholder="Descripción de actividades realizadas durante la sesión"
+                  placeholder="Ejercicios indicados"
                 />
               </div>
 
               <div className="col-12">
-                <label className="form-label fw-semibold">Respuesta del Paciente</label>
+                <label className="form-label fw-semibold">Notas de Progreso</label>
                 <textarea
                   className="form-control"
-                  name="patient_response"
-                  value={form.patient_response || ''}
+                  name="ps_progress_notes"
+                  value={form.ps_progress_notes || ''}
                   onChange={handleChange}
-                  rows={2}
-                  placeholder="Cómo respondió el paciente a la terapia"
-                />
-              </div>
-
-              <div className="col-12">
-                <label className="form-label fw-semibold">Notas Adicionales</label>
-                <textarea
-                  className="form-control"
-                  name="notes"
-                  value={form.notes || ''}
-                  onChange={handleChange}
-                  rows={2}
-                  placeholder="Observaciones adicionales"
+                  rows={3}
+                  placeholder="Evolución y observaciones"
                 />
               </div>
             </div>

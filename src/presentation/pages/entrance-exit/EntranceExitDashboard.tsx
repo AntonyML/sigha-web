@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, ChevronLeft, AlertCircle, CheckCircle2, Loader2, LogIn, LogOut, Inbox, ChevronsDown } from 'lucide-react'
+import { RefreshCw, ChevronLeft, CheckCircle2, Loader2, LogIn, LogOut, Inbox, ChevronsDown } from 'lucide-react'
 import { entranceExitService } from '../../../services/entranceExitService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import type { EntranceExitResponse } from '../../../types/entranceExit'

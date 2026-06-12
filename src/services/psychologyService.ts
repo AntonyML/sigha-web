@@ -56,25 +56,25 @@ export const psychologyService = {
     const params = appointmentId !== undefined ? { appointmentId } : undefined;
     return httpClient
       .get<PsychologySessionApi[]>('/psychology/sessions', { params })
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getSessionById(id: number): Promise<PsychologySessionApi> {
     return httpClient
       .get<PsychologySessionApi>(`/psychology/sessions/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   createSession(payload: CreatePsychologySessionDto): Promise<PsychologySessionApi> {
     return httpClient
       .post<PsychologySessionApi>('/psychology/sessions', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   updateSession(id: number, payload: UpdatePsychologySessionDto): Promise<PsychologySessionApi> {
     return httpClient
       .put<PsychologySessionApi>(`/psychology/sessions/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   deleteSession(id: number): Promise<void> {

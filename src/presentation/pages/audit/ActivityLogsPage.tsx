@@ -3,17 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { auditService, type DigitalRecord } from '../../../services/auditService';
 import type { AuditAction } from '../../../types/audit';
 
-const severityBadge: Record<string, string> = {
-  create: 'bg-success',
-  update: 'bg-info text-dark',
-  delete: 'bg-danger',
-  view: 'bg-secondary',
-  login: 'bg-primary',
-  logout: 'bg-warning text-dark',
-  export: 'bg-warning text-dark',
-  other: 'bg-light text-dark',
-};
-
 export default function ActivityLogsPage() {
   const [logs, setLogs] = useState<DigitalRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +19,7 @@ export default function ActivityLogsPage() {
       const data = await auditService.searchAuditRecords({
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        limit: '100',
+        limit: 100,
       });
       setLogs(data.records ?? []);
     } catch (err) {

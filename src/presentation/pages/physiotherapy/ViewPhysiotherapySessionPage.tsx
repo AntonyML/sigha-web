@@ -2,52 +2,36 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Activity, ArrowLeft, Pencil, User, Calendar, AlertCircle,
-  ClipboardList, Zap, Dumbbell, FileText, UserCheck
+  ClipboardList, Dumbbell, FileText,
 } from 'lucide-react'
-import { physiotherapyService } from '../../../services/physiotherapyService'
-import type { PhysiotherapySession } from '../../../types/physiotherapy'
+import { physiotherapyService, type PhysiotherapySessionApi } from '../../../services/physiotherapyService'
 import '../../styles/lp.css'
 
 const TYPE_LABELS: Record<string, string> = {
-  therapy:          'Terapia',
-  evaluation:       'Evaluación',
-  follow_up:        'Seguimiento',
-  exercise_program: 'Programa de Ejercicios',
-  pain_management:  'Manejo del Dolor',
-  rehabilitation:   'Rehabilitación',
+  therapy:     'Terapia',
+  evaluation:  'Evaluación',
+  follow_up:   'Seguimiento',
 }
 
 const MOBILITY_LABELS: Record<string, string> = {
-  independent:        'Independiente',
-  minimal_assistance: 'Asistencia Mínima',
-  moderate:           'Moderado',
-  maximum_assistance: 'Asistencia Máxima',
-  total_dependence:   'Dependencia Total',
+  high:     'Alta',
+  moderate: 'Moderada',
+  low:      'Baja',
+  none:     'Ninguna',
 }
 
 const MOBILITY_COLORS: Record<string, { bg: string; color: string }> = {
-  independent:        { bg: '#dcfce7', color: '#15803d' },
-  minimal_assistance: { bg: '#d1fae5', color: '#047857' },
-  moderate:           { bg: '#fef9c3', color: '#854d0e' },
-  maximum_assistance: { bg: '#fee2e2', color: '#b91c1c' },
-  total_dependence:   { bg: '#fce7f3', color: '#9d174d' },
-}
-
-const getPatient = (s: PhysiotherapySession) => s.appointment?.patient
-const getPatientName = (s: PhysiotherapySession) => {
-  const p = getPatient(s)
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : '—'
-}
-const getStaffName = (s: PhysiotherapySession) => {
-  const st = s.appointment?.staff
-  return st ? [st.name, st.firstLastName].filter(Boolean).join(' ') : '—'
+  high:     { bg: '#dcfce7', color: '#15803d' },
+  moderate: { bg: '#fef9c3', color: '#854d0e' },
+  low:      { bg: '#fee2e2', color: '#b91c1c' },
+  none:     { bg: '#fce7f3', color: '#9d174d' },
 }
 
 const fmt     = (v?: string | null) => v || '—'
 const fmtDate = (v?: string) => v ? new Date(v).toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 const fmtDT   = (v?: string) => v ? new Date(v).toLocaleString('es-CR') : '—'
 
-const painColor = (n?: number) => {
+const painColor = (n?: number | null) => {
   if (n === undefined || n === null) return { bg: '#f1f5f9', color: '#64748b' }
   if (n <= 3) return { bg: '#dcfce7', color: '#15803d' }
   if (n <= 6) return { bg: '#fef9c3', color: '#854d0e' }
@@ -80,7 +64,7 @@ function Section({ title, icon, children }: { title: string; icon: React.ReactNo
 export default function ViewPhysiotherapySessionPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [session, setSession] = useState<PhysiotherapySession | null>(null)
+  const [session, setSession] = useState<PhysiotherapySessionApi | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState('')
 
@@ -126,8 +110,7 @@ export default function ViewPhysiotherapySessionPage() {
               <Activity size={20} color="#16a34a" /> Sesión de Fisioterapia #{session.id}
             </h1>
             <p style={{ margin: '0.125rem 0 0', fontSize: '0.8125rem', color: '#64748b' }}>
-              Creada el {fmtDT(session.created_at)}
-              {session.updated_at ? ` · Actualizada ${fmtDT(session.updated_at)}` : ''}
+              Creada el {fmtDT(session.create_at)}
             </p>
           </div>
         </div>
@@ -143,8 +126,8 @@ export default function ViewPhysiotherapySessionPage() {
           <User size={24} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Paciente</p>
-          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>{getPatientName(session)}</p>
+          <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Cita vinculada</p>
+          <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>#{session.id_appointment}</p>
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ margin: '0 0 0.2rem', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.75 }}>Fecha de sesión</p>
@@ -171,13 +154,6 @@ export default function ViewPhysiotherapySessionPage() {
         )}
       </div>
 
-      {/* Staff */}
-      {session.appointment?.staff && (
-        <Section title="Fisioterapeuta" icon={<UserCheck size={16} />}>
-          <Field label="Nombre" value={getStaffName(session)} />
-        </Section>
-      )}
-
       {/* Tratamiento */}
       <Section title="Descripción del tratamiento" icon={<ClipboardList size={16} />}>
         <Field label="Descripción del tratamiento" value={fmt(session.ps_treatment_description)} wide />
@@ -192,14 +168,6 @@ export default function ViewPhysiotherapySessionPage() {
       <Section title="Notas de progreso" icon={<FileText size={16} />}>
         <Field label="Observaciones y evolución" value={fmt(session.ps_progress_notes)} wide />
       </Section>
-
-      {/* Cita vinculada */}
-      {session.appointment && (
-        <Section title="Cita vinculada" icon={<Zap size={16} />}>
-          <Field label="ID de cita" value={String(session.appointment.id)} />
-          <Field label="Fecha de la cita" value={fmtDate(session.appointment.appointmentDate)} />
-        </Section>
-      )}
 
       {/* Footer */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>

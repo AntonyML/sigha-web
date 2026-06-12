@@ -1,37 +1,27 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Activity, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
-import { physiotherapyService } from '../../../services/physiotherapyService'
-import type { PhysiotherapySession } from '../../../types/physiotherapy'
+import { physiotherapyService, type PhysiotherapySessionApi } from '../../../services/physiotherapyService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
 import '../../styles/lp.css'
 
 const TYPE_LABELS: Record<string, string> = {
-  therapy:          'Terapia',
-  evaluation:       'Evaluación',
-  follow_up:        'Seguimiento',
-  exercise_program: 'Programa de Ejercicios',
-  pain_management:  'Manejo del Dolor',
-  rehabilitation:   'Rehabilitación',
+  therapy:     'Terapia',
+  evaluation:  'Evaluación',
+  follow_up:   'Seguimiento',
 }
 
 const MOBILITY_LABELS: Record<string, string> = {
-  independent:        'Independiente',
-  minimal_assistance: 'Asistencia Mínima',
-  moderate:           'Moderado',
-  maximum_assistance: 'Asistencia Máxima',
-  total_dependence:   'Dependencia Total',
-}
-
-const getPatientName = (s: PhysiotherapySession) => {
-  const p = (s.id_appointment ?? s.appointment)?.patient
-  return p ? [p.name, p.firstLastName, p.secondLastName].filter(Boolean).join(' ') : ''
+  high:     'Alta',
+  moderate: 'Moderada',
+  low:      'Baja',
+  none:     'Ninguna',
 }
 
 export default function PhysiotherapySessionsListPage() {
-  const [sessions, setSessions] = useState<PhysiotherapySession[]>([])
+  const [sessions, setSessions] = useState<PhysiotherapySessionApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -72,9 +62,7 @@ export default function PhysiotherapySessionsListPage() {
     const matchType = !typeFilter || s.ps_type === typeFilter
     if (!searchTerm.trim()) return matchType
     const term = searchTerm.toLowerCase()
-    const patientName = getPatientName(s).toLowerCase()
     const matchText = (
-      patientName.includes(term) ||
       (TYPE_LABELS[s.ps_type] ?? s.ps_type ?? '').toLowerCase().includes(term) ||
       (s.ps_treatment_description ?? '').toLowerCase().includes(term) ||
       (s.ps_progress_notes ?? '').toLowerCase().includes(term)
@@ -117,7 +105,7 @@ export default function PhysiotherapySessionsListPage() {
           <input
             type="text"
             className="lp-search-input"
-            placeholder="Buscar por nombre de paciente o descripción…"
+            placeholder="Buscar por tipo o descripción…"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -188,7 +176,7 @@ export default function PhysiotherapySessionsListPage() {
                   <tr key={session.id}>
                     <td>
                       <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.875rem' }}>
-                        {getPatientName(session) || <span className="lp-muted">Sin paciente</span>}
+                        <span className="lp-muted">Sin paciente</span>
                       </div>
                     </td>
                     <td>

@@ -55,25 +55,25 @@ export const socialWorkService = {
     const params = patientId !== undefined ? { patientId } : undefined;
     return httpClient
       .get<SocialWorkReportApi[]>('/social-work/reports', { params })
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getReportById(id: number): Promise<SocialWorkReportApi> {
     return httpClient
       .get<SocialWorkReportApi>(`/social-work/reports/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   createReport(payload: CreateSocialWorkReportDto): Promise<SocialWorkReportApi> {
     return httpClient
       .post<SocialWorkReportApi>('/social-work/reports', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   updateReport(id: number, payload: UpdateSocialWorkReportDto): Promise<SocialWorkReportApi> {
     return httpClient
       .put<SocialWorkReportApi>(`/social-work/reports/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   deleteReport(id: number): Promise<void> {

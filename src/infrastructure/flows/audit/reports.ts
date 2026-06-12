@@ -1,5 +1,6 @@
 import { auditService } from '../../../services/auditService';
-import { AuditReportType, type AuditReport, type SearchAuditReportsDto } from '../../../types/audit';
+import { AuditReportType, type AuditReport } from '../../../types/audit';
+import type { SearchAuditRecordsParams } from '../../../services/auditService';
 import type { AuditFlowResult, GetAuditReportFlowResult } from './interfaces';
 import { validateAuditReportId } from './validation/reportsValidations';
 import type { AxiosError } from 'axios';
@@ -12,7 +13,7 @@ import type { AxiosError } from 'axios';
  * @param params - Filtros de reportes (opcional)
  * @returns Resultado con reportes generados
  */
-export async function getAuditReports(params?: SearchAuditReportsDto): Promise<AuditFlowResult & { reports?: AuditReport[] }> {
+export async function getAuditReports(params?: SearchAuditRecordsParams): Promise<AuditFlowResult & { reports?: AuditReport[] }> {
   try {
     const reports = await auditService.getAuditReports(params);
 

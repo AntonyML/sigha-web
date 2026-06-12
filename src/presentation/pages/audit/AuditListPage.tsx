@@ -28,7 +28,7 @@ export default function AuditListPage() {
             page: currentPage.toString(),
             limit: pageSize.toString(),
             action: filterAction !== 'ALL' ? filterAction : undefined,
-            entityName: filterTable !== 'ALL' ? filterTable : undefined,
+            tableName: filterTable !== 'ALL' ? filterTable : undefined,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
         };
@@ -87,7 +87,7 @@ export default function AuditListPage() {
     const handleExport = async () => {
         const result = await auditFlow.exportAuditReports({
             action: filterAction !== 'ALL' ? filterAction : undefined,
-            entityName: filterTable !== 'ALL' ? filterTable : undefined,
+            tableName: filterTable !== 'ALL' ? filterTable : undefined,
             startDate: startDate || undefined,
             endDate: endDate || undefined,
         }, 'auditorias.csv');

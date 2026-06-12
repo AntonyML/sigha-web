@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
-import type { UpdateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamily';
+import type { UpdateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamilyService';
 
 export default function EditOlderAdultFamilyPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,7 @@ export default function EditOlderAdultFamilyPage() {
   useEffect(() => {
     if (!id) return;
     olderAdultFamilyService.getById(Number(id)).then(d => {
-      setForm({ pfIdentification: d.pfIdentification, pfName: d.pfName, pfFLastName: d.pfFLastName, pfSLastName: d.pfSLastName, pfPhoneNumber: d.pfPhoneNumber, pfEmail: d.pfEmail, pfKinship: d.pfKinship });
+      setForm({ pfIdentification: d.pfIdentification, pfName: d.pfName, pfFLastName: d.pfFLastName, pfSLastName: d.pfSLastName, pfPhoneNumber: d.pfPhoneNumber ?? undefined, pfEmail: d.pfEmail ?? undefined, pfKinship: d.pfKinship });
       setLoading(false);
     }).catch(() => { setError('Error al cargar familiar'); setLoading(false); });
   }, [id]);

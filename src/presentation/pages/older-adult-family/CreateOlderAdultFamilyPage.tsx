@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { olderAdultFamilyService } from '../../../services/olderAdultFamilyService';
-import type { CreateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamily';
+import type { CreateOlderAdultFamilyDto, KinshipType } from '../../../services/olderAdultFamilyService';
 
 const initial: CreateOlderAdultFamilyDto = {
   pfIdentification: '', pfName: '', pfFLastName: '', pfSLastName: '', pfPhoneNumber: '', pfEmail: '',   pfKinship: 'not specified' as KinshipType,

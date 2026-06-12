@@ -3,7 +3,6 @@ import {
   AuditReportType,
   AuditAction,
   type AuditReport,
-  type PaginatedAuditReportsResponse,
   type AuditStatistics,
 } from '../types/audit';
 import { config } from '../config/app.config';
@@ -76,7 +75,7 @@ const toStringRecord = (params?: SearchAuditRecordsParams): Record<string, strin
 };
 
 export const auditService = {
-  async getAuditReports(params?: SearchAuditReportsParams): Promise<AuditReport[]> {
+  async getAuditReports(params?: SearchAuditRecordsParams): Promise<AuditReport[]> {
     const response = await apiClient.get('/audits/reports', { params: toStringRecord(params) });
     const data = response.data;
     return Array.isArray(data) ? data : data?.data ?? [];

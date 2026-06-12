@@ -74,25 +74,25 @@ export const medicalRecordService = {
     const params = olderAdultId !== undefined ? { olderAdultId } : undefined;
     return httpClient
       .get<MedicalRecord[]>('/medical-records', { params })
-      .then((r) => r.data?.data ?? r.data ?? []);
+      .then((r) => r.data ?? []);
   },
 
   getMedicalRecordById(id: number): Promise<MedicalRecord> {
     return httpClient
       .get<MedicalRecord>(`/medical-records/${id}`)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   createMedicalRecord(payload: CreateMedicalRecordDto): Promise<MedicalRecord> {
     return httpClient
       .post<MedicalRecord>('/medical-records', payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   updateMedicalRecord(id: number, payload: UpdateMedicalRecordDto): Promise<MedicalRecord> {
     return httpClient
       .put<MedicalRecord>(`/medical-records/${id}`, payload)
-      .then((r) => r.data?.data ?? r.data);
+      .then((r) => r.data);
   },
 
   deleteMedicalRecord(id: number): Promise<void> {

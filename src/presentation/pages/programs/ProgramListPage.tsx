@@ -32,7 +32,7 @@ export default function ProgramListPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete() {
     const ok = await feedback.confirm('Eliminar programa', '¿Está seguro de que desea eliminar este programa?')
     if (!ok) return
     feedback.error('La eliminación de programas no está disponible en esta versión.')
@@ -149,7 +149,7 @@ export default function ProgramListPage() {
                         <button
                           className="lp-icon-btn lp-icon-btn--delete"
                           title="Eliminar"
-                          onClick={() => handleDelete(program.id!)}
+                          onClick={() => handleDelete()}
                         >
                           <Trash2 size={14} />
                         </button>
