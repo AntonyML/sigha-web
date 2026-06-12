@@ -25,6 +25,10 @@ import {
   ClipboardList,
   List,
   UserCircle,
+  Stethoscope,
+  Activity,
+  Brain,
+  HeartHandshake,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
 import { PermissionUtils } from '../../../../utils/permissionUtils';
@@ -84,6 +88,43 @@ const SECTION_CLINICAL: MenuItem[] = [
       { id: 'ee-dashboard', label: 'Dashboard',  path: '/entrance-exit' },
       { id: 'ee-register',  label: 'Registrar',  path: '/entrance-exit/register' },
       { id: 'ee-history',   label: 'Historial',  path: '/entrance-exit/history' },
+    ],
+  },
+  {
+    id: 'nursing',
+    label: 'Enfermería',
+    icon: <Stethoscope className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'nur-dashboard',  label: 'Dashboard',  path: '/nursing' },
+      { id: 'nur-new',        label: 'Nueva cita', path: '/nursing/appointments/new' },
+      { id: 'nur-history',    label: 'Historial',  path: '/nursing/appointments/history' },
+    ],
+  },
+  {
+    id: 'physiotherapy',
+    label: 'Fisioterapia',
+    icon: <Activity className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'phy-list',   label: 'Listado', path: '/physiotherapy' },
+      { id: 'phy-create', label: 'Crear',   path: '/physiotherapy/create' },
+    ],
+  },
+  {
+    id: 'psychology',
+    label: 'Psicología',
+    icon: <Brain className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'psy-list',   label: 'Listado', path: '/psychology' },
+      { id: 'psy-create', label: 'Crear',   path: '/psychology/create' },
+    ],
+  },
+  {
+    id: 'socialWork',
+    label: 'Trabajo Social',
+    icon: <HeartHandshake className="w-[18px] h-[18px]" />,
+    children: [
+      { id: 'sw-list',   label: 'Listado', path: '/social-work' },
+      { id: 'sw-create', label: 'Crear',   path: '/social-work/create' },
     ],
   },
 ];
@@ -166,9 +207,15 @@ export default function Sidebar() {
   }, [location.pathname]);
 
   /* ── Filtered sections ────────────────────────────────── */
+  // El backend exige 2FA solo a SUPER_ADMIN / ADMIN
+  // (role.service.ts::requiresTwoFactor). Para los demás roles, el sidebar
+  // muestra los módulos clínicos aunque 2FA esté deshabilitado.
+  const requires2FA =
+    PermissionUtils.isSuperAdminSync() || PermissionUtils.isAdminSync();
+
   const visibleSections = (() => {
-    if (!isEnabled) {
-      // 2FA disabled → only Principal
+    if (requires2FA && !isEnabled) {
+      // 2FA disabled para admin → solo Principal (sin Dashboard)
       return [{ label: null, items: SECTION_GENERAL.filter(i => i.id === 'main') }];
     }
     if (hasPermissions === false) {

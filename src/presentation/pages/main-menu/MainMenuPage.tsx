@@ -173,8 +173,15 @@ export default function MainMenuPage() {
 
   const go = (route: string) => navigate(route);
 
+  // El backend solo exige 2FA para SUPER_ADMIN y ADMIN (ver
+  // role.service.ts::requiresTwoFactor). El resto de roles (director,
+  // nurse, physiotherapist, psychologist, social worker) acceden al
+  // menú principal sin necesidad de 2FA.
+  const requires2FA =
+    PermissionUtils.isSuperAdminSync() || PermissionUtils.isAdminSync();
+
   /* Loading state */
-  if (loading) {
+  if (loading && requires2FA) {
     return (
       <div className="main-menu-page">
         <HeroStats />
@@ -186,8 +193,8 @@ export default function MainMenuPage() {
     );
   }
 
-  /* 2FA required gate */
-  if (!isEnabled) {
+  /* 2FA required gate (solo aplica a super admin / admin) */
+  if (requires2FA && !isEnabled) {
     return (
       <div className="main-menu-page">
         <HeroStats />
