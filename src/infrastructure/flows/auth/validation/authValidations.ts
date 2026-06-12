@@ -72,10 +72,10 @@ export function getLoginErrorMessage(error: AxiosError | Error | unknown): strin
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError;
+  const axiosError = error as AxiosError<{ message?: string | string[] }>;
+  const data = axiosError?.response?.data as { message?: string | string[] } | undefined;
   if (axiosError?.response?.status === 400) {
-    // Validación de datos desde backend
-    const msg = axiosError?.response?.data?.message;
+    const msg = data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Datos enviados no válidos.';
@@ -98,8 +98,8 @@ export function getLoginErrorMessage(error: AxiosError | Error | unknown): strin
   if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (axiosError?.response?.data?.message) {
-    return axiosError.response.data.message;
+  if (data?.message) {
+    return Array.isArray(data.message) ? data.message.join(' ') : data.message;
   }
   return 'Error desconocido al iniciar sesión. Intenta nuevamente.';
 }
@@ -138,15 +138,16 @@ export function get2FAErrorMessage(error: AxiosError | Error | unknown): string 
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError;
+  const axiosError = error as AxiosError<{ message?: string | string[] }>;
+  const data = axiosError?.response?.data as { message?: string | string[] } | undefined;
   if (axiosError?.response?.status === 400) {
-    const msg = axiosError?.response?.data?.message;
+    const msg = data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Código enviado no válido.';
   }
   if (axiosError?.response?.status === 401) {
-    const msg = axiosError?.response?.data?.message || '';
+    const msg = Array.isArray(data?.message) ? data?.message.join(' ') : data?.message ?? '';
     if (msg.includes('Token temporal') || msg.includes('expirado')) {
       return 'El tiempo para verificar el código ha expirado (5 minutos desde el login inicial). La hora del servidor puede estar desincronizada. Por favor, inicia sesión nuevamente.';
     }
@@ -164,8 +165,8 @@ export function get2FAErrorMessage(error: AxiosError | Error | unknown): string 
   if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (axiosError?.response?.data?.message) {
-    return axiosError.response.data.message;
+  if (data?.message) {
+    return Array.isArray(data.message) ? data.message.join(' ') : data.message;
   }
   return 'Error desconocido al verificar el código 2FA. Intenta nuevamente.';
 }

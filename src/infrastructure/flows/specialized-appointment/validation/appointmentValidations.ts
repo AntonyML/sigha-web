@@ -105,7 +105,7 @@ export function getSpecializedAppointmentErrorMessage(operation: string, error: 
  * @param userRole - Rol del usuario
  * @returns true si tiene permisos, false si no
  */
-export function validateSpecializedAppointmentPermissions(operation: string, userRole?: string): boolean {
+export function validateSpecializedAppointmentPermissions(_operation: string, _userRole?: string): boolean {
     // TODO: Implementar validaciones de permisos cuando se defina el sistema de roles
     // Por ahora, permitir todas las operaciones
     return true;
@@ -117,7 +117,7 @@ export function validateSpecializedAppointmentPermissions(operation: string, use
  * @param appointmentData - Datos de la cita
  * @returns Mensaje de error o null si puede ser cancelada
  */
-export function validateAppointmentCancellation(appointmentData: any): string | null {
+export function validateAppointmentCancellation(_appointmentData: any): string | null {
     // TODO: Implementar validaciones específicas de negocio para cancelación
     // Por ejemplo: no permitir cancelar citas que ya pasaron, etc.
 
@@ -130,7 +130,7 @@ export function validateAppointmentCancellation(appointmentData: any): string | 
  * @param appointmentData - Datos de la cita
  * @returns Mensaje de error o null si puede ser completada
  */
-export function validateAppointmentCompletion(appointmentData: any): string | null {
+export function validateAppointmentCompletion(_appointmentData: any): string | null {
     // TODO: Implementar validaciones específicas de negocio para completación
     // Por ejemplo: verificar que la cita esté en estado programada, etc.
 

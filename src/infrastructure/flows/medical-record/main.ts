@@ -5,7 +5,7 @@
  */
 
 import { medicalRecordService } from '../../../services/medicalRecordService';
-import type { MedicalRecord, CreateMedicalRecordDto, UpdateMedicalRecordDto } from '../../../types/medicalRecord';
+import type { MedicalRecord, CreateMedicalRecordDto, UpdateMedicalRecordDto } from '../../../services/medicalRecordService';
 import { validateMedicalRecordData, validateMedicalRecordId, getMedicalRecordErrorMessage } from './validation/medicalRecordValidations';
 
 export interface MedicalRecordFlowResult<T = any> {

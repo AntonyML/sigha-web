@@ -1,12 +1,14 @@
 import axios from 'axios';
-import type {
-  SpecializedAppointmentApi,
-  CreateSpecializedAppointmentDto,
-  UpdateSpecializedAppointmentDto,
-  AppointmentStatusApi,
+import {
+  type SpecializedAppointmentApi,
+  type CreateSpecializedAppointmentDto,
+  type UpdateSpecializedAppointmentDto,
+  type AppointmentStatusApi,
 } from '../types/specializedAppointment';
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
+
+export type { SpecializedAppointmentApi, CreateSpecializedAppointmentDto, UpdateSpecializedAppointmentDto, AppointmentStatusApi };
 
 const apiClient = axios.create({
   baseURL: config.api.baseUrl,

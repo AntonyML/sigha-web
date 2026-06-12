@@ -101,7 +101,7 @@ export function getClinicalMedicationErrorMessage(operation: string, error: unkn
  * @param userRole - Rol del usuario
  * @returns true si tiene permisos, false si no
  */
-export function validateClinicalMedicationPermissions(operation: string, userRole?: string): boolean {
+export function validateClinicalMedicationPermissions(_operation: string, _userRole?: string): boolean {
     // TODO: Implementar validaciones de permisos cuando se defina el sistema de roles
     // Por ahora, permitir todas las operaciones
     return true;

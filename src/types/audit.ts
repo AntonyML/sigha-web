@@ -59,18 +59,14 @@ export type AuditActionType =
 /**
  * Request para registrar auditoría usando stored procedure
  * Sincronizado con LogAuditDto del backend
- * Endpoint: POST /audits/log
+ * Endpoint: POST /audits
  */
 export interface LogAuditRequest {
-  type: AuditReportType;           // Requerido - tipo de reporte
-  action: AuditAction;             // Requerido - acción realizada
-  entityName?: string;             // Opcional - nombre de tabla (ej: 'users', 'older_adult')
-  entityId?: number;               // Opcional - ID del registro afectado
-  oldValue?: string;               // Opcional - valor anterior (JSON string)
-  newValue?: string;               // Opcional - valor nuevo (JSON string)
-  ipAddress?: string;              // Opcional - IP del cliente (backend lo obtiene si no se envía)
-  userAgent?: string;              // Opcional - navegador/app
-  observations?: string;           // Opcional - descripción/notas
+  type?: AuditReportType;
+  action: AuditAction;
+  tableName?: string;
+  recordId?: number;
+  description?: string;
 }
 
 /**
@@ -113,14 +109,14 @@ export interface AuditReport {
  * Sincronizado con backend para tabla audit_report
  */
 export interface SearchAuditReportsDto {
-  type?: string;           // ar_type: login_attempts, role_changes, etc.
-  entityName?: string;     // ar_entity_name: users, older_adults, etc.
-  entityId?: string;       // ar_entity_id (enviado como string al backend)
-  action?: string;         // ar_action: login, logout, create, update, delete
+  type?: string;
+  tableName?: string;
+  recordId?: string;
+  action?: string;
   startDate?: string;
   endDate?: string;
-  page?: string;           // Número de página (enviado como string al backend)
-  limit?: string;          // Límite de registros por página (enviado como string al backend)
+  page?: string;
+  limit?: string;
 }
 
 /**

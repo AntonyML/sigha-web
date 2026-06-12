@@ -4,9 +4,8 @@
  * Conectado a physiotherapyService — CRÍTICO-1 resuelto.
  */
 
-import { physiotherapyService } from '../../../services/physiotherapyService';
-import type { PhysiotherapySession, CreatePhysiotherapySessionDto, UpdatePhysiotherapySessionDto } from '../../../types/physiotherapy';
-import { validatePhysiotherapyData, validatePhysiotherapyId, getPhysiotherapyErrorMessage } from './validation/physiotherapyValidations';
+import { physiotherapyService, type PhysiotherapySessionApi, type CreatePhysiotherapySessionDto, type UpdatePhysiotherapySessionDto } from '../../../services/physiotherapyService';
+import { validatePhysiotherapyData, validatePhysiotherapyId } from './validation/physiotherapyValidations';
 
 export interface PhysiotherapyFlowResult<T = any> {
     success: boolean;
@@ -15,7 +14,7 @@ export interface PhysiotherapyFlowResult<T = any> {
 }
 
 export const physiotherapyFlow = {
-    async getAllSessions(appointmentId?: number): Promise<PhysiotherapyFlowResult<PhysiotherapySession[]>> {
+    async getAllSessions(appointmentId?: number): Promise<PhysiotherapyFlowResult<PhysiotherapySessionApi[]>> {
         try {
             const data = await physiotherapyService.getSessions(appointmentId);
             return { success: true, data };
@@ -25,10 +24,10 @@ export const physiotherapyFlow = {
         }
     },
 
-    async getSessionById(id: string | number): Promise<PhysiotherapyFlowResult<PhysiotherapySession>> {
+    async getSessionById(id: string | number): Promise<PhysiotherapyFlowResult<PhysiotherapySessionApi>> {
         try {
             const idValidation = validatePhysiotherapyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPhysiotherapyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de fisioterapia inválido' };
             const data = await physiotherapyService.getSessionById(Number(id));
             return { success: true, data };
         } catch (error: unknown) {
@@ -37,7 +36,7 @@ export const physiotherapyFlow = {
         }
     },
 
-    async createSession(data: CreatePhysiotherapySessionDto): Promise<PhysiotherapyFlowResult<PhysiotherapySession>> {
+    async createSession(data: CreatePhysiotherapySessionDto): Promise<PhysiotherapyFlowResult<PhysiotherapySessionApi>> {
         try {
             const validationError = validatePhysiotherapyData(data);
             if (validationError) return { success: false, error: validationError };
@@ -49,10 +48,10 @@ export const physiotherapyFlow = {
         }
     },
 
-    async updateSession(id: string | number, data: UpdatePhysiotherapySessionDto): Promise<PhysiotherapyFlowResult<PhysiotherapySession>> {
+    async updateSession(id: string | number, data: UpdatePhysiotherapySessionDto): Promise<PhysiotherapyFlowResult<PhysiotherapySessionApi>> {
         try {
             const idValidation = validatePhysiotherapyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPhysiotherapyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de fisioterapia inválido' };
             const validationError = validatePhysiotherapyData(data);
             if (validationError) return { success: false, error: validationError };
             const result = await physiotherapyService.updateSession(Number(id), data);
@@ -66,7 +65,7 @@ export const physiotherapyFlow = {
     async deleteSession(id: string | number): Promise<PhysiotherapyFlowResult<void>> {
         try {
             const idValidation = validatePhysiotherapyId(id);
-            if (!idValidation.isValid) return { success: false, error: getPhysiotherapyErrorMessage(idValidation.error!) };
+            if (!idValidation.isValid) return { success: false, error: 'ID de sesión de fisioterapia inválido' };
             await physiotherapyService.deleteSession(Number(id));
             return { success: true };
         } catch (error: unknown) {

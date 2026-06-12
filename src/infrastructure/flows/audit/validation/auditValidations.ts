@@ -30,108 +30,32 @@ export function validateLogAuditRequest(data: LogAuditRequest): string | null {
     return `La acción debe ser una de: ${validActions.join(', ')}.`;
   }
 
-  // Validar nombre de entidad (opcional)
-  if (data.entityName !== undefined) {
-    if (typeof data.entityName !== 'string') {
-      return 'El nombre de la entidad debe ser un texto válido.';
+  // Validar nombre de tabla (opcional)
+  if (data.tableName !== undefined) {
+    if (typeof data.tableName !== 'string') {
+      return 'El nombre de la tabla debe ser un texto válido.';
     }
-    if (data.entityName.trim() !== data.entityName) {
-      return 'El nombre de la entidad no debe tener espacios al inicio o final.';
+    if (data.tableName.trim() !== data.tableName) {
+      return 'El nombre de la tabla no debe tener espacios al inicio o final.';
     }
-    if (data.entityName.length < 1) {
-      return 'El nombre de la entidad no puede estar vacío.';
+    if (data.tableName.length < 1) {
+      return 'El nombre de la tabla no puede estar vacío.';
     }
-    if (data.entityName.length > 100) {
-      return 'El nombre de la entidad es demasiado largo.';
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(data.entityName)) {
-      return 'El nombre de la entidad solo puede contener letras, números y guiones bajos.';
+    if (data.tableName.length > 100) {
+      return 'El nombre de la tabla es demasiado largo.';
     }
   }
 
-  // Validar ID de entidad (opcional)
-  if (data.entityId !== undefined) {
-    if (typeof data.entityId !== 'number') {
-      return 'El ID de la entidad debe ser un número.';
+  // Validar ID de registro (opcional)
+  if (data.recordId !== undefined) {
+    if (typeof data.recordId !== 'number') {
+      return 'El ID del registro debe ser un número.';
     }
-    if (data.entityId <= 0) {
-      return 'El ID de la entidad debe ser un número positivo.';
+    if (data.recordId <= 0) {
+      return 'El ID del registro debe ser un número positivo.';
     }
-    if (!Number.isInteger(data.entityId)) {
-      return 'El ID de la entidad debe ser un número entero.';
-    }
-  }
-
-  // Validar valor anterior (opcional)
-  if (data.oldValue !== undefined) {
-    if (typeof data.oldValue !== 'string') {
-      return 'El valor anterior debe ser un texto válido.';
-    }
-    if (data.oldValue.length > 10000) {
-      return 'El valor anterior es demasiado largo (máximo 10000 caracteres).';
-    }
-    // Intentar validar que sea JSON válido
-    try {
-      if (data.oldValue.trim()) {
-        JSON.parse(data.oldValue);
-      }
-    } catch {
-      return 'El valor anterior debe ser un JSON válido.';
-    }
-  }
-
-  // Validar valor nuevo (opcional)
-  if (data.newValue !== undefined) {
-    if (typeof data.newValue !== 'string') {
-      return 'El valor nuevo debe ser un texto válido.';
-    }
-    if (data.newValue.length > 10000) {
-      return 'El valor nuevo es demasiado largo (máximo 10000 caracteres).';
-    }
-    // Intentar validar que sea JSON válido
-    try {
-      if (data.newValue.trim()) {
-        JSON.parse(data.newValue);
-      }
-    } catch {
-      return 'El valor nuevo debe ser un JSON válido.';
-    }
-  }
-
-  // Validar dirección IP (opcional)
-  if (data.ipAddress !== undefined) {
-    if (typeof data.ipAddress !== 'string') {
-      return 'La dirección IP debe ser un texto válido.';
-    }
-    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    if (!ipRegex.test(data.ipAddress)) {
-      return 'La dirección IP no tiene un formato válido.';
-    }
-  }
-
-  // Validar user agent (opcional)
-  if (data.userAgent !== undefined) {
-    if (typeof data.userAgent !== 'string') {
-      return 'El user agent debe ser un texto válido.';
-    }
-    if (data.userAgent.length > 500) {
-      return 'El user agent es demasiado largo (máximo 500 caracteres).';
-    }
-  }
-
-  // Validar observaciones (opcional)
-  if (data.observations !== undefined) {
-    if (typeof data.observations !== 'string') {
-      return 'Las observaciones deben ser un texto válido.';
-    }
-    if (data.observations.trim() !== data.observations) {
-      return 'Las observaciones no deben tener espacios al inicio o final.';
-    }
-    if (data.observations.length < 1) {
-      return 'Las observaciones no pueden estar vacías.';
-    }
-    if (data.observations.length > 1000) {
-      return 'Las observaciones son demasiado largas (máximo 1000 caracteres).';
+    if (!Number.isInteger(data.recordId)) {
+      return 'El ID del registro debe ser un número entero.';
     }
   }
 
@@ -156,35 +80,32 @@ export function validateSearchAuditReportsDto(params: SearchAuditReportsDto): st
     }
   }
 
-  // Validar nombre de entidad (opcional)
-  if (params.entityName !== undefined) {
-    if (typeof params.entityName !== 'string') {
-      return 'El nombre de la entidad debe ser un texto válido.';
+  // Validar nombre de tabla (opcional)
+  if (params.tableName !== undefined) {
+    if (typeof params.tableName !== 'string') {
+      return 'El nombre de la tabla debe ser un texto válido.';
     }
-    if (params.entityName.trim() !== params.entityName) {
-      return 'El nombre de la entidad no debe tener espacios al inicio o final.';
+    if (params.tableName.trim() !== params.tableName) {
+      return 'El nombre de la tabla no debe tener espacios al inicio o final.';
     }
-    if (params.entityName.length < 1) {
-      return 'El nombre de la entidad no puede estar vacío.';
+    if (params.tableName.length < 1) {
+      return 'El nombre de la tabla no puede estar vacío.';
     }
-    if (params.entityName.length > 100) {
-      return 'El nombre de la entidad es demasiado largo.';
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(params.entityName)) {
-      return 'El nombre de la entidad solo puede contener letras, números y guiones bajos.';
+    if (params.tableName.length > 100) {
+      return 'El nombre de la tabla es demasiado largo.';
     }
   }
 
-  // Validar ID de entidad (opcional)
-  if (params.entityId !== undefined) {
-    if (typeof params.entityId !== 'number') {
-      return 'El ID de la entidad debe ser un número.';
+  // Validar ID de registro (opcional)
+  if (params.recordId !== undefined) {
+    if (typeof params.recordId !== 'number') {
+      return 'El ID del registro debe ser un número.';
     }
-    if (params.entityId <= 0) {
-      return 'El ID de la entidad debe ser un número positivo.';
+    if (params.recordId <= 0) {
+      return 'El ID del registro debe ser un número positivo.';
     }
-    if (!Number.isInteger(params.entityId)) {
-      return 'El ID de la entidad debe ser un número entero.';
+    if (!Number.isInteger(params.recordId)) {
+      return 'El ID del registro debe ser un número entero.';
     }
   }
 
@@ -254,9 +175,10 @@ export function getAuditErrorMessage(error: AxiosError | Error | unknown): strin
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';
   }
-  const axiosError = error as AxiosError;
+  const axiosError = error as AxiosError<{ message?: string | string[] }>;
+  const data = axiosError?.response?.data as { message?: string | string[] } | undefined;
   if (axiosError?.response?.status === 400) {
-    const msg = axiosError?.response?.data?.message;
+    const msg = data?.message;
     if (typeof msg === 'string') return msg;
     if (Array.isArray(msg)) return msg.join(' ');
     return 'Datos enviados no válidos.';
@@ -279,8 +201,8 @@ export function getAuditErrorMessage(error: AxiosError | Error | unknown): strin
   if (axiosError?.response?.status && axiosError.response.status >= 500) {
     return 'Error interno del servidor. Intenta más tarde o contacta al soporte.';
   }
-  if (axiosError?.response?.data?.message) {
-    return axiosError.response.data.message;
+  if (data?.message) {
+    return Array.isArray(data.message) ? data.message.join(' ') : data.message;
   }
   return 'Error desconocido en el sistema de auditoría. Intenta nuevamente.';
 }

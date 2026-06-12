@@ -125,7 +125,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: axiosError.response?.data?.message || 'Error al obtener usuarios.',
+                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener usuarios.',
             };
         }
     },
@@ -178,7 +178,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: axiosError.response?.data?.message || 'Error al obtener usuario.',
+                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener usuario.',
             };
         }
     },
@@ -308,7 +308,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: axiosError.response?.data?.message || 'Error al eliminar usuario.',
+                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al eliminar usuario.',
             };
         }
     },
@@ -385,7 +385,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: axiosError.response?.data?.message || 'Error al obtener usuarios por rol.',
+                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener usuarios por rol.',
             };
         }
     },
@@ -441,7 +441,7 @@ export const userManagementFlow = {
 
             return {
                 success: false,
-                error: axiosError.response?.data?.message || 'Error al cambiar estado del usuario.',
+                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al cambiar estado del usuario.',
             };
         }
     },
