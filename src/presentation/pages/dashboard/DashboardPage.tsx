@@ -1,26 +1,29 @@
 /**
  * DashboardPage — Centro operacional
  *
- * Responde "¿Qué está pasando hoy?".
- * Responsabilidad: KPIs, pendientes, actividad reciente, movimientos,
- * acciones rápidas y accesos frecuentes. NO es un catálogo de módulos
- * (esa responsabilidad vive en el Sidebar).
+ * Responde "¿Qué está pasando hoy y qué necesita mi atención?".
+ * Responsabilidad: excepciones, KPIs, pendientes, actividad reciente,
+ * movimientos, acciones rápidas y accesos frecuentes.
+ * NO es un catálogo de módulos (esa responsabilidad vive en el Sidebar).
  *
  * Estructura:
- *   1. KPIs
- *   2. Pendientes (notificaciones)
- *   3. Actividad reciente
- *   4. Movimientos recientes
- *   5. Acciones rápidas
- *   6. Accesos frecuentes (favoritos estáticos)
+ *   1. Header         (título + fecha + última actualización)
+ *   2. KPIs           (4 indicadores operacionales)
+ *   3. Excepciones    (banner compacto, solo si hay pendientes)
+ *   4. Pendientes     (notificaciones por enviar)
+ *   5. Actividad reciente
+ *   6. Movimientos recientes
+ *   7. Acciones rápidas
+ *   8. Accesos frecuentes (favoritos estáticos, peso visual bajo)
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Users, ArrowLeftRight, Bell, FilePlus,
   Eye, Loader2, AlertTriangle, CalendarClock,
-  TrendingUp, Clock, CalendarCheck, Stethoscope, CalendarDays, ChevronRight,
+  TrendingUp, Clock, CalendarCheck, Stethoscope, CalendarDays,
+  ChevronRight, DoorOpen, RefreshCw,
 } from 'lucide-react'
 import { virtualFileService } from '../../../services/virtualFileService'
 import { entranceExitService } from '../../../services/entranceExitService'
@@ -55,6 +58,13 @@ function formatTime(str?: string): string {
   return isNaN(d.getTime()) ? '—' : d.toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })
 }
 
+const MONTHS_LONG = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre']
+const WEEKDAYS_LONG = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
+function formatTodayLong(): string {
+  const d = new Date()
+  return `${WEEKDAYS_LONG[d.getDay()].charAt(0).toUpperCase() + WEEKDAYS_LONG[d.getDay()].slice(1)}, ${d.getDate()} de ${MONTHS_LONG[d.getMonth()]}`
+}
+
 /* ─── stat card ───────────────────────────────────────── */
 
 interface Stat {
@@ -68,15 +78,15 @@ interface Stat {
 
 function StatCard({ s }: { s: Stat }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.25rem', background: 'var(--card-bg,#fff)', border: `1px solid var(--border-color,#e2e8f0)`, borderLeft: `3px solid ${s.accent}`, borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
-      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '2.5rem', height: '2.5rem', borderRadius: '0.625rem', background: s.bg, color: s.accent, flexShrink: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem', padding: '0.875rem 1.125rem', background: 'var(--card-bg,#fff)', border: `1px solid var(--border-color,#e2e8f0)`, borderLeft: `3px solid ${s.accent}`, borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '2.25rem', height: '2.25rem', borderRadius: '0.5rem', background: s.bg, color: s.accent, flexShrink: 0 }}>
         {s.icon}
       </span>
-      <div>
-        <div style={{ fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary,#1e293b)', lineHeight: 1.2 }}>
-          {s.loading ? <Loader2 size={18} style={{ animation: 'dbSpin .8s linear infinite' }} /> : s.value}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary,#1e293b)', lineHeight: 1.15 }}>
+          {s.loading ? <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} /> : s.value}
         </div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary,#64748b)' }}>{s.label}</div>
+        <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary,#64748b)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, marginTop: '0.125rem' }}>{s.label}</div>
       </div>
     </div>
   )
@@ -87,9 +97,9 @@ function StatCard({ s }: { s: Stat }) {
 function Section({ title, icon, action, children }: { title: string; icon: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-        <span style={{ color: 'var(--text-secondary,#64748b)' }}>{icon}</span>
-        <h2 style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary,#64748b)' }}>{title}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.625rem' }}>
+        <span style={{ color: 'var(--text-secondary,#64748b)' }} aria-hidden="true">{icon}</span>
+        <h2 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-secondary,#64748b)' }}>{title}</h2>
         <div style={{ flex: 1, height: 1, background: 'var(--border-color,#e2e8f0)' }} />
         {action}
       </div>
@@ -109,10 +119,10 @@ interface QuickLink {
 }
 
 const QUICK_LINKS: QuickLink[] = [
-  { label: 'Residentes',  route: '/virtualFiles',              icon: <Users          size={15} />, bg: '#eff6ff', color: '#1d4ed8' },
-  { label: 'Citas',       route: '/specialized-appointments',  icon: <CalendarCheck  size={15} />, bg: '#eef2ff', color: '#4338ca' },
-  { label: 'Enfermería',  route: '/nursing',                   icon: <Stethoscope    size={15} />, bg: '#ecfdf5', color: '#047857' },
-  { label: 'Programas',   route: '/programs',                  icon: <CalendarDays   size={15} />, bg: '#f0fdfa', color: '#0f766e' },
+  { label: 'Residentes',  route: '/virtualFiles',              icon: <Users          size={14} />, bg: '#eff6ff', color: '#1d4ed8' },
+  { label: 'Citas',       route: '/specialized-appointments',  icon: <CalendarCheck  size={14} />, bg: '#eef2ff', color: '#4338ca' },
+  { label: 'Enfermería',  route: '/nursing',                   icon: <Stethoscope    size={14} />, bg: '#ecfdf5', color: '#047857' },
+  { label: 'Programas',   route: '/programs',                  icon: <CalendarDays   size={14} />, bg: '#f0fdfa', color: '#0f766e' },
 ]
 
 /* ─── main component ──────────────────────────────────── */
@@ -132,87 +142,164 @@ export default function DashboardPage() {
   const [errorE,   setErrorE]   = useState(false)
   const [errorN,   setErrorN]   = useState(false)
 
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
   useEffect(() => {
+    let cancelled = false
+    let pending = 3
+
+    const markDone = () => {
+      pending -= 1
+      if (pending === 0 && !cancelled) setLastUpdated(new Date())
+    }
+
     virtualFileService.getAllVirtualFiles()
-      .then(d => setResidents(d))
-      .catch(() => setErrorR(true))
-      .finally(() => setLoadingR(false))
+      .then(d => { if (!cancelled) setResidents(d) })
+      .catch(() => { if (!cancelled) setErrorR(true) })
+      .finally(() => { if (!cancelled) { setLoadingR(false); markDone() } })
 
     entranceExitService.getAllEntranceExits()
-      .then(d => setEntrances(d))
-      .catch(() => setErrorE(true))
-      .finally(() => setLoadingE(false))
+      .then(d => { if (!cancelled) setEntrances(d) })
+      .catch(() => { if (!cancelled) setErrorE(true) })
+      .finally(() => { if (!cancelled) { setLoadingE(false); markDone() } })
 
     notificationService.getNotifications({ nSent: false, limit: 5 })
       .then(r => {
+        if (cancelled) return
         setPendingNotifs(r.total ?? r.data?.length ?? 0)
         setPendingList(r.data ?? [])
       })
-      .catch(() => { setErrorN(true); setPendingNotifs(0); setPendingList([]) })
-      .finally(() => setLoadingN(false))
+      .catch(() => { if (!cancelled) { setErrorN(true); setPendingNotifs(0); setPendingList([]) } })
+      .finally(() => { if (!cancelled) { setLoadingN(false); markDone() } })
+
+    return () => { cancelled = true }
   }, [])
 
-  const todayEntrances = entrances.filter(e => isToday(e.eeDatetimeEntrance ?? e.createAt))
-  const recentResidents = [...residents]
-    .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-    .slice(0, 6)
+  /* ── Derived operational signals (sin nuevos endpoints) ── */
+  const todayEntrances     = useMemo(() => entrances.filter(e => isToday(e.eeDatetimeEntrance ?? e.createAt)), [entrances])
+  const openEntrances     = useMemo(() => entrances.filter(e => e.eeAccessType === 'entrance' && !e.eeClose), [entrances])
+  const recentResidents   = useMemo(() =>
+    [...residents]
+      .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+      .slice(0, 5),
+    [residents]
+  )
+  const newResidentsToday = useMemo(() => residents.filter(r => isToday(r.createdAt)).length, [residents])
+
+  const totalExceptions = pendingNotifs + openEntrances.length
+  const hasExceptions   = totalExceptions > 0
 
   const stats: Stat[] = [
-    { label: 'Residentes totales',  value: residents.length,   accent: '#3b82f6', bg: '#eff6ff', icon: <Users size={18} />,         loading: loadingR },
-    { label: 'Movimientos hoy',     value: todayEntrances.length, accent: '#10b981', bg: '#ecfdf5', icon: <ArrowLeftRight size={18} />, loading: loadingE },
-    { label: 'Notif. pendientes',   value: pendingNotifs,      accent: '#f59e0b', bg: '#fffbeb', icon: <Bell size={18} />,            loading: loadingN },
-    { label: 'Fecha',               value: new Date().toLocaleDateString('es-CR', { weekday: 'short', day: 'numeric', month: 'short' }),
-      accent: '#8b5cf6', bg: '#f5f3ff', icon: <CalendarClock size={18} />, loading: false },
+    { label: 'Residentes totales', value: residents.length,         accent: '#3b82f6', bg: '#eff6ff', icon: <Users size={17} />,         loading: loadingR },
+    { label: 'Movimientos hoy',    value: todayEntrances.length,    accent: '#10b981', bg: '#ecfdf5', icon: <ArrowLeftRight size={17} />, loading: loadingE },
+    { label: 'Ingresos abiertos',  value: openEntrances.length,     accent: '#f97316', bg: '#fff7ed', icon: <DoorOpen size={17} />,       loading: loadingE },
+    { label: 'Notif. pendientes',  value: pendingNotifs,            accent: '#f59e0b', bg: '#fffbeb', icon: <Bell size={17} />,            loading: loadingN },
   ]
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1.25rem 3rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '1.5rem 1.25rem 3rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <style>{`@keyframes dbSpin { to { transform: rotate(360deg); } }`}</style>
 
-      {/* Page title */}
-      <div>
-        <h1 style={{ margin: '0 0 0.25rem', fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary,#1e293b)' }}>Dashboard</h1>
-        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary,#64748b)' }}>Resumen operacional del día</p>
+      {/* Header — título + fecha + última actualización */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0, fontSize: '1.375rem', fontWeight: 700, color: 'var(--text-primary,#1e293b)' }}>Dashboard</h1>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: 'var(--card-bg,#fff)', border: '1px solid var(--border-color,#e2e8f0)', borderRadius: '999px', fontSize: '0.75rem', color: 'var(--text-secondary,#64748b)', fontWeight: 600 }}>
+              <CalendarClock size={12} aria-hidden="true" />
+              {formatTodayLong()}
+            </span>
+            {newResidentsToday > 0 && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600 }}
+                aria-label={`${newResidentsToday} residentes nuevos hoy`}>
+                <TrendingUp size={12} aria-hidden="true" />
+                {newResidentsToday} {newResidentsToday === 1 ? 'nuevo residente' : 'nuevos residentes'} hoy
+              </span>
+            )}
+          </div>
+        </div>
+        {lastUpdated && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.75rem', color: 'var(--text-secondary,#94a3b8)' }}
+            aria-label={`Datos actualizados ${timeAgo(lastUpdated.toISOString())}`}>
+            <RefreshCw size={12} aria-hidden="true" />
+            Actualizado {timeAgo(lastUpdated.toISOString())}
+          </div>
+        )}
       </div>
 
       {/* 1. KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.875rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.75rem' }} role="group" aria-label="Indicadores operacionales">
         {stats.map(s => <StatCard key={s.label} s={s} />)}
       </div>
 
-      {/* 2. Pendientes */}
+      {/* 2. Excepciones — banner compacto, solo si hay */}
+      {hasExceptions && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderLeft: '4px solid #f59e0b', borderRadius: '0.625rem', boxShadow: '0 1px 2px rgba(0,0,0,.04)' }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.75rem', height: '1.75rem', borderRadius: '0.5rem', background: '#fef3c7', color: '#b45309', flexShrink: 0 }} aria-hidden="true">
+            <AlertTriangle size={15} />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#92400e' }}>
+              Necesita atención — {totalExceptions} {totalExceptions === 1 ? 'excepción' : 'excepciones'}
+            </div>
+            <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', fontSize: '0.75rem', color: '#78350f', marginTop: '0.125rem' }}>
+              {pendingNotifs > 0 && (
+                <button type="button" onClick={() => navigate('/notifications')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', padding: 0, color: '#92400e', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                  aria-label={`Ver ${pendingNotifs} notificaciones pendientes`}>
+                  <Bell size={12} aria-hidden="true" /> {pendingNotifs} {pendingNotifs === 1 ? 'notificación' : 'notificaciones'} sin enviar
+                </button>
+              )}
+              {openEntrances.length > 0 && (
+                <button type="button" onClick={() => navigate('/entrance-exit')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', padding: 0, color: '#92400e', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                  aria-label={`Ver ${openEntrances.length} ingresos abiertos sin cierre`}>
+                  <DoorOpen size={12} aria-hidden="true" /> {openEntrances.length} {openEntrances.length === 1 ? 'ingreso abierto' : 'ingresos abiertos'} sin cierre
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Pendientes */}
       <Section
         title="Pendientes"
         icon={<Bell size={15} />}
         action={
           pendingNotifs > 0 && (
             <button type="button" onClick={() => navigate('/notifications')}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>
-              Ver todas <ChevronRight size={13} />
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}
+              aria-label="Ver todas las notificaciones">
+              Ver todas <ChevronRight size={13} aria-hidden="true" />
             </button>
           )
         }
       >
         {loadingN && (
           <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} /> Cargando…
+            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} aria-hidden="true" /> Cargando…
           </div>
         )}
         {!loadingN && errorN && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: '#fef2f2', borderRadius: '0.625rem', color: '#991b1b', fontSize: '0.875rem' }}>
-            <AlertTriangle size={15} /> No se pudo cargar las notificaciones.
+            <AlertTriangle size={15} aria-hidden="true" /> No se pudo cargar las notificaciones.
           </div>
         )}
         {!loadingN && !errorN && pendingList.length === 0 && (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
-            No hay notificaciones pendientes.
+          <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
+            No hay notificaciones pendientes. Todo al día.
           </div>
         )}
         {!loadingN && !errorN && pendingList.length > 0 && (
           <div style={{ border: '1px solid var(--border-color,#e2e8f0)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--card-bg,#fff)' }}>
             {pendingList.map((n, i) => (
               <div key={n.id}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.75rem 1rem', borderBottom: i < pendingList.length - 1 ? '1px solid var(--border-color,#f1f5f9)' : 'none', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.625rem 0.875rem', borderBottom: i < pendingList.length - 1 ? '1px solid var(--border-color,#f1f5f9)' : 'none', cursor: 'pointer' }}
                 onClick={() => navigate(`/notifications/view/${n.id}`)}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-card-bg,#f8faff)')}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}
@@ -221,7 +308,7 @@ export default function DashboardPage() {
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/notifications/view/${n.id}`) } }}
                 aria-label={`Notificación pendiente: ${n.nTitle}`}
               >
-                <span style={{ marginTop: '0.2rem', width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: '#f59e0b', flexShrink: 0 }} aria-hidden="true" />
+                <span style={{ marginTop: '0.35rem', width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: '#f59e0b', flexShrink: 0 }} aria-hidden="true" />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '0.75rem' }}>
                     <span style={{ fontWeight: 600, color: 'var(--text-primary,#1e293b)', fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nTitle}</span>
@@ -237,31 +324,31 @@ export default function DashboardPage() {
         )}
       </Section>
 
-      {/* 3. Actividad reciente */}
+      {/* 4. Actividad reciente */}
       <Section title="Actividad reciente" icon={<TrendingUp size={15} />}>
         {loadingR && (
           <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} /> Cargando…
+            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} aria-hidden="true" /> Cargando…
           </div>
         )}
         {!loadingR && errorR && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: '#fef2f2', borderRadius: '0.625rem', color: '#991b1b', fontSize: '0.875rem' }}>
-            <AlertTriangle size={15} /> No se pudo cargar la lista de residentes.
+            <AlertTriangle size={15} aria-hidden="true" /> No se pudo cargar la lista de residentes.
           </div>
         )}
         {!loadingR && !errorR && recentResidents.length === 0 && (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
+          <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
             No hay fichas registradas.{' '}
             <button type="button" onClick={() => navigate('/virtualFiles/create')} style={{ color: 'var(--primary-color,#3b82f6)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Crear primera ficha →</button>
           </div>
         )}
         {!loadingR && !errorR && recentResidents.length > 0 && (
           <div style={{ border: '1px solid var(--border-color,#e2e8f0)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--card-bg,#fff)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
               <thead>
                 <tr style={{ background: 'var(--sidebar-bg,#f8fafc)', borderBottom: '1px solid var(--border-color,#e2e8f0)' }}>
                   {['Nombre', 'Cédula', 'Edad', 'Registrado', ''].map(h => (
-                    <th key={h} style={{ padding: '0.625rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary,#64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                    <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontWeight: 600, fontSize: '0.6875rem', color: 'var(--text-secondary,#64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -270,23 +357,24 @@ export default function DashboardPage() {
                   <tr key={r.id ?? i} style={{ borderBottom: '1px solid var(--border-color,#f1f5f9)' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'var(--hover-card-bg,#f8faff)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}>
-                    <td style={{ padding: '0.625rem 1rem', fontWeight: 600, color: 'var(--text-primary,#1e293b)' }}>{r.nombreApellido ?? '—'}</td>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-secondary,#475569)', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{r.cedula ?? '—'}</td>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-secondary,#64748b)' }}>{r.edad ?? '—'}</td>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-secondary,#94a3b8)', fontSize: '0.8125rem' }}>{timeAgo(r.createdAt)}</td>
-                    <td style={{ padding: '0.625rem 1rem', textAlign: 'right' }}>
+                    <td style={{ padding: '0.5rem 0.875rem', fontWeight: 600, color: 'var(--text-primary,#1e293b)' }}>{r.nombreApellido ?? '—'}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-secondary,#475569)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{r.cedula ?? '—'}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-secondary,#64748b)' }}>{r.edad ?? '—'}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-secondary,#94a3b8)', fontSize: '0.75rem' }}>{timeAgo(r.createdAt)}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', textAlign: 'right' }}>
                       <button type="button" onClick={() => navigate(`/virtualFiles/view/${r.id}`)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '0.375rem', padding: '0.3rem 0.625rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600 }}>
-                        <Eye size={13} /> Ver
+                        aria-label={`Ver ficha de ${r.nombreApellido ?? 'residente'}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: '#eff6ff', color: '#2563eb', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
+                        <Eye size={12} aria-hidden="true" /> Ver
                       </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div style={{ padding: '0.625rem 1rem', borderTop: '1px solid var(--border-color,#e2e8f0)', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ padding: '0.5rem 0.875rem', borderTop: '1px solid var(--border-color,#e2e8f0)', display: 'flex', justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => navigate('/virtualFiles')}
-                style={{ background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>
+                style={{ background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
                 Ver todas las fichas ({residents.length}) →
               </button>
             </div>
@@ -294,41 +382,41 @@ export default function DashboardPage() {
         )}
       </Section>
 
-      {/* 4. Movimientos recientes */}
+      {/* 5. Movimientos recientes */}
       <Section title="Movimientos recientes" icon={<Clock size={15} />}>
         {loadingE && (
           <div style={{ display: 'flex', gap: '0.5rem', padding: '1.25rem', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} /> Cargando…
+            <Loader2 size={16} style={{ animation: 'dbSpin .8s linear infinite' }} aria-hidden="true" /> Cargando…
           </div>
         )}
         {!loadingE && errorE && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '1rem', background: '#fef2f2', borderRadius: '0.625rem', color: '#991b1b', fontSize: '0.875rem' }}>
-            <AlertTriangle size={15} /> No se pudo cargar los movimientos.
+            <AlertTriangle size={15} aria-hidden="true" /> No se pudo cargar los movimientos.
           </div>
         )}
         {!loadingE && !errorE && todayEntrances.length === 0 && (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
+          <div style={{ padding: '1.25rem', textAlign: 'center', color: 'var(--text-secondary,#64748b)', fontSize: '0.875rem' }}>
             Sin movimientos registrados hoy.
           </div>
         )}
         {!loadingE && !errorE && todayEntrances.length > 0 && (
           <div style={{ border: '1px solid var(--border-color,#e2e8f0)', borderRadius: '0.75rem', overflow: 'hidden', background: 'var(--card-bg,#fff)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
               <thead>
                 <tr style={{ background: 'var(--sidebar-bg,#f8fafc)', borderBottom: '1px solid var(--border-color,#e2e8f0)' }}>
                   {['Tipo', 'Acceso', 'Hora entrada', 'Estado'].map(h => (
-                    <th key={h} style={{ padding: '0.625rem 1rem', textAlign: 'left', fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-secondary,#64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                    <th key={h} style={{ padding: '0.5rem 0.875rem', textAlign: 'left', fontWeight: 600, fontSize: '0.6875rem', color: 'var(--text-secondary,#64748b)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {todayEntrances.slice(0, 8).map((e, i) => (
+                {todayEntrances.slice(0, 6).map((e, i) => (
                   <tr key={e.id ?? i} style={{ borderBottom: '1px solid var(--border-color,#f1f5f9)' }}>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-primary,#1e293b)' }}>{e.eeType ?? '—'}</td>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-secondary,#475569)' }}>{e.eeAccessType ?? '—'}</td>
-                    <td style={{ padding: '0.625rem 1rem', color: 'var(--text-secondary,#64748b)', fontFamily: 'monospace', fontSize: '0.8125rem' }}>{formatTime(e.eeDatetimeEntrance)}</td>
-                    <td style={{ padding: '0.625rem 1rem' }}>
-                      <span style={{ display: 'inline-block', padding: '0.125rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: e.eeClose ? '#f1f5f9' : '#ecfdf5', color: e.eeClose ? '#64748b' : '#059669' }}>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-primary,#1e293b)' }}>{e.eeType ?? '—'}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-secondary,#475569)' }}>{e.eeAccessType ?? '—'}</td>
+                    <td style={{ padding: '0.5rem 0.875rem', color: 'var(--text-secondary,#64748b)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{formatTime(e.eeDatetimeEntrance)}</td>
+                    <td style={{ padding: '0.5rem 0.875rem' }}>
+                      <span style={{ display: 'inline-block', padding: '0.125rem 0.5rem', borderRadius: '999px', fontSize: '0.6875rem', fontWeight: 600, background: e.eeClose ? '#f1f5f9' : '#ecfdf5', color: e.eeClose ? '#64748b' : '#059669' }}>
                         {e.eeClose ? 'Cerrado' : 'Activo'}
                       </span>
                     </td>
@@ -336,10 +424,10 @@ export default function DashboardPage() {
                 ))}
               </tbody>
             </table>
-            {todayEntrances.length > 8 && (
-              <div style={{ padding: '0.625rem 1rem', borderTop: '1px solid var(--border-color,#e2e8f0)', display: 'flex', justifyContent: 'flex-end' }}>
+            {todayEntrances.length > 6 && (
+              <div style={{ padding: '0.5rem 0.875rem', borderTop: '1px solid var(--border-color,#e2e8f0)', display: 'flex', justifyContent: 'flex-end' }}>
                 <button type="button" onClick={() => navigate('/entrance-exit')}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600 }}>
+                  style={{ background: 'none', border: 'none', color: 'var(--primary-color,#3b82f6)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>
                   Ver todos ({todayEntrances.length}) →
                 </button>
               </div>
@@ -348,37 +436,46 @@ export default function DashboardPage() {
         )}
       </Section>
 
-      {/* 5. Acciones rápidas */}
+      {/* 6. Acciones rápidas — verbos claros, máximo 4 */}
       <Section title="Acciones rápidas" icon={<FilePlus size={15} />}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.625rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }} role="group" aria-label="Acciones rápidas">
           {[
-            { label: 'Nueva ficha',        route: '/virtualFiles/create', bg: '#eff6ff', color: '#1d4ed8' },
-            { label: 'Registrar ingreso',  route: '/entrance-exit',       bg: '#ecfdf5', color: '#065f46' },
-            { label: 'Nota de enfermería', route: '/nursing',             bg: '#eef2ff', color: '#3730a3' },
-            { label: 'Ver actividades',    route: '/programs',            bg: '#f0fdfa', color: '#0f766e' },
+            { label: 'Crear residente',       route: '/virtualFiles/create',        bg: '#eff6ff', color: '#1d4ed8', icon: <Users        size={16} />, hint: 'Nueva ficha de adulto mayor' },
+            { label: 'Registrar movimiento',  route: '/entrance-exit',               bg: '#ecfdf5', color: '#065f46', icon: <ArrowLeftRight size={16} />, hint: 'Ingreso o salida de residente o visita' },
+            { label: 'Nueva cita',            route: '/specialized-appointments',    bg: '#eef2ff', color: '#3730a3', icon: <CalendarCheck size={16} />, hint: 'Agendar atención especializada' },
+            { label: 'Atención enfermería',   route: '/nursing',                     bg: '#f0fdfa', color: '#0f766e', icon: <Stethoscope  size={16} />, hint: 'Notas, citas y resultados' },
           ].map(a => (
             <button key={a.route} type="button" onClick={() => navigate(a.route)}
-              style={{ padding: '0.5rem 1.125rem', background: a.bg, color: a.color, border: `1px solid ${a.bg}`, borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer', transition: 'opacity 150ms' }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}>
-              {a.label}
+              aria-label={`${a.label} — ${a.hint}`}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.75rem 0.875rem', background: a.bg, color: a.color, border: 'none', borderRadius: '0.625rem', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', textAlign: 'left', transition: 'transform 150ms ease, box-shadow 150ms ease' }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.08)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
+              onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
+              onBlur={e => { e.currentTarget.style.outline = ''; e.currentTarget.style.outlineOffset = '' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.75rem', height: '1.75rem', borderRadius: '0.375rem', background: 'rgba(255,255,255,.55)', flexShrink: 0 }} aria-hidden="true">
+                {a.icon}
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</span>
+                <span style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 500, opacity: 0.75, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.hint}</span>
+              </span>
             </button>
           ))}
         </div>
       </Section>
 
-      {/* 6. Accesos frecuentes (favoritos estáticos) */}
+      {/* 7. Accesos frecuentes — peso visual bajo */}
       <Section title="Accesos frecuentes" icon={<ChevronRight size={15} />}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.625rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }} role="group" aria-label="Accesos frecuentes">
           {QUICK_LINKS.map(q => (
             <button key={q.route} type="button" onClick={() => navigate(q.route)}
               aria-label={`Ir a ${q.label}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.75rem 0.875rem', background: q.bg, color: q.color, border: 'none', borderRadius: '0.625rem', fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', textAlign: 'left', transition: 'transform 150ms ease, box-shadow 150ms ease' }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,.08)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'var(--card-bg,#fff)', color: q.color, border: '1px solid var(--border-color,#e2e8f0)', borderRadius: '0.5rem', fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer', textAlign: 'left', transition: 'background 150ms ease, border-color 150ms ease' }}
+              onMouseEnter={e => { e.currentTarget.style.background = q.bg; e.currentTarget.style.borderColor = q.color }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'var(--card-bg,#fff)'; e.currentTarget.style.borderColor = 'var(--border-color,#e2e8f0)' }}
               onFocus={e => { e.currentTarget.style.outline = '2px solid #3b82f6'; e.currentTarget.style.outlineOffset = '2px' }}
               onBlur={e => { e.currentTarget.style.outline = ''; e.currentTarget.style.outlineOffset = '' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.5rem', height: '1.5rem', borderRadius: '0.375rem', background: 'rgba(255,255,255,.6)', flexShrink: 0 }} aria-hidden="true">
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '1.25rem', height: '1.25rem', flexShrink: 0, color: q.color }} aria-hidden="true">
                 {q.icon}
               </span>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.label}</span>
