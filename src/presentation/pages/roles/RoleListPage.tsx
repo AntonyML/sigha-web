@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw } from 'lucide-react'
+import { ShieldCheck, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw, History } from 'lucide-react'
 import { roleFlow } from '../../../infrastructure/flows/role'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
 import type { UserRole } from '../../../types/user'
@@ -76,6 +76,9 @@ export default function RoleListPage() {
           <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>Administra los roles y permisos del sistema</p>
         </div>
         <div className="lp-actions">
+          <button className="lp-btn lp-btn--back" onClick={() => navigate('/role-changes')}>
+            <History size={14} /> Historial de cambios
+          </button>
           <button className="lp-btn lp-btn--primary" onClick={() => navigate('/roles/create')}>
             <Plus size={16} /> Nuevo Rol
           </button>

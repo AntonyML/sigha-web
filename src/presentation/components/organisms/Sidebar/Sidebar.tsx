@@ -1,29 +1,51 @@
 /**
- * Sidebar
+ * Sidebar — Mapa completo de navegación del sistema
  *
- * Fixes aplicados (P1 + P2):
- *  ✅ Brand eliminado — ya está en Navbar
- *  ✅ Auto-expand grupo activo al montar y al cambiar ruta
- *  ✅ Chevron animado (rotate) — un solo ícono
- *  ✅ "Mi perfil" navega a /profile (estaba en /users)
- *  ✅ 2FA movido a UserMenu — eliminado del nav
- *  ✅ Sub-Programas como hijo de Programas
- *  ✅ Separadores de sección (Clínica / Administración / Sistema)
- *  ✅ compact mode eliminado — reemplazado por scroll natural
+ * Arquitectura:
+ *   Grupo 1 · Inicio              — Dashboard
+ *   Grupo 2 · Operación diaria    — Residentes, E/S, Programas, Subprogramas,
+ *                                   Familiares, Contactos emergencia, Actualizaciones
+ *   Grupo 3 · Atención clínica   — Enfermería, Psicología, Fisioterapia,
+ *                                   Trabajo Social, Citas, Áreas especializadas
+ *   Grupo 4 · Historial clínico  — Expedientes, Medicamentos, Condiciones, Vacunas
+ *   Grupo 5 · Comunicación       — Notificaciones
+ *   Grupo 6 · Seguridad y acceso — Usuarios, Roles, Permisos, 2FA, Perfil
+ *   Grupo 7 · Auditoría          — Auditoría (menú, listado, dashboard)
+ *
+ * Reglas de visibilidad:
+ *   - 2FA inactivo  → solo Inicio (Dashboard)
+ *   - Sin permisos administrativos → oculta Usuarios, Roles, Permisos y todo el grupo Auditoría
+ *   - Con permisos → todo visible
  */
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
+  LayoutDashboard,
   Users,
+  ArrowLeftRight,
   Calendar,
-  FileText,
-  ChevronDown,
-  Syringe,
-  Shield,
+  CalendarRange,
+  CalendarCheck,
+  PhoneCall,
+  History,
+  Stethoscope,
+  Brain,
+  Activity,
+  HeartHandshake,
+  Building2,
   ClipboardList,
-  List,
+  Pill,
+  HeartPulse,
+  Syringe,
+  Bell,
+  UserCog,
+  Shield,
+  KeyRound,
+  ShieldCheck,
   UserCircle,
+  FileSearch,
+  ChevronDown,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
 import { PermissionUtils } from '../../../../utils/permissionUtils';
@@ -39,99 +61,127 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-/* ─── Menu definition ─────────────────────────────────── */
+interface NavSection {
+  id: string;
+  label: string | null;
+  items: MenuItem[];
+  adminOnly?: boolean;
+}
 
-const SECTION_GENERAL: MenuItem[] = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    path: '/dashboard',
-    icon: <ClipboardList className="w-[18px] h-[18px]" />,
-  },
+const ICON_CLASS = 'w-[18px] h-[18px]';
+
+/* ─── Menú completo del sistema ────────────────────────── */
+
+const SECTION_INICIO: MenuItem[] = [
+  { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className={ICON_CLASS} /> },
 ];
 
-const SECTION_CLINICAL: MenuItem[] = [
+const SECTION_OPERACION: MenuItem[] = [
   {
-    id: 'virtualFiles',
-    label: 'Adultos Mayores',
-    icon: <Users className="w-[18px] h-[18px]" />,
+    id: 'residentes', label: 'Residentes', icon: <Users className={ICON_CLASS} />,
     children: [
-      { id: 'vf-list',   label: 'Listado',         path: '/virtualFiles' },
-      { id: 'vf-create', label: 'Crear Registro',   path: '/virtualFiles/create' },
+      { id: 'res-list',     label: 'Listado',        path: '/virtualFiles' },
+      { id: 'res-create',   label: 'Crear registro', path: '/virtualFiles/create' },
+      { id: 'res-updates',  label: 'Actualizaciones', path: '/older-adult-updates' },
     ],
   },
   {
-    id: 'vaccines',
-    label: 'Vacunas',
-    icon: <Syringe className="w-[18px] h-[18px]" />,
-    children: [
-      { id: 'vac-list',   label: 'Listado', path: '/vaccines' },
-      { id: 'vac-create', label: 'Crear',   path: '/vaccines/create' },
-    ],
-  },
-  {
-    id: 'entranceExit',
-    label: 'Entrada / Salida',
-    icon: <List className="w-[18px] h-[18px]" />,
+    id: 'entradasSalidas', label: 'Entradas y Salidas', icon: <ArrowLeftRight className={ICON_CLASS} />,
     children: [
       { id: 'ee-dashboard', label: 'Dashboard',  path: '/entrance-exit' },
       { id: 'ee-register',  label: 'Registrar',  path: '/entrance-exit/register' },
       { id: 'ee-history',   label: 'Historial',  path: '/entrance-exit/history' },
     ],
   },
+  {
+    id: 'programas', label: 'Programas', icon: <Calendar className={ICON_CLASS} />,
+    children: [
+      { id: 'prog-list',   label: 'Listado', path: '/programs' },
+      { id: 'prog-create', label: 'Crear',    path: '/programs/create' },
+    ],
+  },
+  {
+    id: 'subprogramas', label: 'Subprogramas', icon: <CalendarRange className={ICON_CLASS} />,
+    children: [
+      { id: 'sub-list',   label: 'Listado', path: '/sub-programs' },
+      { id: 'sub-create', label: 'Crear',    path: '/sub-programs/create' },
+    ],
+  },
+  { id: 'familiares',     label: 'Familiares',            path: '/older-adult-family', icon: <Users className={ICON_CLASS} /> },
+  { id: 'contactosEmerg', label: 'Contactos de Emergencia', path: '/emergency-contacts', icon: <PhoneCall className={ICON_CLASS} /> },
+  { id: 'historialCamb',  label: 'Historial de Cambios',   path: '/older-adult-updates', icon: <History className={ICON_CLASS} /> },
 ];
 
-const SECTION_ADMIN: MenuItem[] = [
+const SECTION_CLINICA: MenuItem[] = [
+  { id: 'enfermeria',   label: 'Enfermería',            path: '/nursing',                  icon: <Stethoscope    className={ICON_CLASS} /> },
+  { id: 'psicologia',   label: 'Psicología',            path: '/psychology',               icon: <Brain          className={ICON_CLASS} /> },
+  { id: 'fisioterapia', label: 'Fisioterapia',          path: '/physiotherapy',            icon: <Activity       className={ICON_CLASS} /> },
+  { id: 'trabajoSoc',   label: 'Trabajo Social',        path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} /> },
+  { id: 'citas',        label: 'Citas Especializadas',  path: '/specialized-appointments', icon: <CalendarCheck  className={ICON_CLASS} /> },
+  { id: 'areas',        label: 'Áreas Especializadas',  path: '/specialized-areas',        icon: <Building2      className={ICON_CLASS} /> },
+];
+
+const SECTION_HISTORIAL: MenuItem[] = [
+  { id: 'expedientes',  label: 'Expedientes Médicos',    path: '/medical-records',      icon: <ClipboardList className={ICON_CLASS} /> },
+  { id: 'medicamentos', label: 'Medicamentos',           path: '/clinical-medication',  icon: <Pill          className={ICON_CLASS} /> },
+  { id: 'condiciones',  label: 'Condiciones Clínicas',   path: '/clinical-history',     icon: <HeartPulse    className={ICON_CLASS} /> },
+  { id: 'vacunas',      label: 'Vacunas',                path: '/vaccines',             icon: <Syringe       className={ICON_CLASS} /> },
+];
+
+const SECTION_COMUNICACION: MenuItem[] = [
+  { id: 'notificaciones', label: 'Notificaciones', path: '/notifications', icon: <Bell className={ICON_CLASS} /> },
+];
+
+const SECTION_SEGURIDAD: MenuItem[] = [
   {
-    id: 'programs',
-    label: 'Programas',
-    icon: <Calendar className="w-[18px] h-[18px]" />,
+    id: 'usuarios', label: 'Usuarios', icon: <UserCog className={ICON_CLASS} />, adminOnly: true,
     children: [
-      { id: 'programs-list',   label: 'Listado',       path: '/programs' },
-      { id: 'programs-create', label: 'Crear',          path: '/programs/create' },
-      { id: 'sub-list',        label: 'Sub-Programas',  path: '/sub-programs' },
-      { id: 'sub-create',      label: 'Crear Sub-Prog', path: '/sub-programs/create' },
+      { id: 'usr-list',    label: 'Listado',    path: '/users' },
+      { id: 'usr-create',  label: 'Crear',      path: '/users/create' },
+      { id: 'usr-deleted', label: 'Eliminados', path: '/users/deleted' },
     ],
   },
+  { id: 'roles',     label: 'Roles',      path: '/roles',       icon: <Shield      className={ICON_CLASS} />, adminOnly: true },
+  { id: 'permisos',  label: 'Permisos',   path: '/permissions', icon: <KeyRound    className={ICON_CLASS} />, adminOnly: true },
+  { id: 'twofa',     label: '2FA',        path: '/two-factor',  icon: <ShieldCheck className={ICON_CLASS} /> },
+  { id: 'perfil',    label: 'Perfil',     path: '/profile',     icon: <UserCircle  className={ICON_CLASS} /> },
+];
+
+const SECTION_AUDITORIA: MenuItem[] = [
   {
-    id: 'users',
-    label: 'Usuarios',
-    icon: <Shield className="w-[18px] h-[18px]" />,
+    id: 'auditoria', label: 'Auditoría', icon: <FileSearch className={ICON_CLASS} />, adminOnly: true,
     children: [
-      { id: 'users-list',    label: 'Listado',     path: '/users' },
-      { id: 'users-create',  label: 'Crear',       path: '/users/create' },
-      { id: 'users-deleted', label: 'Eliminados',  path: '/users/deleted' },
-    ],
-  },
-  {
-    id: 'audits',
-    label: 'Auditoría',
-    icon: <FileText className="w-[18px] h-[18px]" />,
-    children: [
-      { id: 'audit-menu',      label: 'Menú',      path: '/audits' },
-      { id: 'audit-list',      label: 'Listado',   path: '/audits/list' },
-      { id: 'audit-dashboard', label: 'Dashboard', path: '/audits/dashboard' },
+      { id: 'aud-menu',      label: 'Menú',      path: '/audits' },
+      { id: 'aud-list',      label: 'Listado',   path: '/audits/list' },
+      { id: 'aud-dashboard', label: 'Dashboard', path: '/audits/dashboard' },
     ],
   },
 ];
 
-const ALL_SECTIONS = [
-  { label: null,            items: SECTION_GENERAL  },
-  { label: 'Clínica',      items: SECTION_CLINICAL },
-  { label: 'Administración', items: SECTION_ADMIN  },
+const ALL_SECTIONS: NavSection[] = [
+  { id: 'inicio',        label: null,              items: SECTION_INICIO,      adminOnly: false },
+  { id: 'operacion',     label: 'Operación diaria', items: SECTION_OPERACION,   adminOnly: false },
+  { id: 'clinica',       label: 'Atención clínica', items: SECTION_CLINICA,     adminOnly: false },
+  { id: 'historial',     label: 'Historial clínico', items: SECTION_HISTORIAL,  adminOnly: false },
+  { id: 'comunicacion',  label: 'Comunicación',     items: SECTION_COMUNICACION, adminOnly: false },
+  { id: 'seguridad',     label: 'Seguridad y acceso', items: SECTION_SEGURIDAD, adminOnly: false },
+  { id: 'auditoria',     label: 'Auditoría',        items: SECTION_AUDITORIA,   adminOnly: true  },
 ];
 
 /* ─── Helpers ─────────────────────────────────────────── */
 
-function findActiveGroupId(sections: typeof ALL_SECTIONS, pathname: string): string | null {
+function findActiveGroupId(sections: NavSection[], pathname: string): string | null {
   for (const section of sections) {
     for (const item of section.items) {
-      if (item.children?.some(c => c.path && (pathname === c.path || pathname.startsWith(c.path + '/')))) {
-        return item.id;
-      }
+      if (isItemActive(item, pathname)) return item.id;
     }
   }
   return null;
+}
+
+function isItemActive(item: MenuItem, pathname: string): boolean {
+  if (item.path && (pathname === item.path || pathname.startsWith(item.path + '/'))) return true;
+  return !!item.children?.some(c => c.path && (pathname === c.path || pathname.startsWith(c.path + '/')));
 }
 
 /* ─── Component ───────────────────────────────────────── */
@@ -143,7 +193,7 @@ export default function Sidebar() {
   const [hasPermissions, setHasPermissions] = useState<boolean | null>(null);
   const [openGroups, setOpenGroups]         = useState<Record<string, boolean>>({});
 
-  /* Check permissions once */
+  /* Check admin permissions once */
   useEffect(() => {
     Promise.all([PermissionUtils.canViewAllUsers(), PermissionUtils.isSuperAdmin()])
       .then(([canManage, isSuper]) => setHasPermissions(canManage || isSuper))
@@ -159,16 +209,22 @@ export default function Sidebar() {
   }, [location.pathname]);
 
   /* ── Filtered sections ────────────────────────────────── */
-  const visibleSections = (() => {
+  const visibleSections: NavSection[] = (() => {
     if (!isEnabled) {
-      // 2FA disabled → only Dashboard
-      return [{ label: null, items: SECTION_GENERAL.filter(i => i.id === 'dashboard') }];
+      // 2FA disabled → only Inicio (Dashboard)
+      return ALL_SECTIONS.filter(s => s.id === 'inicio');
     }
-    if (hasPermissions === false) {
-      // No admin perms → General only
-      return [{ label: null, items: SECTION_GENERAL }];
-    }
-    return ALL_SECTIONS;
+    const isAdmin = hasPermissions === true;
+    return ALL_SECTIONS
+      .map(section => {
+        if (section.adminOnly && !isAdmin) return null;
+        const items = section.items
+          .map(item => item.adminOnly && !isAdmin ? null : item)
+          .filter((i): i is MenuItem => i !== null);
+        if (items.length === 0) return null;
+        return { ...section, items };
+      })
+      .filter((s): s is NavSection => s !== null);
   })();
 
   /* ── Active checks ────────────────────────────────────── */
@@ -177,8 +233,7 @@ export default function Sidebar() {
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
-  const isGroupActive = (item: MenuItem) =>
-    !!item.children?.some(c => isActive(c.path));
+  const isGroupActive = (item: MenuItem) => isItemActive(item, location.pathname);
 
   /* ── Toggle group open/close ──────────────────────────── */
   const toggle = (id: string) =>
@@ -186,13 +241,12 @@ export default function Sidebar() {
 
   /* ─── Render ─────────────────────────────────────────── */
   return (
-    <aside className="sidebar-root" aria-label="Menú lateral de navegación">
+    <aside className="sidebar-root" aria-label="Menú lateral de navegación principal">
 
       {/* Scrollable nav */}
       <nav className="sidebar-nav">
-        {visibleSections.map((section, si) => (
-          <div key={si}>
-            {/* Section label */}
+        {visibleSections.map(section => (
+          <div key={section.id}>
             {section.label && (
               <div className="sidebar-section-label" aria-hidden="true">
                 {section.label}
@@ -221,6 +275,7 @@ export default function Sidebar() {
                         className={`sidebar-group-trigger${isGroupActive(item) ? ' sidebar-group-trigger--active' : ''}`}
                         onClick={() => toggle(item.id)}
                         aria-expanded={!!openGroups[item.id]}
+                        aria-controls={`sidebar-group-${item.id}`}
                       >
                         <span className="sidebar-item-icon" aria-hidden="true">{item.icon}</span>
                         <span className="sidebar-group-label">{item.label}</span>
@@ -231,6 +286,7 @@ export default function Sidebar() {
                       </button>
 
                       <ul
+                        id={`sidebar-group-${item.id}`}
                         className={`sidebar-children${openGroups[item.id] ? ' sidebar-children--open' : ''}`}
                         role="list"
                       >
@@ -255,18 +311,6 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Footer — Mi Perfil */}
-      <div className="sidebar-footer">
-        <button
-          className="sidebar-footer-btn"
-          onClick={() => navigate('/profile')}
-          aria-current={isActive('/profile') ? 'page' : undefined}
-        >
-          <UserCircle className="sidebar-item-icon w-[18px] h-[18px]" aria-hidden="true" />
-          Mi perfil
-        </button>
-      </div>
 
     </aside>
   );

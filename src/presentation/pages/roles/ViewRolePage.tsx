@@ -1,8 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import { roleFlow } from '../../../infrastructure/flows/role';
+import { permissionApiService } from '../../../services/permissionApiService';
+import type { PermissionApi, RolePermissionApi } from '../../../services/permissionApiService';
 import type { UserRole } from '../../../types/user';
+
+/* ─── Labels amigables (display-only) ─────────────────── */
+
+const ACTION_LABELS: Record<string, string> = {
+  view: 'Ver',
+  create: 'Crear',
+  edit: 'Editar',
+  delete: 'Eliminar',
+};
+
+const ACTION_ORDER = ['view', 'create', 'edit', 'delete'];
+
+const MODULE_LABELS: Record<string, string> = {
+  users: 'Usuarios',
+  roles: 'Roles',
+  permissions: 'Permisos',
+  audits: 'Auditoría',
+  programs: 'Programas',
+  'sub-programs': 'Subprogramas',
+  vaccines: 'Vacunas',
+  notifications: 'Notificaciones',
+  'virtualFiles': 'Residentes',
+  'entrance-exit': 'Entradas y Salidas',
+  nursing: 'Enfermería',
+  'older-adult-family': 'Familiares',
+  'older-adult-updates': 'Actualizaciones',
+  'emergency-contacts': 'Contactos de Emergencia',
+  'medical-records': 'Expedientes Médicos',
+  'clinical-medication': 'Medicamentos',
+  'clinical-history': 'Condiciones Clínicas',
+  'specialized-appointments': 'Citas Especializadas',
+  'specialized-areas': 'Áreas Especializadas',
+  'two-factor': '2FA',
+  dashboard: 'Dashboard',
+  profile: 'Perfil',
+};
+
+function moduleLabel(m: string): string {
+  return MODULE_LABELS[m] ?? m;
+}
+
+/* ─── Component ───────────────────────────────────────── */
 
 export default function ViewRolePage() {
     const { id } = useParams<{ id: string }>();
@@ -12,6 +56,11 @@ export default function ViewRolePage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
     const [deleting, setDeleting] = useState<boolean>(false);
+
+    const [catalog,      setCatalog]      = useState<PermissionApi[]>([]);
+    const [rolePerms,    setRolePerms]    = useState<RolePermissionApi[]>([]);
+    const [loadingPerms, setLoadingPerms] = useState<boolean>(true);
+    const [errorPerms,   setErrorPerms]   = useState<string>('');
 
     useEffect(() => {
         const loadRole = async () => {
@@ -43,6 +92,50 @@ export default function ViewRolePage() {
         loadRole();
     }, [id]);
 
+    /* Cargar catálogo y permisos del rol desde el backend */
+    useEffect(() => {
+        if (!id) return;
+        const roleId = Number(id);
+        setLoadingPerms(true);
+        setErrorPerms('');
+        Promise.all([
+            permissionApiService.getAll(),
+            permissionApiService.getByRole(roleId),
+        ])
+            .then(([cat, rp]) => {
+                setCatalog(cat);
+                setRolePerms(rp);
+            })
+            .catch(err => {
+                console.error('Error cargando permisos del rol:', err);
+                setErrorPerms('No se pudieron cargar los permisos del rol.');
+            })
+            .finally(() => setLoadingPerms(false));
+    }, [id]);
+
+    /* Agrupar permisos del catálogo por módulo + estado de otorgamiento del rol */
+    const groupedPermissions = useMemo(() => {
+        const grantedIds = new Set(rolePerms.filter(rp => rp.rpGranted).map(rp => rp.permissionId));
+        const byModule: Record<string, Array<{ action: string; granted: boolean; name: string }>> = {};
+        for (const perm of catalog) {
+            if (!perm.pEnabled) continue;
+            if (!byModule[perm.pModule]) byModule[perm.pModule] = [];
+            byModule[perm.pModule].push({
+                action: perm.pAction,
+                granted: grantedIds.has(perm.id),
+                name: perm.pName,
+            });
+        }
+        for (const mod of Object.keys(byModule)) {
+            byModule[mod].sort((a, b) => ACTION_ORDER.indexOf(a.action) - ACTION_ORDER.indexOf(b.action));
+        }
+        return byModule;
+    }, [catalog, rolePerms]);
+
+    const grantedCount  = rolePerms.filter(rp => rp.rpGranted).length;
+    const modulesCount  = Object.keys(groupedPermissions).length;
+    const totalInCatalog = catalog.filter(p => p.pEnabled).length;
+
     const handleEditRole = () => {
         navigate(`/roles/edit/${id}`);
     };
@@ -50,7 +143,6 @@ export default function ViewRolePage() {
     const handleDeleteRole = async () => {
         if (!role) return;
 
-        // Verificar si el rol puede ser eliminado
         if (role.rIsAdmin) {
             feedback.showNotification({
                 title: 'No se puede eliminar',
@@ -60,7 +152,6 @@ export default function ViewRolePage() {
             return;
         }
 
-        // Verificar si es un rol crítico del sistema (por nombre)
         const criticalRoles = ['Super Admin', 'Administrador', 'Admin'];
         if (criticalRoles.includes(role.rName)) {
             feedback.showNotification({
@@ -71,7 +162,6 @@ export default function ViewRolePage() {
             return;
         }
 
-        // Confirmar eliminación
         const confirmed = await feedback.confirm(
             '¿Eliminar Rol?',
             `¿Estás seguro de que deseas eliminar el rol "${role.rName}"? Esta acción no se puede deshacer.`
@@ -263,29 +353,71 @@ export default function ViewRolePage() {
                             </div>
                         </div>
 
+                        {/* Permisos del rol — conectado a GET /permissions y GET /permissions/role/:id */}
                         <div className="card shadow-sm border-0">
                             <div className="card-header bg-white border-bottom py-3">
                                 <h5 className="card-title mb-0 fw-semibold">
-                                    <i className="bi bi-info-circle me-2 text-warning"></i>
-                                    Estado de Implementación
+                                    <i className="bi bi-key me-2 text-primary"></i>
+                                    Permisos del Rol
                                 </h5>
                             </div>
                             <div className="card-body p-4">
-                                <div className="alert alert-warning border-0 bg-light">
-                                    <h6 className="alert-heading fw-semibold">
-                                        <i className="bi bi-tools me-2"></i>
-                                        Funcionalidad en Desarrollo
-                                    </h6>
-                                    <p className="mb-2">
-                                        Esta vista de detalles está preparada para mostrar información completa del rol,
-                                        incluyendo permisos asociados y estadísticas de uso.
-                                    </p>
-                                    <hr />
-                                    <p className="mb-0 small">
-                                        <strong>Próximas funcionalidades:</strong> Visualización de permisos,
-                                        estadísticas de usuarios con este rol, y opciones de gestión avanzada.
-                                    </p>
-                                </div>
+                                {loadingPerms && (
+                                    <div className="text-center py-4">
+                                        <div className="spinner-border text-primary" role="status">
+                                            <span className="visually-hidden">Cargando permisos...</span>
+                                        </div>
+                                        <p className="text-muted small mt-2 mb-0">Cargando permisos del rol…</p>
+                                    </div>
+                                )}
+
+                                {!loadingPerms && errorPerms && (
+                                    <div className="alert alert-danger mb-0" role="alert">
+                                        <i className="bi bi-exclamation-triangle me-2"></i>
+                                        {errorPerms}
+                                    </div>
+                                )}
+
+                                {!loadingPerms && !errorPerms && Object.keys(groupedPermissions).length === 0 && (
+                                    <p className="text-muted text-center mb-0">No hay permisos activos definidos en el sistema.</p>
+                                )}
+
+                                {!loadingPerms && !errorPerms && Object.keys(groupedPermissions).length > 0 && (
+                                    <div className="row g-3">
+                                        {Object.entries(groupedPermissions).map(([module, actions]) => {
+                                            const grantedInModule = actions.filter(a => a.granted).length;
+                                            return (
+                                                <div key={module} className="col-md-6">
+                                                    <div className="border rounded p-3 h-100 bg-white">
+                                                        <div className="d-flex align-items-center justify-content-between mb-3">
+                                                            <h6 className="fw-semibold mb-0 text-capitalize">{moduleLabel(module)}</h6>
+                                                            <span className={`badge ${grantedInModule === actions.length ? 'bg-success' : grantedInModule > 0 ? 'bg-warning text-dark' : 'bg-light text-secondary border'}`}>
+                                                                {grantedInModule}/{actions.length}
+                                                            </span>
+                                                        </div>
+                                                        <ul className="list-unstyled mb-0 d-flex flex-column gap-2">
+                                                            {actions.map(a => (
+                                                                <li
+                                                                    key={a.action}
+                                                                    className={`d-flex align-items-center gap-2 small ${a.granted ? 'text-body' : 'text-muted'}`}
+                                                                    title={a.name}
+                                                                >
+                                                                    <i
+                                                                        className={`bi ${a.granted ? 'bi-check-circle-fill text-success' : 'bi-x-circle text-muted'}`}
+                                                                        aria-hidden="true"
+                                                                    ></i>
+                                                                    <span className={a.granted ? 'fw-semibold' : 'text-decoration-line-through'}>
+                                                                        {ACTION_LABELS[a.action] ?? a.action}
+                                                                    </span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -324,13 +456,6 @@ export default function ViewRolePage() {
                                         <i className="bi bi-people me-2"></i>
                                         Ver Usuarios
                                     </button>
-                                    <button
-                                        className="btn btn-outline-warning btn-sm"
-                                        onClick={() => feedback.info('Funcionalidad próximamente disponible', 'La gestión de permisos estará disponible en futuras versiones.')}
-                                    >
-                                        <i className="bi bi-key me-2"></i>
-                                        Gestionar Permisos
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -344,15 +469,15 @@ export default function ViewRolePage() {
                             </div>
                             <div className="card-body p-3 text-center">
                                 <div className="mb-3">
-                                    <div className="display-6 fw-bold text-success">--</div>
-                                    <small className="text-muted">Usuarios activos</small>
+                                    <div className="display-6 fw-bold text-success">{grantedCount}</div>
+                                    <small className="text-muted">Permisos otorgados</small>
                                 </div>
                                 <div className="mb-3">
-                                    <div className="display-6 fw-bold text-info">--</div>
-                                    <small className="text-muted">Permisos asignados</small>
+                                    <div className="display-6 fw-bold text-info">{modulesCount}</div>
+                                    <small className="text-muted">Módulos cubiertos</small>
                                 </div>
                                 <small className="text-muted d-block">
-                                    Estadísticas disponibles próximamente
+                                    {totalInCatalog} permisos activos en el sistema
                                 </small>
                             </div>
                         </div>

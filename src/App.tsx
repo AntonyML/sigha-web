@@ -105,6 +105,9 @@ import ViewSocialWorkReportPage from './presentation/pages/social-work/ViewSocia
 
 //Notifications
 import NotificationsListPage from './presentation/pages/notifications/NotificationsListPage'
+
+//Role Changes
+import RoleChangesListPage from './presentation/pages/role-changes/RoleChangesListPage'
 import CreateNotificationPage from './presentation/pages/notifications/CreateNotificationPage'
 import ViewNotificationPage from './presentation/pages/notifications/ViewNotificationPage'
 
@@ -235,6 +238,7 @@ export default function App() {
               <Route path="social-work/edit/:id" element={<EditSocialWorkReportPage />} />
 
               <Route path="notifications" element={<NotificationsListPage />} />
+              <Route path="role-changes" element={<RoleChangesListPage />} />
               <Route path="notifications/create" element={<CreateNotificationPage />} />
               <Route path="notifications/view/:id" element={<ViewNotificationPage />} />
 
