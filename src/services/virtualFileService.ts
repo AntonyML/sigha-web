@@ -10,7 +10,7 @@ import type {
   PatientBasicInfo,
   SearchPatientsResponse
 } from '../types/virtualFile';
-import { transformVirtualFileToApiPayload } from '../types/virtualFile';
+import { transformVirtualFileToApiPayload, mapApiToVirtualFile } from '../types/virtualFile';
 import { config } from '../config/app.config';
 
 const apiClient = axios.create({
@@ -32,14 +32,14 @@ apiClient.interceptors.request.use((config) => {
 export const virtualFileService = {
 
   getAllVirtualFiles: async (): Promise<VirtualFile[]> => {
-    const response = await apiClient.get<VirtualFileApiResponse>('/virtual-files');
-    return response.data.data;
+    const response = await apiClient.get<{ message: string; data: any[] }>('/virtual-records/all');
+    return (response.data.data ?? []).map(mapApiToVirtualFile);
   },
 
 
   getVirtualFileById: async (id: number): Promise<VirtualFile> => {
-    const response = await apiClient.get<VirtualFile>(`/virtual-files/${id}`);
-    return response.data;
+    const response = await apiClient.get<{ message: string; data: any }>(`/virtual-records/${id}`);
+    return mapApiToVirtualFile(response.data.data);
   },
 
 
@@ -115,12 +115,12 @@ export const virtualFileService = {
     
     console.log('📤 Payload de actualización enviado al API:', JSON.stringify(apiPayload, null, 2));
     
-    const response = await apiClient.put<VirtualFile>(`/virtual-files/${id}`, apiPayload);
-    return response.data;
+    const response = await apiClient.put<{ message: string; data: any }>(`/virtual-records/${id}`, apiPayload);
+    return mapApiToVirtualFile(response.data.data);
   },
 
   deleteVirtualFile: async (id: number): Promise<void> => {
-    await apiClient.delete(`/virtual-files/${id}`);
+    await apiClient.delete(`/virtual-records/${id}`);
   },
 
   searchVirtualFiles: async (params: VirtualFileSearchParams): Promise<VirtualFileApiResponse> => {

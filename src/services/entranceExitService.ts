@@ -26,8 +26,21 @@ apiClient.interceptors.request.use((config) => {
 
 export const entranceExitService = {
   getAllEntranceExits: async (): Promise<EntranceExitResponse[]> => {
-    const response = await apiClient.get<EntranceExitListResponse>('/entrances-exits');
-    return response.data.data;
+    // No generic "get all" endpoint exists on the backend (the controller only
+    // exposes /open-entrances, /open-exits and /closed-records). Aggregate
+    // those three existing endpoints instead of calling the non-existent
+    // root GET /entrances-exits (which returns 404).
+    const [openEntrances, openExits, closedRecords] = await Promise.all([
+      apiClient.get<EntranceExitResponse[]>('/entrances-exits/open-entrances'),
+      apiClient.get<EntranceExitResponse[]>('/entrances-exits/open-exits'),
+      apiClient.get<EntranceExitResponse[]>('/entrances-exits/closed-records'),
+    ]);
+
+    return [
+      ...(Array.isArray(openEntrances.data) ? openEntrances.data : []),
+      ...(Array.isArray(openExits.data) ? openExits.data : []),
+      ...(Array.isArray(closedRecords.data) ? closedRecords.data : []),
+    ];
   },
 
   getEntranceExitById: async (id: number): Promise<EntranceExitResponse> => {

@@ -50,8 +50,8 @@ export const physiotherapyService = {
   getSessions(appointmentId?: number): Promise<PhysiotherapySessionApi[]> {
     const params = appointmentId !== undefined ? { appointmentId } : undefined;
     return httpClient
-      .get<PhysiotherapySessionApi[]>('/physiotherapy/sessions', { params })
-      .then((r) => r.data ?? []);
+      .get<{ message: string; data: PhysiotherapySessionApi[] }>('/physiotherapy/sessions', { params })
+      .then((r) => r.data?.data ?? []);
   },
 
   getSessionById(id: number): Promise<PhysiotherapySessionApi> {

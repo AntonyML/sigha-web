@@ -73,8 +73,8 @@ export const medicalRecordService = {
   getMedicalRecords(olderAdultId?: number): Promise<MedicalRecord[]> {
     const params = olderAdultId !== undefined ? { olderAdultId } : undefined;
     return httpClient
-      .get<MedicalRecord[]>('/medical-records', { params })
-      .then((r) => r.data ?? []);
+      .get<{ message: string; data: MedicalRecord[] }>('/medical-records', { params })
+      .then((r) => r.data?.data ?? []);
   },
 
   getMedicalRecordById(id: number): Promise<MedicalRecord> {

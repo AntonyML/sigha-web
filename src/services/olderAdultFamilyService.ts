@@ -60,26 +60,26 @@ export interface UpdateOlderAdultFamilyDto {
 export const olderAdultFamilyService = {
   getAll(): Promise<OlderAdultFamilyApi[]> {
     return httpClient
-      .get<OlderAdultFamilyApi[]>('/older-adult-family')
-      .then((r) => r.data ?? []);
+      .get<{ message: string; data: OlderAdultFamilyApi[] }>('/older-adult-family')
+      .then((r) => r.data?.data ?? []);
   },
 
   getById(id: number): Promise<OlderAdultFamilyApi> {
     return httpClient
-      .get<OlderAdultFamilyApi>(`/older-adult-family/${id}`)
-      .then((r) => r.data);
+      .get<{ message: string; data: OlderAdultFamilyApi }>(`/older-adult-family/${id}`)
+      .then((r) => r.data.data);
   },
 
   create(payload: CreateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
     return httpClient
-      .post<OlderAdultFamilyApi>('/older-adult-family', payload)
-      .then((r) => r.data);
+      .post<{ message: string; data: OlderAdultFamilyApi }>('/older-adult-family', payload)
+      .then((r) => r.data.data);
   },
 
   update(id: number, payload: UpdateOlderAdultFamilyDto): Promise<OlderAdultFamilyApi> {
     return httpClient
-      .patch<OlderAdultFamilyApi>(`/older-adult-family/${id}`, payload)
-      .then((r) => r.data);
+      .patch<{ message: string; data: OlderAdultFamilyApi }>(`/older-adult-family/${id}`, payload)
+      .then((r) => r.data.data);
   },
 
   remove(id: number): Promise<void> {

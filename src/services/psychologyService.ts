@@ -55,8 +55,8 @@ export const psychologyService = {
   getSessions(appointmentId?: number): Promise<PsychologySessionApi[]> {
     const params = appointmentId !== undefined ? { appointmentId } : undefined;
     return httpClient
-      .get<PsychologySessionApi[]>('/psychology/sessions', { params })
-      .then((r) => r.data ?? []);
+      .get<{ message: string; data: PsychologySessionApi[] }>('/psychology/sessions', { params })
+      .then((r) => r.data?.data ?? []);
   },
 
   getSessionById(id: number): Promise<PsychologySessionApi> {

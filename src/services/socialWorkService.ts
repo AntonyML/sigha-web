@@ -54,8 +54,8 @@ export const socialWorkService = {
   getReports(patientId?: number): Promise<SocialWorkReportApi[]> {
     const params = patientId !== undefined ? { patientId } : undefined;
     return httpClient
-      .get<SocialWorkReportApi[]>('/social-work/reports', { params })
-      .then((r) => r.data ?? []);
+      .get<{ message: string; data: SocialWorkReportApi[] }>('/social-work/reports', { params })
+      .then((r) => r.data?.data ?? []);
   },
 
   getReportById(id: number): Promise<SocialWorkReportApi> {
