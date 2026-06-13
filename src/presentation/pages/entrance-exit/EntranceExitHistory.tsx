@@ -95,7 +95,7 @@ export default function EntranceExitHistory() {
       {/* Header */}
       <div className="no-print" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <button type="button" onClick={() => navigate('/main-menu')}
+          <button type="button" onClick={() => navigate('/dashboard')}
             style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.375rem 0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#64748b', fontSize: '0.8125rem' }}>
             <ChevronLeft size={15} /> Menú
           </button>

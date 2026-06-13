@@ -85,7 +85,7 @@ export default function AuditMenuPage() {
     };
 
     const handleBack = () => {
-        navigate('/main-menu');
+        navigate('/dashboard');
     };
 
     return (

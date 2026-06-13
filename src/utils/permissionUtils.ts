@@ -6,8 +6,6 @@ import type { UserRole } from '../types/user';
 
 const PUBLIC_MODULES = new Set<string>([
   'profile',
-  'main',
-  'main-menu',
   'twoFactor',
   'two-factor',
   'dashboard',
@@ -172,7 +170,7 @@ class PermissionUtilsImpl {
   }
 
   // ──────────────────── Alias de compatibilidad ────────────────────
-  // Mantienen la API que ya consumen los componentes (Navbar, Sidebar, MainMenu).
+  // Mantienen la API que ya consumen los componentes (Navbar, Sidebar, Dashboard).
   // Son síncronos y delegan al caché o al nombre del rol.
 
   canViewAllUsers(): boolean {

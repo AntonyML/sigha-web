@@ -53,8 +53,8 @@ export default function TwoFactorVerificationPage() {
       }
 
       if (result.user) {
-        console.log('Usuario verificado, navegando al menú:', result.user)
-        navigate('/main-menu')
+        console.log('Usuario verificado, navegando al dashboard:', result.user)
+        navigate('/dashboard')
       } else {
         console.log('Verificación exitosa pero sin usuario')
         setError('Verificación exitosa pero no se recibió información del usuario')

@@ -54,8 +54,8 @@ export default function LoginPage() {
 
       if (result.user) {
         console.log('Login exitoso, usuario:', result.user)
-        console.log('Navegando a /main-menu')
-        navigate('/main-menu')
+        console.log('Navegando a /dashboard')
+        navigate('/dashboard')
       } else {
         console.log('Login exitoso pero sin usuario en respuesta')
         setError('Login exitoso pero no se recibió información del usuario')

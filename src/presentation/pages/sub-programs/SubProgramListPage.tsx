@@ -74,7 +74,7 @@ export default function SubProgramListPage() {
           Gestión de Subprogramas
         </h2>
         <div className="lp-actions">
-          <button className="lp-btn lp-btn--back" onClick={() => navigate('/main-menu')}>
+          <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={16} /> Menú Principal
           </button>
           <button className="lp-btn lp-btn--primary" onClick={() => navigate('/sub-programs/create')}>

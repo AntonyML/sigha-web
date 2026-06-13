@@ -103,7 +103,7 @@ export default function UserListPage() {
           <strong>Error</strong>
           <p style={{ margin: 0 }}>{error}</p>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="lp-btn lp-btn--back" onClick={() => navigate('/main-menu')}>Volver al menú</button>
+            <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>Volver al inicio</button>
             <button className="lp-btn lp-btn--primary" onClick={loadUsersAndPermissions}>Reintentar</button>
           </div>
         </div>

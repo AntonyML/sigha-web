@@ -15,7 +15,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home,
   Users,
   Calendar,
   FileText,
@@ -43,12 +42,6 @@ interface MenuItem {
 /* ─── Menu definition ─────────────────────────────────── */
 
 const SECTION_GENERAL: MenuItem[] = [
-  {
-    id: 'main',
-    label: 'Principal',
-    path: '/main-menu',
-    icon: <Home className="w-[18px] h-[18px]" />,
-  },
   {
     id: 'dashboard',
     label: 'Dashboard',
@@ -168,8 +161,8 @@ export default function Sidebar() {
   /* ── Filtered sections ────────────────────────────────── */
   const visibleSections = (() => {
     if (!isEnabled) {
-      // 2FA disabled → only Principal
-      return [{ label: null, items: SECTION_GENERAL.filter(i => i.id === 'main') }];
+      // 2FA disabled → only Dashboard
+      return [{ label: null, items: SECTION_GENERAL.filter(i => i.id === 'dashboard') }];
     }
     if (hasPermissions === false) {
       // No admin perms → General only

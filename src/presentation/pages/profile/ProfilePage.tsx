@@ -64,7 +64,7 @@ export default function ProfilePage() {
                                     <h4 className="mb-3">Error al cargar perfil</h4>
                                     <p className="text-muted mb-4">{error || 'No se pudo cargar la información del perfil'}</p>
                                     <div className="d-flex gap-2 justify-content-center">
-                                        <button className="btn btn-secondary" onClick={() => navigate('/main-menu')}>
+                                        <button className="btn btn-secondary" onClick={() => navigate('/dashboard')}>
                                             Volver al inicio
                                         </button>
                                         <button className="btn btn-primary" onClick={() => window.location.reload()}>
@@ -100,7 +100,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div className="d-flex gap-2">
-                                <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/main-menu')}>
+                                <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/dashboard')}>
                                     <i className="bi bi-arrow-left"></i>
                                     Volver
                                 </button>

@@ -192,7 +192,7 @@ export default function TwoFactorPage() {
                 icon="bi-shield-lock"
                 backButton={{
                     text: "Regresar",
-                    onClick: () => navigate('/main-menu'),
+                    onClick: () => navigate('/dashboard'),
                     disabled: processing,
                     icon: "arrow_back"
                 }}

@@ -10,7 +10,7 @@ interface MobileNavItem {
 }
 
 const NAV_ITEMS: MobileNavItem[] = [
-  { id: 'home',         label: 'Inicio',         icon: <Home    className="mobile-nav-icon" />, path: '/main-menu'    },
+  { id: 'home',         label: 'Inicio',         icon: <Home    className="mobile-nav-icon" />, path: '/dashboard'    },
   { id: 'residents',    label: 'Residentes',      icon: <Users   className="mobile-nav-icon" />, path: '/virtualFiles' },
   { id: 'activities',   label: 'Actividades',     icon: <Calendar className="mobile-nav-icon" />, path: '/programs'  },
   { id: 'profile',      label: 'Perfil',          icon: <User    className="mobile-nav-icon" />, path: '/profile'     },

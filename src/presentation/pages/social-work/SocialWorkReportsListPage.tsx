@@ -87,7 +87,7 @@ export default function SocialWorkReportsListPage() {
           Reportes de Trabajo Social
         </h2>
         <div className="lp-actions">
-          <button className="lp-btn lp-btn--back" onClick={() => navigate('/main-menu')}>
+          <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={16} /> Regresar
           </button>
           <button className="lp-btn lp-btn--info" onClick={() => navigate('/social-work/create')}>

@@ -11,8 +11,6 @@ import PasswordRecoveryResetPage from './presentation/pages/login/PasswordRecove
 import TwoFactorVerificationPage from './presentation/pages/login/TwoFactorVerificationPage'
 import CreateUserPage from './presentation/pages/login/CreateUserPage'
 
-import MainMenuPage from './presentation/pages/main-menu/MainMenuPage'
-
 //Older Adults
 import Dashboard from './presentation/pages/dashboard/DashboardPage'
 import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPage'
@@ -160,8 +158,6 @@ export default function App() {
         <Route path="/*" element={
           <AppLayout>
             <Routes>
-              <Route path="main-menu" element={<MainMenuPage />} />
-
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="virtualFiles" element={<ListVirtualFile />} />
               <Route path="virtualFiles/create" element={<CreateVirtualFile />} />

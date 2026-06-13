@@ -32,7 +32,7 @@ export default function OlderAdultUpdatesListPage() {
     <div className="container-fluid py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0"><i className="bi bi-clock-history me-2 text-secondary"></i>Historial de Cambios de Adultos Mayores</h2>
-        <button className="btn btn-outline-secondary" onClick={() => navigate('/main-menu')}><i className="bi bi-arrow-left me-2"></i>Regresar</button>
+        <button className="btn btn-outline-secondary" onClick={() => navigate('/dashboard')}><i className="bi bi-arrow-left me-2"></i>Regresar</button>
       </div>
 
       <div className="card shadow-sm mb-4">

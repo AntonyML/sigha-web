@@ -9,7 +9,6 @@ interface BreadcrumbItem {
 
 // Mapeo de rutas a nombres legibles
 const routeNameMap: Record<string, string> = {
-  'main-menu': 'Inicio',
   'virtualFiles': 'Adultos Mayores',
   'create': 'Crear',
   'edit': 'Editar',
@@ -75,7 +74,7 @@ export default function Breadcrumbs() {
     // Siempre agregar Home al inicio
     items.push({
       label: 'Inicio',
-      path: '/main-menu',
+      path: '/dashboard',
     });
 
     let currentPath = '';
