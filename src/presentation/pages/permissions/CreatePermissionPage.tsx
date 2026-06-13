@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { permissionEntityFlow } from '../../../infrastructure/flows/permission';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
-import type { CreatePermissionData } from '../../../types/permissionEntity';
 
-// Opciones disponibles para módulos y acciones
 const MODULE_OPTIONS = [
     { value: 'users', label: 'Usuarios' },
     { value: 'roles', label: 'Roles' },
@@ -25,22 +23,30 @@ const ACTION_OPTIONS = [
     { value: 'delete', label: 'Eliminar' }
 ];
 
-const defaultPermissionFormData: CreatePermissionData = {
-    name: '',
-    description: '',
-    module: '',
-    action: '',
-    enabled: true
+interface PermissionFormData {
+    pName: string;
+    pDescription: string;
+    pModule: string;
+    pAction: string;
+    pEnabled: boolean;
+}
+
+const defaultFormData: PermissionFormData = {
+    pName: '',
+    pDescription: '',
+    pModule: '',
+    pAction: '',
+    pEnabled: true
 };
 
 export default function CreatePermissionPage() {
-    const [formData, setFormData] = useState<CreatePermissionData>(defaultPermissionFormData);
+    const [formData, setFormData] = useState<PermissionFormData>(defaultFormData);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
 
-    function onInputChange(field: keyof CreatePermissionData, value: string | boolean) {
+    function onInputChange(field: keyof PermissionFormData, value: string | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
     }
 
@@ -48,50 +54,33 @@ export default function CreatePermissionPage() {
         e.preventDefault();
         setError('');
 
-        if (!formData.name.trim()) {
-            setError('Por favor ingresa el nombre del permiso');
-            return;
-        }
-
-        if (!formData.description.trim()) {
-            setError('Por favor ingresa la descripción del permiso');
-            return;
-        }
-
-        if (!formData.module.trim()) {
-            setError('Por favor ingresa el módulo del permiso');
-            return;
-        }
-
-        if (!formData.action.trim()) {
-            setError('Por favor ingresa la acción del permiso');
-            return;
-        }
-
-        if (formData.name.trim().length < 3) {
-            setError('El nombre del permiso debe tener al menos 3 caracteres');
-            return;
-        }
+        if (!formData.pName.trim()) { setError('Por favor ingresa el nombre del permiso'); return; }
+        if (!formData.pDescription.trim()) { setError('Por favor ingresa la descripción del permiso'); return; }
+        if (!formData.pModule.trim()) { setError('Por favor ingresa el módulo del permiso'); return; }
+        if (!formData.pAction.trim()) { setError('Por favor ingresa la acción del permiso'); return; }
+        if (formData.pName.trim().length < 3) { setError('El nombre del permiso debe tener al menos 3 caracteres'); return; }
 
         setLoading(true);
 
         try {
-            const result = await permissionEntityFlow.createPermission(formData);
+            const created = await permissionApiService.create({
+                pName: formData.pName.trim(),
+                pDescription: formData.pDescription.trim(),
+                pModule: formData.pModule,
+                pAction: formData.pAction,
+                pEnabled: formData.pEnabled,
+            });
 
-            if (result.success && result.permission) {
-                feedback.success('Permiso creado exitosamente');
-                feedback.showNotification({
-                    title: 'Permiso creado',
-                    message: `El permiso "${result.permission.name}" ha sido creado exitosamente.`,
-                    variant: 'success'
-                });
-                navigate('/permissions');
-            } else {
-                setError(result.error || 'Error al crear permiso');
-            }
-        } catch (err) {
+            feedback.success('Permiso creado exitosamente');
+            feedback.showNotification({
+                title: 'Permiso creado',
+                message: `El permiso "${created.pName}" ha sido creado exitosamente.`,
+                variant: 'success'
+            });
+            navigate('/permissions');
+        } catch (err: any) {
             console.error('Error creando permiso:', err);
-            setError('Error inesperado al crear permiso');
+            setError(err?.response?.data?.message || err?.message || 'Error al crear permiso en el servidor');
         } finally {
             setLoading(false);
         }
@@ -143,115 +132,52 @@ export default function CreatePermissionPage() {
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="name" className="form-label fw-semibold">
+                                            <label htmlFor="pName" className="form-label fw-semibold">
                                                 Nombre del Permiso <span className="text-danger">*</span>
                                             </label>
-                                            <input
-                                                id="name"
-                                                type="text"
-                                                className="form-control form-control-lg"
-                                                value={formData.name}
-                                                onChange={(e) => onInputChange('name', e.target.value)}
-                                                placeholder="Ej: Ver Usuarios, Crear Roles"
-                                                required
-                                                disabled={loading}
-                                                minLength={3}
-                                                maxLength={100}
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Nombre descriptivo del permiso (mínimo 3 caracteres)
-                                            </small>
+                                            <input id="pName" type="text" className="form-control form-control-lg"
+                                                value={formData.pName} onChange={e => onInputChange('pName', e.target.value)}
+                                                placeholder="Ej: Ver Usuarios, Crear Roles" required disabled={loading} minLength={3} maxLength={100} />
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="module" className="form-label fw-semibold">
+                                            <label htmlFor="pModule" className="form-label fw-semibold">
                                                 Módulo <span className="text-danger">*</span>
                                             </label>
-                                            <select
-                                                id="module"
-                                                className="form-select form-select-lg"
-                                                value={formData.module}
-                                                onChange={(e) => onInputChange('module', e.target.value)}
-                                                required
-                                                disabled={loading}
-                                            >
+                                            <select id="pModule" className="form-select form-select-lg"
+                                                value={formData.pModule} onChange={e => onInputChange('pModule', e.target.value)}
+                                                required disabled={loading}>
                                                 <option value="">Selecciona un módulo</option>
-                                                {MODULE_OPTIONS.map((option) => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label}
-                                                    </option>
-                                                ))}
+                                                {MODULE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                             </select>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Módulo del sistema al que pertenece el permiso
-                                            </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="action" className="form-label fw-semibold">
+                                            <label htmlFor="pAction" className="form-label fw-semibold">
                                                 Acción <span className="text-danger">*</span>
                                             </label>
-                                            <select
-                                                id="action"
-                                                className="form-select form-select-lg"
-                                                value={formData.action}
-                                                onChange={(e) => onInputChange('action', e.target.value)}
-                                                required
-                                                disabled={loading}
-                                            >
+                                            <select id="pAction" className="form-select form-select-lg"
+                                                value={formData.pAction} onChange={e => onInputChange('pAction', e.target.value)}
+                                                required disabled={loading}>
                                                 <option value="">Selecciona una acción</option>
-                                                {ACTION_OPTIONS.map((option) => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label}
-                                                    </option>
-                                                ))}
+                                                {ACTION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                             </select>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Acción que permite el permiso
-                                            </small>
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="enabled" className="form-label fw-semibold">
-                                                Estado
-                                            </label>
+                                            <label htmlFor="pEnabled" className="form-label fw-semibold">Estado</label>
                                             <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                    id="enabled"
-                                                    checked={formData.enabled}
-                                                    onChange={(e) => onInputChange('enabled', e.target.checked)}
-                                                    disabled={loading}
-                                                />
-                                                <label className="form-check-label" htmlFor="enabled">
-                                                    {formData.enabled ? 'Habilitado' : 'Deshabilitado'}
+                                                <input className="form-check-input" type="checkbox" id="pEnabled"
+                                                    checked={formData.pEnabled} onChange={e => onInputChange('pEnabled', e.target.checked)} disabled={loading} />
+                                                <label className="form-check-label" htmlFor="pEnabled">
+                                                    {formData.pEnabled ? 'Habilitado' : 'Deshabilitado'}
                                                 </label>
                                             </div>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Indica si el permiso está activo en el sistema
-                                            </small>
                                         </div>
                                         <div className="col-12">
-                                            <label htmlFor="description" className="form-label fw-semibold">
+                                            <label htmlFor="pDescription" className="form-label fw-semibold">
                                                 Descripción <span className="text-danger">*</span>
                                             </label>
-                                            <textarea
-                                                id="description"
-                                                className="form-control form-control-lg"
-                                                value={formData.description}
-                                                onChange={(e) => onInputChange('description', e.target.value)}
-                                                placeholder="Describe qué permite este permiso..."
-                                                required
-                                                disabled={loading}
-                                                rows={3}
-                                                maxLength={255}
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Descripción detallada del permiso y su propósito
-                                            </small>
+                                            <textarea id="pDescription" className="form-control form-control-lg"
+                                                value={formData.pDescription} onChange={e => onInputChange('pDescription', e.target.value)}
+                                                placeholder="Describe qué permite este permiso..." required disabled={loading} rows={3} maxLength={255} />
                                         </div>
                                     </div>
                                 </div>
@@ -260,31 +186,13 @@ export default function CreatePermissionPage() {
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-4">
                                     <div className="d-flex flex-column flex-sm-row gap-3">
-                                        <button
-                                            type="submit"
-                                            className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            disabled={loading}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    Creando permiso...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="bi bi-check-circle"></i>
-                                                    Crear Permiso
-                                                </>
-                                            )}
+                                        <button type="submit" className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" disabled={loading}>
+                                            {loading
+                                                ? <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando permiso...</>
+                                                : <><i className="bi bi-check-circle"></i> Crear Permiso</>}
                                         </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            onClick={() => navigate('/permissions')}
-                                            disabled={loading}
-                                        >
-                                            <i className="bi bi-x-circle"></i>
-                                            Cancelar
+                                        <button type="button" className="btn btn-outline-secondary btn-lg px-4" onClick={() => navigate('/permissions')} disabled={loading}>
+                                            <i className="bi bi-x-circle me-2"></i>Cancelar
                                         </button>
                                     </div>
                                 </div>

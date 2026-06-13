@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { roleFlow } from '../../../infrastructure/flows/role';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { PermissionUtils } from '../../../utils/permissionUtils';
-import { permissionService } from '../../../services/permissionService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { CreateRoleData } from '../../../types/user';
-import type { Permission, PermissionModuleType, PermissionActionType } from '../../../types/permissions';
-import { PermissionModule } from '../../../types/permissions';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 
@@ -23,80 +21,86 @@ export default function CreateRolePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-    const [permissions, setPermissions] = useState<Permission[]>([]);
+
+    const [catalog, setCatalog] = useState<Awaited<ReturnType<typeof permissionApiService.getAll>>>([]);
+    const [grantedIds, setGrantedIds] = useState<Set<number>>(new Set());
     const [permissionsLoading, setPermissionsLoading] = useState(false);
+
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
 
-    // Verificar permisos y cargar permisos por defecto al montar el componente
     useEffect(() => {
-        const checkPermissionsAndLoadPermissions = async () => {
+        const checkAndLoad = async () => {
             try {
-                // Verificar permisos
                 const canManage = await PermissionUtils.canManageRoles();
                 setHasPermission(canManage);
+                if (!canManage) return;
 
-                if (!canManage) {
-                    return;
-                }
-
-                // Cargar permisos por defecto
                 setPermissionsLoading(true);
-                const defaultPermissions = permissionService.getDefaultPermissions();
-                setPermissions(defaultPermissions);
-                setPermissionsLoading(false);
+                const cat = await permissionApiService.getAll();
+                setCatalog(cat);
+                setGrantedIds(new Set()); // no permissions granted initially
             } catch (err) {
-                console.error('Error verificando permisos:', err);
+                console.error('Error verificando permisos o cargando catálogo:', err);
+            } finally {
                 setPermissionsLoading(false);
             }
         };
-
-        checkPermissionsAndLoadPermissions();
+        checkAndLoad();
     }, []);
 
+    const groupedByModule = useMemo(() => {
+        const byModule: Record<string, typeof catalog> = {};
+        for (const p of catalog) {
+            if (!byModule[p.pModule]) byModule[p.pModule] = [];
+            byModule[p.pModule].push(p);
+        }
+        for (const m of Object.keys(byModule)) {
+            byModule[m].sort((a, b) => a.pAction.localeCompare(b.pAction));
+        }
+        return byModule;
+    }, [catalog]);
+
     function onInputChange(field: keyof CreateRoleData, value: string | boolean) {
-        setFormData((prev) => ({ ...prev, [field]: value }));
+        setFormData(prev => ({ ...prev, [field]: value }));
     }
 
-    function handlePermissionChange(module: PermissionModuleType, action: PermissionActionType, enabled: boolean) {
-        setPermissions(prev => prev.map(permission =>
-            permission.module === module && permission.action === action
-                ? { ...permission, enabled }
-                : permission
-        ));
+    function togglePermission(permId: number, checked: boolean) {
+        setGrantedIds(prev => {
+            const next = new Set(prev);
+            if (checked) next.add(permId); else next.delete(permId);
+            return next;
+        });
+    }
+
+    function toggleModuleAll(module: string, checked: boolean) {
+        setGrantedIds(prev => {
+            const next = new Set(prev);
+            for (const p of catalog) {
+                if (p.pModule !== module) continue;
+                if (checked) next.add(p.id); else next.delete(p.id);
+            }
+            return next;
+        });
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError('');
 
-        // Verificar permisos antes de procesar
-        if (hasPermission === false) {
-            setError('No tienes permisos para crear roles.');
-            return;
-        }
-
-        if (!formData.rName.trim()) {
-            setError('Por favor ingresa el nombre del rol');
-            return;
-        }
-
-        if (formData.rName.trim().length < 3) {
-            setError('El nombre del rol debe tener al menos 3 caracteres');
-            return;
-        }
+        if (hasPermission === false) { setError('No tienes permisos para crear roles.'); return; }
+        if (!formData.rName.trim()) { setError('Por favor ingresa el nombre del rol'); return; }
+        if (formData.rName.trim().length < 3) { setError('El nombre del rol debe tener al menos 3 caracteres'); return; }
 
         setLoading(true);
-
         try {
             const result = await roleFlow.createRole(formData);
-
             if (result.success && result.role) {
-                // Guardar permisos del rol
+                // Persistir permisos del nuevo rol en el backend
                 try {
-                    await permissionService.updateRolePermissions(result.role.id, permissions);
+                    await permissionApiService.setRolePermissions(result.role.id, Array.from(grantedIds));
                 } catch (permError) {
-                    console.error('Error guardando permisos:', permError);
+                    console.error('Error guardando permisos del rol:', permError);
                     feedback.error('Rol creado pero error al guardar permisos');
                 }
 
@@ -110,12 +114,28 @@ export default function CreateRolePage() {
             } else {
                 setError(result.error || 'Error al crear rol');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error creando rol:', err);
-            setError('Error inesperado al crear rol');
+            setError(err?.response?.data?.message || 'Error inesperado al crear el rol');
         } finally {
             setLoading(false);
         }
+    }
+
+    if (hasPermission === false) {
+        return (
+            <div className="min-vh-100 bg-light">
+                <div className="container-fluid py-4">
+                    <div className="row justify-content-center">
+                        <div className="col-12 col-md-8 col-lg-6">
+                            <AlertMessage type="warning" title="Sin permisos">
+                                No tienes permisos para crear roles. Solo los administradores del sistema pueden crear nuevos roles.
+                            </AlertMessage>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -126,14 +146,10 @@ export default function CreateRolePage() {
                         <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                             <div>
                                 <h1 className="h3 fw-bold mb-1">Crear Nuevo Rol</h1>
-                                <p className="text-muted mb-0">Define un nuevo rol para el sistema</p>
+                                <p className="text-muted mb-0">Define un nuevo rol y asigna sus permisos</p>
                             </div>
-                            <button
-                                className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                                onClick={() => navigate('/roles')}
-                            >
-                                <i className="bi bi-arrow-left"></i>
-                                Volver a la lista
+                            <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/roles')}>
+                                <i className="bi bi-arrow-left"></i> Volver a la lista
                             </button>
                         </div>
                     </div>
@@ -151,137 +167,36 @@ export default function CreateRolePage() {
                     </div>
                 )}
 
-                {hasPermission === false && (
-                    <div className="row mb-4">
-                        <div className="col-12">
-                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                                <i className="bi bi-shield-x-fill me-2"></i>
-                                <strong>Acceso Denegado</strong>
-                                <p className="mb-0 mt-2">No tienes permisos para crear roles. Solo los administradores del sistema pueden crear nuevos roles.</p>
-                                <button type="button" className="btn-close" onClick={() => navigate('/roles')}></button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {hasPermission === true && (
                 <form onSubmit={handleSubmit}>
                     <div className="row">
-                        <div className="col-12">
+                        <div className="col-12 col-lg-8">
                             <div className="card shadow-sm border-0 mb-4">
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-shield-plus me-2 text-primary"></i>
-                                        Información del Rol
+                                        <i className="bi bi-shield-plus me-2 text-primary"></i>Información del Rol
                                     </h5>
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="rName" className="form-label fw-semibold">
-                                                Nombre del Rol <span className="text-danger">*</span>
-                                            </label>
-                                            <input
-                                                id="rName"
-                                                type="text"
-                                                className="form-control form-control-lg"
-                                                value={formData.rName}
-                                                onChange={(e) => onInputChange('rName', e.target.value)}
-                                                placeholder="Ej: Administrador, Enfermera, Doctor"
-                                                required
-                                                disabled={loading}
-                                                minLength={3}
-                                                maxLength={50}
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                El nombre debe ser único y descriptivo (mínimo 3 caracteres)
-                                            </small>
+                                            <label htmlFor="rName" className="form-label fw-semibold">Nombre del Rol <span className="text-danger">*</span></label>
+                                            <input id="rName" type="text" className="form-control form-control-lg" value={formData.rName} onChange={e => onInputChange('rName', e.target.value)} placeholder="Ej: Coordinador de Enfermería" required disabled={loading} minLength={3} maxLength={100} />
                                         </div>
                                         <div className="col-12 col-md-6">
-                                            <label htmlFor="rIsActive" className="form-label fw-semibold">
-                                                Estado
-                                            </label>
-                                            <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                    id="rIsActive"
-                                                    checked={formData.rIsActive}
-                                                    onChange={(e) => onInputChange('rIsActive', e.target.checked)}
-                                                    disabled={loading}
-                                                />
-                                                <label className="form-check-label" htmlFor="rIsActive">
-                                                    {formData.rIsActive ? 'Activo' : 'Inactivo'}
-                                                </label>
-                                            </div>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Indica si el rol está activo en el sistema
-                                            </small>
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="rIsAdmin" className="form-label fw-semibold">
-                                                Rol Administrativo
-                                            </label>
-                                            <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                    id="rIsAdmin"
-                                                    checked={formData.rIsAdmin}
-                                                    onChange={(e) => onInputChange('rIsAdmin', e.target.checked)}
-                                                    disabled={loading}
-                                                />
-                                                <label className="form-check-label" htmlFor="rIsAdmin">
-                                                    {formData.rIsAdmin ? 'Es rol administrativo' : 'No es rol administrativo'}
-                                                </label>
-                                            </div>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Los roles administrativos tienen permisos elevados
-                                            </small>
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="rRequires2FA" className="form-label fw-semibold">
-                                                Requiere 2FA
-                                            </label>
-                                            <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input"
-                                                    type="checkbox"
-                                                    id="rRequires2FA"
-                                                    checked={formData.rRequires2FA}
-                                                    onChange={(e) => onInputChange('rRequires2FA', e.target.checked)}
-                                                    disabled={loading}
-                                                />
-                                                <label className="form-check-label" htmlFor="rRequires2FA">
-                                                    {formData.rRequires2FA ? 'Requiere autenticación de dos factores' : 'No requiere 2FA'}
-                                                </label>
-                                            </div>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Mayor seguridad para roles críticos
-                                            </small>
+                                            <label htmlFor="rDescription" className="form-label fw-semibold">Descripción</label>
+                                            <input id="rDescription" type="text" className="form-control form-control-lg" value={formData.rDescription ?? ''} onChange={e => onInputChange('rDescription', e.target.value)} placeholder="Describe las responsabilidades y permisos de este rol..." disabled={loading} maxLength={255} />
                                         </div>
                                         <div className="col-12">
-                                            <label htmlFor="rDescription" className="form-label fw-semibold">
-                                                Descripción
-                                            </label>
-                                            <textarea
-                                                id="rDescription"
-                                                className="form-control form-control-lg"
-                                                value={formData.rDescription}
-                                                onChange={(e) => onInputChange('rDescription', e.target.value)}
-                                                placeholder="Describe las responsabilidades y permisos de este rol..."
-                                                disabled={loading}
-                                                rows={3}
-                                                maxLength={255}
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Descripción opcional del rol y sus funciones
-                                            </small>
+                                            <div className="form-check form-switch">
+                                                <input className="form-check-input" type="checkbox" id="rIsAdmin" checked={formData.rIsAdmin ?? false} onChange={e => onInputChange('rIsAdmin', e.target.checked)} disabled={loading} />
+                                                <label className="form-check-label" htmlFor="rIsAdmin">Rol administrativo (permisos elevados)</label>
+                                            </div>
+                                        </div>
+                                        <div className="col-12">
+                                            <div className="form-check form-switch">
+                                                <input className="form-check-input" type="checkbox" id="rRequires2FA" checked={formData.rRequires2FA ?? false} onChange={e => onInputChange('rRequires2FA', e.target.checked)} disabled={loading} />
+                                                <label className="form-check-label" htmlFor="rRequires2FA">Requiere autenticación 2FA</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -290,46 +205,47 @@ export default function CreateRolePage() {
                             <div className="card shadow-sm border-0 mb-4">
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-shield-check me-2 text-primary"></i>
-                                        Permisos del Rol
+                                        <i className="bi bi-key me-2 text-primary"></i>Permisos del Rol
                                     </h5>
                                 </div>
                                 <div className="card-body p-4">
+                                    <p className="text-muted small mb-3">
+                                        <i className="bi bi-info-circle me-1"></i>
+                                        Configura los permisos que tendrá este rol. Los cambios se aplican en el servidor al guardar.
+                                    </p>
                                     {permissionsLoading ? (
-                                        <LoadingSpinner message="Cargando permisos..." size="sm" />
-                                    ) : permissions.length === 0 ? (
-                                        <AlertMessage
-                                            type="warning"
-                                            message="No se pudieron cargar los permisos por defecto"
-                                        />
+                                        <LoadingSpinner message="Cargando catálogo de permisos..." size="sm" />
+                                    ) : Object.keys(groupedByModule).length === 0 ? (
+                                        <p className="text-muted text-center mb-0">No hay permisos definidos en el sistema.</p>
                                     ) : (
-                                        <div className="row g-4">
-                                            {(Object.keys(PermissionModule) as Array<keyof typeof PermissionModule>).map(moduleKey => {
-                                                const module = PermissionModule[moduleKey] as PermissionModuleType;
-                                                const modulePermissions = permissions.filter(p => p.module === module);
-                                                if (modulePermissions.length === 0) return null;
-
+                                        <div className="row g-3">
+                                            {Object.entries(groupedByModule).map(([module, perms]) => {
+                                                const allChecked = perms.every(p => grantedIds.has(p.id));
                                                 return (
-                                                    <div key={module} className="col-12 col-md-6">
-                                                        <div className="border rounded p-3">
-                                                            <h6 className="fw-semibold mb-3 text-capitalize">
-                                                                <i className="bi bi-folder me-2 text-primary"></i>
-                                                                {module.replace(/([A-Z])/g, ' $1').toLowerCase()}
-                                                            </h6>
-                                                            <div className="d-flex flex-column gap-2">
-                                                                {modulePermissions.map(permission => (
-                                                                    <div key={`${permission.module}:${permission.action}`} className="form-check">
-                                                                        <input
-                                                                            className="form-check-input"
-                                                                            type="checkbox"
-                                                                            id={`perm-${permission.module}-${permission.action}`}
-                                                                            checked={permission.enabled}
-                                                                            onChange={(e) => handlePermissionChange(permission.module, permission.action, e.target.checked)}
-                                                                            disabled={loading}
-                                                                        />
-                                                                        <label className="form-check-label text-capitalize" htmlFor={`perm-${permission.module}-${permission.action}`}>
-                                                                            {permission.action.replace('_', ' ')}
-                                                                        </label>
+                                                    <div key={module} className="col-12">
+                                                        <div className="border rounded p-3 bg-white">
+                                                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                                                <h6 className="fw-semibold mb-0 text-capitalize">{module}</h6>
+                                                                <div className="form-check">
+                                                                    <input className="form-check-input" type="checkbox" id={`mod-${module}`}
+                                                                        checked={allChecked}
+                                                                        onChange={e => toggleModuleAll(module, e.target.checked)}
+                                                                        disabled={loading} />
+                                                                    <label className="form-check-label small" htmlFor={`mod-${module}`}>Todos</label>
+                                                                </div>
+                                                            </div>
+                                                            <div className="row g-2">
+                                                                {perms.map(p => (
+                                                                    <div key={p.id} className="col-12 col-md-6 col-lg-3">
+                                                                        <div className="form-check">
+                                                                            <input className="form-check-input" type="checkbox" id={`perm-${p.id}`}
+                                                                                checked={grantedIds.has(p.id)}
+                                                                                onChange={e => togglePermission(p.id, e.target.checked)}
+                                                                                disabled={loading || !p.pEnabled} />
+                                                                            <label className="form-check-label text-capitalize" htmlFor={`perm-${p.id}`}>
+                                                                                {p.pAction}
+                                                                            </label>
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -339,41 +255,19 @@ export default function CreateRolePage() {
                                             })}
                                         </div>
                                     )}
-                                    <small className="text-muted d-block mt-3">
-                                        <i className="bi bi-info-circle me-1"></i>
-                                        Configura los permisos que tendrá este rol en el sistema
-                                    </small>
                                 </div>
                             </div>
 
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-4">
                                     <div className="d-flex flex-column flex-sm-row gap-3">
-                                        <button
-                                            type="submit"
-                                            className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            disabled={loading}
-                                        >
-                                            {loading ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    Creando rol...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="bi bi-check-circle"></i>
-                                                    Crear Rol
-                                                </>
-                                            )}
+                                        <button type="submit" className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" disabled={loading}>
+                                            {loading
+                                                ? <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando rol...</>
+                                                : <><i className="bi bi-check-circle"></i> Crear Rol</>}
                                         </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            onClick={() => navigate('/roles')}
-                                            disabled={loading}
-                                        >
-                                            <i className="bi bi-x-circle"></i>
-                                            Cancelar
+                                        <button type="button" className="btn btn-outline-secondary btn-lg px-4" onClick={() => navigate('/roles')} disabled={loading}>
+                                            <i className="bi bi-x-circle me-2"></i>Cancelar
                                         </button>
                                     </div>
                                 </div>
@@ -381,8 +275,6 @@ export default function CreateRolePage() {
                         </div>
                     </div>
                 </form>
-                )}
-
             </div>
         </div>
     );

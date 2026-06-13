@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { permissionService } from '../../../services/permissionService';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { getFullName } from '../../../utils/userUtils';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
@@ -72,21 +72,26 @@ export default function EditUserPage() {
                     roleId: user.roleId || 0
                 });
 
-                // Cargar permisos del rol actual
+                // Cargar permisos del rol actual desde el backend
                 if (user.roleId) {
-                    // Encontrar el nombre del rol
-                    const userRole = rolesResult.roles?.find(role => role.id === user.roleId);
-                    if (userRole) {
-                        const rolePermissions = permissionService.getRolePermissionsByName(userRole.rName);
-                        setPermissions(rolePermissions);
-
-                        // Inicializar selectedPermissions con los valores actuales
+                    try {
+                        const rolePerms = await permissionApiService.getByRole(user.roleId);
+                        const mapped: Permission[] = rolePerms
+                            .filter(rp => rp.rpGranted)
+                            .map(rp => ({
+                                module: rp.permission.pModule as PermissionModuleType,
+                                action: rp.permission.pAction as PermissionActionType,
+                                enabled: true,
+                            }));
+                        setPermissions(mapped);
                         const initialSelected: Record<string, boolean> = {};
-                        rolePermissions.forEach(permission => {
+                        mapped.forEach(permission => {
                             const key = `${permission.module}:${permission.action}`;
-                            initialSelected[key] = permission.enabled;
+                            initialSelected[key] = true;
                         });
                         setSelectedPermissions(initialSelected);
+                    } catch (permErr) {
+                        console.error('Error cargando permisos del rol:', permErr);
                     }
                 }
             } else {
@@ -142,23 +147,23 @@ export default function EditUserPage() {
         }, 5000); // 5 segundos timeout
 
         try {
-            // Encontrar el nombre del rol seleccionado
-            const selectedRole = roles.find(role => role.id === roleId);
-            if (!selectedRole) {
-                throw new Error('Rol no encontrado');
-            }
+            const rolePerms = await permissionApiService.getByRole(roleId);
+            clearTimeout(timeoutId);
 
-            const rolePermissions = permissionService.getRolePermissionsByName(selectedRole.rName);
-            clearTimeout(timeoutId); // Limpiar timeout si se completa exitosamente
-
-            setPermissions(rolePermissions);
+            const mapped: Permission[] = rolePerms
+                .filter(rp => rp.rpGranted)
+                .map(rp => ({
+                    module: rp.permission.pModule as PermissionModuleType,
+                    action: rp.permission.pAction as PermissionActionType,
+                    enabled: true,
+                }));
+            setPermissions(mapped);
             setPermissionsLoading(false);
 
-            // Inicializar selectedPermissions con los valores actuales
             const initialSelected: Record<string, boolean> = {};
-            rolePermissions.forEach(permission => {
+            mapped.forEach(permission => {
                 const key = `${permission.module}:${permission.action}`;
-                initialSelected[key] = permission.enabled;
+                initialSelected[key] = true;
             });
             setSelectedPermissions(initialSelected);
         } catch (error) {

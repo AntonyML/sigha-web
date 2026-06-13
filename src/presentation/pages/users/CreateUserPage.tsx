@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { PermissionUtils } from '../../../utils/permissionUtils';
-import { permissionService } from '../../../services/permissionService';
+import { permissionApiService } from '../../../services/permissionApiService';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { UserRole, CreateUserData } from '../../../types/user';
 import type { Permission, PermissionModuleType } from '../../../types/permissions';
@@ -113,23 +113,23 @@ export default function CreateUserPage() {
         }, 5000); // 5 segundos timeout
 
         try {
-            // Encontrar el nombre del rol seleccionado
-            const selectedRole = roles.find(role => role.id === roleId);
-            if (!selectedRole) {
-                throw new Error('Rol no encontrado');
-            }
+            const rolePerms = await permissionApiService.getByRole(roleId);
+            clearTimeout(timeoutId);
 
-            const rolePermissions = permissionService.getRolePermissionsByName(selectedRole.rName);
-            clearTimeout(timeoutId); // Limpiar timeout si se completa exitosamente
-
-            setPermissions(rolePermissions);
+            const mapped: Permission[] = rolePerms
+                .filter(rp => rp.rpGranted)
+                .map(rp => ({
+                    module: rp.permission.pModule as PermissionModuleType,
+                    action: rp.permission.pAction as PermissionActionType,
+                    enabled: true,
+                }));
+            setPermissions(mapped);
             setPermissionsLoading(false);
 
-            // Inicializar selectedPermissions con los valores actuales
             const initialSelected: Record<string, boolean> = {};
-            rolePermissions.forEach(permission => {
+            mapped.forEach(permission => {
                 const key = `${permission.module}:${permission.action}`;
-                initialSelected[key] = permission.enabled;
+                initialSelected[key] = true;
             });
             setSelectedPermissions(initialSelected);
         } catch (error) {

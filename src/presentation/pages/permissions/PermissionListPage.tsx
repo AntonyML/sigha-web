@@ -1,15 +1,14 @@
 ﻿import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, Download } from 'lucide-react'
-import { permissionEntityFlow } from '../../../infrastructure/flows/permission'
+import { Lock, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2 } from 'lucide-react'
+import { permissionApiService } from '../../../services/permissionApiService'
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications'
-import type { PermissionEntity } from '../../../types/index'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
 import '../../styles/lp.css'
 
 export default function PermissionListPage() {
-  const [permissions, setPermissions] = useState<PermissionEntity[]>([])
+  const [permissions, setPermissions] = useState<typeof permissionApiService extends never ? never : Awaited<ReturnType<typeof permissionApiService.getAll>>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
@@ -22,61 +21,39 @@ export default function PermissionListPage() {
     setLoading(true)
     setError('')
     try {
-      const result = await permissionEntityFlow.getAllPermissions()
-      if (result.success && result.permissions) {
-        setPermissions(result.permissions)
-      } else {
-        setError(result.error || 'Error al cargar permisos')
-      }
+      const data = await permissionApiService.getAll()
+      setPermissions(data)
     } catch (err) {
-      console.error(err)
-      setError('Error inesperado al cargar permisos')
+      console.error('Error cargando permisos:', err)
+      setError('Error al cargar permisos desde el servidor')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (permission: PermissionEntity) => {
-    if (permission.id <= 23) {
-      feedback.error('Los permisos predefinidos del sistema no se pueden eliminar.')
+  const handleDelete = async (permissionId: number, enabled: boolean, name: string) => {
+    if (!enabled) {
+      feedback.error('Los permisos deshabilitados no se pueden eliminar.')
       return
     }
-    const ok = await feedback.confirm('Eliminar permiso', `¿Deseas eliminar el permiso "${permission.name}"?\n\nEsta acción no se puede deshacer.`)
+    const ok = await feedback.confirm('Eliminar permiso', `¿Deseas eliminar el permiso "${name}"?\n\nEsta acción no se puede deshacer.`)
     if (!ok) return
     setError('')
     try {
-      const result = await permissionEntityFlow.deletePermission(permission.id)
-      if (result.success) {
-        feedback.success('Permiso eliminado exitosamente')
-        feedback.showNotification({ title: 'Permiso eliminado', message: `El permiso "${permission.name}" fue eliminado.`, variant: 'success' })
-        await loadPermissions()
-      } else {
-        setError(result.error || 'Error al eliminar permiso')
-      }
+      await permissionApiService.remove(permissionId)
+      feedback.success('Permiso eliminado exitosamente')
+      feedback.showNotification({ title: 'Permiso eliminado', message: `El permiso "${name}" fue eliminado.`, variant: 'success' })
+      await loadPermissions()
     } catch (err) {
-      console.error(err)
-      setError('Error inesperado al eliminar permiso')
-    }
-  }
-
-  const handleExportJson = async () => {
-    try {
-      const result = await permissionEntityFlow.downloadPermissionsAsJson('permisos_actualizados.json')
-      if (result.success) {
-        feedback.success('Permisos exportados exitosamente')
-      } else {
-        setError(result.error || 'Error al exportar permisos')
-      }
-    } catch (err) {
-      console.error(err)
-      setError('Error inesperado al exportar permisos')
+      console.error('Error eliminando permiso:', err)
+      setError('Error al eliminar permiso del servidor')
     }
   }
 
   const filteredPermissions = permissions.filter(p => {
     if (!searchTerm.trim()) return true
     const q = searchTerm.toLowerCase()
-    return p.name.toLowerCase().includes(q) || p.module?.toLowerCase().includes(q) || p.action?.toLowerCase().includes(q)
+    return p.pName.toLowerCase().includes(q) || p.pModule.toLowerCase().includes(q) || p.pAction.toLowerCase().includes(q)
   })
 
   const { paginatedItems, page, totalPages, total, pageSize, goToPage } = usePagination(filteredPermissions)
@@ -92,9 +69,6 @@ export default function PermissionListPage() {
           <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>Administra los permisos del sistema</p>
         </div>
         <div className="lp-actions">
-          <button className="lp-btn lp-btn--back" onClick={handleExportJson}>
-            <Download size={15} /> Exportar JSON
-          </button>
           <button className="lp-btn lp-btn--primary" onClick={() => navigate('/permissions/create')}>
             <Plus size={16} /> Nuevo Permiso
           </button>
@@ -118,9 +92,10 @@ export default function PermissionListPage() {
             placeholder="Buscar por nombre, módulo o acción..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
+            aria-label="Buscar permisos"
           />
           {searchTerm && (
-            <button className="lp-search-clear" onClick={() => setSearchTerm('')}>
+            <button className="lp-search-clear" onClick={() => setSearchTerm('')} aria-label="Limpiar búsqueda">
               <X size={15} />
             </button>
           )}
@@ -161,26 +136,26 @@ export default function PermissionListPage() {
                   <tr key={permission.id}>
                     <td><span className="lp-badge lp-badge--id">#{permission.id}</span></td>
                     <td>
-                      <strong style={{ display: 'block' }}>{permission.name}</strong>
-                      {permission.description && <span className="lp-muted">{permission.description}</span>}
+                      <strong style={{ display: 'block' }}>{permission.pName}</strong>
+                      {permission.pDescription && <span className="lp-muted">{permission.pDescription}</span>}
                     </td>
-                    <td><span className="lp-badge lp-badge--info">{permission.module}</span></td>
-                    <td><span className="lp-badge lp-badge--warning">{permission.action}</span></td>
+                    <td><span className="lp-badge lp-badge--info">{permission.pModule}</span></td>
+                    <td><span className="lp-badge lp-badge--warning">{permission.pAction}</span></td>
                     <td className="center">
-                      <span className={`lp-badge ${permission.enabled ? 'lp-badge--success' : 'lp-badge--danger'}`}>
-                        {permission.enabled ? 'Activo' : 'Inactivo'}
+                      <span className={`lp-badge ${permission.pEnabled ? 'lp-badge--success' : 'lp-badge--danger'}`}>
+                        {permission.pEnabled ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     <td className="center">
                       <div className="lp-table-actions">
-                        <button className="lp-icon-btn lp-icon-btn--view" title="Ver detalles" onClick={() => navigate(`/permissions/view/${permission.id}`)}>
+                        <button className="lp-icon-btn lp-icon-btn--view" title="Ver detalles" onClick={() => navigate(`/permissions/view/${permission.id}`)} aria-label={`Ver ${permission.pName}`}>
                           <Eye size={14} />
                         </button>
-                        <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/permissions/edit/${permission.id}`)}>
+                        <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/permissions/edit/${permission.id}`)} aria-label={`Editar ${permission.pName}`}>
                           <Pencil size={14} />
                         </button>
-                        {permission.id > 23 && (
-                          <button className="lp-icon-btn lp-icon-btn--delete" title="Eliminar" onClick={() => handleDelete(permission)}>
+                        {permission.pEnabled && (
+                          <button className="lp-icon-btn lp-icon-btn--delete" title="Eliminar" onClick={() => handleDelete(permission.id, permission.pEnabled, permission.pName)} aria-label={`Eliminar ${permission.pName}`}>
                             <Trash2 size={14} />
                           </button>
                         )}

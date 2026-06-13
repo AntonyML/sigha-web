@@ -36,11 +36,11 @@ export default function RoleListPage() {
     }
   }
 
-  const handleDeleteRole = async (role: UserRole) => {
-    if (role.id <= 10) {
-      feedback.error('No se pueden eliminar los roles del sistema.')
-      return
-    }
+    const handleDeleteRole = async (role: UserRole) => {
+        if (role.rIsAdmin) {
+            feedback.error('No se pueden eliminar los roles administrativos del sistema.')
+            return;
+        }
     const ok = await feedback.confirm('Eliminar rol', `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`)
     if (!ok) return
     setError('')
@@ -160,7 +160,7 @@ export default function RoleListPage() {
                         <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/roles/edit/${role.id}`)}>
                           <Pencil size={14} />
                         </button>
-                        {role.id > 10 && (
+                        {!role.rIsAdmin && (
                           <button className="lp-icon-btn lp-icon-btn--delete" title="Eliminar" onClick={() => handleDeleteRole(role)}>
                             <Trash2 size={14} />
                           </button>

@@ -16,8 +16,7 @@ export { twoFactorFlow } from './twoFactor';
 // Profile flows
 export { profileFlow } from './profile';
 
-// Permission flows
-export { permissionFlow } from './permission';
+// Permission flows (legacy permissionFlow removed; consumers use permissionApiService directly)
 
 // Password recovery flows
 export { passwordRecoveryFlow } from './passwordRecovery';

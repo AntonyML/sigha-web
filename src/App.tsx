@@ -1,8 +1,51 @@
-import { Routes, Route } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 import { AppLayout } from './presentation/components/organisms'
 import { NotificationProvider } from './presentation/components/organisms/NotificationCenter'
 import { TwoFactorProvider } from './infrastructure/flows/twoFactor'
+import { PermissionUtils } from './utils/permissionUtils'
+
+/* ─── Route guard: bloquea acceso si el usuario no tiene permiso sobre el módulo ── */
+
+function ProtectedRoute({ module, children }: { module: string; children: React.ReactNode }) {
+  const [, force] = useState(0)
+  const [loaded, setLoaded] = useState(PermissionUtils.isLoaded())
+
+  useEffect(() => {
+    let cancelled = false
+    const ensureLoaded = async () => {
+      if (PermissionUtils.isLoaded()) {
+        if (!cancelled) setLoaded(true)
+        return
+      }
+      await PermissionUtils.load()
+      if (!cancelled) setLoaded(true)
+    }
+    ensureLoaded()
+    const unsubscribe = PermissionUtils.subscribe(() => force(n => n + 1))
+    return () => { cancelled = true; unsubscribe() }
+  }, [])
+
+  if (!loaded) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+        <div className="text-center">
+          <div className="spinner-border text-primary mb-3" role="status">
+            <span className="visually-hidden">Cargando…</span>
+          </div>
+          <p className="text-muted">Verificando permisos…</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!PermissionUtils.canAccessModule(module)) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
+}
 
 import LoginForm from './presentation/pages/login/LoginPage'
 import PasswordRecoveryRequestPage from './presentation/pages/login/PasswordRecoveryRequestPage'
