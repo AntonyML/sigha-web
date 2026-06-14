@@ -120,7 +120,7 @@ export default function CreateUserPage() {
                 .filter(rp => rp.rpGranted)
                 .map(rp => ({
                     module: rp.permission.pModule as PermissionModuleType,
-                    action: rp.permission.pAction as PermissionActionType,
+                    action: rp.permission.pAction as string,
                     enabled: true,
                 }));
             setPermissions(mapped);
@@ -377,7 +377,7 @@ export default function CreateUserPage() {
                                     <div className="row g-4">
                                         <div className="col-12">
                                             <label htmlFor="roleId" className="form-label fw-semibold">
-                                                Asignar Rol <span className="text-danger">*</span>
+                                                Rol inicial del usuario <span className="text-danger">*</span>
                                             </label>
                                             <select
                                                 id="roleId"
@@ -387,7 +387,7 @@ export default function CreateUserPage() {
                                                 required
                                                 disabled={loading}
                                             >
-                                                <option value={0}>Seleccionar rol...</option>
+                                                <option value={0}>Seleccionar rol…</option>
                                                 {roles.map(role => (
                                                     <option key={role.id} value={role.id}>
                                                         {role.rName}
@@ -396,7 +396,7 @@ export default function CreateUserPage() {
                                             </select>
                                             <small className="text-muted d-block mt-2">
                                                 <i className="bi bi-info-circle me-1"></i>
-                                                Selecciona un rol para configurar sus permisos específicos
+                                                El rol determina los permisos del usuario desde el primer inicio de sesión
                                             </small>
                                         </div>
                                     </div>

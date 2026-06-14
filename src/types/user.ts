@@ -8,6 +8,12 @@ export interface User {
   uEmailVerified?: boolean;
   uIsActive?: boolean;
   createAt?: Date;
+  /** ID del rol primario — puede venir del backend en GET /users/:id */
+  roleId?: number;
+  /** Nombres de roles asignados al usuario */
+  roles?: string[];
+  /** IDs de roles asignados al usuario */
+  roleIds?: number[];
 }
 
 export interface UserRole {

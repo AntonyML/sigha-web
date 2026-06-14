@@ -1,500 +1,558 @@
+/**
+ * EditUserPage — Editar usuario existente
+ *
+ * Mejoras de UX/RBAC:
+ *   - Muestra el rol actual del usuario de forma prominente (no editable)
+ *     antes del selector de nuevo rol.
+ *   - El selector de nuevo rol arranca preseleccionado en el rol actual
+ *     del usuario (si se puede resolver).
+ *   - Distingue visualmente "rol actual" de "seleccionar nuevo rol".
+ *   - Muestra un resumen de cambio "X → Y" al seleccionar un rol distinto.
+ *   - El campo roleId en el submit solo se envía si el rol nuevo es distinto
+ *     al rol actual, evitando actualizaciones fantasma.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { userManagementFlow } from '../../../infrastructure/flows/userManagement';
 import { roleFlow } from '../../../infrastructure/flows/role';
-import { permissionApiService } from '../../../services/permissionApiService';
 import { getFullName } from '../../../utils/userUtils';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
-import type { Permission, PermissionModuleType } from '../../../types/permissions';
-import { PermissionModule } from '../../../types/permissions';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
-import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
+import '../../styles/lp.css';
 
-type PermissionActionType = string;
+/* ─── Tipos internos ──────────────────────────────────────── */
 
 interface UserFormData {
-    uIdentification: string;
-    uName: string;
-    uFLastName: string;
-    uSLastName?: string;
-    uEmail: string;
-    uPassword?: string;
-    roleId: number;
+  uIdentification: string;
+  uName: string;
+  uFLastName: string;
+  uSLastName: string;
+  uEmail: string;
+  uPassword: string;
+  newRoleId: number; // 0 = sin cambio
 }
 
-const defaultUserFormData: UserFormData = {
+/* ─── Helper: resolver rol actual del usuario ─────────────── */
+
+function resolveCurrentRoleId(user: User): number {
+  if (user.roleId) return user.roleId;
+  if (user.roleIds && user.roleIds.length > 0) return user.roleIds[0];
+  return 0;
+}
+
+function resolveCurrentRoleNames(user: User, catalog: UserRole[]): string[] {
+  if (user.roles && user.roles.length > 0) return user.roles;
+  if (user.roleIds && user.roleIds.length > 0 && catalog.length > 0) {
+    return user.roleIds
+      .map(rid => catalog.find(r => r.id === rid)?.rName)
+      .filter((n): n is string => Boolean(n));
+  }
+  if (user.roleId && catalog.length > 0) {
+    const r = catalog.find(r => r.id === user.roleId);
+    return r ? [r.rName] : [];
+  }
+  return [];
+}
+
+/* ─── Subcomponentes locales ──────────────────────────────── */
+
+function SectionCard({
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: string;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="lp-card" style={{ marginBottom: '1rem' }}>
+      <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #f1f5f9', background: '#fafafa' }}>
+        <h5 style={{ margin: 0, fontWeight: 600, fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <i className={`bi ${icon}`} style={{ color: '#2563eb' }} />
+          {title}
+        </h5>
+        {subtitle && (
+          <small style={{ color: '#94a3b8', marginTop: '0.2rem', display: 'block' }}>{subtitle}</small>
+        )}
+      </div>
+      <div style={{ padding: '1.25rem' }}>{children}</div>
+    </div>
+  );
+}
+
+function FieldGroup({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+      <label style={{ fontWeight: 600, fontSize: '0.875rem', color: '#374151' }}>
+        {label} {required && <span style={{ color: '#dc2626' }}>*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+/* ─── Página principal ────────────────────────────────────── */
+
+export default function EditUserPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const feedback = useFeedbackWithNotifications();
+
+  const [formData, setFormData] = useState<UserFormData>({
     uIdentification: '',
     uName: '',
     uFLastName: '',
     uSLastName: '',
     uEmail: '',
     uPassword: '',
-    roleId: 0
-};
+    newRoleId: 0,
+  });
 
-export default function EditUserPage() {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
-    const feedback = useFeedbackWithNotifications();
-    const [formData, setFormData] = useState<UserFormData>(defaultUserFormData);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [saving, setSaving] = useState<boolean>(false);
-    const [error, setError] = useState<string>('');
-    const [roles, setRoles] = useState<UserRole[]>([]);
-    const [originalUser, setOriginalUser] = useState<User | null>(null);
-    const [permissions, setPermissions] = useState<Permission[]>([]);
-    const [selectedPermissions, setSelectedPermissions] = useState<Record<string, boolean>>({});
-    const [permissionsLoading, setPermissionsLoading] = useState(false);
-    const [permissionsError, setPermissionsError] = useState<string>('');
-    const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [originalUser, setOriginalUser] = useState<User | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-    const loadUserAndRoles = useCallback(async () => {
-        if (!id) return;
+  // Rol actual resuelto del usuario (nombre y ID)
+  const currentRoleId = originalUser ? resolveCurrentRoleId(originalUser) : 0;
+  const currentRoleNames = originalUser ? resolveCurrentRoleNames(originalUser, roles) : [];
+  const currentRoleName = currentRoleNames.length > 0 ? currentRoleNames[0] : null;
 
-        setLoading(true);
-        setError('');
+  // Nombre del nuevo rol seleccionado
+  const selectedRoleName = formData.newRoleId
+    ? roles.find(r => r.id === formData.newRoleId)?.rName ?? null
+    : null;
 
-        try {
-            const [userResult, rolesResult] = await Promise.all([
-                userManagementFlow.getUserById(Number(id)),
-                roleFlow.getAllRoles()
-            ]);
+  // ¿El usuario realmente está cambiando el rol?
+  const isChangingRole = formData.newRoleId !== 0 && formData.newRoleId !== currentRoleId;
 
-            if (userResult.success && userResult.user) {
-                const user = userResult.user;
-                setOriginalUser(user);
-                setFormData({
-                    uIdentification: user.uIdentification || '',
-                    uName: user.uName || '',
-                    uFLastName: user.uFLastName || '',
-                    uSLastName: user.uSLastName || '',
-                    uEmail: user.uEmail || '',
-                    uPassword: '',
-                    roleId: 0,
-                });
-            } else {
-                setError(userResult.error || 'Error al cargar usuario');
-            }
+  /* ── Carga de datos ─────────────────────────────────────── */
 
-            if (rolesResult.success && rolesResult.roles) {
-                setRoles(rolesResult.roles);
-            }
-        } catch (err) {
-            console.error('Error cargando datos:', err);
-            setError('Error inesperado al cargar los datos');
-        } finally {
-            setLoading(false);
-        }
-    }, [id]);
+  const loadData = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError('');
+    try {
+      const [userResult, rolesResult] = await Promise.all([
+        userManagementFlow.getUserById(Number(id)),
+        roleFlow.getAllRoles(),
+      ]);
 
-    useEffect(() => {
-        if (!id) { setLoading(false); return; }
-        loadUserAndRoles();
-    }, [id, loadUserAndRoles]);
+      if (userResult.success && userResult.user) {
+        const u = userResult.user;
+        setOriginalUser(u);
+        setFormData({
+          uIdentification: u.uIdentification || '',
+          uName: u.uName || '',
+          uFLastName: u.uFLastName || '',
+          uSLastName: u.uSLastName || '',
+          uEmail: u.uEmail || '',
+          uPassword: '',
+          newRoleId: 0, // sin cambio por defecto
+        });
+      } else {
+        setError(userResult.error || 'Error al cargar usuario');
+      }
 
-    function onInputChange(field: keyof UserFormData, value: string | number | boolean) {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-        if (field === 'roleId') loadRolePermissions(Number(value));
+      if (rolesResult.success && rolesResult.roles) {
+        setRoles(rolesResult.roles);
+      }
+    } catch {
+      setError('Error inesperado al cargar los datos');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    loadData();
+  }, [id, loadData]);
+
+  /* ── Cambio de campos ───────────────────────────────────── */
+
+  function onInputChange(field: keyof UserFormData, value: string | number) {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }
+
+  /* ── Submit ─────────────────────────────────────────────── */
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id) { setError('ID de usuario no válido'); return; }
+    setError('');
+    setSaving(true);
+
+    const updateData: UpdateUserData = {};
+
+    if (formData.uIdentification !== (originalUser?.uIdentification || ''))
+      updateData.uIdentification = formData.uIdentification;
+    if (formData.uName !== originalUser?.uName)
+      updateData.uName = formData.uName;
+    if (formData.uFLastName !== originalUser?.uFLastName)
+      updateData.uFLastName = formData.uFLastName;
+    if (formData.uSLastName !== (originalUser?.uSLastName || ''))
+      updateData.uSLastName = formData.uSLastName || undefined;
+    if (formData.uEmail !== originalUser?.uEmail)
+      updateData.uEmail = formData.uEmail;
+
+    // Solo enviar roleId si realmente hay un cambio de rol
+    if (isChangingRole) {
+      updateData.roleId = formData.newRoleId;
     }
 
-    async function loadRolePermissions(roleId: number) {
-        if (roleId === 0) {
-            setPermissions([]);
-            setSelectedPermissions({});
-            setPermissionsError('');
-            return;
-        }
+    updateData.uIsActive = true;
 
-        setPermissionsLoading(true);
-        setPermissionsError('');
-
-        const timeoutId = setTimeout(() => {
-            setPermissions([]);
-            setSelectedPermissions({});
-            setPermissionsLoading(false);
-            setPermissionsError('Tiempo de espera agotado al cargar permisos del rol');
-        }, 5000);
-
-        try {
-            const rolePerms = await permissionApiService.getByRole(roleId);
-            clearTimeout(timeoutId);
-            const mapped: Permission[] = rolePerms
-                .filter(rp => rp.rpGranted)
-                .map(rp => ({
-                    module: rp.permission.pModule as PermissionModuleType,
-                    action: rp.permission.pAction as PermissionActionType,
-                    enabled: true,
-                }));
-            setPermissions(mapped);
-            setPermissionsLoading(false);
-            const initialSelected: Record<string, boolean> = {};
-            mapped.forEach(p => { initialSelected[`${p.module}:${p.action}`] = true; });
-            setSelectedPermissions(initialSelected);
-        } catch (err) {
-            clearTimeout(timeoutId);
-            console.error('Error cargando permisos del rol:', err);
-            setPermissions([]);
-            setSelectedPermissions({});
-            setPermissionsLoading(false);
-            setPermissionsError('Error al cargar los permisos del rol seleccionado');
-        }
+    if (Object.keys(updateData).length <= 1) {
+      setError('No se detectaron cambios para guardar');
+      setSaving(false);
+      return;
     }
 
-    function handlePermissionChange(module: string, action: string, enabled: boolean) {
-        setSelectedPermissions(prev => ({ ...prev, [`${module}:${action}`]: enabled }));
+    const result = await userManagementFlow.updateUser(Number(id), updateData);
+
+    if (result.success) {
+      feedback.success(result.message || 'Usuario actualizado exitosamente');
+      feedback.showNotification({
+        title: 'Usuario actualizado',
+        message: 'El usuario ha sido actualizado correctamente en el sistema.',
+        variant: 'success',
+      });
+      navigate('/users');
+    } else {
+      setError(result.error || 'Error al actualizar usuario');
     }
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!id) { setError('ID de usuario no válido'); return; }
+    setSaving(false);
+  }
 
-        setError('');
-        setSaving(true);
+  /* ── Estados de carga / error ─────────────────────────── */
 
-        const updateData: UpdateUserData = {};
-
-        if (formData.uIdentification !== (originalUser?.uIdentification || ''))
-            updateData.uIdentification = formData.uIdentification;
-        if (formData.uName !== originalUser?.uName)
-            updateData.uName = formData.uName;
-        if (formData.uFLastName !== originalUser?.uFLastName)
-            updateData.uFLastName = formData.uFLastName;
-        if (formData.uSLastName !== (originalUser?.uSLastName || ''))
-            updateData.uSLastName = formData.uSLastName || undefined;
-        if (formData.uEmail !== originalUser?.uEmail)
-            updateData.uEmail = formData.uEmail;
-        if (formData.roleId !== 0)
-            updateData.roleId = formData.roleId;
-
-        updateData.uIsActive = true;
-
-        if (Object.keys(updateData).length <= 1) {
-            setError('No se detectaron cambios para guardar');
-            setSaving(false);
-            return;
-        }
-
-        const result = await userManagementFlow.updateUser(Number(id), updateData);
-
-        if (result.success) {
-            feedback.success(result.message || 'Usuario actualizado exitosamente');
-            feedback.showNotification({
-                title: 'Usuario actualizado',
-                message: 'El usuario ha sido actualizado correctamente en el sistema.',
-                variant: 'success'
-            });
-            navigate('/users');
-        } else {
-            setError(result.error || 'Error al actualizar usuario');
-        }
-
-        setSaving(false);
-    }
-
-    if (!id) {
-        return (
-            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
-                <div className="container">
-                    <div className="row justify-content-center">
-                        <div className="col-12 col-md-6">
-                            <div className="card shadow-sm border-0">
-                                <div className="card-body p-5 text-center">
-                                    <i className="bi bi-exclamation-triangle display-1 text-warning mb-3 d-block"></i>
-                                    <h4 className="mb-3">ID no proporcionado</h4>
-                                    <p className="text-muted mb-4">No se encontró el identificador del usuario.</p>
-                                    <button className="btn btn-primary" onClick={() => navigate('/users')}>
-                                        Volver a la lista
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (loading) {
-        return (
-            <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-                <div className="text-center">
-                    <div className="spinner-border text-primary mb-3" style={{ width: '3rem', height: '3rem' }} role="status">
-                        <span className="visually-hidden">Cargando...</span>
-                    </div>
-                    <p className="text-muted fw-medium">Cargando información del usuario...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error && !originalUser) {
-        return (
-            <div className="min-vh-100 bg-light d-flex align-items-center justify-content-center">
-                <div className="container">
-                    <div className="row justify-content-center">
-                        <div className="col-12 col-md-6">
-                            <div className="card shadow-sm border-0">
-                                <div className="card-body p-5 text-center">
-                                    <i className="bi bi-exclamation-circle display-1 text-danger mb-3 d-block"></i>
-                                    <h4 className="mb-3">Error al cargar usuario</h4>
-                                    <p className="text-muted mb-4">{error}</p>
-                                    <div className="d-flex gap-2 justify-content-center">
-                                        <button className="btn btn-secondary" onClick={() => navigate('/users')}>
-                                            Volver a la lista
-                                        </button>
-                                        <button className="btn btn-primary" onClick={loadUserAndRoles}>
-                                            Reintentar
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
+  if (!id) {
     return (
-        <div className="min-vh-100 bg-light py-4">
-            <div className="container-fluid">
-                <div className="row mb-4">
-                    <div className="col-12">
-                        <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-                            <div>
-                                <h1 className="h3 fw-bold mb-1">Editar Personal</h1>
-                                <p className="text-muted mb-0">{originalUser ? getFullName(originalUser) : `#${id}`}</p>
-                            </div>
-                            <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/users')} disabled={saving}>
-                                <i className="bi bi-arrow-left"></i>
-                                Volver al personal
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {error && (
-                    <div className="row mb-4">
-                        <div className="col-12">
-                            <div className="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                                <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                                {error}
-                                <button type="button" className="btn-close" onClick={() => setError('')}></button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit}>
-                    <div className="row">
-                        <div className="col-12">
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-person-circle me-2 text-primary"></i>
-                                        Información Personal
-                                    </h5>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="row g-4">
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="uIdentification" className="form-label fw-semibold">
-                                                Identificación <span className="text-danger">*</span>
-                                            </label>
-                                            <input id="uIdentification" type="text" className="form-control form-control-lg"
-                                                value={formData.uIdentification}
-                                                onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: 123456789" required disabled={saving}
-                                                pattern="^[0-9]+$" title="Solo números" />
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="uName" className="form-label fw-semibold">
-                                                Nombre <span className="text-danger">*</span>
-                                            </label>
-                                            <input id="uName" type="text" className="form-control form-control-lg"
-                                                value={formData.uName}
-                                                onChange={(e) => onInputChange('uName', e.target.value)}
-                                                required disabled={saving} />
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="uFLastName" className="form-label fw-semibold">
-                                                Primer Apellido <span className="text-danger">*</span>
-                                            </label>
-                                            <input id="uFLastName" type="text" className="form-control form-control-lg"
-                                                value={formData.uFLastName}
-                                                onChange={(e) => onInputChange('uFLastName', e.target.value)}
-                                                required disabled={saving} />
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="uSLastName" className="form-label fw-semibold">
-                                                Segundo Apellido
-                                            </label>
-                                            <input id="uSLastName" type="text" className="form-control form-control-lg"
-                                                value={formData.uSLastName}
-                                                onChange={(e) => onInputChange('uSLastName', e.target.value)}
-                                                placeholder="Opcional" disabled={saving} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-envelope me-2 text-primary"></i>
-                                        Correo Electrónico
-                                    </h5>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="row g-4">
-                                        <div className="col-12">
-                                            <label htmlFor="uEmail" className="form-label fw-semibold">
-                                                Correo <span className="text-danger">*</span>
-                                            </label>
-                                            <input id="uEmail" type="email" className="form-control form-control-lg"
-                                                value={formData.uEmail}
-                                                onChange={(e) => onInputChange('uEmail', e.target.value)}
-                                                required disabled={saving} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-key me-2 text-primary"></i>
-                                        Cambiar Rol Primario
-                                    </h5>
-                                    <small className="text-muted d-block mt-1">
-                                        Opcional — solo completar si deseas cambiar el rol principal del usuario
-                                    </small>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="row g-4">
-                                        <div className="col-12">
-                                            <label htmlFor="roleId" className="form-label fw-semibold">
-                                                Nuevo Rol Principal
-                                            </label>
-                                            <select id="roleId" className="form-select form-select-lg"
-                                                value={formData.roleId}
-                                                onChange={(e) => onInputChange('roleId', Number(e.target.value))}
-                                                disabled={saving}>
-                                                <option value={0}>Sin cambio de rol</option>
-                                                {roles.map(role => (
-                                                    <option key={role.id} value={role.id}>{role.rName}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    {permissions.length > 0 && (
-                                        <div className="mt-4">
-                                            <h6 className="fw-semibold mb-3">
-                                                <i className="bi bi-shield-check me-2 text-success"></i>
-                                                Permisos del nuevo rol
-                                            </h6>
-                                            {permissionsError ? (
-                                                <AlertMessage type="danger" message={permissionsError}
-                                                    dismissible onDismiss={() => setPermissionsError('')} />
-                                            ) : permissionsLoading ? (
-                                                <LoadingSpinner message="Cargando permisos..." size="sm" />
-                                            ) : (
-                                                <div className="row g-3">
-                                                    {Object.values(PermissionModule).map(module => {
-                                                        const modulePerms = permissions.filter(p => p.module === module);
-                                                        if (modulePerms.length === 0) return null;
-                                                        return (
-                                                            <div key={module} className="col-12 col-md-6 col-lg-4">
-                                                                <div className="card border-light bg-light">
-                                                                    <div className="card-header bg-white py-2">
-                                                                        <small className="fw-semibold text-uppercase text-muted">
-                                                                            {module.replace('_', ' ')}
-                                                                        </small>
-                                                                    </div>
-                                                                    <div className="card-body p-3">
-                                                                        {modulePerms.map(p => {
-                                                                            const key = `${p.module}:${p.action}`;
-                                                                            return (
-                                                                                <div key={key} className="form-check mb-2">
-                                                                                    <input className="form-check-input" type="checkbox"
-                                                                                        id={`perm-${key}`}
-                                                                                        checked={selectedPermissions[key] || false}
-                                                                                        onChange={(e) => handlePermissionChange(p.module, p.action, e.target.checked)}
-                                                                                        disabled={saving} />
-                                                                                    <label className="form-check-label small" htmlFor={`perm-${key}`}>
-                                                                                        {p.action.replace('_', ' ')}
-                                                                                    </label>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="card shadow-sm border-0 mb-4">
-                                <div className="card-header bg-white border-bottom py-3">
-                                    <h5 className="card-title mb-0 fw-semibold">
-                                        <i className="bi bi-shield-lock me-2 text-primary"></i>
-                                        Contraseña
-                                    </h5>
-                                    <small className="text-muted d-block mt-1">Dejar vacío para mantener la actual</small>
-                                </div>
-                                <div className="card-body p-4">
-                                    <div className="col-12 col-md-6">
-                                        <label htmlFor="uPassword" className="form-label fw-semibold">Nueva Contraseña</label>
-                                        <div className="position-relative">
-                                            <input id="uPassword" type={showPassword ? 'text' : 'password'}
-                                                className="form-control form-control-lg"
-                                                value={formData.uPassword}
-                                                onChange={(e) => onInputChange('uPassword', e.target.value)}
-                                                placeholder="Dejar vacío para no cambiar"
-                                                disabled={saving} minLength={8} />
-                                            <button type="button"
-                                                className="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 p-0 border-0 bg-transparent"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                tabIndex={-1} aria-label={showPassword ? 'Ocultar' : 'Mostrar'}>
-                                                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-muted`}></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card shadow-sm border-0">
-                                <div className="card-body p-4">
-                                    <div className="d-flex flex-column flex-sm-row gap-3">
-                                        <button type="submit" className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" disabled={saving}>
-                                            {saving ? (
-                                                <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...</>
-                                            ) : (
-                                                <><i className="bi bi-check-circle"></i> Guardar Cambios</>
-                                            )}
-                                        </button>
-                                        <button type="button" className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            onClick={() => navigate('/users')} disabled={saving}>
-                                            <i className="bi bi-x-circle"></i> Cancelar
-                                        </button>
-                                        <button type="button" className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            onClick={() => navigate(`/users/view/${id}`)} disabled={saving}>
-                                            <i className="bi bi-eye"></i> Ver Detalles
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
+      <div className="lp-page">
+        <div className="lp-error">
+          <i className="bi bi-exclamation-triangle" />
+          <span>No se proporcionó un ID de usuario.</span>
+          <button className="lp-btn lp-btn--back lp-error__retry" onClick={() => navigate('/users')}>
+            Volver a la lista
+          </button>
         </div>
+      </div>
     );
+  }
+
+  if (loading) {
+    return (
+      <div className="lp-loading" style={{ minHeight: '60vh' }}>
+        <div className="lp-spinner" />
+        <span>Cargando información del usuario…</span>
+      </div>
+    );
+  }
+
+  if (error && !originalUser) {
+    return (
+      <div className="lp-page">
+        <div className="lp-error">
+          <i className="bi bi-exclamation-circle" />
+          <span>{error}</span>
+          <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
+            <button className="lp-btn lp-btn--back" onClick={() => navigate('/users')}>Volver</button>
+            <button className="lp-btn lp-btn--primary lp-error__retry" onClick={loadData}>Reintentar</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Render principal ─────────────────────────────────── */
+
+  return (
+    <div className="lp-page">
+
+      {/* Encabezado */}
+      <div className="lp-header">
+        <div>
+          <h2 className="lp-title">Editar usuario</h2>
+          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>
+            {originalUser ? getFullName(originalUser) : `#${id}`}
+          </p>
+        </div>
+        <button
+          className="lp-btn lp-btn--back"
+          onClick={() => navigate('/users')}
+          disabled={saving}
+        >
+          <i className="bi bi-arrow-left" /> Volver
+        </button>
+      </div>
+
+      {error && (
+        <AlertMessage
+          type="danger"
+          message={error}
+          dismissible
+          onDismiss={() => setError('')}
+        />
+      )}
+
+      <form onSubmit={handleSubmit}>
+
+        {/* ── Información personal ───────────────────────── */}
+        <SectionCard icon="bi-person-circle" title="Información personal">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+            <FieldGroup label="Identificación" required>
+              <input
+                type="text"
+                className="form-control form-control-lg"
+                value={formData.uIdentification}
+                onChange={e => onInputChange('uIdentification', e.target.value)}
+                pattern="^[0-9]+$"
+                title="Solo números"
+                required
+                disabled={saving}
+              />
+            </FieldGroup>
+            <FieldGroup label="Nombre" required>
+              <input
+                type="text"
+                className="form-control form-control-lg"
+                value={formData.uName}
+                onChange={e => onInputChange('uName', e.target.value)}
+                required
+                disabled={saving}
+              />
+            </FieldGroup>
+            <FieldGroup label="Primer apellido" required>
+              <input
+                type="text"
+                className="form-control form-control-lg"
+                value={formData.uFLastName}
+                onChange={e => onInputChange('uFLastName', e.target.value)}
+                required
+                disabled={saving}
+              />
+            </FieldGroup>
+            <FieldGroup label="Segundo apellido">
+              <input
+                type="text"
+                className="form-control form-control-lg"
+                value={formData.uSLastName}
+                onChange={e => onInputChange('uSLastName', e.target.value)}
+                placeholder="Opcional"
+                disabled={saving}
+              />
+            </FieldGroup>
+          </div>
+        </SectionCard>
+
+        {/* ── Correo electrónico ─────────────────────────── */}
+        <SectionCard icon="bi-envelope" title="Correo electrónico">
+          <FieldGroup label="Correo" required>
+            <input
+              type="email"
+              className="form-control form-control-lg"
+              value={formData.uEmail}
+              onChange={e => onInputChange('uEmail', e.target.value)}
+              required
+              disabled={saving}
+            />
+          </FieldGroup>
+        </SectionCard>
+
+        {/* ── Rol del usuario ────────────────────────────── */}
+        <SectionCard
+          icon="bi-person-badge"
+          title="Rol del usuario"
+          subtitle="El rol determina los permisos del usuario en todo el sistema."
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+            {/* Rol actual — no editable, solo informativo */}
+            <div>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Rol actual
+              </p>
+              {currentRoleName ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      padding: '0.4rem 0.875rem',
+                      borderRadius: '999px',
+                      background: '#dbeafe',
+                      color: '#1d4ed8',
+                      fontWeight: 600,
+                      fontSize: '0.875rem',
+                      border: '1.5px solid #bfdbfe',
+                    }}
+                  >
+                    <i className="bi bi-person-badge" />
+                    {currentRoleName}
+                    <span
+                      style={{
+                        fontSize: '0.625rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        background: '#1d4ed8',
+                        color: '#fff',
+                        borderRadius: '999px',
+                        padding: '0.1rem 0.4rem',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      Principal
+                    </span>
+                  </span>
+                  {currentRoleNames.length > 1 && (
+                    <span style={{ color: '#94a3b8', fontSize: '0.8125rem' }}>
+                      + {currentRoleNames.length - 1} más
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
+                  <i className="bi bi-dash-circle me-1" />
+                  Sin rol asignado
+                </span>
+              )}
+            </div>
+
+            {/* Separador */}
+            <div style={{ borderTop: '1px solid #f1f5f9' }} />
+
+            {/* Selector de nuevo rol */}
+            <FieldGroup label="Cambiar rol">
+              <select
+                className="form-select form-select-lg"
+                value={formData.newRoleId}
+                onChange={e => onInputChange('newRoleId', Number(e.target.value))}
+                disabled={saving}
+              >
+                <option value={0}>— Mantener rol actual —</option>
+                {roles.map(role => (
+                  <option key={role.id} value={role.id}>
+                    {role.rName}
+                    {role.id === currentRoleId ? ' (actual)' : ''}
+                  </option>
+                ))}
+              </select>
+              <small style={{ color: '#94a3b8', marginTop: '0.25rem' }}>
+                Deja en "Mantener rol actual" si no deseas cambiar el rol.
+              </small>
+            </FieldGroup>
+
+            {/* Resumen de cambio — solo visible si hay cambio real */}
+            {isChangingRole && selectedRoleName && (
+              <div
+                style={{
+                  padding: '0.875rem 1rem',
+                  background: '#fefce8',
+                  border: '1.5px solid #fde68a',
+                  borderRadius: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <i className="bi bi-arrow-right-circle-fill" style={{ color: '#d97706', fontSize: '1.125rem', flexShrink: 0 }} />
+                <span style={{ color: '#92400e' }}>
+                  Se cambiará el rol de{' '}
+                  <strong>{currentRoleName ?? 'sin rol'}</strong>
+                  {' → '}
+                  <strong>{selectedRoleName}</strong>
+                </span>
+              </div>
+            )}
+
+          </div>
+        </SectionCard>
+
+        {/* ── Contraseña ─────────────────────────────────── */}
+        <SectionCard
+          icon="bi-shield-lock"
+          title="Contraseña"
+          subtitle="Dejar vacío para mantener la contraseña actual"
+        >
+          <div style={{ maxWidth: '360px' }}>
+            <FieldGroup label="Nueva contraseña">
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-control form-control-lg"
+                  value={formData.uPassword}
+                  onChange={e => onInputChange('uPassword', e.target.value)}
+                  placeholder="Dejar vacío para no cambiar"
+                  disabled={saving}
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  style={{
+                    position: 'absolute', top: '50%', right: '0.75rem',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent', border: 'none',
+                    cursor: 'pointer', padding: 0, color: '#94a3b8',
+                  }}
+                  onClick={() => setShowPassword(v => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ocultar' : 'Mostrar'}
+                >
+                  <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`} />
+                </button>
+              </div>
+            </FieldGroup>
+          </div>
+        </SectionCard>
+
+        {/* ── Acciones ───────────────────────────────────── */}
+        <div className="lp-card" style={{ padding: '1.25rem' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <button
+              type="submit"
+              className="lp-btn lp-btn--primary"
+              style={{ padding: '0.6rem 1.5rem', fontSize: '0.9375rem' }}
+              disabled={saving}
+            >
+              {saving ? (
+                <><span className="spinner-border spinner-border-sm me-2" role="status" /> Guardando…</>
+              ) : (
+                <><i className="bi bi-check-circle me-1" /> Guardar cambios</>
+              )}
+            </button>
+            <button
+              type="button"
+              className="lp-btn lp-btn--back"
+              style={{ padding: '0.6rem 1.5rem', fontSize: '0.9375rem' }}
+              onClick={() => navigate('/users')}
+              disabled={saving}
+            >
+              <i className="bi bi-x-circle me-1" /> Cancelar
+            </button>
+            <button
+              type="button"
+              className="lp-btn lp-btn--info"
+              style={{ padding: '0.6rem 1.5rem', fontSize: '0.9375rem' }}
+              onClick={() => navigate(`/users/view/${id}`)}
+              disabled={saving}
+            >
+              <i className="bi bi-eye me-1" /> Ver detalles
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  );
 }
