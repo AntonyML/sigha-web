@@ -4,18 +4,21 @@
  * Arquitectura:
  *   Grupo 1 · Inicio              — Dashboard
  *   Grupo 2 · Operación diaria    — Residentes, E/S, Programas, Subprogramas,
- *                                   Familiares, Contactos emergencia, Actualizaciones
+ *                                   Familiares, Contactos emergencia, Cambios
  *   Grupo 3 · Atención clínica   — Enfermería, Psicología, Fisioterapia,
  *                                   Trabajo Social, Citas, Áreas especializadas
  *   Grupo 4 · Historial clínico  — Expedientes, Medicamentos, Condiciones, Vacunas
  *   Grupo 5 · Comunicación       — Notificaciones
- *   Grupo 6 · Seguridad y acceso — Usuarios, Roles, Permisos, 2FA, Perfil
+ *   Grupo 6 · Configuración      — Usuarios, Roles, Permisos, 2FA, Perfil
  *   Grupo 7 · Auditoría          — Auditoría (menú, listado, dashboard)
  *
- * Reglas de visibilidad:
+ * Reglas de visibilidad (basadas en permisos reales del backend):
  *   - 2FA inactivo  → solo Inicio (Dashboard)
- *   - Sin permisos administrativos → oculta Usuarios, Roles, Permisos y todo el grupo Auditoría
- *   - Con permisos → todo visible
+ *   - Cada ítem declara `requiredModule` (clave del enum `e_permission_module`)
+ *   - El ítem se muestra si el usuario tiene `view` sobre ese módulo
+ *   - Un grupo se muestra si al menos uno de sus ítems es visible
+ *   - Un grupo sin ítems visibles no se renderiza
+ *   - Sin IDs mágicos, sin nombres de rol hardcodeados, sin flags adminOnly
  */
 
 import { useState, useEffect } from 'react';
@@ -45,19 +48,30 @@ import {
   ShieldCheck,
   UserCircle,
   FileSearch,
+  ShieldAlert,
+  Server,
   ChevronDown,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '../../../../infrastructure/flows/twoFactor';
-import { PermissionUtils } from '../../../../utils/permissionUtils';
+import { usePermissions } from '../../../../utils/permissionUtils';
 import './Sidebar.css';
 
 /* ─── Types ───────────────────────────────────────────── */
+
+type PermissionModule =
+  | 'users' | 'roles' | 'permissions' | 'dashboard' | 'virtualFiles' | 'audits'
+  | 'programs' | 'vaccines' | 'subPrograms' | 'entranceExit' | 'twoFactor'
+  | 'nursing' | 'physiotherapy' | 'psychology' | 'socialWork' | 'clinicalHistory'
+  | 'clinicalMedication' | 'medicalRecords' | 'emergencyContacts' | 'olderAdultFamily'
+  | 'olderAdultUpdates' | 'specializedAreas' | 'specializedAppointments'
+  | 'notifications';
 
 interface MenuItem {
   id: string;
   label: string;
   path?: string;
   icon?: React.ReactNode;
+  requiredModule?: PermissionModule;
   children?: MenuItem[];
 }
 
@@ -65,7 +79,6 @@ interface NavSection {
   id: string;
   label: string | null;
   items: MenuItem[];
-  adminOnly?: boolean;
 }
 
 const ICON_CLASS = 'w-[18px] h-[18px]';
@@ -79,14 +92,16 @@ const SECTION_INICIO: MenuItem[] = [
 const SECTION_OPERACION: MenuItem[] = [
   {
     id: 'residentes', label: 'Residentes', icon: <Users className={ICON_CLASS} />,
+    requiredModule: 'virtualFiles',
     children: [
-      { id: 'res-list',     label: 'Listado',        path: '/virtualFiles' },
-      { id: 'res-create',   label: 'Crear registro', path: '/virtualFiles/create' },
-      { id: 'res-updates',  label: 'Actualizaciones', path: '/older-adult-updates' },
+      { id: 'res-list',    label: 'Listado',         path: '/virtualFiles' },
+      { id: 'res-create',  label: 'Crear registro',  path: '/virtualFiles/create' },
+      { id: 'res-updates', label: 'Actualizaciones',  path: '/older-adult-updates' },
     ],
   },
   {
     id: 'entradasSalidas', label: 'Entradas y Salidas', icon: <ArrowLeftRight className={ICON_CLASS} />,
+    requiredModule: 'entranceExit',
     children: [
       { id: 'ee-dashboard', label: 'Dashboard',  path: '/entrance-exit' },
       { id: 'ee-register',  label: 'Registrar',  path: '/entrance-exit/register' },
@@ -95,6 +110,7 @@ const SECTION_OPERACION: MenuItem[] = [
   },
   {
     id: 'programas', label: 'Programas', icon: <Calendar className={ICON_CLASS} />,
+    requiredModule: 'programs',
     children: [
       { id: 'prog-list',   label: 'Listado', path: '/programs' },
       { id: 'prog-create', label: 'Crear',    path: '/programs/create' },
@@ -102,70 +118,75 @@ const SECTION_OPERACION: MenuItem[] = [
   },
   {
     id: 'subprogramas', label: 'Subprogramas', icon: <CalendarRange className={ICON_CLASS} />,
+    requiredModule: 'subPrograms',
     children: [
       { id: 'sub-list',   label: 'Listado', path: '/sub-programs' },
       { id: 'sub-create', label: 'Crear',    path: '/sub-programs/create' },
     ],
   },
-  { id: 'familiares',     label: 'Familiares',            path: '/older-adult-family', icon: <Users className={ICON_CLASS} /> },
-  { id: 'contactosEmerg', label: 'Contactos de Emergencia', path: '/emergency-contacts', icon: <PhoneCall className={ICON_CLASS} /> },
-  { id: 'historialCamb',  label: 'Historial de Cambios',   path: '/older-adult-updates', icon: <History className={ICON_CLASS} /> },
+  { id: 'familiares',     label: 'Familiares',             path: '/older-adult-family',  icon: <Users     className={ICON_CLASS} />, requiredModule: 'olderAdultFamily'  },
+  { id: 'contactosEmerg', label: 'Contactos de Emergencia', path: '/emergency-contacts',   icon: <PhoneCall className={ICON_CLASS} />, requiredModule: 'emergencyContacts' },
+  { id: 'historialCamb',  label: 'Historial de Cambios',   path: '/older-adult-updates',  icon: <History   className={ICON_CLASS} />, requiredModule: 'olderAdultUpdates' },
 ];
 
 const SECTION_CLINICA: MenuItem[] = [
-  { id: 'enfermeria',   label: 'Enfermería',            path: '/nursing',                  icon: <Stethoscope    className={ICON_CLASS} /> },
-  { id: 'psicologia',   label: 'Psicología',            path: '/psychology',               icon: <Brain          className={ICON_CLASS} /> },
-  { id: 'fisioterapia', label: 'Fisioterapia',          path: '/physiotherapy',            icon: <Activity       className={ICON_CLASS} /> },
-  { id: 'trabajoSoc',   label: 'Trabajo Social',        path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} /> },
-  { id: 'citas',        label: 'Citas Especializadas',  path: '/specialized-appointments', icon: <CalendarCheck  className={ICON_CLASS} /> },
-  { id: 'areas',        label: 'Áreas Especializadas',  path: '/specialized-areas',        icon: <Building2      className={ICON_CLASS} /> },
+  { id: 'enfermeria',   label: 'Enfermería',            path: '/nursing',                  icon: <Stethoscope    className={ICON_CLASS} />, requiredModule: 'nursing' },
+  { id: 'psicologia',   label: 'Psicología',            path: '/psychology',               icon: <Brain          className={ICON_CLASS} />, requiredModule: 'psychology' },
+  { id: 'fisioterapia', label: 'Fisioterapia',          path: '/physiotherapy',            icon: <Activity       className={ICON_CLASS} />, requiredModule: 'physiotherapy' },
+  { id: 'trabajoSoc',   label: 'Trabajo Social',        path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} />, requiredModule: 'socialWork' },
+  { id: 'citas',        label: 'Citas Especializadas',  path: '/specialized-appointments', icon: <CalendarCheck  className={ICON_CLASS} />, requiredModule: 'specializedAppointments' },
+  { id: 'areas',        label: 'Áreas Especializadas',  path: '/specialized-areas',        icon: <Building2      className={ICON_CLASS} />, requiredModule: 'specializedAreas' },
 ];
 
 const SECTION_HISTORIAL: MenuItem[] = [
-  { id: 'expedientes',  label: 'Expedientes Médicos',    path: '/medical-records',      icon: <ClipboardList className={ICON_CLASS} /> },
-  { id: 'medicamentos', label: 'Medicamentos',           path: '/clinical-medication',  icon: <Pill          className={ICON_CLASS} /> },
-  { id: 'condiciones',  label: 'Condiciones Clínicas',   path: '/clinical-history',     icon: <HeartPulse    className={ICON_CLASS} /> },
-  { id: 'vacunas',      label: 'Vacunas',                path: '/vaccines',             icon: <Syringe       className={ICON_CLASS} /> },
+  { id: 'expedientes',  label: 'Expedientes Médicos',    path: '/medical-records',      icon: <ClipboardList className={ICON_CLASS} />, requiredModule: 'medicalRecords' },
+  { id: 'medicamentos', label: 'Medicamentos',           path: '/clinical-medication',  icon: <Pill          className={ICON_CLASS} />, requiredModule: 'clinicalMedication' },
+  { id: 'condiciones',  label: 'Condiciones Clínicas',   path: '/clinical-history',     icon: <HeartPulse    className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
+  { id: 'vacunas',      label: 'Vacunas',                path: '/vaccines',             icon: <Syringe       className={ICON_CLASS} />, requiredModule: 'vaccines' },
 ];
 
 const SECTION_COMUNICACION: MenuItem[] = [
-  { id: 'notificaciones', label: 'Notificaciones', path: '/notifications', icon: <Bell className={ICON_CLASS} /> },
+  { id: 'notificaciones', label: 'Notificaciones', path: '/notifications', icon: <Bell className={ICON_CLASS} />, requiredModule: 'notifications' },
 ];
 
-const SECTION_SEGURIDAD: MenuItem[] = [
+const SECTION_CONFIGURACION: MenuItem[] = [
   {
-    id: 'usuarios', label: 'Usuarios', icon: <UserCog className={ICON_CLASS} />, adminOnly: true,
+    id: 'usuarios', label: 'Usuarios', icon: <UserCog className={ICON_CLASS} />, requiredModule: 'users',
     children: [
       { id: 'usr-list',    label: 'Listado',    path: '/users' },
       { id: 'usr-create',  label: 'Crear',      path: '/users/create' },
       { id: 'usr-deleted', label: 'Eliminados', path: '/users/deleted' },
     ],
   },
-  { id: 'roles',     label: 'Roles',      path: '/roles',       icon: <Shield      className={ICON_CLASS} />, adminOnly: true },
-  { id: 'permisos',  label: 'Permisos',   path: '/permissions', icon: <KeyRound    className={ICON_CLASS} />, adminOnly: true },
-  { id: 'twofa',     label: '2FA',        path: '/two-factor',  icon: <ShieldCheck className={ICON_CLASS} /> },
-  { id: 'perfil',    label: 'Perfil',     path: '/profile',     icon: <UserCircle  className={ICON_CLASS} /> },
+  { id: 'roles',    label: 'Roles',      path: '/roles',       icon: <Shield      className={ICON_CLASS} />, requiredModule: 'roles' },
+  { id: 'histCamb', label: 'Historial de Cambios', path: '/role-changes', icon: <History className={ICON_CLASS} />, requiredModule: 'roles' },
+  { id: 'permisos', label: 'Permisos',   path: '/permissions', icon: <KeyRound    className={ICON_CLASS} />, requiredModule: 'permissions' },
+  { id: 'twofa',    label: '2FA',        path: '/two-factor',  icon: <ShieldCheck className={ICON_CLASS} />, requiredModule: 'twoFactor' },
+  { id: 'perfil',   label: 'Perfil',     path: '/profile',     icon: <UserCircle  className={ICON_CLASS} /> },
 ];
 
 const SECTION_AUDITORIA: MenuItem[] = [
   {
-    id: 'auditoria', label: 'Auditoría', icon: <FileSearch className={ICON_CLASS} />, adminOnly: true,
+    id: 'auditoria', label: 'Auditoría', icon: <FileSearch className={ICON_CLASS} />, requiredModule: 'audits',
     children: [
-      { id: 'aud-menu',      label: 'Menú',      path: '/audits' },
-      { id: 'aud-list',      label: 'Listado',   path: '/audits/list' },
-      { id: 'aud-dashboard', label: 'Dashboard', path: '/audits/dashboard' },
+      { id: 'aud-menu',      label: 'Menú',                path: '/audits' },
+      { id: 'aud-list',      label: 'Listado',             path: '/audits/list' },
+      { id: 'aud-dashboard', label: 'Dashboard',           path: '/audits/dashboard' },
+      { id: 'aud-logs',      label: 'Logs de Actividad',   path: '/audits/activity-logs', icon: <Activity className={ICON_CLASS} /> },
+      { id: 'aud-security',  label: 'Seguridad',           path: '/audits/security',      icon: <ShieldAlert className={ICON_CLASS} /> },
+      { id: 'aud-health',    label: 'Salud del Sistema',   path: '/audits/system-health', icon: <Server className={ICON_CLASS} /> },
     ],
   },
 ];
 
 const ALL_SECTIONS: NavSection[] = [
-  { id: 'inicio',        label: null,              items: SECTION_INICIO,      adminOnly: false },
-  { id: 'operacion',     label: 'Operación diaria', items: SECTION_OPERACION,   adminOnly: false },
-  { id: 'clinica',       label: 'Atención clínica', items: SECTION_CLINICA,     adminOnly: false },
-  { id: 'historial',     label: 'Historial clínico', items: SECTION_HISTORIAL,  adminOnly: false },
-  { id: 'comunicacion',  label: 'Comunicación',     items: SECTION_COMUNICACION, adminOnly: false },
-  { id: 'seguridad',     label: 'Seguridad y acceso', items: SECTION_SEGURIDAD, adminOnly: false },
-  { id: 'auditoria',     label: 'Auditoría',        items: SECTION_AUDITORIA,   adminOnly: true  },
+  { id: 'inicio',        label: null,                 items: SECTION_INICIO,        },
+  { id: 'operacion',     label: 'Operación diaria',    items: SECTION_OPERACION,     },
+  { id: 'clinica',       label: 'Atención clínica',    items: SECTION_CLINICA,       },
+  { id: 'historial',     label: 'Historial clínico',   items: SECTION_HISTORIAL,     },
+  { id: 'comunicacion',  label: 'Comunicación',        items: SECTION_COMUNICACION,  },
+  { id: 'configuracion', label: 'Configuración',       items: SECTION_CONFIGURACION, },
+  { id: 'auditoria',     label: 'Auditoría',           items: SECTION_AUDITORIA,     },
 ];
 
 /* ─── Helpers ─────────────────────────────────────────── */
@@ -190,15 +211,15 @@ export default function Sidebar() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { isEnabled } = useTwoFactorStatus();
-  const [hasPermissions, setHasPermissions] = useState<boolean | null>(null);
-  const [openGroups, setOpenGroups]         = useState<Record<string, boolean>>({});
+  const { isLoaded: permsLoaded, canAccessModule } = usePermissions();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
-  /* Check admin permissions once */
-  useEffect(() => {
-    Promise.all([PermissionUtils.canViewAllUsers(), PermissionUtils.isSuperAdmin()])
-      .then(([canManage, isSuper]) => setHasPermissions(canManage || isSuper))
-      .catch(() => setHasPermissions(false));
-  }, []);
+  /* Filtra un ítem por permiso real de backend (no por flag heredado) */
+  function isItemVisible(item: MenuItem): boolean {
+    if (!item.requiredModule) return true;
+    if (!permsLoaded) return false;
+    return canAccessModule(item.requiredModule);
+  }
 
   /* Auto-expand the group whose child matches the current route */
   useEffect(() => {
@@ -211,20 +232,21 @@ export default function Sidebar() {
   /* ── Filtered sections ────────────────────────────────── */
   const visibleSections: NavSection[] = (() => {
     if (!isEnabled) {
-      // 2FA disabled → only Inicio (Dashboard)
-      return ALL_SECTIONS.filter(s => s.id === 'inicio');
+      // 2FA disabled → solo Inicio (Dashboard)
+      return ALL_SECTIONS
+        .filter(s => s.id === 'inicio')
+        .map(section => ({
+          ...section,
+          items: section.items.filter(isItemVisible),
+        }))
+        .filter(s => s.items.length > 0);
     }
-    const isAdmin = hasPermissions === true;
     return ALL_SECTIONS
-      .map(section => {
-        if (section.adminOnly && !isAdmin) return null;
-        const items = section.items
-          .map(item => item.adminOnly && !isAdmin ? null : item)
-          .filter((i): i is MenuItem => i !== null);
-        if (items.length === 0) return null;
-        return { ...section, items };
-      })
-      .filter((s): s is NavSection => s !== null);
+      .map(section => ({
+        ...section,
+        items: section.items.filter(isItemVisible),
+      }))
+      .filter(s => s.items.length > 0);
   })();
 
   /* ── Active checks ────────────────────────────────────── */
@@ -243,7 +265,6 @@ export default function Sidebar() {
   return (
     <aside className="sidebar-root" aria-label="Menú lateral de navegación principal">
 
-      {/* Scrollable nav */}
       <nav className="sidebar-nav">
         {visibleSections.map(section => (
           <div key={section.id}>
@@ -257,7 +278,6 @@ export default function Sidebar() {
               {section.items.map(item => (
                 <li key={item.id}>
 
-                  {/* ── Leaf item (no children) ── */}
                   {!item.children?.length ? (
                     <button
                       className={`sidebar-btn${isActive(item.path) ? ' sidebar-btn--active' : ''}`}
@@ -269,7 +289,6 @@ export default function Sidebar() {
                     </button>
 
                   ) : (
-                    /* ── Group item (with children) ── */
                     <div>
                       <button
                         className={`sidebar-group-trigger${isGroupActive(item) ? ' sidebar-group-trigger--active' : ''}`}

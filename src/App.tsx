@@ -281,7 +281,7 @@ export default function App() {
               <Route path="social-work/edit/:id" element={<EditSocialWorkReportPage />} />
 
               <Route path="notifications" element={<NotificationsListPage />} />
-              <Route path="role-changes" element={<RoleChangesListPage />} />
+              <Route path="role-changes" element={<ProtectedRoute module="roles"><RoleChangesListPage /></ProtectedRoute>} />
               <Route path="notifications/create" element={<CreateNotificationPage />} />
               <Route path="notifications/view/:id" element={<ViewNotificationPage />} />
 
