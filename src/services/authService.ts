@@ -39,6 +39,40 @@ apiClient.interceptors.response.use(
   }
 );
 
+interface JwtPayload {
+  sub?: number;
+  email?: string;
+  roleIds?: number[];
+  roles?: string[];
+  twoFactorVerified?: boolean;
+  [key: string]: unknown;
+}
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
+    const decoded = atob(padded);
+    return JSON.parse(decoded) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function extractRoleIdsFromToken(token: string): number[] {
+  const payload = decodeJwtPayload(token);
+  if (!payload || !Array.isArray(payload.roleIds)) return [];
+  return payload.roleIds.filter((n): n is number => typeof n === 'number');
+}
+
+function extractRolesFromToken(token: string): string[] {
+  const payload = decodeJwtPayload(token);
+  if (!payload || !Array.isArray(payload.roles)) return [];
+  return payload.roles.filter((s): s is string => typeof s === 'string');
+}
+
 export const authService = {
   login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
     localStorage.removeItem('tempToken');
@@ -65,8 +99,19 @@ export const authService = {
     }
 
     if (accessToken && user) {
+      const roleIds = extractRoleIdsFromToken(accessToken);
+      const roles = Array.isArray(user.roles) && user.roles.length > 0
+        ? user.roles
+        : extractRolesFromToken(accessToken);
+
+      const enrichedUser: AuthUser = {
+        ...user,
+        roles,
+        roleIds,
+      };
+
       localStorage.setItem('authToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
       if (response.data.refreshToken) {
         localStorage.setItem('refreshToken', response.data.refreshToken);
       }
@@ -90,9 +135,20 @@ export const authService = {
     const { accessToken, refreshToken, user } = response.data;
 
     if (accessToken && refreshToken && user) {
+      const roleIds = extractRoleIdsFromToken(accessToken);
+      const roles = Array.isArray(user.roles) && user.roles.length > 0
+        ? user.roles
+        : extractRolesFromToken(accessToken);
+
+      const enrichedUser: AuthUser = {
+        ...user,
+        roles,
+        roleIds,
+      };
+
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
-      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
       localStorage.removeItem('tempToken');
       localStorage.removeItem('tempCredentials');
       window.dispatchEvent(new CustomEvent('authTokenChanged'));
@@ -102,8 +158,15 @@ export const authService = {
   },
 
   getProfile: async (): Promise<AuthUser> => {
-    const response = await apiClient.get<AuthUser>('/auth/profile');
-    return response.data;
+    const response = await apiClient.get<{ user: { sub: number; email: string; roleIds: number[]; roles: string[]; twoFactorVerified: boolean } }>('/auth/profile');
+    const u = response.data.user;
+    return {
+      id: u.sub,
+      uEmail: u.email,
+      uName: '',
+      roles: Array.isArray(u.roles) ? u.roles : [],
+      roleIds: Array.isArray(u.roleIds) ? u.roleIds : [],
+    };
   },
 
   forgotPassword: async (email: string): Promise<{ message: string }> => {
@@ -141,7 +204,22 @@ export const authService = {
 
   getStoredUser: (): AuthUser | null => {
     const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr) return null;
+    try {
+      const parsed = JSON.parse(userStr) as Partial<AuthUser>;
+      if (!parsed || !Array.isArray(parsed.roles)) return null;
+      return {
+        id: parsed.id ?? 0,
+        uEmail: parsed.uEmail ?? '',
+        uName: parsed.uName ?? '',
+        uFLastName: parsed.uFLastName,
+        uSLastName: parsed.uSLastName,
+        roles: parsed.roles,
+        roleIds: Array.isArray(parsed.roleIds) ? parsed.roleIds : [],
+      };
+    } catch {
+      return null;
+    }
   },
 
   clearLocalSession: (): void => {

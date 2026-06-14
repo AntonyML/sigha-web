@@ -49,6 +49,21 @@ function moduleLabel(m: string): string {
 
 /* ─── Component ───────────────────────────────────────── */
 
+const SYSTEM_ROLE_NAMES: ReadonlySet<string> = new Set<string>([
+  'super admin',
+  'admin',
+  'director',
+  'nurse',
+  'physiotherapist',
+  'psychologist',
+  'social worker',
+  'not specified',
+]);
+
+function isSystemRoleName(name: string): boolean {
+  return SYSTEM_ROLE_NAMES.has(name.toLowerCase());
+}
+
 export default function ViewRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -146,10 +161,10 @@ export default function ViewRolePage() {
     const handleDeleteRole = async () => {
         if (!role) return;
 
-        if (role.rIsAdmin) {
+        if (isSystemRoleName(role.rName)) {
             feedback.showNotification({
                 title: 'No se puede eliminar',
-                message: 'No se pueden eliminar roles administrativos.',
+                message: 'No se pueden eliminar roles del sistema.',
                 variant: 'warning'
             });
             return;
@@ -276,7 +291,7 @@ export default function ViewRolePage() {
                                     <i className="bi bi-pencil"></i>
                                     Editar Rol
                                 </button>
-                                {role && canDeleteRoles && !role.rIsAdmin && (
+                                {role && canDeleteRoles && !isSystemRoleName(role.rName) && (
                                     <button
                                         className="btn btn-outline-danger d-flex align-items-center gap-2"
                                         onClick={handleDeleteRole}
@@ -432,7 +447,7 @@ export default function ViewRolePage() {
                                         <i className="bi bi-pencil me-2"></i>
                                         Editar Rol
                                     </button>
-                                    {role && canDeleteRoles && !role.rIsAdmin && (
+                                    {role && canDeleteRoles && !isSystemRoleName(role.rName) && (
                                         <button
                                             className="btn btn-outline-danger btn-sm"
                                             onClick={handleDeleteRole}

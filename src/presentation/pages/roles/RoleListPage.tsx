@@ -37,8 +37,8 @@ export default function RoleListPage() {
   }
 
     const handleDeleteRole = async (role: UserRole) => {
-        if (role.rIsAdmin) {
-            feedback.error('No se pueden eliminar los roles administrativos del sistema.')
+        if (isSystemRoleName(role.rName)) {
+            feedback.error('No se pueden eliminar los roles del sistema.');
             return;
         }
     const ok = await feedback.confirm('Eliminar rol', `¿Estás seguro de que deseas eliminar el rol "${role.rName}"?\n\nEsta acción no se puede deshacer.`)
@@ -160,7 +160,7 @@ export default function RoleListPage() {
                         <button className="lp-icon-btn lp-icon-btn--edit" title="Editar" onClick={() => navigate(`/roles/edit/${role.id}`)}>
                           <Pencil size={14} />
                         </button>
-                        {!role.rIsAdmin && (
+                        {!isSystemRoleName(role.rName) && (
                           <button className="lp-icon-btn lp-icon-btn--delete" title="Eliminar" onClick={() => handleDeleteRole(role)}>
                             <Trash2 size={14} />
                           </button>
@@ -182,4 +182,19 @@ export default function RoleListPage() {
       )}
     </div>
   )
+}
+
+const SYSTEM_ROLE_NAMES: ReadonlySet<string> = new Set<string>([
+  'super admin',
+  'admin',
+  'director',
+  'nurse',
+  'physiotherapist',
+  'psychologist',
+  'social worker',
+  'not specified',
+]);
+
+function isSystemRoleName(name: string): boolean {
+  return SYSTEM_ROLE_NAMES.has(name.toLowerCase());
 }

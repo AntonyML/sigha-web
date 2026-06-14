@@ -1,21 +1,16 @@
 import { userManagementService } from '../../../services/userManagementService';
 import type {
-  User,
-  CreateUserData,
-  UpdateUserData,
-  UserSearchParams
+    User,
+    CreateUserData,
+    UpdateUserData
 } from '../../../types/user';
 import {
-  validateCreateUserData,
-  validateUpdateUserData,
-  validateUserSearchParams,
-  getUserManagementErrorMessage
+    validateCreateUserData,
+    validateUpdateUserData,
+    getUserManagementErrorMessage
 } from './validation/userValidations';
 import type { AxiosError } from 'axios';
 
-/**
- * Resultado del flujo de obtención de usuarios
- */
 export interface GetUsersFlowResult {
     success: boolean;
     users?: User[];
@@ -23,18 +18,12 @@ export interface GetUsersFlowResult {
     error?: string;
 }
 
-/**
- * Resultado del flujo de obtención de un usuario
- */
 export interface GetUserFlowResult {
     success: boolean;
     user?: User;
     error?: string;
 }
 
-/**
- * Resultado del flujo de creación de usuario
- */
 export interface CreateUserFlowResult {
     success: boolean;
     user?: User;
@@ -42,9 +31,6 @@ export interface CreateUserFlowResult {
     error?: string;
 }
 
-/**
- * Resultado del flujo de actualización de usuario
- */
 export interface UpdateUserFlowResult {
     success: boolean;
     user?: User;
@@ -52,27 +38,18 @@ export interface UpdateUserFlowResult {
     error?: string;
 }
 
-/**
- * Resultado del flujo de eliminación de usuario
- */
 export interface DeleteUserFlowResult {
     success: boolean;
     message?: string;
     error?: string;
 }
 
-/**
- * Resultado del flujo de búsqueda de usuarios
- */
 export interface SearchUsersFlowResult {
     success: boolean;
     users?: User[];
     error?: string;
 }
 
-/**
- * Resultado del flujo de toggle de estado de usuario
- */
 export interface ToggleUserStatusFlowResult {
     success: boolean;
     user?: User;
@@ -80,22 +57,7 @@ export interface ToggleUserStatusFlowResult {
     error?: string;
 }
 
-/**
- * UserManagementFlow - Flujo de gestión administrativa de usuarios
- *
- * Maneja todas las operaciones de administración de usuarios:
- * - CRUD completo de usuarios
- * - Búsqueda y filtrado
- * - Gestión de estados de usuario
- *
- * Todas las operaciones incluyen validación del frontend y manejo robusto de errores.
- */
 export const userManagementFlow = {
-    /**
-     * Obtener todos los usuarios (Admin)
-     *
-     * @returns GetUsersFlowResult con la lista de usuarios
-     */
     async getAllUsers(): Promise<GetUsersFlowResult> {
         try {
             const users = await userManagementService.getAllUsers();
@@ -130,12 +92,6 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Obtener usuario por ID (Admin)
-     *
-     * @param id ID del usuario
-     * @returns GetUserFlowResult con el usuario encontrado
-     */
     async getUserById(id: number): Promise<GetUserFlowResult> {
         try {
             if (!id || id <= 0) {
@@ -183,15 +139,8 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Crear nuevo usuario (Admin)
-     *
-     * @param data Datos del nuevo usuario
-     * @returns CreateUserFlowResult con el usuario creado
-     */
     async createUser(data: CreateUserData): Promise<CreateUserFlowResult> {
         try {
-            // Validaciones del frontend
             const validationError = validateCreateUserData(data);
             if (validationError) {
                 return {
@@ -219,13 +168,6 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Actualizar usuario (Admin)
-     *
-     * @param id ID del usuario a actualizar
-     * @param data Datos a actualizar
-     * @returns UpdateUserFlowResult con el usuario actualizado
-     */
     async updateUser(id: number, data: UpdateUserData): Promise<UpdateUserFlowResult> {
         try {
             if (!id || id <= 0) {
@@ -235,7 +177,6 @@ export const userManagementFlow = {
                 };
             }
 
-            // Validaciones del frontend
             const validationError = validateUpdateUserData(data);
             if (validationError) {
                 return {
@@ -260,12 +201,6 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Eliminar usuario (Admin)
-     *
-     * @param id ID del usuario a eliminar
-     * @returns DeleteUserFlowResult con el resultado
-     */
     async deleteUser(id: number): Promise<DeleteUserFlowResult> {
         try {
             if (!id || id <= 0) {
@@ -313,12 +248,6 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Buscar usuarios
-     *
-     * @param searchTerm Término de búsqueda
-     * @returns SearchUsersFlowResult con los usuarios encontrados
-     */
     async searchUsers(searchTerm: string): Promise<SearchUsersFlowResult> {
         try {
             if (!searchTerm?.trim()) {
@@ -343,59 +272,6 @@ export const userManagementFlow = {
         }
     },
 
-    /**
-     * Obtener usuarios por rol
-     *
-     * @param roleId ID del rol
-     * @returns GetUsersFlowResult con los usuarios del rol
-     */
-    async getUsersByRole(roleId: number): Promise<GetUsersFlowResult> {
-        try {
-            if (!roleId || roleId <= 0) {
-                return {
-                    success: false,
-                    error: 'ID de rol inválido.',
-                };
-            }
-
-            const users = await userManagementService.getUsersByRole(roleId);
-
-            return {
-                success: true,
-                users,
-                total: users.length,
-            };
-        } catch (error: unknown) {
-            console.error('Error en userManagementFlow.getUsersByRole:', error);
-
-            const axiosError = error as AxiosError;
-            if (axiosError.response?.status === 401) {
-                return {
-                    success: false,
-                    error: 'No estás autenticado. Por favor inicia sesión.',
-                };
-            }
-
-            if (axiosError.response?.status === 403) {
-                return {
-                    success: false,
-                    error: 'No tienes permisos para ver usuarios por rol.',
-                };
-            }
-
-            return {
-                success: false,
-                error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al obtener usuarios por rol.',
-            };
-        }
-    },
-
-    /**
-     * Toggle estado de usuario (Admin)
-     *
-     * @param id ID del usuario
-     * @returns ToggleUserStatusFlowResult con el usuario actualizado
-     */
     async toggleUserStatus(id: number): Promise<ToggleUserStatusFlowResult> {
         try {
             if (!id || id <= 0) {
@@ -442,55 +318,6 @@ export const userManagementFlow = {
             return {
                 success: false,
                 error: (axiosError.response?.data as { message?: string } | undefined)?.message || 'Error al cambiar estado del usuario.',
-            };
-        }
-    },
-
-    /**
-     * Búsqueda avanzada de usuarios con filtros
-     *
-     * @param params Parámetros de búsqueda
-     * @returns GetUsersFlowResult con los usuarios filtrados
-     */
-    async searchUsersAdvanced(params: UserSearchParams): Promise<GetUsersFlowResult> {
-        try {
-            // Validar parámetros
-            const validationError = validateUserSearchParams(params);
-            if (validationError) {
-                return {
-                    success: false,
-                    error: validationError,
-                };
-            }
-
-            // Verificar que al menos un parámetro de búsqueda esté presente
-            if (!params.term?.trim() && !params.roleId) {
-                return {
-                    success: false,
-                    error: 'Debe proporcionar un término de búsqueda o seleccionar un rol.',
-                };
-            }
-
-            let users: User[];
-
-            if (params.term?.trim()) {
-                // Búsqueda por término
-                users = await userManagementService.searchUsers(params.term.trim());
-            } else {
-                // Búsqueda por rol
-                users = await userManagementService.getUsersByRole(params.roleId!);
-            }
-
-            return {
-                success: true,
-                users,
-                total: users.length,
-            };
-        } catch (error: unknown) {
-            console.error('Error en userManagementFlow.searchUsersAdvanced:', error);
-            return {
-                success: false,
-                error: getUserManagementErrorMessage(error),
             };
         }
     },

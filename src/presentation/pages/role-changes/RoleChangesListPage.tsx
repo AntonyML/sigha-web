@@ -2,14 +2,14 @@
  * RoleChangesListPage — Historial de cambios de roles
  *
  * Consume el backend real:
- *   GET /role-changes               → listado paginado con filtros
- *   GET /role-changes/statistics/summary → métricas agregadas
+ *   GET /role-changes                          → listado paginado con filtros
+ *   GET /role-changes/statistics/summary      → métricas agregadas
  *
  * Servicio y flow ya implementados:
  *   services/roleChangesService.ts
  *   infrastructure/flows/role-changes/roleChangesFlow.ts
  *
- * Filtros: tipo de cambio (ASSIGNMENT | REMOVAL | UPDATE), fechas desde/hasta.
+ * Filtros: idUser, changedBy, fechas desde/hasta.
  */
 
 import { useState, useEffect, useMemo } from 'react'
@@ -19,16 +19,25 @@ import {
   UserPlus, UserMinus, UserCog, RefreshCw, ArrowLeft, Filter,
 } from 'lucide-react'
 import { roleChangesFlow } from '../../../infrastructure/flows/role-changes'
-import { roleFlow } from '../../../infrastructure/flows/role'
 import type { RoleChange, RoleChangeStatistics } from '../../../types/roleChanges'
 import { usePagination } from '../../hooks/usePagination'
 import Pagination from '../../components/molecules/Pagination/Pagination'
 import '../../styles/lp.css'
 
-const CHANGE_TYPE_META: Record<RoleChange['changeType'], { label: string; color: string; icon: React.ReactNode }> = {
+type ChangeKind = 'ASSIGNMENT' | 'REMOVAL' | 'UPDATE';
+
+const CHANGE_KIND_META: Record<ChangeKind, { label: string; color: string; icon: React.ReactNode }> = {
   ASSIGNMENT: { label: 'Asignación', color: '#10b981', icon: <UserPlus size={12} /> },
   REMOVAL:    { label: 'Remoción',   color: '#ef4444', icon: <UserMinus size={12} /> },
   UPDATE:     { label: 'Actualización', color: '#3b82f6', icon: <UserCog size={12} /> },
+}
+
+function deriveChangeKind(rc: RoleChange): ChangeKind {
+  const hadOld = rc.oldRoleId !== null && rc.oldRoleId !== undefined;
+  const hasNew = rc.newRoleId !== null && rc.newRoleId !== undefined;
+  if (!hadOld && hasNew) return 'ASSIGNMENT';
+  if (hadOld && !hasNew) return 'REMOVAL';
+  return 'UPDATE';
 }
 
 function formatDate(iso?: string): string {
@@ -52,22 +61,17 @@ export default function RoleChangesListPage() {
   const [loadingStats, setLoadingStats] = useState(true)
   const [error, setError]           = useState('')
 
-  const [typeFilter, setTypeFilter]         = useState<'' | RoleChange['changeType']>('')
   const [startDate, setStartDate]           = useState('')
   const [endDate, setEndDate]               = useState('')
   const [searchTerm, setSearchTerm]         = useState('')
-  const [roleFilter, setRoleFilter]         = useState<number | ''>('')
-  const [rolesCatalog, setRolesCatalog]     = useState<{ id: number; rName: string }[]>([])
 
   const loadChanges = async () => {
     setLoading(true)
     setError('')
     try {
       const result = await roleChangesFlow.getAllRoleChanges({
-        changeType: typeFilter || undefined,
         startDate:  startDate || undefined,
         endDate:    endDate   || undefined,
-        roleId:     roleFilter === '' ? undefined : Number(roleFilter),
         limit: 100,
       })
       if (result.success && result.data) {
@@ -95,14 +99,7 @@ export default function RoleChangesListPage() {
     }
   }
 
-  /* Cargar catálogo de roles para el filtro */
-  useEffect(() => {
-    roleFlow.getAllRoles()
-      .then(r => { if (r.success && r.roles) setRolesCatalog(r.roles.map(rl => ({ id: rl.id, rName: rl.rName }))) })
-      .catch(err => console.error('Error cargando roles:', err))
-  }, [])
-
-  useEffect(() => { loadChanges() }, [typeFilter, startDate, endDate, roleFilter])
+  useEffect(() => { loadChanges() }, [startDate, endDate])
   useEffect(() => { loadStats() }, [])
 
   const filtered = useMemo(() => {
@@ -110,22 +107,34 @@ export default function RoleChangesListPage() {
     const q = searchTerm.toLowerCase()
     return changes.filter(c =>
       fullName(c.user).toLowerCase().includes(q) ||
-      fullName(c.admin).toLowerCase().includes(q) ||
+      fullName(c.changedByUser).toLowerCase().includes(q) ||
       (c.oldRole?.rName ?? '').toLowerCase().includes(q) ||
       (c.newRole?.rName ?? '').toLowerCase().includes(q) ||
-      (c.changeReason ?? '').toLowerCase().includes(q)
+      (c.rcOldRole ?? '').toLowerCase().includes(q) ||
+      (c.rcNewRole ?? '').toLowerCase().includes(q)
     )
   }, [changes, searchTerm])
 
   const { paginatedItems, page, totalPages, total, pageSize, goToPage } = usePagination(filtered)
 
   const handleClearFilters = () => {
-    setTypeFilter('')
     setStartDate('')
     setEndDate('')
-    setRoleFilter('')
     setSearchTerm('')
   }
+
+  const assignmentCount = useMemo(
+    () => changes.filter(c => deriveChangeKind(c) === 'ASSIGNMENT').length,
+    [changes]
+  )
+  const removalCount = useMemo(
+    () => changes.filter(c => deriveChangeKind(c) === 'REMOVAL').length,
+    [changes]
+  )
+  const updateCount = useMemo(
+    () => changes.filter(c => deriveChangeKind(c) === 'UPDATE').length,
+    [changes]
+  )
 
   return (
     <div className="lp-page">
@@ -151,10 +160,10 @@ export default function RoleChangesListPage() {
 
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
-        <KpiCard label="Total de cambios"  value={stats?.totalChanges ?? 0}               loading={loadingStats} accent="#3b82f6" />
-        <KpiCard label="Asignaciones"      value={stats?.changesByType.ASSIGNMENT ?? 0}   loading={loadingStats} accent="#10b981" />
-        <KpiCard label="Remociones"        value={stats?.changesByType.REMOVAL    ?? 0}   loading={loadingStats} accent="#ef4444" />
-        <KpiCard label="Actualizaciones"    value={stats?.changesByType.UPDATE     ?? 0}   loading={loadingStats} accent="#f59e0b" />
+        <KpiCard label="Total de cambios"  value={stats?.totalChanges ?? changes.length}  loading={loadingStats} accent="#3b82f6" />
+        <KpiCard label="Asignaciones"      value={assignmentCount}   loading={false} accent="#10b981" />
+        <KpiCard label="Remociones"        value={removalCount}     loading={false} accent="#ef4444" />
+        <KpiCard label="Actualizaciones"    value={updateCount}      loading={false} accent="#f59e0b" />
       </div>
 
       {/* Filtros */}
@@ -172,30 +181,6 @@ export default function RoleChangesListPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.8125rem' }}>
           <Filter size={14} aria-hidden="true" />
-          <select
-            className="form-select form-select-sm"
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value as any)}
-            aria-label="Filtrar por tipo de cambio"
-            style={{ width: 150 }}
-          >
-            <option value="">Todos los tipos</option>
-            <option value="ASSIGNMENT">Asignación</option>
-            <option value="REMOVAL">Remoción</option>
-            <option value="UPDATE">Actualización</option>
-          </select>
-          <select
-            className="form-select form-select-sm"
-            value={roleFilter === '' ? '' : String(roleFilter)}
-            onChange={e => setRoleFilter(e.target.value === '' ? '' : Number(e.target.value))}
-            aria-label="Filtrar por rol"
-            style={{ width: 180 }}
-          >
-            <option value="">Todos los roles</option>
-            {rolesCatalog.map(r => (
-              <option key={r.id} value={r.id}>{r.rName}</option>
-            ))}
-          </select>
           <input
             type="date"
             className="form-control form-control-sm"
@@ -214,7 +199,7 @@ export default function RoleChangesListPage() {
             title="Hasta"
             style={{ width: 150 }}
           />
-          {(typeFilter || startDate || endDate || roleFilter) && (
+          {(startDate || endDate || searchTerm) && (
             <button
               type="button"
               className="btn btn-link btn-sm text-decoration-none"
@@ -243,10 +228,10 @@ export default function RoleChangesListPage() {
       ) : filtered.length === 0 ? (
         <div className="lp-empty">
           <History size={48} className="lp-empty__icon" />
-          <p>{searchTerm || typeFilter || roleFilter || startDate || endDate
+          <p>{searchTerm || startDate || endDate
             ? 'Sin resultados para los filtros aplicados.'
             : 'Aún no hay cambios de roles registrados.'}</p>
-          {(searchTerm || typeFilter || roleFilter || startDate || endDate) && (
+          {(searchTerm || startDate || endDate) && (
             <button className="lp-btn lp-btn--back" onClick={handleClearFilters}>Limpiar filtros</button>
           )}
         </div>
@@ -262,15 +247,17 @@ export default function RoleChangesListPage() {
                   <th>Rol anterior</th>
                   <th>Rol nuevo</th>
                   <th>Realizado por</th>
-                  <th>Motivo</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedItems.map(c => {
-                  const meta = CHANGE_TYPE_META[c.changeType] ?? CHANGE_TYPE_META.UPDATE
+                  const kind = deriveChangeKind(c)
+                  const meta = CHANGE_KIND_META[kind]
+                  const oldName = c.oldRole?.rName ?? c.rcOldRole ?? null
+                  const newName = c.newRole?.rName ?? c.rcNewRole ?? null
                   return (
                     <tr key={c.id}>
-                      <td><span style={{ color: '#475569', fontSize: '0.8125rem', fontFamily: 'monospace' }}>{formatDate(c.createdAt)}</span></td>
+                      <td><span style={{ color: '#475569', fontSize: '0.8125rem', fontFamily: 'monospace' }}>{formatDate(c.changedAt)}</span></td>
                       <td>
                         <span
                           className="lp-badge"
@@ -285,23 +272,18 @@ export default function RoleChangesListPage() {
                         {c.user?.uEmail && <span className="lp-muted" style={{ fontSize: '0.75rem' }}>{c.user.uEmail}</span>}
                       </td>
                       <td>
-                        {c.oldRole
-                          ? <span className="lp-badge lp-badge--info">{c.oldRole.rName}</span>
+                        {oldName
+                          ? <span className="lp-badge lp-badge--info">{oldName}</span>
                           : <span className="lp-muted">—</span>}
                       </td>
                       <td>
-                        {c.newRole
-                          ? <span className="lp-badge lp-badge--success">{c.newRole.rName}</span>
+                        {newName
+                          ? <span className="lp-badge lp-badge--success">{newName}</span>
                           : <span className="lp-muted">—</span>}
                       </td>
                       <td>
-                        <strong style={{ display: 'block' }}>{fullName(c.admin)}</strong>
-                        {c.admin?.uEmail && <span className="lp-muted" style={{ fontSize: '0.75rem' }}>{c.admin.uEmail}</span>}
-                      </td>
-                      <td>
-                        <span className="lp-muted" style={{ fontSize: '0.8125rem' }}>
-                          {c.changeReason || <em>Sin motivo registrado</em>}
-                        </span>
+                        <strong style={{ display: 'block' }}>{fullName(c.changedByUser)}</strong>
+                        {c.changedByUser?.uEmail && <span className="lp-muted" style={{ fontSize: '0.75rem' }}>{c.changedByUser.uEmail}</span>}
                       </td>
                     </tr>
                   )

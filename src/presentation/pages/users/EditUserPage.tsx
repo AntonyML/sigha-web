@@ -6,10 +6,12 @@ import { permissionApiService } from '../../../services/permissionApiService';
 import { getFullName } from '../../../utils/userUtils';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import type { User, UserRole, UpdateUserData } from '../../../types/user';
-import type { Permission } from '../../../types/permissions';
+import type { Permission, PermissionModuleType } from '../../../types/permissions';
 import { PermissionModule } from '../../../types/permissions';
 import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessage';
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
+
+type PermissionActionType = string;
 
 interface UserFormData {
     uIdentification: string;
@@ -69,31 +71,8 @@ export default function EditUserPage() {
                     uSLastName: user.uSLastName || '',
                     uEmail: user.uEmail || '',
                     uPassword: '',
-                    roleId: user.roleId || 0
+                    roleId: 0,
                 });
-
-                // Cargar permisos del rol actual desde el backend
-                if (user.roleId) {
-                    try {
-                        const rolePerms = await permissionApiService.getByRole(user.roleId);
-                        const mapped: Permission[] = rolePerms
-                            .filter(rp => rp.rpGranted)
-                            .map(rp => ({
-                                module: rp.permission.pModule as PermissionModuleType,
-                                action: rp.permission.pAction as PermissionActionType,
-                                enabled: true,
-                            }));
-                        setPermissions(mapped);
-                        const initialSelected: Record<string, boolean> = {};
-                        mapped.forEach(permission => {
-                            const key = `${permission.module}:${permission.action}`;
-                            initialSelected[key] = true;
-                        });
-                        setSelectedPermissions(initialSelected);
-                    } catch (permErr) {
-                        console.error('Error cargando permisos del rol:', permErr);
-                    }
-                }
             } else {
                 setError(userResult.error || 'Error al cargar usuario');
             }
@@ -110,20 +89,13 @@ export default function EditUserPage() {
     }, [id]);
 
     useEffect(() => {
-        if (!id) {
-            setLoading(false);
-            return;
-        }
+        if (!id) { setLoading(false); return; }
         loadUserAndRoles();
     }, [id, loadUserAndRoles]);
 
     function onInputChange(field: keyof UserFormData, value: string | number | boolean) {
         setFormData((prev) => ({ ...prev, [field]: value }));
-
-        // Si cambiamos el rol, cargar los permisos de ese rol
-        if (field === 'roleId') {
-            loadRolePermissions(Number(value));
-        }
+        if (field === 'roleId') loadRolePermissions(Number(value));
     }
 
     async function loadRolePermissions(roleId: number) {
@@ -137,19 +109,16 @@ export default function EditUserPage() {
         setPermissionsLoading(true);
         setPermissionsError('');
 
-        // Crear un timeout para evitar loading infinito
         const timeoutId = setTimeout(() => {
-            console.warn('Timeout cargando permisos del rol:', roleId);
             setPermissions([]);
             setSelectedPermissions({});
             setPermissionsLoading(false);
             setPermissionsError('Tiempo de espera agotado al cargar permisos del rol');
-        }, 5000); // 5 segundos timeout
+        }, 5000);
 
         try {
             const rolePerms = await permissionApiService.getByRole(roleId);
             clearTimeout(timeoutId);
-
             const mapped: Permission[] = rolePerms
                 .filter(rp => rp.rpGranted)
                 .map(rp => ({
@@ -159,16 +128,12 @@ export default function EditUserPage() {
                 }));
             setPermissions(mapped);
             setPermissionsLoading(false);
-
             const initialSelected: Record<string, boolean> = {};
-            mapped.forEach(permission => {
-                const key = `${permission.module}:${permission.action}`;
-                initialSelected[key] = true;
-            });
+            mapped.forEach(p => { initialSelected[`${p.module}:${p.action}`] = true; });
             setSelectedPermissions(initialSelected);
-        } catch (error) {
+        } catch (err) {
             clearTimeout(timeoutId);
-            console.error('Error cargando permisos del rol:', error);
+            console.error('Error cargando permisos del rol:', err);
             setPermissions([]);
             setSelectedPermissions({});
             setPermissionsLoading(false);
@@ -177,51 +142,34 @@ export default function EditUserPage() {
     }
 
     function handlePermissionChange(module: string, action: string, enabled: boolean) {
-        const key = `${module}:${action}`;
-        setSelectedPermissions(prev => ({
-            ...prev,
-            [key]: enabled
-        }));
+        setSelectedPermissions(prev => ({ ...prev, [`${module}:${action}`]: enabled }));
     }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-
-        if (!id) {
-            setError('ID de usuario no válido');
-            return;
-        }
+        if (!id) { setError('ID de usuario no válido'); return; }
 
         setError('');
         setSaving(true);
 
-        // Construir objeto de actualización solo con campos modificados
         const updateData: UpdateUserData = {};
 
-        if (formData.uIdentification !== (originalUser?.uIdentification || '')) {
+        if (formData.uIdentification !== (originalUser?.uIdentification || ''))
             updateData.uIdentification = formData.uIdentification;
-        }
-        if (formData.uName !== originalUser?.uName) {
+        if (formData.uName !== originalUser?.uName)
             updateData.uName = formData.uName;
-        }
-        if (formData.uFLastName !== originalUser?.uFLastName) {
+        if (formData.uFLastName !== originalUser?.uFLastName)
             updateData.uFLastName = formData.uFLastName;
-        }
-        if (formData.uSLastName !== (originalUser?.uSLastName || '')) {
+        if (formData.uSLastName !== (originalUser?.uSLastName || ''))
             updateData.uSLastName = formData.uSLastName || undefined;
-        }
-        if (formData.uEmail !== originalUser?.uEmail) {
+        if (formData.uEmail !== originalUser?.uEmail)
             updateData.uEmail = formData.uEmail;
-        }
-        if (formData.roleId !== originalUser?.roleId) {
+        if (formData.roleId !== 0)
             updateData.roleId = formData.roleId;
-        }
 
-        // Asegurar que el usuario se mantenga activo al editar
         updateData.uIsActive = true;
 
-        // Verificar si hay cambios
-        if (Object.keys(updateData).length === 0) {
+        if (Object.keys(updateData).length <= 1) {
             setError('No se detectaron cambios para guardar');
             setSaving(false);
             return;
@@ -230,19 +178,6 @@ export default function EditUserPage() {
         const result = await userManagementFlow.updateUser(Number(id), updateData);
 
         if (result.success) {
-            // Registrar cambio de rol si aplica
-            if (updateData.roleId && originalUser) {
-                // TODO: Implementar logRoleChange en auditService
-                // const oldRole = roles.find(r => r.id === originalUser.roleId)?.rName || 'Desconocido';
-                // const newRole = roles.find(r => r.id === updateData.roleId)?.rName || 'Desconocido';
-                // await auditService.logRoleChange(
-                //     Number(id),
-                //     oldRole,
-                //     newRole,
-                //     `Cambio de rol de ${oldRole} a ${newRole} para usuario ${originalUser.uEmail}`
-                // );
-            }
-            
             feedback.success(result.message || 'Usuario actualizado exitosamente');
             feedback.showNotification({
                 title: 'Usuario actualizado',
@@ -328,12 +263,12 @@ export default function EditUserPage() {
                     <div className="col-12">
                         <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                             <div>
-                                <h1 className="h3 fw-bold mb-1">Editar Usuario</h1>
+                                <h1 className="h3 fw-bold mb-1">Editar Personal</h1>
                                 <p className="text-muted mb-0">{originalUser ? getFullName(originalUser) : `#${id}`}</p>
                             </div>
                             <button className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => navigate('/users')} disabled={saving}>
                                 <i className="bi bi-arrow-left"></i>
-                                Volver a la lista
+                                Volver al personal
                             </button>
                         </div>
                     </div>
@@ -367,66 +302,38 @@ export default function EditUserPage() {
                                             <label htmlFor="uIdentification" className="form-label fw-semibold">
                                                 Identificación <span className="text-danger">*</span>
                                             </label>
-                                            <input
-                                                id="uIdentification"
-                                                type="text"
-                                                className="form-control form-control-lg"
+                                            <input id="uIdentification" type="text" className="form-control form-control-lg"
                                                 value={formData.uIdentification}
                                                 onChange={(e) => onInputChange('uIdentification', e.target.value)}
-                                                placeholder="Ej: 123456789, 208890123"
-                                                required
-                                                disabled={saving}
-                                                pattern="^[0-9]+$"
-                                                title="Solo números (cédula o identificación)"
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Identificador único (solo números, sin letras ni caracteres especiales)
-                                            </small>
+                                                placeholder="Ej: 123456789" required disabled={saving}
+                                                pattern="^[0-9]+$" title="Solo números" />
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label htmlFor="uName" className="form-label fw-semibold">
                                                 Nombre <span className="text-danger">*</span>
                                             </label>
-                                            <input
-                                                id="uName"
-                                                type="text"
-                                                className="form-control form-control-lg"
+                                            <input id="uName" type="text" className="form-control form-control-lg"
                                                 value={formData.uName}
                                                 onChange={(e) => onInputChange('uName', e.target.value)}
-                                                placeholder="Nombre completo"
-                                                required
-                                                disabled={saving}
-                                            />
+                                                required disabled={saving} />
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label htmlFor="uFLastName" className="form-label fw-semibold">
                                                 Primer Apellido <span className="text-danger">*</span>
                                             </label>
-                                            <input
-                                                id="uFLastName"
-                                                type="text"
-                                                className="form-control form-control-lg"
+                                            <input id="uFLastName" type="text" className="form-control form-control-lg"
                                                 value={formData.uFLastName}
                                                 onChange={(e) => onInputChange('uFLastName', e.target.value)}
-                                                placeholder="Primer apellido"
-                                                required
-                                                disabled={saving}
-                                            />
+                                                required disabled={saving} />
                                         </div>
                                         <div className="col-12 col-md-6">
                                             <label htmlFor="uSLastName" className="form-label fw-semibold">
                                                 Segundo Apellido
                                             </label>
-                                            <input
-                                                id="uSLastName"
-                                                type="text"
-                                                className="form-control form-control-lg"
+                                            <input id="uSLastName" type="text" className="form-control form-control-lg"
                                                 value={formData.uSLastName}
                                                 onChange={(e) => onInputChange('uSLastName', e.target.value)}
-                                                placeholder="Segundo apellido (opcional)"
-                                                disabled={saving}
-                                            />
+                                                placeholder="Opcional" disabled={saving} />
                                         </div>
                                     </div>
                                 </div>
@@ -436,29 +343,19 @@ export default function EditUserPage() {
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
                                         <i className="bi bi-envelope me-2 text-primary"></i>
-                                        Información de Contacto
+                                        Correo Electrónico
                                     </h5>
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12">
                                             <label htmlFor="uEmail" className="form-label fw-semibold">
-                                                Correo Electrónico <span className="text-danger">*</span>
+                                                Correo <span className="text-danger">*</span>
                                             </label>
-                                            <input
-                                                id="uEmail"
-                                                type="email"
-                                                className="form-control form-control-lg"
+                                            <input id="uEmail" type="email" className="form-control form-control-lg"
                                                 value={formData.uEmail}
                                                 onChange={(e) => onInputChange('uEmail', e.target.value)}
-                                                placeholder="correo@ejemplo.com"
-                                                required
-                                                disabled={saving}
-                                            />
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Se utilizará para autenticación y notificaciones
-                                            </small>
+                                                required disabled={saving} />
                                         </div>
                                     </div>
                                 </div>
@@ -468,104 +365,77 @@ export default function EditUserPage() {
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
                                         <i className="bi bi-key me-2 text-primary"></i>
-                                        Rol y Permisos
+                                        Cambiar Rol Primario
                                     </h5>
+                                    <small className="text-muted d-block mt-1">
+                                        Opcional — solo completar si deseas cambiar el rol principal del usuario
+                                    </small>
                                 </div>
                                 <div className="card-body p-4">
                                     <div className="row g-4">
                                         <div className="col-12">
                                             <label htmlFor="roleId" className="form-label fw-semibold">
-                                                Asignar Rol <span className="text-danger">*</span>
+                                                Nuevo Rol Principal
                                             </label>
-                                            <select
-                                                id="roleId"
-                                                className="form-select form-select-lg"
+                                            <select id="roleId" className="form-select form-select-lg"
                                                 value={formData.roleId}
                                                 onChange={(e) => onInputChange('roleId', Number(e.target.value))}
-                                                required
-                                                disabled={saving}
-                                            >
-                                                <option value={0}>Seleccionar rol...</option>
+                                                disabled={saving}>
+                                                <option value={0}>Sin cambio de rol</option>
                                                 {roles.map(role => (
-                                                    <option key={role.id} value={role.id}>
-                                                        {role.rName}
-                                                    </option>
+                                                    <option key={role.id} value={role.id}>{role.rName}</option>
                                                 ))}
                                             </select>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Los permisos se definen según el rol asignado
-                                            </small>
                                         </div>
                                     </div>
 
                                     {permissions.length > 0 && (
-                                        <div className="row g-4 mt-2">
-                                            <div className="col-12">
-                                                <hr className="my-4" />
-                                                <h6 className="fw-semibold mb-3">
-                                                    <i className="bi bi-shield-check me-2 text-success"></i>
-                                                    Permisos del Rol
-                                                </h6>
-                                                {permissionsError ? (
-                                                    <AlertMessage
-                                                        type="danger"
-                                                        message={permissionsError}
-                                                        dismissible={true}
-                                                        onDismiss={() => setPermissionsError('')}
-                                                    />
-                                                ) : permissionsLoading ? (
-                                                    <LoadingSpinner message="Cargando permisos del rol..." size="sm" />
-                                                ) : permissions.length === 0 ? (
-                                                    <AlertMessage
-                                                        type="warning"
-                                                        message="No se encontraron permisos para este rol"
-                                                    />
-                                                ) : (
-                                                    <div className="row g-3">
-                                                        {Object.values(PermissionModule).map(module => {
-                                                            const modulePermissions = permissions.filter(p => p.module === module);
-                                                            if (modulePermissions.length === 0) return null;
-
-                                                            return (
-                                                                <div key={module} className="col-12 col-md-6 col-lg-4">
-                                                                    <div className="card border-light bg-light">
-                                                                        <div className="card-header bg-white py-2">
-                                                                            <small className="fw-semibold text-uppercase text-muted">
-                                                                                {module.replace('_', ' ')}
-                                                                            </small>
-                                                                        </div>
-                                                                        <div className="card-body p-3">
-                                                                            {modulePermissions.map(permission => {
-                                                                                const key = `${permission.module}:${permission.action}`;
-                                                                                return (
-                                                                                    <div key={key} className="form-check mb-2">
-                                                                                        <input
-                                                                                            className="form-check-input"
-                                                                                            type="checkbox"
-                                                                                            id={`perm-${key}`}
-                                                                                            checked={selectedPermissions[key] || false}
-                                                                                            onChange={(e) => handlePermissionChange(permission.module, permission.action, e.target.checked)}
-                                                                                            disabled={saving}
-                                                                                        />
-                                                                                        <label className="form-check-label small" htmlFor={`perm-${key}`}>
-                                                                                            {permission.action.replace('_', ' ')}
-                                                                                        </label>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                        </div>
+                                        <div className="mt-4">
+                                            <h6 className="fw-semibold mb-3">
+                                                <i className="bi bi-shield-check me-2 text-success"></i>
+                                                Permisos del nuevo rol
+                                            </h6>
+                                            {permissionsError ? (
+                                                <AlertMessage type="danger" message={permissionsError}
+                                                    dismissible onDismiss={() => setPermissionsError('')} />
+                                            ) : permissionsLoading ? (
+                                                <LoadingSpinner message="Cargando permisos..." size="sm" />
+                                            ) : (
+                                                <div className="row g-3">
+                                                    {Object.values(PermissionModule).map(module => {
+                                                        const modulePerms = permissions.filter(p => p.module === module);
+                                                        if (modulePerms.length === 0) return null;
+                                                        return (
+                                                            <div key={module} className="col-12 col-md-6 col-lg-4">
+                                                                <div className="card border-light bg-light">
+                                                                    <div className="card-header bg-white py-2">
+                                                                        <small className="fw-semibold text-uppercase text-muted">
+                                                                            {module.replace('_', ' ')}
+                                                                        </small>
+                                                                    </div>
+                                                                    <div className="card-body p-3">
+                                                                        {modulePerms.map(p => {
+                                                                            const key = `${p.module}:${p.action}`;
+                                                                            return (
+                                                                                <div key={key} className="form-check mb-2">
+                                                                                    <input className="form-check-input" type="checkbox"
+                                                                                        id={`perm-${key}`}
+                                                                                        checked={selectedPermissions[key] || false}
+                                                                                        onChange={(e) => handlePermissionChange(p.module, p.action, e.target.checked)}
+                                                                                        disabled={saving} />
+                                                                                    <label className="form-check-label small" htmlFor={`perm-${key}`}>
+                                                                                        {p.action.replace('_', ' ')}
+                                                                                    </label>
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                )}
-                                                <small className="text-muted d-block mt-3">
-                                                    <i className="bi bi-info-circle me-1"></i>
-                                                    Puedes ajustar los permisos específicos para este usuario
-                                                </small>
-                                            </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -575,41 +445,26 @@ export default function EditUserPage() {
                                 <div className="card-header bg-white border-bottom py-3">
                                     <h5 className="card-title mb-0 fw-semibold">
                                         <i className="bi bi-shield-lock me-2 text-primary"></i>
-                                        Credenciales de Seguridad
+                                        Contraseña
                                     </h5>
+                                    <small className="text-muted d-block mt-1">Dejar vacío para mantener la actual</small>
                                 </div>
                                 <div className="card-body p-4">
-                                    <div className="row g-4">
-                                        <div className="col-12">
-                                            <label htmlFor="uPassword" className="form-label fw-semibold">
-                                                Contraseña
-                                            </label>
-                                            <div className="position-relative">
-                                                <input
-                                                    id="uPassword"
-                                                    type={showPassword ? 'text' : 'password'}
-                                                    className="form-control form-control-lg"
-                                                    value={formData.uPassword}
-                                                    onChange={(e) => onInputChange('uPassword', e.target.value)}
-                                                    placeholder="Dejar vacío para mantener la actual"
-                                                    disabled={saving}
-                                                    minLength={8}
-                                                />
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 p-0 border-0 bg-transparent"
-                                                    onClick={() => setShowPassword(!showPassword)}
-                                                    style={{ zIndex: 5 }}
-                                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                                                    tabIndex={-1}
-                                                >
-                                                    <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-muted`} style={{ fontSize: '1.1rem' }}></i>
-                                                </button>
-                                            </div>
-                                            <small className="text-muted d-block mt-2">
-                                                <i className="bi bi-info-circle me-1"></i>
-                                                Completa solo si deseas cambiar la contraseña (mínimo 8 caracteres)
-                                            </small>
+                                    <div className="col-12 col-md-6">
+                                        <label htmlFor="uPassword" className="form-label fw-semibold">Nueva Contraseña</label>
+                                        <div className="position-relative">
+                                            <input id="uPassword" type={showPassword ? 'text' : 'password'}
+                                                className="form-control form-control-lg"
+                                                value={formData.uPassword}
+                                                onChange={(e) => onInputChange('uPassword', e.target.value)}
+                                                placeholder="Dejar vacío para no cambiar"
+                                                disabled={saving} minLength={8} />
+                                            <button type="button"
+                                                className="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 p-0 border-0 bg-transparent"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                tabIndex={-1} aria-label={showPassword ? 'Ocultar' : 'Mostrar'}>
+                                                <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'} text-muted`}></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -618,40 +473,20 @@ export default function EditUserPage() {
                             <div className="card shadow-sm border-0">
                                 <div className="card-body p-4">
                                     <div className="d-flex flex-column flex-sm-row gap-3">
-                                        <button 
-                                            type="submit" 
-                                            className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" 
-                                            disabled={saving}
-                                        >
+                                        <button type="submit" className="btn btn-outline-primary btn-lg px-4 d-flex align-items-center justify-content-center gap-2" disabled={saving}>
                                             {saving ? (
-                                                <>
-                                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                                    Guardando cambios...
-                                                </>
+                                                <><span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...</>
                                             ) : (
-                                                <>
-                                                    <i className="bi bi-check-circle"></i>
-                                                    Guardar Cambios
-                                                </>
+                                                <><i className="bi bi-check-circle"></i> Guardar Cambios</>
                                             )}
                                         </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
-                                            onClick={() => navigate('/users')}
-                                            disabled={saving}
-                                        >
-                                            <i className="bi bi-x-circle"></i>
-                                            Cancelar
+                                        <button type="button" className="btn btn-outline-secondary btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={() => navigate('/users')} disabled={saving}>
+                                            <i className="bi bi-x-circle"></i> Cancelar
                                         </button>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2 btn-outline-info-white-hover"
-                                            onClick={() => navigate(`/users/view/${id}`)}
-                                            disabled={saving}
-                                        >
-                                            <i className="bi bi-eye"></i>
-                                            Ver Detalles
+                                        <button type="button" className="btn btn-outline-info btn-lg px-4 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={() => navigate(`/users/view/${id}`)} disabled={saving}>
+                                            <i className="bi bi-eye"></i> Ver Detalles
                                         </button>
                                     </div>
                                 </div>

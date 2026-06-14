@@ -10,10 +10,6 @@ import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpi
 
 interface RoleFormData {
     rName: string;
-    rDescription?: string;
-    rIsAdmin?: boolean;
-    rRequires2FA?: boolean;
-    rIsActive?: boolean;
 }
 
 export default function EditRolePage() {
@@ -21,10 +17,10 @@ export default function EditRolePage() {
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
     const [formData, setFormData] = useState<RoleFormData>({
-        rName: '', rDescription: '', rIsAdmin: false, rRequires2FA: false, rIsActive: true
+        rName: ''
     });
     const [originalData, setOriginalData] = useState<RoleFormData>({
-        rName: '', rDescription: '', rIsAdmin: false, rRequires2FA: false, rIsActive: true
+        rName: ''
     });
     const [loading, setLoading] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
@@ -50,16 +46,11 @@ export default function EditRolePage() {
                 const result = await roleFlow.getRoleById(Number(id));
                 if (result.success && result.role) {
                     const roleData: RoleFormData = {
-                        rName: result.role.rName,
-                        rDescription: result.role.rDescription || '',
-                        rIsAdmin: result.role.rIsAdmin || false,
-                        rRequires2FA: result.role.rRequires2FA || false,
-                        rIsActive: result.role.rIsActive !== undefined ? result.role.rIsActive : true
+                        rName: result.role.rName
                     };
                     setFormData(roleData);
                     setOriginalData(roleData);
 
-                    // Cargar catálogo + permisos del rol desde el backend
                     setPermissionsLoading(true);
                     const [cat, rolePerms] = await Promise.all([
                         permissionApiService.getAll(),
@@ -72,9 +63,10 @@ export default function EditRolePage() {
                 } else {
                     setError(result.error || 'Error al cargar rol');
                 }
-            } catch (err: any) {
+            } catch (err: unknown) {
+                const e = err as { response?: { data?: { message?: string } } };
                 console.error('Error cargando rol/permisos:', err);
-                setError(err?.response?.data?.message || 'Error inesperado al cargar el rol');
+                setError(e?.response?.data?.message || 'Error inesperado al cargar el rol');
             } finally {
                 setLoadingData(false);
                 setPermissionsLoading(false);
@@ -101,7 +93,7 @@ export default function EditRolePage() {
         return byModule;
     }, [catalog]);
 
-    function onInputChange(field: keyof RoleFormData, value: string | boolean) {
+    function onInputChange(field: keyof RoleFormData, value: string) {
         setFormData(prev => ({ ...prev, [field]: value }));
     }
 
@@ -141,10 +133,6 @@ export default function EditRolePage() {
         try {
             const updateData: UpdateRoleData = {};
             if (formData.rName !== originalData.rName) updateData.rName = formData.rName;
-            if (formData.rDescription !== originalData.rDescription) updateData.rDescription = formData.rDescription;
-            if (formData.rIsAdmin !== originalData.rIsAdmin) updateData.rIsAdmin = formData.rIsAdmin;
-            if (formData.rRequires2FA !== originalData.rRequires2FA) updateData.rRequires2FA = formData.rRequires2FA;
-            if (formData.rIsActive !== originalData.rIsActive) updateData.rIsActive = formData.rIsActive;
 
             const result = await roleFlow.updateRole(Number(id), updateData);
 
@@ -165,9 +153,10 @@ export default function EditRolePage() {
             } else {
                 setError(result.error || 'Error al actualizar rol');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
             console.error('Error actualizando rol:', err);
-            setError(err?.response?.data?.message || 'Error inesperado al actualizar el rol');
+            setError(e?.response?.data?.message || 'Error inesperado al actualizar el rol');
         } finally {
             setLoading(false);
         }
@@ -272,31 +261,6 @@ export default function EditRolePage() {
                                             <div className="col-12 col-md-6">
                                                 <label htmlFor="rName" className="form-label fw-semibold">Nombre del Rol <span className="text-danger">*</span></label>
                                                 <input id="rName" type="text" className="form-control form-control-lg" value={formData.rName} onChange={e => onInputChange('rName', e.target.value)} required disabled={loading} minLength={3} maxLength={50} />
-                                            </div>
-                                            <div className="col-12 col-md-6">
-                                                <label htmlFor="rIsActive" className="form-label fw-semibold">Estado</label>
-                                                <div className="form-check form-switch">
-                                                    <input className="form-check-input" type="checkbox" id="rIsActive" checked={formData.rIsActive ?? true} onChange={e => onInputChange('rIsActive', e.target.checked)} disabled={loading} />
-                                                    <label className="form-check-label" htmlFor="rIsActive">{formData.rIsActive ? 'Activo' : 'Inactivo'}</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-12 col-md-6">
-                                                <label htmlFor="rIsAdmin" className="form-label fw-semibold">Rol Administrativo</label>
-                                                <div className="form-check form-switch">
-                                                    <input className="form-check-input" type="checkbox" id="rIsAdmin" checked={formData.rIsAdmin ?? false} onChange={e => onInputChange('rIsAdmin', e.target.checked)} disabled={loading} />
-                                                    <label className="form-check-label" htmlFor="rIsAdmin">{formData.rIsAdmin ? 'Es rol administrativo' : 'No es rol administrativo'}</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-12 col-md-6">
-                                                <label htmlFor="rRequires2FA" className="form-label fw-semibold">Requiere 2FA</label>
-                                                <div className="form-check form-switch">
-                                                    <input className="form-check-input" type="checkbox" id="rRequires2FA" checked={formData.rRequires2FA ?? false} onChange={e => onInputChange('rRequires2FA', e.target.checked)} disabled={loading} />
-                                                    <label className="form-check-label" htmlFor="rRequires2FA">{formData.rRequires2FA ? 'Requiere 2FA' : 'No requiere 2FA'}</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-12">
-                                                <label htmlFor="rDescription" className="form-label fw-semibold">Descripción</label>
-                                                <textarea id="rDescription" className="form-control form-control-lg" value={formData.rDescription ?? ''} onChange={e => onInputChange('rDescription', e.target.value)} disabled={loading} rows={3} maxLength={255} />
                                             </div>
                                         </div>
                                     </div>

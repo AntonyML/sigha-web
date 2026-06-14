@@ -1,24 +1,20 @@
-// ==================== Role Changes Types ====================
-
 export interface RoleChange {
   id: number;
-  userId: number;
-  adminId: number;
-  oldRoleId?: number;
-  newRoleId: number;
-  changeReason?: string;
-  changeType: 'ASSIGNMENT' | 'REMOVAL' | 'UPDATE';
-  createdAt: string;
-  updatedAt: string;
+  rcOldRole?: string | null;
+  rcNewRole?: string | null;
+  oldRoleId?: number | null;
+  newRoleId?: number | null;
+  idUser: number;
+  changedBy: number;
+  changedAt: string;
 
-  // Relaciones opcionales
   user?: {
     id: number;
     uName: string;
     uFLastName: string;
     uEmail: string;
   };
-  admin?: {
+  changedByUser?: {
     id: number;
     uName: string;
     uFLastName: string;
@@ -27,33 +23,29 @@ export interface RoleChange {
   oldRole?: {
     id: number;
     rName: string;
-  };
+  } | null;
   newRole?: {
     id: number;
     rName: string;
-  };
+  } | null;
 }
 
-// ==================== DTOs ====================
-
 export interface CreateRoleChangeData {
-  userId: number;
-  adminId: number;
+  idUser: number;
+  changedBy?: number;
   oldRoleId?: number;
-  newRoleId: number;
-  changeReason?: string;
-  changeType: 'ASSIGNMENT' | 'REMOVAL' | 'UPDATE';
+  newRoleId?: number;
+  rcOldRole?: string;
+  rcNewRole?: string;
 }
 
 export interface SearchRoleChangesData {
-  page?: number;
-  limit?: number;
-  userId?: number;
-  adminId?: number;
-  roleId?: number;
-  changeType?: 'ASSIGNMENT' | 'REMOVAL' | 'UPDATE';
+  idUser?: number;
+  changedBy?: number;
   startDate?: string;
   endDate?: string;
+  page?: number;
+  limit?: number;
 }
 
 export interface RoleChangesResponse {
@@ -66,18 +58,14 @@ export interface RoleChangesResponse {
 
 export interface RoleChangeStatistics {
   totalChanges: number;
-  changesByType: {
-    ASSIGNMENT: number;
-    REMOVAL: number;
-    UPDATE: number;
-  };
-  changesByMonth: Array<{
-    month: string;
-    count: number;
-  }>;
-  topAdmins: Array<{
+  changesByAdmin: Array<{
     adminId: number;
     adminName: string;
-    changesCount: number;
+    count: number;
   }>;
+  changesByRole: Array<{
+    role: string;
+    count: number;
+  }>;
+  recentChanges: RoleChange[];
 }

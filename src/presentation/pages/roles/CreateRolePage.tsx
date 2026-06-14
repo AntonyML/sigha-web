@@ -9,11 +9,7 @@ import { AlertMessage } from '../../components/molecules/AlertMessage/AlertMessa
 import { LoadingSpinner } from '../../components/atoms/LoadingSpinner/LoadingSpinner';
 
 const defaultRoleFormData: CreateRoleData = {
-    rName: '',
-    rDescription: '',
-    rIsAdmin: false,
-    rRequires2FA: false,
-    rIsActive: true
+    rName: ''
 };
 
 export default function CreateRolePage() {
@@ -39,7 +35,7 @@ export default function CreateRolePage() {
                 setPermissionsLoading(true);
                 const cat = await permissionApiService.getAll();
                 setCatalog(cat);
-                setGrantedIds(new Set()); // no permissions granted initially
+                setGrantedIds(new Set());
             } catch (err) {
                 console.error('Error verificando permisos o cargando catálogo:', err);
             } finally {
@@ -61,7 +57,7 @@ export default function CreateRolePage() {
         return byModule;
     }, [catalog]);
 
-    function onInputChange(field: keyof CreateRoleData, value: string | boolean) {
+    function onInputChange(field: keyof CreateRoleData, value: string) {
         setFormData(prev => ({ ...prev, [field]: value }));
     }
 
@@ -96,7 +92,6 @@ export default function CreateRolePage() {
         try {
             const result = await roleFlow.createRole(formData);
             if (result.success && result.role) {
-                // Persistir permisos del nuevo rol en el backend
                 try {
                     await permissionApiService.setRolePermissions(result.role.id, Array.from(grantedIds));
                 } catch (permError) {
@@ -114,9 +109,10 @@ export default function CreateRolePage() {
             } else {
                 setError(result.error || 'Error al crear rol');
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
             console.error('Error creando rol:', err);
-            setError(err?.response?.data?.message || 'Error inesperado al crear el rol');
+            setError(e?.response?.data?.message || 'Error inesperado al crear el rol');
         } finally {
             setLoading(false);
         }
@@ -128,9 +124,7 @@ export default function CreateRolePage() {
                 <div className="container-fluid py-4">
                     <div className="row justify-content-center">
                         <div className="col-12 col-md-8 col-lg-6">
-                            <AlertMessage type="warning" title="Sin permisos">
-                                No tienes permisos para crear roles. Solo los administradores del sistema pueden crear nuevos roles.
-                            </AlertMessage>
+                            <AlertMessage type="warning" message="No tienes permisos para crear roles. Solo los administradores del sistema pueden crear nuevos roles." />
                         </div>
                     </div>
                 </div>
@@ -181,22 +175,6 @@ export default function CreateRolePage() {
                                         <div className="col-12 col-md-6">
                                             <label htmlFor="rName" className="form-label fw-semibold">Nombre del Rol <span className="text-danger">*</span></label>
                                             <input id="rName" type="text" className="form-control form-control-lg" value={formData.rName} onChange={e => onInputChange('rName', e.target.value)} placeholder="Ej: Coordinador de Enfermería" required disabled={loading} minLength={3} maxLength={100} />
-                                        </div>
-                                        <div className="col-12 col-md-6">
-                                            <label htmlFor="rDescription" className="form-label fw-semibold">Descripción</label>
-                                            <input id="rDescription" type="text" className="form-control form-control-lg" value={formData.rDescription ?? ''} onChange={e => onInputChange('rDescription', e.target.value)} placeholder="Describe las responsabilidades y permisos de este rol..." disabled={loading} maxLength={255} />
-                                        </div>
-                                        <div className="col-12">
-                                            <div className="form-check form-switch">
-                                                <input className="form-check-input" type="checkbox" id="rIsAdmin" checked={formData.rIsAdmin ?? false} onChange={e => onInputChange('rIsAdmin', e.target.checked)} disabled={loading} />
-                                                <label className="form-check-label" htmlFor="rIsAdmin">Rol administrativo (permisos elevados)</label>
-                                            </div>
-                                        </div>
-                                        <div className="col-12">
-                                            <div className="form-check form-switch">
-                                                <input className="form-check-input" type="checkbox" id="rRequires2FA" checked={formData.rRequires2FA ?? false} onChange={e => onInputChange('rRequires2FA', e.target.checked)} disabled={loading} />
-                                                <label className="form-check-label" htmlFor="rRequires2FA">Requiere autenticación 2FA</label>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>

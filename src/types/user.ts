@@ -1,5 +1,3 @@
-// ==================== User Types ====================
-
 export interface User {
   id: number;
   uIdentification: string;
@@ -10,40 +8,12 @@ export interface User {
   uEmailVerified?: boolean;
   uIsActive?: boolean;
   createAt?: Date;
-  roleId?: number;
-  role?: UserRole;
 }
 
 export interface UserRole {
   id: number;
   rName: string;
-  rDescription?: string;
-  rIsAdmin?: boolean;
-  rRequires2FA?: boolean;
-  rIsActive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
 }
-
-// ==================== DTOs ====================
-
-export interface CreateRoleData {
-  rName: string;
-  rDescription?: string;
-  rIsAdmin?: boolean;
-  rRequires2FA?: boolean;
-  rIsActive?: boolean;
-}
-
-export interface UpdateRoleData {
-  rName?: string;
-  rDescription?: string;
-  rIsAdmin?: boolean;
-  rRequires2FA?: boolean;
-  rIsActive?: boolean;
-}
-
-// ==================== DTOs ====================
 
 export interface CreateUserData {
   uIdentification: string;
@@ -63,6 +33,14 @@ export interface UpdateUserData {
   uEmail?: string;
   roleId?: number;
   uIsActive?: boolean;
+}
+
+export interface CreateRoleData {
+  rName: string;
+}
+
+export interface UpdateRoleData {
+  rName?: string;
 }
 
 export interface UserChangePasswordData {

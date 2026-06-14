@@ -38,7 +38,6 @@ export interface UpdatePermissionPayload {
 }
 
 export const permissionApiService = {
-  // ── Catálogo ──
   getAll: (): Promise<PermissionApi[]> =>
     httpClient.get<PermissionApi[]>('/permissions').then(r => r.data),
 
@@ -54,7 +53,6 @@ export const permissionApiService = {
   remove: (id: number): Promise<void> =>
     httpClient.delete(`/permissions/${id}`).then(() => undefined),
 
-  // ── Por rol ──
   getByRole: (roleId: number): Promise<RolePermissionApi[]> =>
     httpClient.get<RolePermissionApi[]>(`/permissions/role/${roleId}`).then(r => r.data),
 

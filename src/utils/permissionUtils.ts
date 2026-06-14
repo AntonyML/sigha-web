@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { authStorage } from '../infrastructure/storage/authStorage';
 import { permissionApiService } from '../services/permissionApiService';
-import { roleFlow } from '../infrastructure/flows/role';
-import type { UserRole } from '../types/user';
 
 const PUBLIC_MODULES = new Set<string>([
   'profile',
@@ -17,8 +15,7 @@ type Listener = () => void;
 
 class PermissionUtilsImpl {
   private granted = new Set<string>();
-  private loadedForRoleId: number | null = null;
-  private rolesCache: UserRole[] | null = null;
+  private loadedForUserId: number | null = null;
   private inFlight: Promise<void> | null = null;
   private listeners = new Set<Listener>();
 
@@ -31,75 +28,69 @@ class PermissionUtilsImpl {
 
   private notify(): void {
     this.listeners.forEach((l) => {
-      try {
-        l();
-      } catch (err) {
-        console.error('PermissionUtils listener error:', err);
-      }
+      try { l(); } catch (err) { console.error('PermissionUtils listener error:', err); }
     });
   }
 
   isLoaded(): boolean {
-    return this.loadedForRoleId !== null;
+    return this.loadedForUserId !== null;
   }
 
   clearCache(): void {
     this.granted = new Set();
-    this.loadedForRoleId = null;
-    this.rolesCache = null;
+    this.loadedForUserId = null;
     this.inFlight = null;
     this.notify();
   }
 
   /**
-   * Carga (y cachea) los permisos efectivos del usuario autenticado.
-   * Resuelve el `roleId` desde el nombre del rol si es necesario.
+   * Carga los permisos efectivos del usuario autenticado.
+   * Fuente de verdad: roleIds del JWT (obtenidos vía /auth/profile),
+   * cruzados contra GET /permissions/role/:roleId por cada rol.
    */
   async load(force = false): Promise<void> {
     if (this.inFlight) return this.inFlight;
 
     const user = authStorage.getUser();
-    if (!user || user.role === undefined || user.role === null) {
+    if (!user) {
       this.granted = new Set();
-      this.loadedForRoleId = null;
+      this.loadedForUserId = null;
       this.notify();
       return;
     }
 
-    let roleId: number | null = typeof user.role === 'number' ? user.role : null;
+    const roleIds: number[] = Array.isArray(user.roleIds) ? user.roleIds : [];
 
-    if (roleId === null) {
-      const roleName = String(user.role).toLowerCase();
-      if (!this.rolesCache) {
-        const result = await roleFlow.getAllRoles();
-        this.rolesCache = result.roles ?? null;
-      }
-      const found = this.rolesCache?.find((r) => r.rName.toLowerCase() === roleName);
-      roleId = found?.id ?? null;
-    }
-
-    if (roleId === null) {
+    if (roleIds.length === 0) {
       this.granted = new Set();
-      this.loadedForRoleId = null;
+      this.loadedForUserId = user.id;
       this.notify();
       return;
     }
 
-    if (!force && this.loadedForRoleId === roleId) return;
+    if (!force && this.loadedForUserId === user.id) return;
 
     this.inFlight = (async () => {
       try {
-        const rolePerms = await permissionApiService.getByRole(roleId!);
-        this.granted = new Set(
-          rolePerms
-            .filter((rp) => rp.rpGranted && rp.permission.pEnabled)
-            .map((rp) => `${rp.permission.pModule}:${rp.permission.pAction}`)
+        const permsPerRole = await Promise.all(
+          roleIds.map(rid => permissionApiService.getByRole(rid).catch(() => []))
         );
-        this.loadedForRoleId = roleId;
+
+        const merged = new Set<string>();
+        for (const rolePerms of permsPerRole) {
+          for (const rp of rolePerms) {
+            if (rp.rpGranted && rp.permission.pEnabled) {
+              merged.add(`${rp.permission.pModule}:${rp.permission.pAction}`);
+            }
+          }
+        }
+
+        this.granted = merged;
+        this.loadedForUserId = user.id;
       } catch (err) {
         console.error('Error cargando permisos del usuario:', err);
         this.granted = new Set();
-        this.loadedForRoleId = null;
+        this.loadedForUserId = null;
       } finally {
         this.inFlight = null;
       }
@@ -108,8 +99,6 @@ class PermissionUtilsImpl {
 
     return this.inFlight;
   }
-
-  // ──────────────────── Consultas (síncronas, leen el caché) ────────────────────
 
   has(module: string, action: string): boolean {
     return this.granted.has(`${module}:${action}`);
@@ -129,10 +118,6 @@ class PermissionUtilsImpl {
     return this.has(module, action);
   }
 
-  /**
-   * Considera "admin" al usuario que puede gestionar usuarios, roles o permisos.
-   * Es síncrono: si el caché no se ha cargado, devuelve `false`.
-   */
   isAdminUser(): boolean {
     return (
       this.has('users', 'create') ||
@@ -147,94 +132,49 @@ class PermissionUtilsImpl {
     return this.has('roles', 'edit') || this.has('permissions', 'edit');
   }
 
-  // ──────────────────── Identidad de rol (cache-friendly) ────────────────────
-
-  getRoleName(): string | null {
+  getRoleNames(): string[] {
     const user = authStorage.getUser();
-    if (!user || user.role === undefined || user.role === null) return null;
-    if (typeof user.role === 'string') return user.role;
-    if (this.rolesCache) {
-      const found = this.rolesCache.find((r) => r.id === user.role);
-      if (found) return found.rName;
-    }
-    return null;
+    if (!user || !Array.isArray(user.roles)) return [];
+    return user.roles;
   }
 
-  getRoleNameLower(): string | null {
-    const name = this.getRoleName();
-    return name ? name.toLowerCase() : null;
+  getRoleNamesLower(): string[] {
+    return this.getRoleNames().map(r => r.toLowerCase());
+  }
+
+  hasRole(roleName: string): boolean {
+    return this.getRoleNamesLower().includes(roleName.toLowerCase());
   }
 
   isAuthenticated(): boolean {
     return authStorage.isAuthenticated();
   }
 
-  // ──────────────────── Alias de compatibilidad ────────────────────
-  // Mantienen la API que ya consumen los componentes (Navbar, Sidebar, Dashboard).
-  // Son síncronos y delegan al caché o al nombre del rol.
+  canViewAllUsers(): boolean { return this.canAccessModule('users'); }
+  canCreateUsers(): boolean { return this.canPerformAction('users', 'create'); }
+  canEditUsers(): boolean { return this.canPerformAction('users', 'edit'); }
+  canDeleteUsers(): boolean { return this.canPerformAction('users', 'delete'); }
+  canManageRoles(): boolean { return this.canAccessModule('roles') || this.isSuperAdminUser(); }
+  canToggleUserStatus(): boolean { return this.canPerformAction('users', 'edit'); }
+  isSuperAdmin(): boolean { return this.isSuperAdminUser(); }
+  isAdmin(): boolean { return this.isAdminUser(); }
 
-  canViewAllUsers(): boolean {
-    return this.canAccessModule('users');
-  }
-
-  canCreateUsers(): boolean {
-    return this.canPerformAction('users', 'create');
-  }
-
-  canEditUsers(): boolean {
-    return this.canPerformAction('users', 'edit');
-  }
-
-  canDeleteUsers(): boolean {
-    return this.canPerformAction('users', 'delete');
-  }
-
-  canManageRoles(): boolean {
-    return this.canAccessModule('roles') || this.isSuperAdminUser();
-  }
-
-  canToggleUserStatus(): boolean {
-    return this.canPerformAction('users', 'edit');
-  }
-
-  isSuperAdmin(): boolean {
-    return this.isSuperAdminUser();
-  }
-
-  isAdmin(): boolean {
-    return this.isAdminUser();
-  }
-
-  // Helpers legados (basados en el nombre del rol) — usados por Navbar/Sidebar
-  // para decidir si el usuario todavía no tiene un rol asignado.
-  isSuperAdminSync(): boolean {
-    return this.getRoleNameLower() === 'super admin';
-  }
-
-  isAdminSync(): boolean {
-    return this.getRoleNameLower() === 'admin';
-  }
-
+  isSuperAdminSync(): boolean { return this.hasRole('super admin'); }
+  isAdminSync(): boolean { return this.hasRole('admin'); }
   isAdminOrDirectorSync(): boolean {
-    const role = this.getRoleNameLower();
-    return role === 'super admin' || role === 'admin' || role === 'director';
+    return this.hasRole('super admin') || this.hasRole('admin') || this.hasRole('director');
   }
-
   isNotSpecifiedSync(): boolean {
-    const role = this.getRoleNameLower();
-    return role === null || role === 'not specified';
+    const names = this.getRoleNamesLower();
+    return names.length === 0 || (names.length === 1 && names[0] === 'not specified');
   }
-
-  isAdminModuleSync(module: string): boolean {
-    return ADMIN_MODULES.has(module);
-  }
+  isAdminModuleSync(module: string): boolean { return ADMIN_MODULES.has(module); }
 }
 
 export const PermissionUtils = new PermissionUtilsImpl();
 
 /**
  * Hook de React que se re-renderiza cuando el caché de permisos cambia.
- * Devuelve una vista estable de los métodos síncronos de `PermissionUtils`.
  */
 export function usePermissions() {
   const [, force] = useState(0);
@@ -248,8 +188,7 @@ export function usePermissions() {
   return {
     isLoaded: PermissionUtils.isLoaded(),
     canAccessModule: (module: string) => PermissionUtils.canAccessModule(module),
-    canPerformAction: (module: string, action: string) =>
-      PermissionUtils.canPerformAction(module, action),
+    canPerformAction: (module: string, action: string) => PermissionUtils.canPerformAction(module, action),
     isPublicModule: (module: string) => PermissionUtils.isPublicModule(module),
     isSuperAdmin: () => PermissionUtils.isSuperAdmin(),
     isAdmin: () => PermissionUtils.isAdmin(),
@@ -263,6 +202,8 @@ export function usePermissions() {
     canDeleteUsers: () => PermissionUtils.canDeleteUsers(),
     canManageRoles: () => PermissionUtils.canManageRoles(),
     canToggleUserStatus: () => PermissionUtils.canToggleUserStatus(),
+    getRoleNames: () => PermissionUtils.getRoleNames(),
+    hasRole: (role: string) => PermissionUtils.hasRole(role),
     load: (force = false) => PermissionUtils.load(force),
     clearCache: () => PermissionUtils.clearCache(),
   };

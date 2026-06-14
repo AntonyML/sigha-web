@@ -13,34 +13,25 @@ const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((reqConfig) => {
   const token = localStorage.getItem('authToken');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    reqConfig.headers.Authorization = `Bearer ${token}`;
   }
-  return config;
+  return reqConfig;
 });
 
 export const profileService = {
-  /**
-   * Obtener perfil propio
-   */
   getProfile: async (): Promise<User> => {
     const response = await apiClient.get<User>('/users/profile');
     return response.data;
   },
 
-  /**
-   * Actualizar perfil propio (campos limitados)
-   */
   updateProfile: async (data: Partial<UpdateUserData>): Promise<User> => {
     const response = await apiClient.patch<User>('/users/profile', data);
     return response.data;
   },
 
-  /**
-   * Cambiar contraseña propia
-   */
   changePassword: async (data: UserChangePasswordData): Promise<void> => {
     await apiClient.post('/users/change-password', data);
   },
