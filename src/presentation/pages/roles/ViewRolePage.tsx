@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useFeedbackWithNotifications } from '../../hooks/useFeedbackWithNotifications';
 import { roleFlow } from '../../../infrastructure/flows/role';
 import { permissionApiService } from '../../../services/permissionApiService';
+import { usePermissions } from '../../../utils/permissionUtils';
 import type { PermissionApi, RolePermissionApi } from '../../../services/permissionApiService';
 import type { UserRole } from '../../../types/user';
 
@@ -52,6 +53,8 @@ export default function ViewRolePage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+    const { canPerformAction, isLoaded: permsLoaded } = usePermissions();
+    const canDeleteRoles = permsLoaded ? canPerformAction('roles', 'delete') : false;
     const [role, setRole] = useState<UserRole | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
@@ -147,16 +150,6 @@ export default function ViewRolePage() {
             feedback.showNotification({
                 title: 'No se puede eliminar',
                 message: 'No se pueden eliminar roles administrativos.',
-                variant: 'warning'
-            });
-            return;
-        }
-
-        const criticalRoles = ['Super Admin', 'Administrador', 'Admin'];
-        if (criticalRoles.includes(role.rName)) {
-            feedback.showNotification({
-                title: 'No se puede eliminar',
-                message: 'Este es un rol crítico del sistema y no puede ser eliminado.',
                 variant: 'warning'
             });
             return;
@@ -283,7 +276,7 @@ export default function ViewRolePage() {
                                     <i className="bi bi-pencil"></i>
                                     Editar Rol
                                 </button>
-                                {role && !role.rIsAdmin && !['Super Admin', 'Administrador', 'Admin'].includes(role.rName) && (
+                                {role && canDeleteRoles && !role.rIsAdmin && (
                                     <button
                                         className="btn btn-outline-danger d-flex align-items-center gap-2"
                                         onClick={handleDeleteRole}
@@ -439,7 +432,7 @@ export default function ViewRolePage() {
                                         <i className="bi bi-pencil me-2"></i>
                                         Editar Rol
                                     </button>
-                                    {role && !role.rIsAdmin && !['Super Admin', 'Administrador', 'Admin'].includes(role.rName) && (
+                                    {role && canDeleteRoles && !role.rIsAdmin && (
                                         <button
                                             className="btn btn-outline-danger btn-sm"
                                             onClick={handleDeleteRole}

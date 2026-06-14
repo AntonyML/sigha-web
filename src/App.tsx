@@ -210,24 +210,24 @@ export default function App() {
               <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />
               <Route path="virtualFiles/view/:id" element={<ViewAdultsPage />} />
 
-              <Route path="users" element={<ListUser />} />
-              <Route path="users/create" element={<CreateUser />} />
-              <Route path="users/view/:id" element={<ViewUserPage />} />
-              <Route path="users/edit/:id" element={<EditUserPage />} />
-              <Route path="users/deleted" element={<DeletedUsersPage />} />
+              <Route path="users" element={<ProtectedRoute module="users"><ListUser /></ProtectedRoute>} />
+              <Route path="users/create" element={<ProtectedRoute module="users"><CreateUser /></ProtectedRoute>} />
+              <Route path="users/view/:id" element={<ProtectedRoute module="users"><ViewUserPage /></ProtectedRoute>} />
+              <Route path="users/edit/:id" element={<ProtectedRoute module="users"><EditUserPage /></ProtectedRoute>} />
+              <Route path="users/deleted" element={<ProtectedRoute module="users"><DeletedUsersPage /></ProtectedRoute>} />
 
               <Route path="profile" element={<ProfilePage />} />
               <Route path="profile/edit" element={<EditProfilePage />} />
 
-              <Route path="roles" element={<RoleListPage />} />
-              <Route path="roles/create" element={<CreateRolePage />} />
-              <Route path="roles/view/:id" element={<ViewRolePage />} />
-              <Route path="roles/edit/:id" element={<EditRolePage />} />
+              <Route path="roles" element={<ProtectedRoute module="roles"><RoleListPage /></ProtectedRoute>} />
+              <Route path="roles/create" element={<ProtectedRoute module="roles"><CreateRolePage /></ProtectedRoute>} />
+              <Route path="roles/view/:id" element={<ProtectedRoute module="roles"><ViewRolePage /></ProtectedRoute>} />
+              <Route path="roles/edit/:id" element={<ProtectedRoute module="roles"><EditRolePage /></ProtectedRoute>} />
 
-              <Route path="permissions" element={<PermissionListPage />} />
-              <Route path="permissions/create" element={<CreatePermissionPage />} />
-              <Route path="permissions/view/:id" element={<ViewPermissionPage />} />
-              <Route path="permissions/edit/:id" element={<EditPermissionPage />} />
+              <Route path="permissions" element={<ProtectedRoute module="permissions"><PermissionListPage /></ProtectedRoute>} />
+              <Route path="permissions/create" element={<ProtectedRoute module="permissions"><CreatePermissionPage /></ProtectedRoute>} />
+              <Route path="permissions/view/:id" element={<ProtectedRoute module="permissions"><ViewPermissionPage /></ProtectedRoute>} />
+              <Route path="permissions/edit/:id" element={<ProtectedRoute module="permissions"><EditPermissionPage /></ProtectedRoute>} />
 
               <Route path="programs" element={<ProgramListPage />} />
               <Route path="programs/create" element={<CreateProgramPage />} />
@@ -252,13 +252,13 @@ export default function App() {
               <Route path="nursing/appointments/:id/complete" element={<CompleteAppointment />} />
               <Route path="nursing/patients/:patientId/appointments" element={<PatientAppointments />} />
 
-              <Route path="audits" element={<AuditMenuPage />} />
-              <Route path="audits/list" element={<AuditListPage />} />
-              <Route path="audits/view/:id" element={<ViewAuditPage />} />
-              <Route path="audits/dashboard" element={<AuditDashboardPage />} />
-              <Route path="audits/activity-logs" element={<ActivityLogsPage />} />
-              <Route path="audits/security" element={<SecurityAuditPage />} />
-              <Route path="audits/system-health" element={<SystemHealthPage />} />
+              <Route path="audits" element={<ProtectedRoute module="audits"><AuditMenuPage /></ProtectedRoute>} />
+              <Route path="audits/list" element={<ProtectedRoute module="audits"><AuditListPage /></ProtectedRoute>} />
+              <Route path="audits/view/:id" element={<ProtectedRoute module="audits"><ViewAuditPage /></ProtectedRoute>} />
+              <Route path="audits/dashboard" element={<ProtectedRoute module="audits"><AuditDashboardPage /></ProtectedRoute>} />
+              <Route path="audits/activity-logs" element={<ProtectedRoute module="audits"><ActivityLogsPage /></ProtectedRoute>} />
+              <Route path="audits/security" element={<ProtectedRoute module="audits"><SecurityAuditPage /></ProtectedRoute>} />
+              <Route path="audits/system-health" element={<ProtectedRoute module="audits"><SystemHealthPage /></ProtectedRoute>} />
 
               <Route path="medical-records" element={<MedicalRecordsListPage />} />
               <Route path="medical-records/create" element={<CreateMedicalRecordPage />} />
