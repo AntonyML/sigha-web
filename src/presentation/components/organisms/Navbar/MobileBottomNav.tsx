@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Users, Calendar, User } from 'lucide-react';
+import { Home, LayoutGrid, Settings, User } from 'lucide-react';
 import './MobileBottomNav.css';
 
 interface MobileNavItem {
@@ -10,10 +10,10 @@ interface MobileNavItem {
 }
 
 const NAV_ITEMS: MobileNavItem[] = [
-  { id: 'home',         label: 'Inicio',         icon: <Home    className="mobile-nav-icon" />, path: '/dashboard'    },
-  { id: 'residents',    label: 'Residentes',      icon: <Users   className="mobile-nav-icon" />, path: '/virtualFiles' },
-  { id: 'activities',   label: 'Actividades',     icon: <Calendar className="mobile-nav-icon" />, path: '/programs'  },
-  { id: 'profile',      label: 'Perfil',          icon: <User    className="mobile-nav-icon" />, path: '/profile'     },
+  { id: 'home',   label: 'Inicio',         icon: <Home       className="mobile-nav-icon" />, path: '/dashboard' },
+  { id: 'admin',  label: 'Administración', icon: <LayoutGrid className="mobile-nav-icon" />, path: '/admin'     },
+  { id: 'config', label: 'Configuración',  icon: <Settings   className="mobile-nav-icon" />, path: '/settings'  },
+  { id: 'perfil', label: 'Perfil',         icon: <User       className="mobile-nav-icon" />, path: '/profile'   },
 ];
 
 export default function MobileBottomNav() {

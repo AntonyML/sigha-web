@@ -54,6 +54,10 @@ import PasswordRecoveryResetPage from './presentation/pages/login/PasswordRecove
 import TwoFactorVerificationPage from './presentation/pages/login/TwoFactorVerificationPage'
 import CreateUserPage from './presentation/pages/login/CreateUserPage'
 
+// Hubs
+import AdminHubPage from './presentation/pages/admin/AdminHubPage'
+import SettingsHubPage from './presentation/pages/settings/SettingsHubPage'
+
 //Older Adults
 import Dashboard from './presentation/pages/dashboard/DashboardPage'
 import ListVirtualFile from './presentation/pages/older-adults/OlderAdultsListPage'
@@ -205,6 +209,8 @@ export default function App() {
           <AppLayout>
             <Routes>
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="admin" element={<AdminHubPage />} />
+              <Route path="settings" element={<SettingsHubPage />} />
               <Route path="virtualFiles" element={<ListVirtualFile />} />
               <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
               <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />

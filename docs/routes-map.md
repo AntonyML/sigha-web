@@ -34,6 +34,8 @@ Mounted under `<Route path="/*" element={<AppLayout>...</AppLayout>} />`.
 |---|---|
 | `/main-menu` | `MainMenuPage` |
 | `/dashboard` | `DashboardPage` |
+| `/admin` | `AdminHubPage` (hub de administración) |
+| `/settings` | `SettingsHubPage` (hub de configuración) |
 
 ### Older adults (a.k.a. virtual files)
 
