@@ -2,48 +2,39 @@
 //
 // Wrapper único para la consulta de identificación de personas.
 //
-// Objetivo: centralizar en un solo punto la llamada al proveedor externo
-// de datos de identificación. Ningún otro archivo del front debe conocer
-// la URL, el proveedor, ni el formato de respuesta crudo — todos consumen
-// esta interfaz genérica.
+// Objetivo: centralizar en un solo punto la llamada a este servicio.
+// Ningún otro archivo del front debe conocer el proveedor real ni el
+// formato de respuesta crudo — todos consumen esta interfaz genérica.
 //
-// Ventajas de tenerlo centralizado acá:
-//   - Si el proveedor cambia (por ejemplo, se mueve a un endpoint propio
-//     del backend que actúe como proxy/cache), solo se edita este archivo.
-//   - Ningún texto ni componente de la UI expone el nombre del proveedor.
-//   - Permite agregar fácilmente timeout, caché, reintentos o rate-limiting
-//     en un solo lugar.
+// La consulta se resuelve contra nuestro propio backend (sigha-api), que
+// actúa como proxy hacia el proveedor externo. Esto evita:
+//   - Problemas de CORS (el navegador nunca llama directo al proveedor).
+//   - Exponer la URL/proveedor real en el bundle o en la pestaña Network.
+//   - Reenviar al usuario el texto o la estructura cruda del proveedor:
+//     el backend siempre normaliza la respuesta a { found, fullName }.
 
-import axios from 'axios';
+import { httpClient } from './httpClient';
 
 export interface PersonLookupResult {
   found: boolean;
   fullName?: string;
 }
 
-const LOOKUP_TIMEOUT_MS = 8000;
-
-// Endpoint del proveedor externo de identificación.
-// No exponer ni loguear esta URL en mensajes visibles al usuario.
-const IDENTIFICATION_LOOKUP_URL = 'https://api.hacienda.go.cr/fe/ae';
-
 export const personLookupService = {
   /**
    * Busca el nombre asociado a un número de identificación.
-   * Devuelve `{ found: false }` ante cualquier error o ausencia de datos,
-   * nunca lanza excepciones hacia el llamador.
+   * Devuelve `{ found: false }` ante cualquier error, nunca lanza excepciones
+   * hacia el llamador.
    */
   async lookupByIdentification(digits: string): Promise<PersonLookupResult> {
     try {
-      const { data } = await axios.get(IDENTIFICATION_LOOKUP_URL, {
-        params: { identificacion: digits },
-        timeout: LOOKUP_TIMEOUT_MS,
+      const { data } = await httpClient.get<PersonLookupResult>('/identification-lookup', {
+        params: { identification: digits },
       });
-
-      if (data?.nombre) {
-        return { found: true, fullName: data.nombre as string };
-      }
-      return { found: false };
+      return {
+        found: !!data?.found,
+        fullName: data?.fullName,
+      };
     } catch {
       return { found: false };
     }
