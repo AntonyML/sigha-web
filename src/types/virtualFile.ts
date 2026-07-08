@@ -1,3 +1,5 @@
+import { splitFullName } from '../utils/nameUtils';
+
 export interface VirtualFile {
   id?: number;
   // Personal Data
@@ -485,11 +487,15 @@ export function transformVirtualFileToApiPayload(
     subProgramId?: number | null;
   } = {}
 ): VirtualFileApiPayload {
-  // Dividir el nombre completo en partes
-  const nameParts = virtualFile.nombreApellido.trim().split(/\s+/);
-  const firstName = nameParts[0] || '';
-  const firstLastName = nameParts[1] || 'Apellido';
-  const secondLastName = nameParts.length >= 3 ? nameParts.slice(2).join(' ') : 'Apellido2';
+  // Dividir el nombre completo en partes.
+  // Las últimas 2 palabras SIEMPRE son los apellidos; todo lo demás son
+  // nombres de pila (una persona puede tener 1, 2 o 3 nombres).
+  // Ver src/utils/nameUtils.ts para la lógica centralizada.
+  const { givenNames, firstLastName: splitFirstLastName, secondLastName: splitSecondLastName } =
+    splitFullName(virtualFile.nombreApellido);
+  const firstName = givenNames;
+  const firstLastName = splitFirstLastName || 'Apellido';
+  const secondLastName = splitSecondLastName || 'Apellido2';
 
   // Obtener condiciones clínicas activas
   const activeConditions = Object.keys(CLINICAL_CONDITIONS_MAP)

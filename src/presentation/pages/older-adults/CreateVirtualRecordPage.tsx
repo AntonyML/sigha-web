@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useCedulaLookup } from '../../hooks/useCedulaLookup'
+import { splitFullName } from '../../../utils/nameUtils'
 import type { VirtualFile, ApiFamily, ApiMedication } from '../../../types/virtualFile'
 import type { Program } from '../../../types/program'
 import type { Vaccine } from '../../../types/vaccine'
@@ -148,13 +149,13 @@ export default function CreateVirtualFile() {
   } = useCedulaLookup(
     familyData.pf_identification,
     (nombre, normalized) => {
-      const parts = nombre.trim().split(/\s+/)
+      const { givenNames, firstLastName, secondLastName } = splitFullName(nombre)
       setFamilyData(p => ({
         ...p,
         pf_identification: normalized,
-        pf_name:       parts[0]  ?? '',
-        pf_f_last_name: parts[1] ?? '',
-        pf_s_last_name: parts.slice(2).join(' ') ?? '',
+        pf_name:        givenNames,
+        pf_f_last_name: firstLastName,
+        pf_s_last_name: secondLastName,
       }))
     }
   )
