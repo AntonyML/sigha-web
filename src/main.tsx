@@ -7,6 +7,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './assets/styles/global.css';
 
 import { FeedbackProvider } from './presentation/context/FeedbackContext';
+import { SettingsProvider } from './presentation/context/SettingsContext';
 import { Toast } from './presentation/components/molecules/Toast/Toast';
 import { PermissionUtils } from './utils/permissionUtils';
 import { authStorage } from './infrastructure/storage/authStorage';
@@ -28,6 +29,7 @@ window.addEventListener('authTokenChanged', () => {
 const isFileProtocol = window.location.protocol === 'file:';
 
 createRoot(document.getElementById('root')!).render(
+  <SettingsProvider>
   <FeedbackProvider>
     <Toast />
     {isFileProtocol ? (
@@ -40,6 +42,7 @@ createRoot(document.getElementById('root')!).render(
       </BrowserRouter>
     )}
   </FeedbackProvider>
+  </SettingsProvider>
 );
 
 void preloadPermissions();

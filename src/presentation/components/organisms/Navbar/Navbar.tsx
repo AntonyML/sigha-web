@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import type { AuthUser } from '../../../../types/auth';
+import { useAppSettings } from '../../../context/SettingsContext';
 import UserMenu        from './UserMenu';
 import MobileBottomNav from './MobileBottomNav';
 import GlobalSearch    from './GlobalSearch';
@@ -39,6 +40,7 @@ function buildDisplayName(user: AuthUser | null): string {
 
 export default function Navbar() {
   const [user, setUser] = useState<AuthUser | null>(getStoredUser);
+  const { appName } = useAppSettings();
 
   useEffect(() => {
     const refresh = () => setUser(getStoredUser());
@@ -61,11 +63,11 @@ export default function Navbar() {
         <div className="navbar-inner">
 
           {/* ── Left: Brand ── */}
-          <div className="navbar-brand" aria-label="ASOPOGUA — Inicio">
+          <div className="navbar-brand" aria-label={`${appName} — Inicio`}>
             <span className="navbar-brand-icon" aria-hidden="true">
-              <span>A</span>
+              <span>{appName.charAt(0)}</span>
             </span>
-            <span className="navbar-brand-name">ASOPOGUA</span>
+            <span className="navbar-brand-name">{appName}</span>
           </div>
 
           {/* ── Center: Global search ── */}
@@ -95,10 +97,10 @@ export default function Navbar() {
       <div className="navbar-mobile-top" aria-label="Barra superior">
         <div className="navbar-mobile-top-inner">
           <div className="navbar-brand">
-            <span className="navbar-brand-icon" aria-hidden="true">
-              <span>A</span>
-            </span>
-            <span className="navbar-brand-name">ASOPOGUA</span>
+<span className="navbar-brand-icon" aria-hidden="true">
+                <span>{appName.charAt(0)}</span>
+              </span>
+              <span className="navbar-brand-name">{appName}</span>
           </div>
 
           <NavbarBell />

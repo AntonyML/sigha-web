@@ -1,5 +1,6 @@
 import React from 'react'
-import Logo from '@/assets/images/asopogua.png'
+import fallbackLogo from '@/assets/images/asopogua.png'
+import { useAppSettings } from '../../../context/SettingsContext'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../atoms'
 
 interface AuthLayoutProps {
@@ -19,13 +20,14 @@ export function AuthLayout({
   onBackClick,
   backButtonText = "Volver"
 }: AuthLayoutProps) {
+  const { logoUrl, appName } = useAppSettings();
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4 tablet:p-6">
       <Card className="w-full max-w-[500px] tablet:max-w-[550px] shadow-2xl border-2 animate-fade-in">
         <CardHeader className="text-center space-y-2 pb-3">
           <img
-            src={Logo}
-            alt="Logo Hogar de Ancianos"
+            src={logoUrl || fallbackLogo}
+            alt={`Logo ${appName}`}
             className="w-24 h-24 mx-auto tablet:w-28 tablet:h-28 object-contain"
           />
           <div className="space-y-1">

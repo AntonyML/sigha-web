@@ -152,7 +152,6 @@ export default function GeneralSettingsPage() {
           <label className="block font-medium mb-1">Idioma</label>
           <select name="language" value={form.language} onChange={handleChange} className="input" disabled={!hasEdit}>
             <option value="es">Español</option>
-            <option value="en">English</option>
           </select>
         </div>
 
