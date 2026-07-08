@@ -6,6 +6,7 @@ import { NotificationProvider } from './presentation/components/organisms/Notifi
 import { TwoFactorProvider } from './infrastructure/flows/twoFactor'
 import { PermissionUtils } from './utils/permissionUtils';
 import InterfaceSettingsPage from './presentation/pages/settings/InterfaceSettingsPage';
+import GeneralSettingsPage from './presentation/pages/settings/GeneralSettingsPage';
 
 /* ─── Route guard: bloquea acceso si el usuario no tiene permiso sobre el módulo ── */
 
@@ -212,6 +213,7 @@ export default function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="admin" element={<AdminHubPage />} />
               <Route path="settings" element={<SettingsHubPage />} />
+              <Route path="settings/general" element={<GeneralSettingsPage />} />
               <Route path="settings/interface" element={<InterfaceSettingsPage />} />
               <Route path="virtualFiles" element={<ListVirtualFile />} />
               <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
