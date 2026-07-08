@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { personLookupService } from '../../services/personLookupService'
 
 /* ─────────────────────────────────────────────────────────────
    Tipos públicos
@@ -7,7 +8,7 @@ export type CedulaKind   = 'nacional' | 'dimex' | 'nite' | 'unknown'
 export type CedulaStatus = 'idle' | 'loading' | 'found' | 'notfound' | 'error'
 
 export interface CedulaLookupResult {
-  /** Estado actual de la consulta Hacienda */
+  /** Estado actual de la consulta de identificación */
   status: CedulaStatus
   /** Tipo de cédula detectado */
   kind: CedulaKind
@@ -92,7 +93,7 @@ export function toTitleCase(s: string): string {
 
 /**
  * Hook que encapsula toda la lógica de validación y consulta
- * de cédulas al API de Hacienda.
+ * de cédulas contra el servicio de identificación (ver personLookupService).
  *
  * @param cedula       Valor actual del campo (puede tener guiones, espacios…)
  * @param onNameFound  Callback cuando se obtuvo el nombre; recibe (nombre, cedulaNormalizada)
@@ -113,26 +114,19 @@ export function useCedulaLookup(
   const debounceRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRunRef  = useRef(true)
 
-  /* ── Función que realiza la consulta a Hacienda ─────────── */
-  const fetchHacienda = useCallback(async (digits: string) => {
+  /* ── Función que realiza la consulta de identificación ──── */
+  const fetchIdentification = useCallback(async (digits: string) => {
     setStatus('loading')
     setHelperText('Consultando…')
-    try {
-      const res = await fetch(`https://api.hacienda.go.cr/fe/ae?identificacion=${digits}`)
-      if (!res.ok) throw new Error('not found')
-      const data = await res.json()
-      if (data?.nombre) {
-        const nombre = toTitleCase(data.nombre)
-        onNameFound(nombre, digits)
-        setStatus('found')
-        setHelperText(`✓ Encontrado: ${nombre}`)
-      } else {
-        setStatus('notfound')
-        setHelperText('No se encontró registro en Hacienda.')
-      }
-    } catch {
+    const result = await personLookupService.lookupByIdentification(digits)
+    if (result.found && result.fullName) {
+      const nombre = toTitleCase(result.fullName)
+      onNameFound(nombre, digits)
+      setStatus('found')
+      setHelperText(`✓ Encontrado: ${nombre}`)
+    } else {
       setStatus('notfound')
-      setHelperText('No se encontró registro en Hacienda.')
+      setHelperText('No se encontró un registro asociado a este número.')
     }
   }, [onNameFound])
 
@@ -175,7 +169,7 @@ export function useCedulaLookup(
     if (detectedKind === 'nite') {
       setNormalizedRaw(digits)
       setHelperText('Cédula jurídica (NITE) detectada.')
-      // También buscar en Hacienda
+      // También se podría consultar el nombre para NITE si el proveedor lo soporta
     }
 
     /* Nacional (incluye cortas de 6-8 dígitos) */
@@ -193,7 +187,7 @@ export function useCedulaLookup(
       // Lanzar búsqueda con debounce
       if (debounceRef.current) clearTimeout(debounceRef.current)
       setStatus('loading')
-      debounceRef.current = setTimeout(() => fetchHacienda(normalized), 600)
+      debounceRef.current = setTimeout(() => fetchIdentification(normalized), 600)
       return
     }
 
@@ -211,8 +205,8 @@ export function useCedulaLookup(
     setShowForeignDialog(false)
     setHelperText('Cédula extranjera confirmada. Consultando…')
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => fetchHacienda(pendingDimex), 300)
-  }, [pendingDimex, fetchHacienda])
+    debounceRef.current = setTimeout(() => fetchIdentification(pendingDimex), 300)
+  }, [pendingDimex, fetchIdentification])
 
   const denyForeign = useCallback(() => {
     setShowForeignDialog(false)

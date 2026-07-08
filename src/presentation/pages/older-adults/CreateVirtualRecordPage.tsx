@@ -74,7 +74,7 @@ export default function CreateVirtualFile() {
   const [saving,         setSaving]         = useState(false)
   const [ingresoDisplay, setIngresoDisplay] = useState('')
 
-  /* ── Cédula: validación, normalización y consulta Hacienda ── */
+  /* ── Cédula: validación, normalización y consulta de identificación ── */
   const {
     status:           cedulaStatus,
     helperText:       cedulaHelper,
