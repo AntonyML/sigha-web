@@ -15,6 +15,7 @@ export interface Notification {
   nMessage: string;
   nSendDate?: string;
   nSent: boolean;
+  nStatus?: string;
   created_at: string;
   updated_at?: string;
   sender?: {

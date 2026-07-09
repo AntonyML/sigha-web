@@ -27,8 +27,11 @@ export default function ViewNotificationPage() {
       try {
         const data = await notificationService.getNotificationById(Number(id));
         setNotification(data);
-      } catch (err) {
-        console.error('Error loading notification:', err);
+        if (data.nStatus !== 'read') {
+          await notificationService.markAsRead(Number(id));
+          setNotification(prev => prev ? { ...prev, nStatus: 'read' } : prev);
+        }
+      } catch {
         setError('Error al cargar la notificación');
       } finally {
         setLoading(false);

@@ -72,6 +72,15 @@ export const notificationService = {
   },
 
   /**
+   * Marcar notificación como leída
+   * Endpoint: PATCH /notifications/:id/read
+   */
+  async markAsRead(id: number): Promise<Notification> {
+    const response = await apiClient.patch<SingleNotificationApiResponse>(`/notifications/${id}/read`);
+    return response.data.data;
+  },
+
+  /**
    * Eliminar notificación
    * Endpoint: DELETE /notifications/:id
    */

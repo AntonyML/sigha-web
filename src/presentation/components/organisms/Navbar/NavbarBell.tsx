@@ -145,7 +145,9 @@ export default function NavbarBell() {
             )}
 
             {!error && notifications.map(n => (
-              <article key={n.id} className="nbell-item">
+              <article key={n.id} className="nbell-item" role="button" tabIndex={0}
+                onClick={() => { setOpen(false); navigate(`/notifications/${n.id}`); }}
+                onKeyDown={e => { if (e.key === 'Enter') { setOpen(false); navigate(`/notifications/${n.id}`); } }}>
                 <div className="nbell-item-body">
                   <p className="nbell-item-title">{n.nTitle}</p>
                   <p className="nbell-item-msg">{n.nMessage}</p>
