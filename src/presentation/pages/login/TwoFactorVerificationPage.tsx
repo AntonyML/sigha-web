@@ -44,19 +44,15 @@ export default function TwoFactorVerificationPage() {
 
     try {
       const result = await authFlow.verify2FA(twoFactorCode)
-      console.log('Resultado de verify2FA:', result)
 
       if (!result.success) {
-        console.log('Verificación fallida:', result.error)
         setError(result.error || 'Código 2FA inválido')
         return
       }
 
       if (result.user) {
-        console.log('Usuario verificado, navegando al dashboard:', result.user)
         navigate('/dashboard')
       } else {
-        console.log('Verificación exitosa pero sin usuario')
         setError('Verificación exitosa pero no se recibió información del usuario')
       }
     } catch (err: unknown) {

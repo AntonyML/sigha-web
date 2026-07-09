@@ -91,10 +91,6 @@ export const authService = {
 
     if (requiresTwoFactor && tempToken) {
       localStorage.setItem('tempToken', tempToken);
-      localStorage.setItem('tempCredentials', JSON.stringify({
-        uEmail: credentials.uEmail,
-        uPassword: credentials.uPassword
-      }));
       return response.data;
     }
 
@@ -121,14 +117,13 @@ export const authService = {
   },
 
   verify2FA: async (twoFactorCode: string): Promise<LoginResponse> => {
-    const tempCredentials = authService.getTempCredentials();
-    if (!tempCredentials) {
-      throw new Error('No se encontraron credenciales temporales. Inicia sesión nuevamente.');
+    const tempToken = authService.getTempToken();
+    if (!tempToken) {
+      throw new Error('No se encontró un token temporal de verificación. Inicia sesión nuevamente.');
     }
 
-    const response = await apiClient.post<LoginResponse>('/auth/login', {
-      uEmail: tempCredentials.uEmail,
-      uPassword: tempCredentials.uPassword,
+    const response = await apiClient.post<LoginResponse>('/auth/verify-2fa', {
+      tempToken,
       twoFactorCode: twoFactorCode.replace(/[\s-]/g, ''),
     });
 
@@ -150,7 +145,6 @@ export const authService = {
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(enrichedUser));
       localStorage.removeItem('tempToken');
-      localStorage.removeItem('tempCredentials');
       window.dispatchEvent(new CustomEvent('authTokenChanged'));
     }
 
@@ -196,11 +190,6 @@ export const authService = {
   getToken: (): string | null => localStorage.getItem('authToken'),
 
   getTempToken: (): string | null => localStorage.getItem('tempToken'),
-
-  getTempCredentials: (): { uEmail: string; uPassword: string } | null => {
-    const creds = localStorage.getItem('tempCredentials');
-    return creds ? JSON.parse(creds) : null;
-  },
 
   getStoredUser: (): AuthUser | null => {
     const userStr = localStorage.getItem('user');
