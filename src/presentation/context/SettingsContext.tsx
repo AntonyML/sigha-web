@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { settingsService } from '../../services/settingsService';
+import { hexToHsl } from '../../utils/colorUtils';
 
 export interface AppSettings {
   appName: string;
@@ -7,14 +8,29 @@ export interface AppSettings {
   timezone: string;
 }
 
-const DEFAULTS: AppSettings = {
+export interface InterfaceSettings {
+  theme: string;
+  density: string;
+  typography: string;
+  brandColor: string;
+}
+
+const GENERAL_DEFAULTS: AppSettings = {
   appName: 'ASOPOGUA',
   logoUrl: '',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
+const INTERFACE_DEFAULTS: InterfaceSettings = {
+  theme: 'light',
+  density: 'comfortable',
+  typography: 'system-ui, -apple-system, sans-serif',
+  brandColor: '#2563eb',
+};
+
 interface SettingsContextType {
-  settings: AppSettings;
+  general: AppSettings;
+  interface: InterfaceSettings;
   loaded: boolean;
 }
 
@@ -24,34 +40,83 @@ function hasToken(): boolean {
   return !!localStorage.getItem('authToken');
 }
 
+function applyInterfaceSettings(s: InterfaceSettings): void {
+  const root = document.documentElement;
+
+  /* Theme */
+  if (s.theme === 'dark') {
+    root.classList.add('dark');
+  } else if (s.theme === 'light') {
+    root.classList.remove('dark');
+  } else {
+    /* 'system' — match OS preference */
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    root.classList.toggle('dark', mq.matches);
+  }
+
+  /* Brand color (HEX → HSL) */
+  if (s.brandColor) {
+    root.style.setProperty('--primary', hexToHsl(s.brandColor));
+  }
+
+  /* Typography */
+  root.style.setProperty('--font-family', s.typography);
+
+  /* Density */
+  root.dataset.density = s.density;
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULTS);
+  const [general, setGeneral] = useState<AppSettings>(GENERAL_DEFAULTS);
+  const [interfaceSettings, setInterfaceSettings] = useState<InterfaceSettings>(INTERFACE_DEFAULTS);
   const [loaded, setLoaded] = useState(false);
 
   const fetch = useCallback(() => {
     let cancelled = false;
     if (!hasToken()) {
       setLoaded(true);
-      document.title = DEFAULTS.appName;
+      document.title = GENERAL_DEFAULTS.appName;
+      applyInterfaceSettings(INTERFACE_DEFAULTS);
       return;
     }
-    settingsService
-      .getGeneralSettings()
-      .then((s) => {
-        if (cancelled) return;
-        setSettings({
-          appName: s.appName || DEFAULTS.appName,
-          logoUrl: s.logoUrl || '',
-          timezone: s.timezone || DEFAULTS.timezone,
+
+    Promise.all([
+      settingsService.getGeneralSettings().catch(() => null),
+      settingsService.getInterfaceSettings().catch(() => null),
+    ]).then(([generalData, interfaceData]) => {
+      if (cancelled) return;
+
+      if (generalData) {
+        setGeneral({
+          appName: generalData.appName || GENERAL_DEFAULTS.appName,
+          logoUrl: generalData.logoUrl || '',
+          timezone: generalData.timezone || GENERAL_DEFAULTS.timezone,
         });
-        setLoaded(true);
-        document.title = s.appName || DEFAULTS.appName;
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setLoaded(true);
-        document.title = DEFAULTS.appName;
-      });
+        document.title = generalData.appName || GENERAL_DEFAULTS.appName;
+      } else {
+        setGeneral(GENERAL_DEFAULTS);
+        document.title = GENERAL_DEFAULTS.appName;
+      }
+
+      const iface: InterfaceSettings = {
+        theme: interfaceData?.theme || INTERFACE_DEFAULTS.theme,
+        density: interfaceData?.density || INTERFACE_DEFAULTS.density,
+        typography: interfaceData?.typography || INTERFACE_DEFAULTS.typography,
+        brandColor: interfaceData?.brandColor || INTERFACE_DEFAULTS.brandColor,
+      };
+      setInterfaceSettings(iface);
+      applyInterfaceSettings(iface);
+
+      setLoaded(true);
+    }).catch(() => {
+      if (cancelled) return;
+      setGeneral(GENERAL_DEFAULTS);
+      setInterfaceSettings(INTERFACE_DEFAULTS);
+      applyInterfaceSettings(INTERFACE_DEFAULTS);
+      document.title = GENERAL_DEFAULTS.appName;
+      setLoaded(true);
+    });
+
     return () => { cancelled = true; };
   }, []);
 
@@ -62,7 +127,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [fetch]);
 
   return (
-    <SettingsContext.Provider value={{ settings, loaded }}>
+    <SettingsContext.Provider value={{ general, interface: interfaceSettings, loaded }}>
       {children}
     </SettingsContext.Provider>
   );
@@ -70,6 +135,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
 export function useAppSettings(): AppSettings {
   const ctx = useContext(SettingsContext);
-  if (!ctx) return DEFAULTS;
-  return ctx.settings;
+  if (!ctx) return GENERAL_DEFAULTS;
+  return ctx.general;
+}
+
+export function useInterfaceSettings(): InterfaceSettings {
+  const ctx = useContext(SettingsContext);
+  if (!ctx) return INTERFACE_DEFAULTS;
+  return ctx.interface;
 }

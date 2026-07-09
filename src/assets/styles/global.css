@@ -24,6 +24,10 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    --font-family: system-ui, -apple-system, sans-serif;
+    --page-padding: 2rem 1.5rem;
+    --section-gap: 1rem;
   }
 
   .dark {
@@ -47,6 +51,16 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
   }
+
+  html[data-density="compact"] {
+    --page-padding: 1rem;
+    --section-gap: 0.5rem;
+  }
+
+  html[data-density="spacious"] {
+    --page-padding: 2.5rem 2rem;
+    --section-gap: 1.5rem;
+  }
 }
 
 @layer base {
@@ -56,6 +70,7 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-family);
   }
 }
 

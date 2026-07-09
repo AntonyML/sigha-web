@@ -19,10 +19,10 @@ export default function InterfaceSettingsPage() {
   const hasAccess = PermissionUtils.canAccessModule('settings')
 
   const [form, setForm] = useState<FormState>({
-    theme: '',
-    density: '',
-    typography: '',
-    brandColor: '#ffffff',
+    theme: 'light',
+    density: 'comfortable',
+    typography: 'system-ui, -apple-system, sans-serif',
+    brandColor: '#2563eb',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -38,9 +38,14 @@ export default function InterfaceSettingsPage() {
     ;(async () => {
       try {
         const data = await settingsService.getInterfaceSettings()
-        setForm(data)
+        setForm({
+          theme: data.theme || 'light',
+          density: data.density || 'comfortable',
+          typography: data.typography || 'system-ui, -apple-system, sans-serif',
+          brandColor: data.brandColor || '#2563eb',
+        })
       } catch (e: any) {
-        setError(e?.response?.data?.message ?? 'Error al cargar la configuración.')
+        setError(e?.response?.data?.message ?? 'No se pudo cargar la configuración de interfaz. Si es la primera vez, guarda los valores para inicializarla.')
       } finally {
         setLoading(false)
       }
@@ -114,7 +119,12 @@ export default function InterfaceSettingsPage() {
         {/* Tipografía */}
         <div>
           <label className="block font-medium mb-1">Tipografía</label>
-          <input name="typography" value={form.typography} onChange={handleChange} className="input" placeholder="Ej.: Inter, Roboto" />
+          <select name="typography" value={form.typography} onChange={handleChange} className="input">
+            <option value="system-ui, -apple-system, sans-serif">Sistema (predeterminado)</option>
+            <option value='Georgia, "Times New Roman", serif'>Serif (tradicional)</option>
+            <option value='"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'>Sans-serif (legible)</option>
+            <option value='"Courier New", Consolas, monospace'>Monoespaciada</option>
+          </select>
         </div>
         {/* Color de Marca */}
         <div>

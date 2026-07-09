@@ -6,7 +6,7 @@
 .lp-page {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: var(--page-padding, 2rem 1.5rem);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -354,7 +354,7 @@
 .lp-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+  gap: var(--section-gap, 1rem);
 }
 
 .lp-item-card {
@@ -421,7 +421,7 @@
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 640px) {
-  .lp-page         { padding: 1rem; }
+  .lp-page         { padding: var(--page-padding, 1rem); }
   .lp-header       { flex-direction: column; align-items: flex-start; }
   .lp-table-head th { font-size: 0.75rem; padding: 0.5rem 0.625rem; }
   .lp-table td      { font-size: 0.8rem;  padding: 0.5rem 0.625rem; }

@@ -17,14 +17,14 @@ export interface GeneralSettings {
 export const settingsService = {
   /** GET /settings/interface */
   getInterfaceSettings: async (): Promise<InterfaceSettings> => {
-    const resp = await httpClient.get<{ message: string; data: { settings: InterfaceSettings } }>('/settings/interface');
-    return resp.data.data.settings;
+    const resp = await httpClient.get<{ id: number; category: string; settings: InterfaceSettings }>('/settings/interface');
+    return resp.data.settings;
   },
 
   /** PUT /settings/interface */
   updateInterfaceSettings: async (payload: InterfaceSettings): Promise<InterfaceSettings> => {
-    const resp = await httpClient.put<{ message: string; data: { settings: InterfaceSettings } }>('/settings/interface', payload);
-    return resp.data.data.settings;
+    const resp = await httpClient.put<{ id: number; category: string; settings: InterfaceSettings }>('/settings/interface', { settings: payload });
+    return resp.data.settings;
   },
 
   /** GET /settings/general — returns { id, category, settings: GeneralSettings, ... } */
