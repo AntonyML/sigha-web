@@ -19,11 +19,7 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    console.log('[DEBUG] handleLogin called')
-    console.log('[DEBUG] Form event:', e)
-    console.log('[DEBUG] Email:', email, 'Password length:', password.length)
     setError('')
-    console.log('Iniciando login con:', { email, password: '***' })
 
     if (!email || !password) {
       setError('Por favor ingrese email y contraseña')
@@ -33,18 +29,14 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      console.log('Llamando authFlow.login...')
       const result = await authFlow.login({ email, password })
-      console.log('Respuesta de authFlow.login:', result)
 
       if (!result.success) {
-        console.log('Login falló:', result.error)
         setError(result.error || 'Error al iniciar sesión')
         return
       }
 
       if (result.requiresTwoFactor) {
-        console.log('Requiere 2FA, navegando a /auth/verify-2fa')
         // Navigate to 2FA verification page
         navigate('/auth/verify-2fa', {
           state: { email }
@@ -53,11 +45,8 @@ export default function LoginPage() {
       }
 
       if (result.user) {
-        console.log('Login exitoso, usuario:', result.user)
-        console.log('Navegando a /dashboard')
         navigate('/dashboard')
       } else {
-        console.log('Login exitoso pero sin usuario en respuesta')
         setError('Login exitoso pero no se recibió información del usuario')
       }
     } catch (err: unknown) {
@@ -65,7 +54,6 @@ export default function LoginPage() {
       setError('Error inesperado al iniciar sesión')
     } finally {
       setLoading(false)
-      console.log('[DEBUG] handleLogin completed, loading set to false')
     }
   }
 
@@ -142,7 +130,6 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full h-12 text-base font-semibold"
           size="lg"
-          onClick={() => console.log('[DEBUG] Botón Entrar clicked')}
         >
           {loading ? (
             <>

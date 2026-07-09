@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 import { AppLayout } from './presentation/components/organisms'
 import { NotificationProvider } from './presentation/components/organisms/NotificationCenter'
-import { TwoFactorProvider } from './infrastructure/flows/twoFactor'
+import { TwoFactorProvider, useTwoFactorStatus } from './infrastructure/flows/twoFactor'
 import { PermissionUtils } from './utils/permissionUtils';
 import InterfaceSettingsPage from './presentation/pages/settings/InterfaceSettingsPage';
 import GeneralSettingsPage from './presentation/pages/settings/GeneralSettingsPage';
 import SecuritySettingsPage from './presentation/pages/settings/SecuritySettingsPage';
+import { LoadingSpinner } from './presentation/components/atoms/LoadingSpinner/LoadingSpinner';
 
 /* ─── Route guard: bloquea acceso si el usuario no tiene permiso sobre el módulo ── */
 
@@ -48,6 +49,27 @@ function ProtectedRoute({ module, children }: { module: string; children: React.
   }
 
   return <>{children}</>
+}
+
+const TWOFA_EXEMPT_PATHS = ['/two-factor', '/profile', '/profile/edit'];
+
+function TwoFactorGuard({ children }: { children: React.ReactNode }) {
+  const { isEnabled, loading } = useTwoFactorStatus();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+        <LoadingSpinner message="Verificando seguridad..." />
+      </div>
+    );
+  }
+
+  if (!isEnabled && !TWOFA_EXEMPT_PATHS.includes(location.pathname)) {
+    return <Navigate to="/two-factor" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 import LoginForm from './presentation/pages/login/LoginPage'
@@ -210,8 +232,9 @@ export default function App() {
         {/* Main Application Routes - With Layout */}
         <Route path="/*" element={
           <AppLayout>
-            <Routes>
-              <Route path="dashboard" element={<Dashboard />} />
+            <TwoFactorGuard>
+              <Routes>
+                <Route path="dashboard" element={<Dashboard />} />
               <Route path="admin" element={<AdminHubPage />} />
               <Route path="settings" element={<SettingsHubPage />} />
               <Route path="settings/general" element={<GeneralSettingsPage />} />
@@ -321,9 +344,10 @@ export default function App() {
               <Route path="specialized-appointments" element={<SpecializedAppointmentsListPage />} />
               <Route path="specialized-appointments/create" element={<CreateSpecializedAppointmentPage />} />
               <Route path="specialized-appointments/edit/:id" element={<EditSpecializedAppointmentPage />} />
-            </Routes>
-          </AppLayout>
-        } />
+                  </Routes>
+                </TwoFactorGuard>
+              </AppLayout>
+              } />
       </Routes>
       </TwoFactorProvider>
     </NotificationProvider>

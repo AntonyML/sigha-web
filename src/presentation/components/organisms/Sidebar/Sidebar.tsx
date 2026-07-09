@@ -302,11 +302,14 @@ export default function Sidebar() {
   /* ── Secciones visibles ───────────────────────────────── */
   const visibleSections: NavSection[] = (() => {
     if (!isEnabled) {
-      // 2FA desactivado → solo Inicio
-      return ALL_SECTIONS
-        .filter(s => s.id === 'inicio')
-        .map(section => ({ ...section, items: section.items.filter(isItemVisible) }))
-        .filter(s => s.items.length > 0);
+      // 2FA desactivado → solo Perfil y 2FA (sin filtrar por permisos)
+      return [{
+        id: 'perfil',
+        label: 'Perfil y seguridad',
+        items: SECTION_PERFIL.filter(item =>
+          item.id === 'perfil' || item.id === 'twofa'
+        ),
+      }];
     }
     return ALL_SECTIONS
       .map(section => ({ ...section, items: section.items.filter(isItemVisible) }))
