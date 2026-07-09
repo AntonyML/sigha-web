@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Settings as SettingsIcon, Save } from 'lucide-react'
 import { settingsService } from '../../../services/settingsService'
 import { PermissionUtils, usePermissions } from '../../../utils/permissionUtils'
+import { useInterfaceSettingsUpdate } from '../../context/SettingsContext'
 
 interface FormState {
   theme: string
@@ -17,6 +18,7 @@ export default function InterfaceSettingsPage() {
   const { canPerformAction, isLoaded } = usePermissions()
   const hasEdit = canPerformAction('settings', 'edit') // permission to edit settings
   const hasAccess = PermissionUtils.canAccessModule('settings')
+  const updateInterface = useInterfaceSettingsUpdate()
 
   const [form, setForm] = useState<FormState>({
     theme: 'light',
@@ -70,6 +72,7 @@ export default function InterfaceSettingsPage() {
     setSaving(true)
     try {
       await settingsService.updateInterfaceSettings(form)
+      updateInterface(form)
       setMessage('Configuración guardada correctamente.')
     } catch (e: any) {
       setError(e?.response?.data?.message ?? 'Error al guardar.')

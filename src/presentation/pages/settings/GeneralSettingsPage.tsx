@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Settings as SettingsIcon, Save, Upload } from 'lucide-react'
 import { settingsService } from '../../../services/settingsService'
 import { PermissionUtils, usePermissions } from '../../../utils/permissionUtils'
+import { useGeneralSettingsUpdate } from '../../context/SettingsContext'
 
 const TIMEZONES = [
   'America/Costa_Rica',
@@ -26,6 +27,7 @@ export default function GeneralSettingsPage() {
   const { canPerformAction, isLoaded } = usePermissions()
   const hasEdit = canPerformAction('settings', 'edit')
   const hasAccess = PermissionUtils.canAccessModule('settings')
+  const updateGeneral = useGeneralSettingsUpdate()
 
   const [form, setForm] = useState({
     appName: '',
@@ -86,6 +88,11 @@ export default function GeneralSettingsPage() {
         timezone: form.timezone,
         logoUrl: form.logoUrl,
       })
+      updateGeneral({
+        appName: form.appName,
+        logoUrl: result.logoUrl || '',
+        timezone: form.timezone,
+      })
       setForm(prev => ({ ...prev, logoUrl: result.logoUrl || '' }))
       setMessage('Configuración guardada correctamente.')
     } catch (e: any) {
@@ -105,6 +112,7 @@ export default function GeneralSettingsPage() {
     try {
       const result = await settingsService.uploadLogo(file)
       setForm(prev => ({ ...prev, logoUrl: result.logoUrl }))
+      updateGeneral({ appName: form.appName, logoUrl: result.logoUrl, timezone: form.timezone })
       setMessage('Logo subido correctamente.')
     } catch (e: any) {
       setError(e?.response?.data?.message ?? 'Error al subir el logo.')

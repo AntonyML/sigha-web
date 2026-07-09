@@ -32,6 +32,8 @@ interface SettingsContextType {
   general: AppSettings;
   interface: InterfaceSettings;
   loaded: boolean;
+  updateGeneral: (s: AppSettings) => void;
+  updateInterface: (s: InterfaceSettings) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -126,8 +128,18 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('authTokenChanged', fetch);
   }, [fetch]);
 
+  const updateGeneral = useCallback((s: AppSettings) => {
+    setGeneral(s);
+    document.title = s.appName;
+  }, []);
+
+  const updateInterface = useCallback((s: InterfaceSettings) => {
+    setInterfaceSettings(s);
+    applyInterfaceSettings(s);
+  }, []);
+
   return (
-    <SettingsContext.Provider value={{ general, interface: interfaceSettings, loaded }}>
+    <SettingsContext.Provider value={{ general, interface: interfaceSettings, loaded, updateGeneral, updateInterface }}>
       {children}
     </SettingsContext.Provider>
   );
@@ -143,4 +155,14 @@ export function useInterfaceSettings(): InterfaceSettings {
   const ctx = useContext(SettingsContext);
   if (!ctx) return INTERFACE_DEFAULTS;
   return ctx.interface;
+}
+
+export function useInterfaceSettingsUpdate(): (s: InterfaceSettings) => void {
+  const ctx = useContext(SettingsContext);
+  return ctx?.updateInterface ?? (() => {});
+}
+
+export function useGeneralSettingsUpdate(): (s: AppSettings) => void {
+  const ctx = useContext(SettingsContext);
+  return ctx?.updateGeneral ?? (() => {});
 }
