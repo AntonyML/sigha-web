@@ -162,7 +162,7 @@ export default function NavbarBell() {
           <div className="nbell-panel-footer">
             <button
               className="nbell-view-all"
-              onClick={() => { setOpen(false); navigate('/audits'); }}
+              onClick={() => { setOpen(false); navigate('/notifications'); }}
             >
               Ver todas las notificaciones
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
