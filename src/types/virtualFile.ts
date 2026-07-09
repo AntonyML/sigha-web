@@ -14,7 +14,9 @@ export interface VirtualFile {
   trabajoPrevio: string;
 
   // Additional data for API
-  zonaProcedencia?: string;
+  provincia?: string;
+  canton?: string;
+  distrito?: string;
   cantidadHijos?: number;
   ingresoEconomico?: number;
   telefono?: string;
@@ -176,7 +178,9 @@ export const defaultVirtualFile: VirtualFile = {
   trabajoPrevio: '',
 
   // Datos adicionales
-  zonaProcedencia: '',
+  provincia: '',
+  canton: '',
+  distrito: '',
   cantidadHijos: 0,
   ingresoEconomico: 0,
   telefono: '',
@@ -294,7 +298,9 @@ export interface VirtualFileApiPayload {
   oa_has_pension: boolean;
   oa_other: boolean;
   oa_other_description: string | null;
-  oa_area_of_origin: string;
+  oa_province: string;
+  oa_canton: string;
+  oa_district: string;
   oa_children_count: number;
   oa_status: string;
   oa_death_date: string | null;
@@ -432,7 +438,9 @@ export function mapApiToVirtualFile(raw: any): VirtualFile {
     anosEscolaridad: SCHOOLING_REVERSE[r.oaYearsSchooling] ?? r.oaYearsSchooling ?? '',
     trabajoPrevio:   r.oaIsRetired ? 'jubilacion' : r.oaHasPension ? 'pension' : r.oaOther ? 'otros' : (r.oaPreviousWork ?? ''),
     // Optional fields
-    zonaProcedencia:  r.oaAreaOfOrigin   ?? '',
+    provincia:        r.oaProvince     ?? '',
+    canton:           r.oaCanton       ?? '',
+    distrito:         r.oaDistrict     ?? '',
     cantidadHijos:    r.oaChildrenCount  ?? 0,
     ingresoEconomico: r.oaEconomicIncome != null ? Number(r.oaEconomicIncome) : undefined,
     telefono:         r.oaPhoneNumber    ?? '',
@@ -538,7 +546,9 @@ export function transformVirtualFileToApiPayload(
     oa_has_pension: virtualFile.trabajoPrevio === 'pension',
     oa_other: virtualFile.trabajoPrevio === 'otros',
     oa_other_description: virtualFile.trabajoPrevio === 'otros' ? virtualFile.otrasCondiciones || null : null,
-    oa_area_of_origin: virtualFile.zonaProcedencia || 'No especificado',
+    oa_province: virtualFile.provincia || '',
+    oa_canton: virtualFile.canton || '',
+    oa_district: virtualFile.distrito || '',
     oa_children_count: virtualFile.cantidadHijos || 0,
     oa_status: 'alive',
     oa_death_date: null,

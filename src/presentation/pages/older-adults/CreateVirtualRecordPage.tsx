@@ -6,11 +6,20 @@ import type { Program } from '../../../types/program'
 import type { Vaccine } from '../../../types/vaccine'
 import type { ClinicalCondition } from '../../../types/clinicalCondition'
 import { defaultVirtualFile } from '../../../types/virtualFile'
+import SelectsLocation from '../../components/molecules/SelectsLocation/SelectsLocation'
 import { useNavigate } from 'react-router-dom'
 import { virtualFileService } from '../../../services/virtualFileService'
 import { programService } from '../../../services/programService'
 import { vaccineService } from '../../../services/vaccineService'
 import { clinicalConditionService } from '../../../services/clinicalConditionService'
+import { formatColones, parseColones } from '@/utils/currencyUtils'
+
+function formatCedulaNacional(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 9)
+  if (digits.length <= 1) return digits
+  if (digits.length <= 5) return `${digits[0]}-${digits.slice(1)}`
+  return `${digits[0]}-${digits.slice(1, 5)}-${digits.slice(5)}`
+}
 
 /* ── Constantes ─────────────────────────────────────────── */
 const STEPS = [
@@ -29,16 +38,6 @@ const RCVG_OPTIONS: [string, string][] = [
   ['> 40%',       '> 40%'],
   ['UNKNOWN',   'No especificado'],
 ]
-
-/* ── Helpers de formato colonés ──────────────────────────── */
-function formatColones(v: number | string): string {
-  const n = typeof v === 'string' ? parseFloat(v.replace(/\./g, '').replace(',', '.')) : v
-  if (!n && n !== 0) return ''
-  return n.toLocaleString('es-CR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-}
-function parseColones(s: string): number {
-  return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
-}
 
 /* ── IMC color ───────────────────────────────────────────── */
 function imcColor(imc: string) {
@@ -74,6 +73,8 @@ export default function CreateVirtualFile() {
   const [step,           setStep]           = useState(1)
   const [saving,         setSaving]         = useState(false)
   const [ingresoDisplay, setIngresoDisplay] = useState('')
+  const [cedulaIsForeign, setCedulaIsForeign] = useState(false)
+  const [familyCedulaIsForeign, setFamilyCedulaIsForeign] = useState(false)
 
   /* ── Cédula: validación, normalización y consulta de identificación ── */
   const {
@@ -84,7 +85,7 @@ export default function CreateVirtualFile() {
     confirmForeign,
     denyForeign,
   } = useCedulaLookup(
-    formData.cedula,
+    cedulaIsForeign ? '' : formData.cedula,
     (nombre, normalized) => setFormData(p => ({ ...p, nombreApellido: nombre, cedula: normalized }))
   )
 
@@ -120,7 +121,7 @@ export default function CreateVirtualFile() {
     10:'parkinson', 11:'demencia', 12:'prostatismo',
     13:'incontinenciaUrinaria', 14:'caidasFrecuentes', 15:'neoplasias',
   }
-  function set(field: keyof VirtualFile, value: string | boolean | number) {
+  function set(field: keyof VirtualFile | 'provincia' | 'canton' | 'distrito', value: string | boolean | number) {
     setFormData(p => ({ ...p, [field]: value } as VirtualFile))
   }
   function setF(field: keyof ApiFamily, value: string) {
@@ -137,6 +138,14 @@ export default function CreateVirtualFile() {
   function toggleVaccine(id: number) {
     setVaccineIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])
   }
+  const handleCedulaTypeChange = (isForeign: boolean) => {
+    setCedulaIsForeign(isForeign)
+    set('cedula', '')
+  }
+  const handleFamilyCedulaTypeChange = (isForeign: boolean) => {
+    setFamilyCedulaIsForeign(isForeign)
+    setF('pf_identification', '')
+  }
 
   /* ── Family cedula lookup ──────────────────────────────── */
   const {
@@ -147,7 +156,7 @@ export default function CreateVirtualFile() {
     confirmForeign:   confirmFamilyForeign,
     denyForeign:      denyFamilyForeign,
   } = useCedulaLookup(
-    familyData.pf_identification,
+    familyCedulaIsForeign ? '' : familyData.pf_identification,
     (nombre, normalized) => {
       const { givenNames, firstLastName, secondLastName } = splitFullName(nombre)
       setFamilyData(p => ({
@@ -238,6 +247,8 @@ export default function CreateVirtualFile() {
                 status={cedulaStatus}
                 helperText={cedulaHelper}
                 normalized={cedulaNormalized}
+                isForeign={cedulaIsForeign}
+                onTypeChange={handleCedulaTypeChange}
                 onChange={v => set('cedula', v)}
               />
             </Field>
@@ -308,16 +319,18 @@ export default function CreateVirtualFile() {
               <input type="email" className="form-control" value={formData.email || ''}
                 onChange={e => set('email', e.target.value)} placeholder="correo@email.com" />
             </Field>
-            <Field label="Zona de procedencia">
-              <input className="form-control" value={formData.zonaProcedencia || ''}
-                onChange={e => set('zonaProcedencia', e.target.value)} placeholder="Ej: San José" />
-            </Field>
+            <SelectsLocation provincia={formData.provincia ?? ''} canton={formData.canton ?? ''} distrito={formData.distrito ?? ''} onChange={(field, value) => set(field, value)} />
           </Grid>
 
           <Grid cols={3}>
             <Field label="Vivienda">
-              <input className="form-control" value={formData.vivienda}
-                onChange={e => set('vivienda', e.target.value)} placeholder="Propia / Alquilada…" />
+              <select className="form-control" value={formData.vivienda} onChange={e => set('vivienda', e.target.value)}>
+                <option value="">Seleccione...</option>
+                <option value="Propia">Propia</option>
+                <option value="Alquilada">Alquilada</option>
+                <option value="Prestada">Prestada</option>
+                <option value="Otro">Otro</option>
+              </select>
             </Field>
             <Field label="Años de escolaridad">
               <select className="form-select" value={formData.anosEscolaridad}
@@ -375,6 +388,8 @@ export default function CreateVirtualFile() {
                 status={familyCedulaStatus}
                 helperText={familyCedulaHelper}
                 normalized={familyCedulaNormalized}
+                isForeign={familyCedulaIsForeign}
+                onTypeChange={handleFamilyCedulaTypeChange}
                 onChange={v => setF('pf_identification', v)}
               />
             </Field>
@@ -696,12 +711,14 @@ function ToggleYesNo({ value, onChange }: { value: string; onChange: (v: string)
 
 /* ── CedulaInput ───────────────────────────────────────────────── */
 function CedulaInput({
-  value, status, helperText, normalized, onChange,
+  value, status, helperText, normalized, onChange, isForeign, onTypeChange,
 }: {
   value:      string
   status:     'idle' | 'loading' | 'found' | 'notfound' | 'error'
   helperText: string
   normalized: string
+  isForeign:  boolean
+  onTypeChange: (v: boolean) => void
   onChange:   (v: string) => void
 }) {
   const borderColor =
@@ -714,18 +731,47 @@ function CedulaInput({
     status === 'error'  ? '#b91c1c' : '#b45309'
 
   const showNormalized =
+    !isForeign &&
     normalized.length === 9 &&
     normalized !== value.replace(/[^0-9]/g, '') &&
     status !== 'idle'
 
+  const displayValue = isForeign ? value : formatCedulaNacional(value)
+
+  function handleInputChange(raw: string) {
+    if (isForeign) {
+      onChange(raw)
+    } else {
+      const digits = raw.replace(/\D/g, '').slice(0, 9)
+      onChange(digits)
+    }
+  }
+
+  const toggleStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: '0.3rem 0.75rem',
+    border: `1px solid ${active ? '#3b82f6' : '#e2e8f0'}`,
+    borderRadius: '0.375rem',
+    background: active ? '#3b82f6' : '#f8fafc',
+    color: active ? '#fff' : '#64748b',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: active ? 700 : 400,
+    transition: 'all 150ms',
+  })
+
   return (
     <div>
+      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem' }}>
+        <button type="button" onClick={() => onTypeChange(false)} style={toggleStyle(!isForeign)}>Nacional</button>
+        <button type="button" onClick={() => onTypeChange(true)} style={toggleStyle(isForeign)}>Extranjero</button>
+      </div>
       <div style={{ position: 'relative' }}>
         <input
           className="form-control"
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder="1-2345-6789"
+          value={displayValue}
+          onChange={e => handleInputChange(e.target.value)}
+          placeholder={isForeign ? 'Número de identificación' : '1-2345-6789'}
           style={{ paddingRight: '2.25rem', borderColor }}
         />
         <span style={{ position: 'absolute', right: '0.625rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', pointerEvents: 'none' }}>
