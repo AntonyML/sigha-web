@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { AlertCircle, Loader2, Shield } from 'lucide-react'
 import { passwordRecoveryFlow } from '../../../infrastructure/flows/passwordRecovery'
 import {
@@ -18,18 +18,17 @@ export default function PasswordRecoveryResetPage() {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const navigate = useNavigate()
-  const location = useLocation()
 
-  // Get data from navigation state
-  const email = location.state?.email || ''
-  const recoveryCode = location.state?.recoveryCode || ''
+  // Data from sessionStorage (recovery_token, recovery_email)
+  const email = sessionStorage.getItem('recovery_email') || ''
+  const recoveryToken = sessionStorage.getItem('recovery_token') || ''
 
   useEffect(() => {
-    if (!email || !recoveryCode) {
-      // If no required data in state, redirect to request page
+    if (!email || !recoveryToken) {
+      // If missing required data, redirect to request page
       navigate('/auth/forgot-password')
     }
-  }, [email, recoveryCode, navigate])
+  }, [email, recoveryToken, navigate])
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault()

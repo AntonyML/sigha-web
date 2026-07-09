@@ -23,6 +23,8 @@ export interface VerifyRecoveryCodeFlowResult {
   success: boolean;
   message?: string;
   error?: string;
+  /** Token limpio (8 dígitos sin espacios) — el call site debe almacenarlo en sessionStorage */
+  cleanToken?: string;
 }
 
 /**
@@ -76,12 +78,13 @@ export const passwordRecoveryFlow = {
   },
 
   /**
-   * Verificar código de recuperación (almacenar token)
-   * Almacena el token recibido por email para usarlo en resetPassword
+   * Validar formato del código de recuperación (8 dígitos)
+   * NO hace llamada HTTP — solo validación local de formato.
+   * Devuelve cleanToken en el resultado para que el call site lo almacene.
    */
-  async verifyRecoveryCode(token: string): Promise<VerifyRecoveryCodeFlowResult> {
+  async validateRecoveryCodeFormat(token: string): Promise<VerifyRecoveryCodeFlowResult> {
     try {
-      // Validar token
+      // Validar que el token no esté vacío
       if (!token || token.trim().length === 0) {
         return {
           success: false,
@@ -89,7 +92,7 @@ export const passwordRecoveryFlow = {
         };
       }
 
-      // Limpiar espacios y validar formato (8 dígitos con posible espacio)
+      // Limpiar espacios y validar formato (exactamente 8 dígitos)
       const cleanToken = token.replace(/\s/g, '');
       if (cleanToken.length !== 8 || !/^\d{8}$/.test(cleanToken)) {
         return {
@@ -98,24 +101,13 @@ export const passwordRecoveryFlow = {
         };
       }
 
-      // Verificar que hayamos solicitado recuperación
-      const storedEmail = sessionStorage.getItem('recovery_email');
-      if (!storedEmail) {
-        return {
-          success: false,
-          error: 'No se encontró una solicitud de recuperación activa.',
-        };
-      }
-
-      // Guardar token para el siguiente paso
-      sessionStorage.setItem('recovery_token', cleanToken);
-
       return {
         success: true,
-        message: 'Código de recuperación verificado correctamente.',
+        message: 'Formato de código válido.',
+        cleanToken,
       };
     } catch (error: unknown) {
-      console.error('Error en passwordRecoveryFlow.verifyRecoveryCode:', error);
+      console.error('Error en passwordRecoveryFlow.validateRecoveryCodeFormat:', error);
       return {
         success: false,
         error: getPasswordRecoveryErrorMessage(error),

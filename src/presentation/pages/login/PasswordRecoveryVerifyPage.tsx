@@ -43,17 +43,22 @@ export default function PasswordRecoveryVerifyPage() {
 
     try {
       const combined = `${recoveryPart1} ${recoveryPart2}`
-      const result = await passwordRecoveryFlow.verifyRecoveryCode(combined)
+      const result = await passwordRecoveryFlow.validateRecoveryCodeFormat(combined)
 
       if (!result.success) {
         setError(result.error || 'Código inválido')
         return
       }
 
+      // Almacenar token limpio en sessionStorage para el siguiente paso
+      if (result.cleanToken) {
+        sessionStorage.setItem('recovery_token', result.cleanToken)
+      }
+
       setSuccess(result.message || 'Código verificado')
       // Navigate to reset password page after a brief delay
       setTimeout(() => {
-        navigate('/auth/recovery/reset', { state: { email, recoveryCode: combined } })
+        navigate('/auth/recovery/reset')
       }, 2000)
     } catch (err: unknown) {
       console.error('Error en verificación de recuperación:', err)
