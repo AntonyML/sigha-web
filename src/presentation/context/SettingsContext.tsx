@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { settingsService } from '../../services/settingsService';
 
 export interface AppSettings {
@@ -20,12 +20,21 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+function hasToken(): boolean {
+  return !!localStorage.getItem('authToken');
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULTS);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
+  const fetch = useCallback(() => {
     let cancelled = false;
+    if (!hasToken()) {
+      setLoaded(true);
+      document.title = DEFAULTS.appName;
+      return;
+    }
     settingsService
       .getGeneralSettings()
       .then((s) => {
@@ -45,6 +54,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    fetch();
+    window.addEventListener('authTokenChanged', fetch);
+    return () => window.removeEventListener('authTokenChanged', fetch);
+  }, [fetch]);
 
   return (
     <SettingsContext.Provider value={{ settings, loaded }}>
