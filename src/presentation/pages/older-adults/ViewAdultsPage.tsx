@@ -454,7 +454,7 @@ export default function ViewAdultsPage() {
               <Field label="Vivienda" value={fmt(data.vivienda)} />
               <Field label="Años de escolaridad" value={fmt(data.anosEscolaridad)} />
               <Field label="Trabajo previo" value={fmt(data.trabajoPrevio)} />
-              {data.zonaProcedencia && <Field label="Zona de procedencia" value={data.zonaProcedencia} />}
+              {(data.provincia || data.canton || data.distrito) && <Field label="Zona de procedencia" value={[data.distrito, data.canton, data.provincia].filter(Boolean).join(', ')} />}
               {data.genero && <Field label="Género" value={data.genero} />}
               {data.tipoSangre && <Field label="Tipo de sangre" value={data.tipoSangre} />}
             </div>
