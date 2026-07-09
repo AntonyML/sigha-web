@@ -81,6 +81,7 @@ export default function CreateVirtualFile() {
     status:           cedulaStatus,
     helperText:       cedulaHelper,
     normalizedRaw:    cedulaNormalized,
+    kind:             cedulaKind,
     showForeignDialog,
     confirmForeign,
     denyForeign,
@@ -152,6 +153,7 @@ export default function CreateVirtualFile() {
     status:           familyCedulaStatus,
     helperText:       familyCedulaHelper,
     normalizedRaw:    familyCedulaNormalized,
+    kind:             familyCedulaKind,
     showForeignDialog: showFamilyForeignDialog,
     confirmForeign:   confirmFamilyForeign,
     denyForeign:      denyFamilyForeign,
@@ -173,8 +175,13 @@ export default function CreateVirtualFile() {
   async function handleSubmit() {
     setSaving(true)
     try {
+      // Derive document type from the foreign toggle and useCedulaLookup detection
+      const docType = cedulaIsForeign ? 'pasaporte' : (cedulaKind === 'unknown' ? 'nacional' : cedulaKind)
+      const familyDocType = familyCedulaIsForeign ? 'pasaporte' : (familyCedulaKind === 'unknown' ? 'nacional' : familyCedulaKind)
+      setFormData(p => ({ ...p, documentType: docType }))
+      setFamilyData(p => ({ ...p, pf_document_type: familyDocType }))
       await virtualFileService.createVirtualFile(
-        formData, familyData, [] as ApiMedication[],
+        { ...formData, documentType: docType }, { ...familyData, pf_document_type: familyDocType }, [] as ApiMedication[],
         programId, vaccineIds, subProgramId,
       )
       navigate('/virtualFiles')

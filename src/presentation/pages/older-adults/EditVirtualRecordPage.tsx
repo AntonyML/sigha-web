@@ -56,6 +56,7 @@ export default function EditVirtualFile() {
     status:           cedulaStatus,
     helperText:       cedulaHelper,
     normalizedRaw:    cedulaNormalized,
+    kind:             cedulaKind,
     showForeignDialog,
     confirmForeign,
     denyForeign,
@@ -126,7 +127,8 @@ export default function EditVirtualFile() {
     setSaving(true)
     setSaveOk(false)
     try {
-      await virtualFileService.updateVirtualFile(Number(id), formData as UpdateVirtualFileData)
+      const docType = cedulaIsForeign ? 'pasaporte' : (cedulaKind === 'unknown' ? 'nacional' : cedulaKind)
+      await virtualFileService.updateVirtualFile(Number(id), { ...formData, documentType: docType } as UpdateVirtualFileData)
       setSaveOk(true)
       setTimeout(() => navigate('/virtualFiles'), 1200)
     } catch (err) {

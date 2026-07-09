@@ -17,6 +17,7 @@ export interface VirtualFile {
   provincia?: string;
   canton?: string;
   distrito?: string;
+  documentType?: string;
   cantidadHijos?: number;
   ingresoEconomico?: number;
   telefono?: string;
@@ -181,6 +182,7 @@ export const defaultVirtualFile: VirtualFile = {
   provincia: '',
   canton: '',
   distrito: '',
+  documentType: '',
   cantidadHijos: 0,
   ingresoEconomico: 0,
   telefono: '',
@@ -252,6 +254,7 @@ export interface ApiProgram {
 
 export interface ApiFamily {
   pf_identification: string;
+  pf_document_type?: string;
   pf_name: string;
   pf_f_last_name: string;
   pf_s_last_name: string;
@@ -298,6 +301,7 @@ export interface VirtualFileApiPayload {
   oa_has_pension: boolean;
   oa_other: boolean;
   oa_other_description: string | null;
+  oa_document_type: string;
   oa_province: string;
   oa_canton: string;
   oa_district: string;
@@ -438,6 +442,7 @@ export function mapApiToVirtualFile(raw: any): VirtualFile {
     anosEscolaridad: SCHOOLING_REVERSE[r.oaYearsSchooling] ?? r.oaYearsSchooling ?? '',
     trabajoPrevio:   r.oaIsRetired ? 'jubilacion' : r.oaHasPension ? 'pension' : r.oaOther ? 'otros' : (r.oaPreviousWork ?? ''),
     // Optional fields
+    documentType:     r.oaDocumentType ?? 'nacional',
     provincia:        r.oaProvince     ?? '',
     canton:           r.oaCanton       ?? '',
     distrito:         r.oaDistrict     ?? '',
@@ -546,6 +551,7 @@ export function transformVirtualFileToApiPayload(
     oa_has_pension: virtualFile.trabajoPrevio === 'pension',
     oa_other: virtualFile.trabajoPrevio === 'otros',
     oa_other_description: virtualFile.trabajoPrevio === 'otros' ? virtualFile.otrasCondiciones || null : null,
+    oa_document_type: virtualFile.documentType || 'nacional',
     oa_province: virtualFile.provincia || '',
     oa_canton: virtualFile.canton || '',
     oa_district: virtualFile.distrito || '',
@@ -566,12 +572,13 @@ export function transformVirtualFileToApiPayload(
     
     family: additionalData.family || {
       pf_identification: '',
+      pf_document_type: 'nacional',
       pf_name: '',
       pf_f_last_name: '',
       pf_s_last_name: '',
       pf_phone_number: '',
       pf_email: '',
-      pf_kinship: 'not specified' // Valor por defecto según ENUM de BD
+      pf_kinship: 'not specified'
     },
     
     clinical_history: {
