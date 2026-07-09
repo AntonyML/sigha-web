@@ -181,6 +181,15 @@ export const authService = {
     return response.data;
   },
 
+  requestUserAccount: async (data: { fullName: string; email: string; phone: string; reason: string }): Promise<{ success: boolean; message: string }> => {
+    const response = await axios.post<{ success: boolean; message: string }>(
+      `${config.api.baseUrl}/user-requests`,
+      data,
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response.data;
+  },
+
   isAuthenticated: (): boolean => {
     const token = localStorage.getItem('authToken');
     const user = localStorage.getItem('user');

@@ -21,6 +21,9 @@ export { profileFlow } from './profile';
 // Password recovery flows
 export { passwordRecoveryFlow } from './passwordRecovery';
 
+// User request flows
+export { userRequestFlow } from './userRequest';
+
 // Virtual file flows (pending implementation)
 // export { virtualFileFlow } from './virtualFile';
 
