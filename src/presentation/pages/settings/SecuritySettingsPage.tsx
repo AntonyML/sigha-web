@@ -30,7 +30,7 @@ import {
   type LoginAttemptRecord,
 } from '../../../services/securityService';
 import { PermissionUtils, usePermissions } from '../../../utils/permissionUtils';
-import '../../../styles/lp.css';
+import '../../styles/lp.css';
 
 // ═══════════════════════════════════════════════════════════
 //  Tabs
