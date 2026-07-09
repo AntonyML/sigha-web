@@ -7,6 +7,7 @@ import { TwoFactorProvider } from './infrastructure/flows/twoFactor'
 import { PermissionUtils } from './utils/permissionUtils';
 import InterfaceSettingsPage from './presentation/pages/settings/InterfaceSettingsPage';
 import GeneralSettingsPage from './presentation/pages/settings/GeneralSettingsPage';
+import SecuritySettingsPage from './presentation/pages/settings/SecuritySettingsPage';
 
 /* ─── Route guard: bloquea acceso si el usuario no tiene permiso sobre el módulo ── */
 
@@ -215,6 +216,7 @@ export default function App() {
               <Route path="settings" element={<SettingsHubPage />} />
               <Route path="settings/general" element={<GeneralSettingsPage />} />
               <Route path="settings/interface" element={<InterfaceSettingsPage />} />
+              <Route path="settings/security" element={<SecuritySettingsPage />} />
               <Route path="virtualFiles" element={<ListVirtualFile />} />
               <Route path="virtualFiles/create" element={<CreateVirtualFile />} />
               <Route path="virtualFiles/edit/:id" element={<EditVirtualFile />} />

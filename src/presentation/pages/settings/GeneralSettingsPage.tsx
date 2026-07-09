@@ -84,7 +84,7 @@ export default function GeneralSettingsPage() {
         appName: form.appName,
         language: form.language,
         timezone: form.timezone,
-        logoUrl: form.logoUrl || undefined,
+        logoUrl: form.logoUrl,
       })
       setForm(prev => ({ ...prev, logoUrl: result.logoUrl || '' }))
       setMessage('Configuración guardada correctamente.')

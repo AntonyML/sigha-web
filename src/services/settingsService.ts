@@ -33,9 +33,9 @@ export const settingsService = {
     return resp.data.settings;
   },
 
-  /** PUT /settings/general — body directo con los campos (backend UpsertSettingsDto acepta category en body, pero aquí enviamos los campos planos) */
+  /** PUT /settings/general — envía body envuelto en { settings: {...} } para coincidir con UpsertSettingsDto */
   updateGeneralSettings: async (payload: GeneralSettings): Promise<GeneralSettings> => {
-    const resp = await httpClient.put<{ id: number; category: string; settings: GeneralSettings }>('/settings/general', payload);
+    const resp = await httpClient.put<{ id: number; category: string; settings: GeneralSettings }>('/settings/general', { settings: payload });
     return resp.data.settings;
   },
 
