@@ -39,3 +39,5 @@ debug-page.png
 Session_starter.md
 
 test-results/
+# Electron build
+dist-electron/
