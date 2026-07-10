@@ -280,9 +280,27 @@ function isItemActive(item: MenuItem, pathname: string): boolean {
 export default function Sidebar() {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { isEnabled } = useTwoFactorStatus();
+  const { isEnabled, loading: twoFALoading } = useTwoFactorStatus();
   const { isLoaded: permsLoaded, canAccessModule } = usePermissions();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  // No renderizar menú completo hasta que sepamos el estado real de 2FA y permisos
+  if (twoFALoading || !permsLoaded) {
+    return (
+      <aside className="sidebar-root" aria-label="Menú lateral de navegación principal">
+        <nav className="sidebar-nav">
+          <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '60vh' }}>
+            <div className="text-center">
+              <div className="spinner-border text-primary mb-3" role="status">
+                <span className="visually-hidden">Cargando menú...</span>
+              </div>
+              <p className="text-muted">Verificando seguridad y permisos…</p>
+            </div>
+          </div>
+        </nav>
+      </aside>
+    );
+  }
 
   /* Filtra un ítem por permiso real del backend */
   function isItemVisible(item: MenuItem): boolean {

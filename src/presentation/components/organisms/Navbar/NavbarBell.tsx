@@ -1,8 +1,8 @@
 /**
  * NavbarBell
- *
- * Reemplaza el bell estático por una campana conectada al backend.
- * - Polling cada 60s: GET /notifications?nSent=false&limit=5
+  *
+  * Reemplaza el bell estático por una campana conectada al backend.
+  * - Polling cada 90s: GET /notifications?nSent=false&limit=5
  * - Badge muestra el count real de notificaciones pendientes (cap 99+)
  * - Dropdown muestra las últimas N con título, mensaje y fecha
  * - Link "Ver todas" navega a /notifications
@@ -19,7 +19,7 @@ import { notificationService } from '../../../../services/notificationService';
 import type { Notification } from '../../../../types/notification';
 import './NavbarBell.css';
 
-const POLL_INTERVAL_MS = 60_000; // 1 minuto
+const POLL_INTERVAL_MS = 90_000; // 90 segundos (aumentado de 60s para reducir presión en /notifications)
 const PREVIEW_LIMIT    = 5;
 
 /* ────────────────────────────────────────────────────── */

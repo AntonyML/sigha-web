@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { twoFactorService } from '../../../services/twoFactorService';
 
 interface TwoFactorContextType {
-    isEnabled: boolean;
+    isEnabled: boolean | null;
     loading: boolean;
     refresh: () => Promise<void>;
 }
@@ -16,7 +16,7 @@ interface TwoFactorProviderProps {
 }
 
 export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }) => {
-    const [isEnabled, setIsEnabled] = useState(false);
+    const [isEnabled, setIsEnabled] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
 
     const check2FAStatus = useCallback(async () => {
@@ -44,10 +44,10 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
     }, [check2FAStatus]);
 
     useEffect(() => {
-        check2FAStatus();
+            check2FAStatus();
 
-        // Verificar cada 30 segundos
-        const interval = setInterval(check2FAStatus, 30000);
+            // Verificar cada 60 segundos (reducido de 30s para evitar throttling)
+            const interval = setInterval(check2FAStatus, 60000);
 
         // Verificar cuando la ventana gane foco
         const handleFocus = () => check2FAStatus();

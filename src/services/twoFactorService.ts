@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { httpClient } from './httpClient';
 import type {
   Setup2FAResponse,
   Enable2FARequest,
@@ -8,55 +8,14 @@ import type {
   Verify2FARequest,
   Verify2FAResponse,
 } from '../types/twoFactor';
-import { navigateTo, getCurrentPath } from '../utils/navigationUtils';
 import { config } from '../config/app.config';
-
-const apiClient = axios.create({
-  baseURL: config.api.baseUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para agregar token a las peticiones
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para manejar errores 401
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      // No redirigir si ya estamos en páginas de autenticación
-      const currentPath = getCurrentPath();
-      if (currentPath.startsWith('/auth/') || currentPath === '/login') {
-        return Promise.reject(error);
-      }
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tempToken');
-      navigateTo('/login');
-    }
-    return Promise.reject(error);
-  }
-);
 
 export const twoFactorService = {
   /**
    * Obtener estado actual de 2FA
    */
   get2FAStatus: async (): Promise<TwoFactorStatusResponse> => {
-    const response = await apiClient.get('/auth/2fa/status');
+    const response = await httpClient.get('/auth/2fa/status');
     return response.data;
   },
 
@@ -64,7 +23,7 @@ export const twoFactorService = {
    * Configurar 2FA - genera QR code y backup codes
    */
   setup2FA: async (): Promise<Setup2FAResponse> => {
-    const response = await apiClient.post<Setup2FAResponse>('/auth/setup-2fa');
+    const response = await httpClient.post<Setup2FAResponse>('/auth/setup-2fa');
     return response.data;
   },
 
@@ -73,7 +32,7 @@ export const twoFactorService = {
    */
   enable2FA: async (data: Enable2FARequest): Promise<Enable2FAResponse> => {
     const requestBody = { verificationCode: data.code };
-    const response = await apiClient.post<Enable2FAResponse>('/auth/enable-2fa', requestBody);
+    const response = await httpClient.post<Enable2FAResponse>('/auth/enable-2fa', requestBody);
     return response.data;
   },
 
@@ -81,7 +40,7 @@ export const twoFactorService = {
    * Verificar código 2FA durante login
    */
   verify2FA: async (data: Verify2FARequest): Promise<Verify2FAResponse> => {
-    const response = await apiClient.post<Verify2FAResponse>('/auth/verify-2fa', data);
+    const response = await httpClient.post<Verify2FAResponse>('/auth/verify-2fa', data);
     return response.data;
   },
 
@@ -89,7 +48,7 @@ export const twoFactorService = {
    * Deshabilitar 2FA
    */
   disable2FA: async (data: { code: string }): Promise<Disable2FAResponse> => {
-    const response = await apiClient.post<Disable2FAResponse>('/auth/disable-2fa', data);
+    const response = await httpClient.post<Disable2FAResponse>('/auth/disable-2fa', data);
     return response.data;
   },
 

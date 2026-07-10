@@ -127,36 +127,43 @@ export const twoFactorFlow = {
     },
 
     /**
-     * Habilitar 2FA después de verificar el código
-     */
-    enable: async (data: Enable2FARequest): Promise<Enable2FAFlowResult> => {
-        try {
-            // Validar código antes de enviar
-            const validationError = validateEnable2FAData(data);
-            if (validationError) {
+         * Habilitar 2FA después de verificar el código
+         */
+        enable: async (data: Enable2FARequest): Promise<Enable2FAFlowResult> => {
+            try {
+                // Validar código antes de enviar
+                const validationError = validateEnable2FAData(data);
+                if (validationError) {
+                    return {
+                        success: false,
+                        error: validationError,
+                    };
+                }
+
+                console.log('DEBUG: Sending enable2FA request with data:', JSON.stringify(data));
+                const result: Enable2FAResponse = await twoFactorService.enable2FA(data);
+            
+                // Si el backend devuelve nuevos tokens (tras regenerar JWT con twoFactorVerified=true), guardarlos
+                if (result.accessToken && result.refreshToken) {
+                    localStorage.setItem('authToken', result.accessToken);
+                    // Disparar evento para que TwoFactorContext y otros componentes se actualicen
+                    window.dispatchEvent(new CustomEvent('authTokenChanged'));
+                }
+
+                return {
+                    success: true,
+                    message: result.message,
+                    backupCodes: result.backupCodes,
+                };
+            } catch (error: unknown) {
+                console.error('Error enabling 2FA:', error);
+            
                 return {
                     success: false,
-                    error: validationError,
+                    error: getTwoFactorErrorMessage(error),
                 };
             }
-
-            console.log('DEBUG: Sending enable2FA request with data:', JSON.stringify(data));
-            const result: Enable2FAResponse = await twoFactorService.enable2FA(data);
-            
-            return {
-                success: true,
-                message: result.message,
-                backupCodes: result.backupCodes,
-            };
-        } catch (error: unknown) {
-            console.error('Error enabling 2FA:', error);
-            
-            return {
-                success: false,
-                error: getTwoFactorErrorMessage(error),
-            };
-        }
-    },
+        },
 
     /**
      * Verificar código 2FA durante login

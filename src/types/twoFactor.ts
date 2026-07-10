@@ -15,6 +15,8 @@ export interface Enable2FAResponse {
     success: boolean;
     message: string;
     backupCodes: string[];
+    accessToken?: string;
+    refreshToken?: string;
 }
 
 export interface Verify2FARequest {

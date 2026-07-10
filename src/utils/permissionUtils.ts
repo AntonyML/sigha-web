@@ -19,6 +19,13 @@ class PermissionUtilsImpl {
   private inFlight: Promise<void> | null = null;
   private listeners = new Set<Listener>();
 
+  constructor() {
+    // Listen for token changes (e.g., after 2FA enable) to reload permissions
+    if (typeof window !== 'undefined') {
+      window.addEventListener('authTokenChanged', () => this.load(true));
+    }
+  }
+
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => {
