@@ -80,7 +80,7 @@ httpClient.interceptors.response.use(
         
         // Increment retry count and retry
         const newConfig = { ...config };
-        newConfig.headers = { ...config.headers, 'x-retry-count': retryCount + 1 };
+        newConfig.headers = { ...(config.headers || {}), 'x-retry-count': retryCount + 1 };
         
         return httpClient.request(newConfig);
       }

@@ -31,8 +31,11 @@ export default function ViewNotificationPage() {
           await notificationService.markAsRead(Number(id));
           setNotification(prev => prev ? { ...prev, nStatus: 'read' } : prev);
         }
-      } catch {
-        setError('Error al cargar la notificación');
+      } catch (err: any) {
+        console.error('Error loading notification:', err);
+        console.error('Error response:', err.response?.data);
+        console.error('Error status:', err.response?.status);
+        setError(`Error al cargar la notificación: ${err.response?.data?.message || err.message || 'Error desconocido'}`);
       } finally {
         setLoading(false);
       }

@@ -49,7 +49,9 @@ export const notificationService = {
    * Endpoint: GET /notifications/:id
    */
   async getNotificationById(id: number): Promise<Notification> {
+    console.log('Fetching notification:', id);
     const response = await apiClient.get<SingleNotificationApiResponse>(`/notifications/${id}`);
+    console.log('Notification response:', response.data);
     return response.data.data;
   },
 
