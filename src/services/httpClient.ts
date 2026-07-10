@@ -1,5 +1,5 @@
 // src/services/httpClient.ts
-import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig, type AxiosHeaders } from 'axios';
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
 
@@ -80,7 +80,9 @@ httpClient.interceptors.response.use(
         
         // Increment retry count and retry
         const newConfig = { ...config };
-        newConfig.headers = { ...(config.headers || {}), 'x-retry-count': retryCount + 1 };
+        const headers = new AxiosHeaders(config.headers);
+        headers.set('x-retry-count', retryCount + 1);
+        newConfig.headers = headers;
         
         return httpClient.request(newConfig);
       }
