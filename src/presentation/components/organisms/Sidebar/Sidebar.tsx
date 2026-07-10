@@ -284,6 +284,15 @@ export default function Sidebar() {
   const { isLoaded: permsLoaded, canAccessModule } = usePermissions();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  /* Auto-expand el grupo cuyo hijo coincide con la ruta actual.
+     Debe estar ANTES de cualquier early return para respetar las Rules of Hooks. */
+  useEffect(() => {
+    const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname);
+    if (activeId) {
+      setOpenGroups(prev => prev[activeId] ? prev : { ...prev, [activeId]: true });
+    }
+  }, [location.pathname]);
+
   // No renderizar menú completo hasta que sepamos el estado real de 2FA y permisos
   if (twoFALoading || !permsLoaded) {
     return (
@@ -308,14 +317,6 @@ export default function Sidebar() {
     if (!permsLoaded) return false;
     return canAccessModule(item.requiredModule);
   }
-
-  /* Auto-expand el grupo cuyo hijo coincide con la ruta actual */
-  useEffect(() => {
-    const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname);
-    if (activeId) {
-      setOpenGroups(prev => prev[activeId] ? prev : { ...prev, [activeId]: true });
-    }
-  }, [location.pathname]);
 
   /* ── Secciones visibles ───────────────────────────────── */
   const visibleSections: NavSection[] = (() => {
