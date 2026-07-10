@@ -39,7 +39,9 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 function hasToken(): boolean {
-  return !!localStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken');
+  const user = localStorage.getItem('user');
+  return !!(token && user);
 }
 
 function applyInterfaceSettings(s: InterfaceSettings): void {
@@ -123,7 +125,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetch();
+    // Only fetch on mount if we have valid auth (token + user)
+    // The authTokenChanged event will trigger fetch after login
+    if (hasToken()) {
+      fetch();
+    }
     window.addEventListener('authTokenChanged', fetch);
     return () => window.removeEventListener('authTokenChanged', fetch);
   }, [fetch]);

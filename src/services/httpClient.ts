@@ -62,7 +62,7 @@ httpClient.interceptors.response.use(
     
     // Handle retryable errors (429, 5xx) with exponential backoff
     if (config && isRetryableError(error)) {
-      const retryCount = (config.headers['x-retry-count'] as number) || 0;
+      const retryCount = Number(config.headers['x-retry-count']) || 0;
       
       if (retryCount < RETRY_CONFIG.maxRetries) {
         const delay = Math.min(
