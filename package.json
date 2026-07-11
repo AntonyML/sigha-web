@@ -6,13 +6,13 @@
   "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "concurrently -k \"npm:start:dev:main\" \"npm:start:dev:renderer\" \"npm:start:dev:electron-wait\"",
+    "dev:electron": "concurrently -k \"pnpm run start:dev:main\" \"pnpm run start:dev:renderer\" \"pnpm run start:dev:electron-wait\"",
     "start:dev:main": "node scripts/watch-electron.js",
     "start:dev:renderer": "cross-env VITE_DEV_SERVER_URL=http://localhost:5173 vite",
     "start:dev:electron-wait": "wait-on http://localhost:5173 && wait-on file:dist-electron/main.cjs && electron ./dist-electron/main.cjs",
     "build:renderer": "vite build",
     "build:electron": "tsc -p electron/tsconfig.json && node scripts/rename-to-cjs.js",
-    "build": "npm run build:renderer && npm run build:electron",
+    "build": "pnpm run build:renderer && pnpm run build:electron",
     "start:prod": "electron ./dist-electron/main.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -26,7 +26,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:selenium": "jest --config jest.selenium.config.cjs",
     "test:gui": "jest --config jest.selenium.config.cjs",
-    "build:prod": "NODE_ENV=production npm run build"
+    "build:prod": "cross-env NODE_ENV=production pnpm run build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
