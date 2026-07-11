@@ -1,7 +1,34 @@
 // src/services/httpClient.ts
-import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig, type AxiosHeaders } from 'axios';
+import axios, { type AxiosInstance, type AxiosError, AxiosHeaders } from 'axios';
 import { config } from '../config/app.config';
 import { navigateTo } from '../utils/navigationUtils';
+
+// ── Concurrency limiter ──────────────────────────────────────────────────────
+// Prevents too many simultaneous requests (avoids 429 rate limits on startup).
+const MAX_CONCURRENT = 2;
+let activeCount = 0;
+const pendingQueue: Array<() => void> = [];
+
+async function acquireSlot(): Promise<void> {
+  if (activeCount < MAX_CONCURRENT) {
+    activeCount++;
+    return;
+  }
+  return new Promise<void>((resolve) => {
+    pendingQueue.push(() => {
+      activeCount++;
+      resolve();
+    });
+  });
+}
+
+function releaseSlot(): void {
+  activeCount--;
+  const next = pendingQueue.shift();
+  if (next) next();
+}
+
+// ── Axios instance ───────────────────────────────────────────────────────────
 
 const httpClient: AxiosInstance = axios.create({
   baseURL: config.api.baseUrl,
@@ -10,11 +37,13 @@ const httpClient: AxiosInstance = axios.create({
   },
 });
 
-httpClient.interceptors.request.use((reqConfig) => {
+httpClient.interceptors.request.use(async (reqConfig) => {
   const token = localStorage.getItem('authToken');
   if (token && reqConfig.headers) {
     reqConfig.headers.Authorization = `Bearer ${token}`;
   }
+  // Acquire concurrency slot before sending
+  await acquireSlot();
   return reqConfig;
 });
 
@@ -38,8 +67,12 @@ async function sleep(ms: number): Promise<void> {
 }
 
 httpClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    releaseSlot();
+    return response;
+  },
   async (error: AxiosError) => {
+    releaseSlot();
     const { config, response } = error;
     
     // Handle 401 - auth redirect (existing logic)
