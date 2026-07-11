@@ -170,33 +170,35 @@ export function useCedulaLookup(
       setNormalizedRaw(digits)
       setHelperText('Cédula jurídica (NITE) detectada.')
       // También se podría consultar el nombre para NITE si el proveedor lo soporta
+      return
     }
 
     /* Nacional (incluye cortas de 6-8 dígitos) */
     if (detectedKind === 'nacional') {
       const normalized = normalizeNacional(digits)
       setNormalizedRaw(normalized)
-      if (normalized !== digits) {
-        setHelperText(`Cédula normalizada a ${normalized} (ceros completados automáticamente)`)
-      }
       if (normalized.length < 9) {
         setStatus('idle')
         setHelperText('Cédula incompleta, revise el número.')
         return
       }
-      // Lanzar búsqueda con debounce
+      // Now we have exactly 9 digits (after normalization)
+      if (normalized !== digits) {
+        setHelperText(`Cédula normalizada a ${normalized} (ceros completados automáticamente)`)
+      } else {
+        setHelperText('') // clear any previous helper text
+      }
+      // Trigger debounced identification lookup for valid nacional cédulas
       if (debounceRef.current) clearTimeout(debounceRef.current)
       setStatus('loading')
-      debounceRef.current = setTimeout(() => fetchIdentification(normalized), 600)
-      return
+      debounceRef.current = setTimeout(() => fetchIdentification(normalized), 500)
+      return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
     }
 
     /* Unknown */
     setStatus('idle')
     setNormalizedRaw(digits)
     setHelperText('Formato de cédula no reconocido.')
-
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cedula])
 

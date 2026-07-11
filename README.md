@@ -160,9 +160,19 @@ Gestión de expedientes virtuales (en desarrollo)
 Asegúrate de tener instalado:
 
 - **Node.js**: v20.x LTS o superior
-- **npm**: v10.x o superior
+- **pnpm**: v8.x o superior (gestionado via [Corepack](https://nodejs.org/api/corepack.html))
 - **Git**: v2.40 o superior
 - **Backend API**: Corriendo en `http://localhost:3000`
+
+### Habilitar Corepack (recomendado)
+
+```bash
+# Habilitar Corepack (incluido con Node.js v20+)
+corepack enable
+
+# Activar la versión de pnpm definida en package.json
+corepack prepare pnpm@latest --activate
+```
 
 ---
 
@@ -178,7 +188,7 @@ cd sigha-web
 ### 2. Instalar Dependencias
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Configurar Variables de Entorno
@@ -202,7 +212,7 @@ VITE_APP_VERSION=1.0.0
 ### Modo Desarrollo (Web)
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 La aplicación estará disponible en: `http://localhost:5173`
@@ -210,17 +220,17 @@ La aplicación estará disponible en: `http://localhost:5173`
 ### Modo Electron (Desarrollo)
 
 ```bash
-npm run electron:dev
+pnpm electron:dev
 ```
 
 ### Build para Producción
 
 ```bash
 # Build web
-npm run build
+pnpm build
 
 # Build Electron (Windows)
-npm run electron:build
+pnpm electron:build
 ```
 
 El instalador se generará en `dist/electron/`
@@ -622,20 +632,20 @@ Menú Principal → Configuración 2FA
 
 ```bash
 # Ejecutar todos los tests
-npm run test
+pnpm test
 
 # Ejecutar en modo watch
-npm run test:watch
+pnpm test:watch
 
 # Generar coverage
-npm run test:coverage
+pnpm test:coverage
 ```
 
 ### Tests E2E
 
 ```bash
 # Ejecutar tests end-to-end
-npm run test:e2e
+pnpm test:e2e
 ```
 
 ### Estructura de Tests
@@ -665,10 +675,10 @@ tests/
 
 ```bash
 # Build de producción
-npm run build
+pnpm build
 
 # Preview del build
-npm run preview
+pnpm preview
 ```
 
 Los archivos se generan en `dist/`
@@ -677,10 +687,10 @@ Los archivos se generan en `dist/`
 
 ```bash
 # Build instalador .exe
-npm run electron:build
+pnpm electron:build
 
 # Build portable
-npm run electron:build:portable
+pnpm electron:build:portable
 ```
 
 Los instaladores se generan en `dist/electron/`
@@ -700,16 +710,16 @@ El archivo `electron-builder.config.js` incluye:
 
 | Script | Descripción |
 |--------|-------------|
-| `npm run dev` | Iniciar servidor de desarrollo |
-| `npm run build` | Compilar para producción |
-| `npm run preview` | Vista previa del build |
-| `npm run electron:dev` | Ejecutar en Electron (desarrollo) |
-| `npm run electron:build` | Compilar instalador Electron |
-| `npm run lint` | Ejecutar linter ESLint |
-| `npm run format` | Formatear código con Prettier |
-| `npm run test` | Ejecutar tests unitarios |
-| `npm run test:e2e` | Ejecutar tests end-to-end |
-| `npm run test:coverage` | Generar reporte de cobertura |
+| `pnpm dev` | Iniciar servidor de desarrollo |
+| `pnpm build` | Compilar para producción |
+| `pnpm preview` | Vista previa del build |
+| `pnpm electron:dev` | Ejecutar en Electron (desarrollo) |
+| `pnpm electron:build` | Compilar instalador Electron |
+| `pnpm lint` | Ejecutar linter ESLint |
+| `pnpm format` | Formatear código con Prettier |
+| `pnpm test` | Ejecutar tests unitarios |
+| `pnpm test:e2e` | Ejecutar tests end-to-end |
+| `pnpm test:coverage` | Generar reporte de cobertura |
 
 ---
 

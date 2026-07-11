@@ -121,6 +121,18 @@ export interface CreateVirtualFileData {
   // Vision and Hearing
   dificultadesVision: string;
   problemasAudicion: string;
+
+  // Location and Contact
+  provincia?: string;
+  canton?: string;
+  distrito?: string;
+  documentType?: string;
+  cantidadHijos?: number;
+  ingresoEconomico?: number;
+  telefono?: string;
+  email?: string;
+  genero?: string;
+  tipoSangre?: string;
 }
 
 export type UpdateVirtualFileData = Partial<CreateVirtualFileData>
