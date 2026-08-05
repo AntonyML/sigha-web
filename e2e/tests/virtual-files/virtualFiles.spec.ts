@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { createDisposableRecord, deleteRecordDirect } from './helpers';
+import { createDisposableRecord, deleteRecordDirect } from '../../support/api';
+import { RUN_DELETE_TESTS } from '../../support/config';
 
 /**
  * CRUD del módulo Expedientes (Fichas virtuales).
@@ -64,7 +65,7 @@ test.describe('Expedientes (virtualFiles) — CRUD', () => {
 
   test('Borrar: confirma y elimina un expediente creado por el test', async ({ page }) => {
     test.skip(
-      process.env.E2E_RUN_DELETE !== '1',
+      !RUN_DELETE_TESTS,
       'Habilita E2E_RUN_DELETE=1 en .env.e2e para ejecutar la prueba destructiva',
     );
 
