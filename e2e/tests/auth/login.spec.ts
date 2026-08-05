@@ -57,9 +57,10 @@ test.describe('Autenticación (/login)', () => {
 
     await login.login(email, password);
 
-    // Salir del login implica autenticarse; según la cuenta puede terminar en
-    // dashboard (sin 2FA) o en /auth/verify-2fa (con 2FA). Ambas guardan sesión.
-    await expect(login.submitButton).toBeHidden({ timeout: 20_000 });
+    // El login con 2FA tarda ~4s y hasta que responde el botón muestra
+    // "Iniciando sesión..." (cambia su nombre). El gate correcto es esperar a
+    // abandonar /login, no a que el botón "Entrar" desaparezca a mitad del POST.
+    await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
     const authToken = await page.evaluate(() => localStorage.getItem('authToken'));
     const tempToken = await page.evaluate(() => localStorage.getItem('tempToken'));
     expect(authToken || tempToken).toBeTruthy();
