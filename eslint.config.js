@@ -26,4 +26,11 @@ export default defineConfig([
       ],
     },
   },
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+    },
+  },
 ])

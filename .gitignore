@@ -35,6 +35,7 @@ debug-page.png
 .env
 .env.*
 !.env.example
+!.env.e2e.example
 
 # Untracked env-file copy without leading dot
 env
@@ -42,5 +43,7 @@ env
 Session_starter.md
 
 test-results/
+e2e/.auth/
+
 # Electron build
 dist-electron/
