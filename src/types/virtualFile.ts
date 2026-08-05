@@ -327,7 +327,7 @@ export interface VirtualFileApiPayload {
   oa_gender: string;
   oa_blood_type: string;
   program: ApiProgram;
-  family: ApiFamily;
+  family?: ApiFamily;
   clinical_history: ApiClinicalHistory;
 }
 
@@ -549,7 +549,14 @@ export function transformVirtualFileToApiPayload(
     return virtualFile.trabajoPrevio;
   };
 
-  return {
+  const hasFamily =
+    !!additionalData.family &&
+    (additionalData.family.pf_identification ||
+      additionalData.family.pf_name ||
+      additionalData.family.pf_f_last_name ||
+      additionalData.family.pf_s_last_name);
+
+  const payload: VirtualFileApiPayload = {
     oa_identification: virtualFile.cedula || '',
     oa_name: firstName || 'Sin nombre',
     oa_f_last_name: firstLastName || 'Sin apellido',
@@ -576,23 +583,12 @@ export function transformVirtualFileToApiPayload(
     oa_profile_photo_url: null,
     oa_gender: virtualFile.genero || 'not specified',
     oa_blood_type: virtualFile.tipoSangre || 'UNKNOWN',
-    
+
     program: {
       id: additionalData.programId || 1,
       sub_programs: additionalData.subProgramId ? [{ id: additionalData.subProgramId }] : []
     },
-    
-    family: additionalData.family || {
-      pf_identification: '',
-      pf_document_type: 'nacional',
-      pf_name: '',
-      pf_f_last_name: '',
-      pf_s_last_name: '',
-      pf_phone_number: '',
-      pf_email: '',
-      pf_kinship: 'not specified'
-    },
-    
+
     clinical_history: {
       ch_frequent_falls: virtualFile.caidasFrecuentes || false,
       ch_weight: weight > 0 ? weight : 50.0, // DECIMAL(5,2) - max 999.99
@@ -611,4 +607,10 @@ export function transformVirtualFileToApiPayload(
       medications: additionalData.medications || []
     }
   };
+
+  if (hasFamily && additionalData.family) {
+    payload.family = additionalData.family;
+  }
+
+  return payload;
 }

@@ -36,6 +36,9 @@ debug-page.png
 .env.*
 !.env.example
 
+# Untracked env-file copy without leading dot
+env
+
 Session_starter.md
 
 test-results/
