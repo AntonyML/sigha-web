@@ -1,7 +1,8 @@
 /** Helpers de API para preparar y limpiar datos de prueba. */
 import type { APIRequestContext } from '@playwright/test';
 import { authedApi } from './auth';
-import { buildCreatePayload, uniqueIdentification } from './factories';
+import { buildCreatePayload, buildEntranceExitPayload, uniqueIdentification } from './factories';
+import type { EeAccessType } from './factories';
 
 /** Obtiene un ID de programa existente (fallback a 1). */
 export async function firstProgramId(ctx: APIRequestContext): Promise<number> {
@@ -50,6 +51,104 @@ export async function deleteRecordDirect(id: number): Promise<void> {
     const res = await ctx.delete(`/virtual-records/${id}`);
     if (!res.ok()) {
       throw new Error(`deleteVirtualRecord falló (${res.status()}): ${await res.text()}`);
+    }
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/**
+ * Crea un registro de entrada/salida vía API y devuelve sus datos.
+ * Con `close: true` además cierra el ciclo (fecha de salida > fecha de entrada).
+ */
+export async function createEntranceExit(
+  accessType: EeAccessType,
+  opts?: { close?: boolean },
+): Promise<{ id: number; identification: string; fullName: string }> {
+  const ctx = await authedApi();
+  try {
+    const identification = uniqueIdentification();
+    const secondLastName = accessType === 'entrance' ? 'Entrada' : 'Salida';
+    const payload = buildEntranceExitPayload({
+      identification,
+      accessType,
+      name: 'Persona',
+      firstLastName: 'E2E',
+      secondLastName,
+      observations: 'Registro creado por test e2e',
+    });
+
+    // El backend aplica un throttler global. Si el límite se alcanza por la
+    // concurrencia de la suite, reintentamos con backoff.
+    let res: import('@playwright/test').APIResponse;
+    for (let attempt = 1; ; attempt++) {
+      res = await ctx.post('/entrances-exits', { data: payload });
+      if (res.status() !== 429 || attempt >= 4) break;
+      await new Promise((r) => setTimeout(r, attempt * 5_000));
+    }
+    if (!res.ok()) {
+      throw new Error(`createEntranceExit falló (${res.status()}): ${await res.text()}`);
+    }
+    const body = (await res.json()) as { id: number };
+    if (!body.id) throw new Error(`createEntranceExit: respuesta sin id: ${JSON.stringify(body)}`);
+
+    if (opts?.close) {
+      const closePayload =
+        accessType === 'entrance'
+          ? {
+              eeClose: true,
+              eeDatetimeExit: new Date(Date.now() + 60_000).toISOString(),
+              eeObservations: 'Cerrado por test e2e',
+            }
+          : { eeClose: true, eeObservations: 'Cerrado por test e2e' };
+      const closeRes = await ctx.patch(`/entrances-exits/${body.id}/close-cycle`, {
+        data: closePayload,
+      });
+      if (!closeRes.ok()) {
+        await ctx.delete(`/entrances-exits/${body.id}`).catch(() => undefined);
+        throw new Error(
+          `closeEntranceExit falló (${closeRes.status()}): ${await closeRes.text()}`,
+        );
+      }
+    }
+
+    return { id: body.id, identification, fullName: `Persona E2E ${secondLastName}` };
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Elimina un registro de entrada/salida vía API (limpieza/seguridad). */
+export async function deleteEntranceExit(id: number): Promise<void> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.delete(`/entrances-exits/${id}`);
+    if (!res.ok()) {
+      throw new Error(`deleteEntranceExit falló (${res.status()}): ${await res.text()}`);
+    }
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Elimina todos los registros que coincidan con una identificación (para datos creados desde la UI). */
+export async function deleteEntranceExitByIdentification(identification: string): Promise<void> {
+  const ctx = await authedApi();
+  try {
+    const endpoints = [
+      '/entrances-exits/open-entrances',
+      '/entrances-exits/open-exits',
+      '/entrances-exits/closed-records',
+    ];
+    for (const endpoint of endpoints) {
+      const res = await ctx.get(endpoint);
+      const body = await res.json().catch(() => []);
+      const arr = Array.isArray(body) ? body : [];
+      for (const rec of arr) {
+        if (String(rec.eeIdentification ?? '') === identification) {
+          await ctx.delete(`/entrances-exits/${rec.id}`).catch(() => undefined);
+        }
+      }
     }
   } finally {
     await ctx.dispose();

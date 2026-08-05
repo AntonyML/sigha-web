@@ -73,3 +73,35 @@ export function buildCreatePayload(identification: string): Record<string, unkno
     },
   };
 }
+
+export type EeAccessType = 'entrance' | 'exit';
+
+/**
+ * Payload válido para POST /entrances-exits.
+ * Cumple las validaciones del CreateEntranceExitDto (enums, longitudes, ISO 8601).
+ * Solo una fecha aplica según el tipo de acceso (entrada → fecha de entrada).
+ */
+export function buildEntranceExitPayload(opts: {
+  identification: string;
+  accessType: EeAccessType;
+  name?: string;
+  firstLastName?: string;
+  secondLastName?: string;
+  datetime?: string;
+  observations?: string;
+  close?: boolean;
+}): Record<string, unknown> {
+  return {
+    eeType: 'employee',
+    eeAccessType: opts.accessType,
+    eeIdentification: opts.identification,
+    eeName: opts.name ?? 'Persona',
+    eeFLastName: opts.firstLastName ?? 'E2E',
+    eeSLastName: opts.secondLastName ?? 'Prueba',
+    eeDatetimeEntrance:
+      opts.accessType === 'entrance' ? (opts.datetime ?? new Date().toISOString()) : undefined,
+    eeDatetimeExit: opts.accessType === 'exit' ? (opts.datetime ?? new Date().toISOString()) : undefined,
+    eeClose: opts.close ?? false,
+    eeObservations: opts.observations ?? 'Registro creado por test e2e',
+  };
+}

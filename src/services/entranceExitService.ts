@@ -24,6 +24,15 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+type AxiosErrorLike = {
+  response?: {
+    status?: number;
+    statusText?: string;
+    data?: { message?: string; error?: string };
+  };
+  config?: { url?: string; method?: string };
+};
+
 export const entranceExitService = {
   getAllEntranceExits: async (): Promise<EntranceExitResponse[]> => {
     // No generic "get all" endpoint exists on the backend (the controller only
@@ -80,17 +89,18 @@ export const entranceExitService = {
       
       const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/close-cycle`, updateData);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const e = error as AxiosErrorLike;
       console.error('❌ Full Error Object:', error);
-      console.error('❌ Server Response Message:', error.response?.data?.message);
+      console.error('❌ Server Response Message:', e.response?.data?.message);
       console.error('❌ Complete Error Details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        serverMessage: error.response?.data?.message,
-        serverError: error.response?.data?.error,
-        fullData: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        serverMessage: e.response?.data?.message,
+        serverError: e.response?.data?.error,
+        fullData: e.response?.data,
+        url: e.config?.url,
+        method: e.config?.method,
         payload: updateData
       });
       throw error;
@@ -98,9 +108,7 @@ export const entranceExitService = {
   },
 
   finalizeExitRecord: async (id: number): Promise<EntranceExitResponse> => {
-    const now = new Date().toISOString();
     const updateData = {
-      eeDatetimeEntrance: now, // Solo agregar fecha de entrada para completar el ciclo de salida
       eeObservations: "Ciclo de salida cerrado automáticamente", 
       eeClose: true
     };
@@ -112,13 +120,14 @@ export const entranceExitService = {
       const response = await apiClient.patch<EntranceExitResponse>(`/entrances-exits/${id}/close-cycle`, updateData);
       console.log('✅ Response received:', response.data);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const e = error as AxiosErrorLike;
       console.error('❌ Error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
+        status: e.response?.status,
+        statusText: e.response?.statusText,
+        data: e.response?.data,
+        url: e.config?.url,
+        method: e.config?.method,
         payload: updateData
       });
       throw error;
