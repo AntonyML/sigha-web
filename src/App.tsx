@@ -116,6 +116,8 @@ import EditPermissionPage from './presentation/pages/permissions/EditPermissionP
 //Programs
 import ProgramListPage from './presentation/pages/programs/ProgramListPage'
 import CreateProgramPage from './presentation/pages/programs/CreateProgramPage'
+import EditProgramPage from './presentation/pages/programs/EditProgramPage'
+import ViewProgramPage from './presentation/pages/programs/ViewProgramPage'
 
 //Vaccines
 import VaccineListPage from './presentation/pages/vaccines/VaccineListPage'
@@ -266,6 +268,8 @@ export default function App() {
 
               <Route path="programs" element={<ProgramListPage />} />
               <Route path="programs/create" element={<CreateProgramPage />} />
+              <Route path="programs/view/:id" element={<ViewProgramPage />} />
+              <Route path="programs/edit/:id" element={<EditProgramPage />} />
 
               <Route path="vaccines" element={<VaccineListPage />} />
               <Route path="vaccines/create" element={<CreateVaccinePage />} />

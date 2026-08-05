@@ -4,8 +4,13 @@ import type { FullConfig } from '@playwright/test';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createInterface } from 'node:readline';
+import { setDefaultResultOrder } from 'node:dns';
 
 loadEnv({ path: '.env.e2e' });
+
+// La API local escucha en IPv4 (0.0.0.0); en Windows Node resuelve 'localhost'
+// a ::1 primero y el global-setup fallaba con ECONNREFUSED ::1:3000.
+setDefaultResultOrder('ipv4first');
 
 const STORAGE_STATE_PATH = 'e2e/.auth/user.json';
 const MAX_2FA_ATTEMPTS = 5;

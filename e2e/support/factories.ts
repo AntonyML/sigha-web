@@ -10,6 +10,12 @@ export function uniqueIdentification(): string {
   return `9${tail}${sequence}`.slice(0, 9);
 }
 
+/** Genera un nombre de programa único (evita el conflicto 409 del backend). */
+export function uniqueProgramName(): string {
+  sequence += 1;
+  return `Programa E2E ${Date.now()}${sequence}`;
+}
+
 /**
  * Payload válido para POST /virtual-records/create.
  * Cumple las validaciones del DTO (CreateVirtualRecordDirectDto) y de la

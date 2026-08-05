@@ -22,8 +22,8 @@ export async function createDisposableRecord(): Promise<{ id: number; identifica
     const payload = buildCreatePayload(identification);
     payload.program = { id: await firstProgramId(ctx), sub_programs: [] };
 
-    // El backend aplica un throttler global (5 req/min por IP). Si el límite
-    // se alcanza por la concurrencia de la suite, reintentamos con backoff.
+    // El backend aplica un throttler global (THROTTLE_LIMIT ?? 100 req/min).
+    // Si el límite se alcanza por la concurrencia de la suite, reintentamos con backoff.
     const MAX_ATTEMPTS = 4;
     let res: import('@playwright/test').APIResponse;
     for (let attempt = 1; ; attempt++) {
@@ -57,6 +57,60 @@ export async function deleteRecordDirect(id: number): Promise<void> {
   }
 }
 
+/** Crea un programa desechable vía API y devuelve su id + nombre. */
+export async function createDisposableProgram(
+  pName: string,
+): Promise<{ id: number; pName: string }> {
+  const ctx = await authedApi();
+  try {
+    // Reintento con backoff si el throttler global (100 req/min) responde 429.
+    const MAX_ATTEMPTS = 4;
+    let res: import('@playwright/test').APIResponse;
+    for (let attempt = 1; ; attempt++) {
+      res = await ctx.post('/programs', { data: { pName } });
+      if (res.status() !== 429 || attempt >= MAX_ATTEMPTS) break;
+      await new Promise((r) => setTimeout(r, attempt * 5_000));
+    }
+    if (!res.ok()) {
+      throw new Error(`createProgram falló (${res.status()}): ${await res.text()}`);
+    }
+    const body = (await res.json()) as { data?: { id?: number; pName?: string } };
+    const id = body.data?.id;
+    if (!id) throw new Error(`createProgram: respuesta sin id: ${JSON.stringify(body)}`);
+    return { id, pName: body.data?.pName ?? pName };
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Busca el id de un programa por nombre exacto (para limpiar lo creado por la UI). */
+export async function findProgramIdByName(pName: string): Promise<number | null> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.get('/programs');
+    if (!res.ok()) {
+      throw new Error(`getPrograms falló (${res.status()}): ${await res.text()}`);
+    }
+    const body = (await res.json()) as { data?: Array<{ id: number; pName: string }> };
+    return (body.data ?? []).find((p) => p.pName === pName)?.id ?? null;
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Elimina un programa directamente vía API (limpieza/seguridad). */
+export async function deleteProgramDirect(id: number): Promise<void> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.delete(`/programs/${id}`);
+    if (!res.ok()) {
+      throw new Error(`deleteProgram falló (${res.status()}): ${await res.text()}`);
+    }
+  } finally {
+    await ctx.dispose();
+  }
+}
+
 /**
  * Crea un registro de entrada/salida vía API y devuelve sus datos.
  * Con `close: true` además cierra el ciclo (fecha de salida > fecha de entrada).
@@ -78,8 +132,8 @@ export async function createEntranceExit(
       observations: 'Registro creado por test e2e',
     });
 
-    // El backend aplica un throttler global. Si el límite se alcanza por la
-    // concurrencia de la suite, reintentamos con backoff.
+    // El backend aplica un throttler global (THROTTLE_LIMIT ?? 100 req/min).
+    // Si el límite se alcanza por la concurrencia de la suite, reintentamos con backoff.
     let res: import('@playwright/test').APIResponse;
     for (let attempt = 1; ; attempt++) {
       res = await ctx.post('/entrances-exits', { data: payload });

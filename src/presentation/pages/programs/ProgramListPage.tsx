@@ -32,10 +32,25 @@ export default function ProgramListPage() {
     }
   }
 
-  async function handleDelete() {
+  async function handleDelete(program: Program) {
+    if (!program.id) return
     const ok = await feedback.confirm('Eliminar programa', '¿Está seguro de que desea eliminar este programa?')
     if (!ok) return
-    feedback.error('La eliminación de programas no está disponible en esta versión.')
+    try {
+      await programService.deleteProgram(program.id)
+      feedback.success('Programa eliminado correctamente')
+      await loadPrograms()
+    } catch (err) {
+      console.error(err)
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 409) {
+        feedback.error('No se puede eliminar un programa que tiene subprogramas asociados.')
+      } else if (status === 404) {
+        feedback.error('El programa ya no existe.')
+      } else {
+        feedback.error('Error al eliminar el programa. Por favor, inténtelo de nuevo.')
+      }
+    }
   }
 
   const filtered = programs.filter(p =>
@@ -149,7 +164,7 @@ export default function ProgramListPage() {
                         <button
                           className="lp-icon-btn lp-icon-btn--delete"
                           title="Eliminar"
-                          onClick={() => handleDelete()}
+                          onClick={() => handleDelete(program)}
                         >
                           <Trash2 size={14} />
                         </button>
