@@ -76,6 +76,11 @@ export default function CreateVirtualFile() {
   const [cedulaIsForeign, setCedulaIsForeign] = useState(false)
   const [familyCedulaIsForeign, setFamilyCedulaIsForeign] = useState(false)
 
+  // Duplicate cedula check state
+  const [dupCheck, setDupCheck] = useState<{ loading: boolean; exists: boolean; existingId: number | null }>(
+    { loading: false, exists: false, existingId: null }
+  )
+
   /* ── Cédula: validación, normalización y consulta de identificación ── */
   const {
     status:           cedulaStatus,
@@ -89,6 +94,44 @@ export default function CreateVirtualFile() {
     cedulaIsForeign ? '' : formData.cedula,
     (nombre, normalized) => setFormData(p => ({ ...p, nombreApellido: nombre, cedula: normalized }))
   )
+
+  /* ── Duplicate cedula check ─────────────────────────────── */
+  // When the cedula is normalized and valid, query the backend to see if a
+  // virtual file already exists for that cedula. Block form progression if so.
+  useEffect(() => {
+    const raw = cedulaNormalized?.trim() ?? ''
+    // Only check when we have a meaningful cedula (at least 9 digits for nacional,
+    // or any non-empty value for foreign documents)
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length < 9 && !cedulaIsForeign) {
+      setDupCheck({ loading: false, exists: false, existingId: null })
+      return
+    }
+    if (!raw) {
+      setDupCheck({ loading: false, exists: false, existingId: null })
+      return
+    }
+
+    let cancelled = false
+    setDupCheck(prev => ({ ...prev, loading: true }))
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await virtualFileService.searchVirtualFiles({ cedula: raw })
+        if (cancelled) return
+        const existing = res.data && res.data.length > 0 ? res.data[0] : null
+        if (existing) {
+          setDupCheck({ loading: false, exists: true, existingId: existing.id ?? null })
+        } else {
+          setDupCheck({ loading: false, exists: false, existingId: null })
+        }
+      } catch {
+        if (!cancelled) setDupCheck({ loading: false, exists: false, existingId: null })
+      }
+    }, 600)
+
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [cedulaNormalized, cedulaIsForeign])
 
   const currentProgram   = programs.find(p => p.id === programId)
   const subPrograms      = currentProgram?.subPrograms || []
@@ -258,6 +301,15 @@ export default function CreateVirtualFile() {
                 onTypeChange={handleCedulaTypeChange}
                 onChange={v => set('cedula', v)}
               />
+              {/* Duplicate cedula warning */}
+              {dupCheck.loading && (
+                <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Verificando duplicado…</div>
+              )}
+              {dupCheck.exists && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Ya existe un expediente con esta cédula.
+                </div>
+              )}
             </Field>
             {showForeignDialog && (
               <ForeignConfirmDialog
@@ -633,12 +685,13 @@ export default function CreateVirtualFile() {
 
         {step < STEPS.length ? (
           <button type="button" onClick={() => setStep(s => s + 1)}
-            style={{ padding: '0.625rem 1.5rem', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.625rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>
+            disabled={dupCheck.exists || dupCheck.loading}
+            style={{ padding: '0.625rem 1.5rem', background: dupCheck.exists || dupCheck.loading ? '#93c5fd' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.625rem', cursor: dupCheck.exists || dupCheck.loading ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>
             Siguiente →
           </button>
         ) : (
-          <button type="button" onClick={handleSubmit} disabled={saving}
-            style={{ padding: '0.625rem 1.75rem', background: saving ? '#93c5fd' : '#16a34a', color: '#fff', border: 'none', borderRadius: '0.625rem', cursor: saving ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <button type="button" onClick={handleSubmit} disabled={saving || dupCheck.exists || dupCheck.loading}
+            style={{ padding: '0.625rem 1.75rem', background: saving || dupCheck.exists || dupCheck.loading ? '#93c5fd' : '#16a34a', color: '#fff', border: 'none', borderRadius: '0.625rem', cursor: saving || dupCheck.exists || dupCheck.loading ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             {saving ? '⏳ Guardando…' : '✓ Crear expediente'}
           </button>
         )}
