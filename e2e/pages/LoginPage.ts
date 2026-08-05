@@ -17,10 +17,10 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.title = page.getByRole('heading', { name: 'Iniciar Sesión' });
+    this.title = page.getByText('Iniciar Sesión', { exact: true });
     this.subtitle = page.getByText('Hogar de Ancianos ASOPOGUA');
-    this.emailInput = page.getByLabel('Correo Electrónico');
-    this.passwordInput = page.getByLabel('Contraseña');
+    this.emailInput = page.getByLabel('Correo Electrónico', { exact: true });
+    this.passwordInput = page.getByLabel('Contraseña', { exact: true });
     this.submitButton = page.getByRole('button', { name: 'Entrar' });
     this.errorAlert = page.getByRole('alert');
     this.forgotPasswordButton = page.getByRole('button', { name: '¿Olvidaste tu contraseña?' });

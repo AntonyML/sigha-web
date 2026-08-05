@@ -21,7 +21,16 @@ export async function createDisposableRecord(): Promise<{ id: number; identifica
     const payload = buildCreatePayload(identification);
     payload.program = { id: await firstProgramId(ctx), sub_programs: [] };
 
-    const res = await ctx.post('/virtual-records/create', { data: payload });
+    // El backend aplica un throttler global (5 req/min por IP). Si el límite
+    // se alcanza por la concurrencia de la suite, reintentamos con backoff.
+    const MAX_ATTEMPTS = 4;
+    let res: import('@playwright/test').APIResponse;
+    for (let attempt = 1; ; attempt++) {
+      res = await ctx.post('/virtual-records/create', { data: payload });
+      if (res.status() !== 429 || attempt >= MAX_ATTEMPTS) break;
+      await new Promise((r) => setTimeout(r, attempt * 5_000));
+    }
+
     if (!res.ok()) {
       throw new Error(`createVirtualRecord falló (${res.status()}): ${await res.text()}`);
     }
