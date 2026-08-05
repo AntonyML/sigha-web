@@ -5,6 +5,11 @@ loadEnv({ path: '.env.e2e' });
 
 const WEB_URL = process.env.E2E_WEB_URL ?? 'http://localhost:5173';
 
+// "true" abre una ventana con GUI (headed); "false"/vacío corre headless.
+// Al pasarlo explícito (''|'true'|'false') evita el aviso de conflicto con
+// --headed/--headless; --headed/--headless siguen teniendo prioridad si se pasan.
+const HEADED = process.env.E2E_HEADED === 'true';
+
 /**
  * Antes de ejecutar los tests, el proyecto necesita:
  *   - El frontend corriendo en http://localhost:5173 (se reutiliza si ya está activo)
@@ -30,6 +35,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    headless: !HEADED,
   },
   projects: [
     {
