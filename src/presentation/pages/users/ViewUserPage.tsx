@@ -66,7 +66,7 @@ function RoleBadge({ name, isPrimary }: { name: string; isPrimary: boolean }) {
       }}
     >
       <i className="bi bi-person-badge" />
-      {name}
+      <span>{name}</span>
       {isPrimary && (
         <span
           style={{

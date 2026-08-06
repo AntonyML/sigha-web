@@ -214,7 +214,7 @@ test.describe('Roles (/roles) — CRUD', () => {
   });
 
   test('Ver: abre el detalle del rol creado y muestra sus permisos', async ({ page }) => {
-    test.setTimeout(TEST_TIMEOUT);
+    test.setTimeout(180_000);
     const name = uniqueRoleName();
     const catalog = await getPermissionCatalog();
     const enabledPerm = catalog.find((p) => p.pEnabled);

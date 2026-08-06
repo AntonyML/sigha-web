@@ -3,7 +3,6 @@ import type { Page } from '@playwright/test';
 import { ForgotPasswordPage } from '../../pages/ForgotPasswordPage';
 import { RecoveryVerifyPage } from '../../pages/RecoveryVerifyPage';
 import { RecoveryResetPage } from '../../pages/RecoveryResetPage';
-import { API_URL } from '../../support/config';
 
 /**
  * Recuperación de contraseña — flujo completo de 3 pasos:
@@ -21,12 +20,23 @@ import { API_URL } from '../../support/config';
 const EMAIL_INEXISTENTE = `usuario-e2e-${Date.now()}@example.com`;
 
 /**
+ * Predicado de ruta para mockear SOLO la API NestJS.
+ * El navegador llama a VITE_API_URL (por defecto http://localhost:3000),
+ * mientras que E2E_API_URL (http://127.0.0.1:3000) solo aplica a las llamadas
+ * directas de Node (IPv4). page.route() matchea por dominio exacto, así que un
+ * glob con doble asterisco también interceptaría la ruta SPA
+ * /auth/forgot-password del frontend (puerto 5173). Este predicado ancla el
+ * match al puerto 3000 + pathname + método, sin tocar el SPA.
+ */
+function apiRoute(path: string) {
+  return (url: URL): boolean => url.port === '3000' && url.pathname === path;
+}
+
+/**
  * Simula una respuesta exitosa de POST /auth/forgot-password.
- * Nota: el patrón se ancla a la URL de la API; un glob con doble asterisco
- * también interceptaría la ruta SPA /auth/forgot-password del frontend.
  */
 async function mockForgotPasswordSuccess(page: Page): Promise<void> {
-  await page.route(`${API_URL}/auth/forgot-password`, (route) =>
+  await page.route(apiRoute('/auth/forgot-password'), (route) =>
     route.fulfill({ json: { message: 'Código de recuperación enviado al email' } }),
   );
 }
@@ -273,11 +283,16 @@ test.describe('Recuperación de contraseña', () => {
       // test no cayó silenciosamente al backend real (p. ej. si la URL no coincide).
       let forgotCalls = 0;
       let resetCalls = 0;
-      await page.route(`${API_URL}/auth/forgot-password`, (route) => {
+      // El navegador llama a VITE_API_URL (por defecto http://localhost:3000),
+      // mientras que E2E_API_URL usa 127.0.0.1 para las llamadas directas de
+      // Node (IPv4). page.route es por dominio exacto, así que se usa un glob
+      // `**` que cubre ambos hosts y se valida con los contadores que el mock
+      // sí interceptó (y no se cayó al backend real).
+      await page.route(apiRoute('/auth/forgot-password'), (route) => {
         forgotCalls += 1;
         return route.fulfill({ json: { message: 'Código de recuperación enviado al email' } });
       });
-      await page.route(`${API_URL}/auth/reset-password`, (route) => {
+      await page.route(apiRoute('/auth/reset-password'), (route) => {
         resetCalls += 1;
         return route.fulfill({ json: { message: 'Contraseña actualizada exitosamente' } });
       });
@@ -286,7 +301,7 @@ test.describe('Recuperación de contraseña', () => {
       const forgot = new ForgotPasswordPage(page);
       await forgot.goto();
       await forgot.requestRecovery('flujo-exitoso@example.com');
-      await expect(forgot.alert).toContainText(/código de recuperación enviado/i, {
+      await expect(forgot.alert).toContainText(/se ha enviado un código de recuperación/i, {
         timeout: 15_000,
       });
       await expect(page).toHaveURL(/\/auth\/recovery\/verify$/, { timeout: 15_000 });

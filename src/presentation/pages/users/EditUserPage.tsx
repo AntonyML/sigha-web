@@ -398,7 +398,7 @@ export default function EditUserPage() {
                     }}
                   >
                     <i className="bi bi-person-badge" />
-                    {currentRoleName}
+                    <span>{currentRoleName}</span>
                     <span
                       style={{
                         fontSize: '0.625rem',

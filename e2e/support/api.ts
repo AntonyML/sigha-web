@@ -458,6 +458,33 @@ export async function createDisposablePermission(opts?: {
   }
 }
 
+/**
+ * Crea un permiso desechable; si el catálogo ya cubre todas las combinaciones
+ * (módulo × acción) — p.ej. en una DB migrada con 008_permissions.sql, cuyo
+ * seed rellena el catálogo completo — no se puede crear uno nuevo (la unicidad
+ * del backend es por módulo × acción). En ese caso reutiliza ("borrow") un
+ * permiso real existente y devuelve `borrowed: true` para que el test NO lo
+ * borre en su limpieza (es data real del seed).
+ */
+export async function createOrBorrowDisposablePermission(opts?: {
+  pName?: string;
+  pModule?: string;
+  pAction?: string;
+  pEnabled?: boolean;
+  excludeIds?: number[];
+}): Promise<{ perm: PermissionCatalogItem; borrowed: boolean }> {
+  const combo = await findFreePermissionCombo();
+  if (!combo) {
+    const catalog = await getPermissionCatalog();
+    const existing = catalog.find((p) => !(opts?.excludeIds ?? []).includes(p.id)) ?? null;
+    if (existing) {
+      return { perm: existing, borrowed: true };
+    }
+  }
+  const perm = await createDisposablePermission(opts);
+  return { perm, borrowed: false };
+}
+
 /** Busca un permiso por nombre exacto (para limpiar lo creado por la UI). */
 export async function findPermissionByName(
   pName: string,

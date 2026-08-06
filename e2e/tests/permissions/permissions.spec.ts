@@ -6,6 +6,7 @@ import { ViewPermissionPage } from '../../pages/ViewPermissionPage';
 import {
   createDisposablePermission,
   createDisposableRole,
+  createOrBorrowDisposablePermission,
   deletePermissionDirect,
   deleteRoleDirect,
   findFreePermissionCombo,
@@ -164,7 +165,7 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Ver: abre el detalle del permiso creado y muestra sus datos', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
-    const perm = await createDisposablePermission();
+    const { perm, borrowed } = await createOrBorrowDisposablePermission();
     try {
       const list = new PermissionsListPage(page);
       await list.goto();
@@ -183,7 +184,7 @@ test.describe('Permisos (/permissions) — CRUD', () => {
       await expect(view.actionBadge(perm.pAction)).toBeVisible();
       await expect(view.statusBadge('Habilitado')).toBeVisible();
     } finally {
-      await deletePermissionDirect(perm.id).catch(() => undefined);
+      if (!borrowed) await deletePermissionDirect(perm.id).catch(() => undefined);
     }
   });
 
@@ -191,6 +192,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
     page,
   }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission();
     const newName = `${uniquePermissionName()} Renombrado`;
     try {
@@ -221,6 +224,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Editar: deshabilita el permiso y se persiste', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission({ pEnabled: true });
     try {
       const edit = new EditPermissionPage(page);
@@ -244,6 +249,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Editar: cancelar la edición mantiene los datos sin guardar', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission();
     const unsavedName = `${perm.pName} NO GUARDADO`;
     try {
@@ -271,6 +278,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Eliminar: cancelar la confirmación mantiene el permiso', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission();
     try {
       const list = new PermissionsListPage(page);
@@ -296,6 +305,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
       'Habilita E2E_RUN_DELETE=1 en .env.e2e para ejecutar la prueba destructiva',
     );
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission();
     try {
       const list = new PermissionsListPage(page);
@@ -317,6 +328,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Eliminar: un permiso asignado a un rol muestra el error del backend', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission();
     const role = await createDisposableRole(uniqueRoleName(), [perm.id]);
     try {
@@ -346,6 +359,8 @@ test.describe('Permisos (/permissions) — CRUD', () => {
 
   test('Eliminar: un permiso deshabilitado no muestra el botón de eliminar', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
+    const combo = await findFreePermissionCombo();
+    test.skip(!combo, 'El catálogo ya cubre todas las combinaciones (no se puede crear permiso desechable)');
     const perm = await createDisposablePermission({ pEnabled: false });
     try {
       const list = new PermissionsListPage(page);
@@ -370,8 +385,10 @@ test.describe('Permisos (/permissions) — Búsqueda', () => {
 
   test('Búsqueda: filtrar por nombre muestra solo coincidencias', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
-    const permA = await createDisposablePermission();
-    const permB = await createDisposablePermission();
+    const { perm: permA, borrowed: borrowedA } = await createOrBorrowDisposablePermission();
+    const { perm: permB, borrowed: borrowedB } = await createOrBorrowDisposablePermission({
+      excludeIds: [permA.id],
+    });
     try {
       const list = new PermissionsListPage(page);
       await list.goto();
@@ -381,8 +398,8 @@ test.describe('Permisos (/permissions) — Búsqueda', () => {
       await expect(list.rowFor(permA.pName)).toHaveCount(1);
       await expect(list.rowFor(permB.pName)).toHaveCount(0);
     } finally {
-      await deletePermissionDirect(permA.id).catch(() => undefined);
-      await deletePermissionDirect(permB.id).catch(() => undefined);
+      if (!borrowedA) await deletePermissionDirect(permA.id).catch(() => undefined);
+      if (!borrowedB) await deletePermissionDirect(permB.id).catch(() => undefined);
     }
   });
 
