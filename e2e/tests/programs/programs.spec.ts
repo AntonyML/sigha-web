@@ -58,14 +58,21 @@ test.describe('Programas (/programs) — CRUD', () => {
     await create.goto();
 
     // Desactiva la validación nativa (required) para llegar al alert de la app.
-    await create.page.evaluate(() => {
-      document.querySelector('form')?.setAttribute('novalidate', '');
+    // `locator.evaluate` espera a que el form exista: `page.evaluate` con
+    // `document.querySelector('form')?` corría antes del montaje de React en el
+    // dev server y fallaba en silencio, dejando la validación nativa activa.
+    await create.page.locator('form').evaluate((form) => form.setAttribute('novalidate', ''));
+
+    // El alert() del submit bloquea el hilo JS y deja colgado el click() de
+    // Playwright ("performing click action"), así que el handler acepta el
+    // dialog al instante; el mensaje se captura para la aserción.
+    let dialogMessage: string | null = null;
+    create.page.once('dialog', (dialog) => {
+      dialogMessage = dialog.message();
+      void dialog.accept();
     });
-    const dialogPromise = create.page.waitForEvent('dialog');
     await create.submit();
-    const dialog = await dialogPromise;
-    expect(dialog.message()).toBe('El nombre del programa es requerido');
-    await dialog.accept();
+    expect(dialogMessage).toBe('El nombre del programa es requerido');
   });
 
   test('Crear: crea un programa y lo muestra en el listado', async ({ page }) => {
@@ -131,7 +138,7 @@ test.describe('Programas (/programs) — CRUD', () => {
   test('Editar: carga los datos, renombra y lo refleja en el listado', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
     const name = uniqueProgramName();
-    const newName = `${name} Renombrado`;
+    const newName = `${uniqueProgramName()} Renombrado`;
     const { id } = await createDisposableProgram(name);
     try {
       const list = new ProgramsListPage(page);

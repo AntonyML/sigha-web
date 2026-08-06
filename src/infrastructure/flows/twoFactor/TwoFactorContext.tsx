@@ -31,8 +31,10 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
             const result = await twoFactorService.get2FAStatus();
             setIsEnabled(result.enabled || false);
         } catch (error) {
+            // Error transitorio (429/red): conservar el último estado conocido
+            // en lugar de marcar 2FA como deshabilitado (evita redirecciones
+            // falsas a /two-factor cuando el backend throttlea el endpoint).
             console.error('Error checking 2FA status:', error);
-            setIsEnabled(false);
         } finally {
             setLoading(false);
         }
@@ -53,8 +55,11 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
         const handleFocus = () => check2FAStatus();
         window.addEventListener('focus', handleFocus);
 
-        // Verificar cuando cambie el token de autenticación
-        const handleAuthTokenChanged = () => check2FAStatus();
+        // Verificar cuando cambie el token de autenticación. Usar refresh()
+        // (que marca loading = true) para que el TwoFactorGuard muestre el
+        // spinner mientras se re-chequea el estado y no redirija a /two-factor
+        // con un isEnabled obsoleto tras el login con 2FA.
+        const handleAuthTokenChanged = () => refresh();
         window.addEventListener('authTokenChanged', handleAuthTokenChanged);
 
         return () => {
@@ -62,7 +67,7 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
             window.removeEventListener('focus', handleFocus);
             window.removeEventListener('authTokenChanged', handleAuthTokenChanged);
         };
-    }, [check2FAStatus]);
+    }, [check2FAStatus, refresh]);
 
     const value: TwoFactorContextType = {
         isEnabled,

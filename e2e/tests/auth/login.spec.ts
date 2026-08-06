@@ -67,6 +67,34 @@ test.describe('Autenticación (/login)', () => {
     expect(new URL(page.url()).pathname).not.toBe('/login');
   });
 
+  test('login con 2FA: completa el código de 6 dígitos y aterriza en /dashboard', async ({ page }) => {
+    test.skip(
+      !process.env.E2E_2FA_CODE,
+      'Requiere E2E_2FA_CODE (código vigente de la app autenticadora) para completar el 2FA de forma no interactiva',
+    );
+
+    const { email, password } = requireAdminCredentials();
+    const login = new LoginPage(page);
+    await login.goto();
+
+    await login.login(email, password);
+
+    // Salir de /login (con 2FA llega a /auth/verify-2fa).
+    await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
+
+    // Si la cuenta exige 2FA, completar el código.
+    if (/\/auth\/verify-2fa$/.test(new URL(page.url()).pathname)) {
+      const codeInput = page.getByLabel('Código de Verificación');
+      await expect(codeInput).toBeVisible({ timeout: 15_000 });
+      await codeInput.fill(process.env.E2E_2FA_CODE!);
+      await page.getByRole('button', { name: 'Verificar Código' }).click();
+    }
+
+    // REGRESIÓN: tras el login + 2FA debe aterrizar en /dashboard,
+    // NO ser redirigido a /two-factor (bug de la race condition del guard).
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
+  });
+
   test('navega a la recuperación de contraseña', async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();

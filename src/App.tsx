@@ -65,7 +65,10 @@ function TwoFactorGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isEnabled && !TWOFA_EXEMPT_PATHS.includes(location.pathname)) {
+  // Solo redirigir a /two-factor cuando el backend confirmó que el 2FA está
+  // deshabilitado (isEnabled === false). Si el estado es desconocido (null,
+  // p.ej. por un 429 transitorio de 2fa/status), no bloquear al usuario.
+  if (isEnabled === false && !TWOFA_EXEMPT_PATHS.includes(location.pathname)) {
     return <Navigate to="/two-factor" replace />;
   }
 

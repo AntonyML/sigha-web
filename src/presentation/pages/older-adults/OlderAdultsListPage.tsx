@@ -33,7 +33,7 @@ function highlight(text: string, term: string): React.ReactNode {
 function inDateRange(fecha: string | undefined, from: string, to: string): boolean {
   if (!fecha) return true
   const d = new Date(fecha).getTime()
-  if (from && d < new Date(from).getTime()) return false
+  if (from && d < new Date(from + 'T00:00:00').getTime()) return false
   if (to && d > new Date(to + 'T23:59:59').getTime()) return false
   return true
 }

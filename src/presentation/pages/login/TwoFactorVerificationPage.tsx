@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AlertCircle, Loader2, Shield } from 'lucide-react'
 import { authFlow } from '../../../infrastructure/flows/auth'
+import { useTwoFactorStatus } from '../../../infrastructure/flows/twoFactor'
 import {
   ButtonNew as Button,
   InputNew as Input,
@@ -15,6 +16,7 @@ export default function TwoFactorVerificationPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
+  const { refresh } = useTwoFactorStatus()
 
   // Get data from navigation state
   const email = location.state?.email || ''
@@ -51,6 +53,10 @@ export default function TwoFactorVerificationPage() {
       }
 
       if (result.user) {
+        // Esperar a que el estado 2FA se refresque (isEnabled === true) antes
+        // de navegar; si no, el TwoFactorGuard lee un isEnabled obsoleto
+        // (false) y redirige a /two-factor.
+        await refresh()
         navigate('/dashboard')
       } else {
         setError('Verificación exitosa pero no se recibió información del usuario')

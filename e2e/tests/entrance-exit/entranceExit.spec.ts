@@ -16,7 +16,10 @@ import { RUN_DELETE_TESTS } from '../../support/config';
  * Los tests que tocan filas crean su PROPIO registro vía API (y lo limpian al
  * final), para no depender de datos preexistentes ni de otros tests.
  * `DATA_TIMEOUT` es amplio porque el dev server de Vite compila módulos en
- * frío durante la primera carga (especialmente con tests en paralelo).
+ * frío durante la primera carga (especialmente con tests en paralelo), y el
+ * TwoFactorGuard resuelve el estado 2FA vía API antes del primer render (con
+ * cola de concurrencia + retries puede superar los 12s por defecto). Por eso
+ * los `heading` que siguen a cada `page.goto` usan `DATA_TIMEOUT`.
  */
 const DATA_TIMEOUT = 45_000;
 const TEST_TIMEOUT = 120_000;
@@ -53,7 +56,7 @@ function localDateTimeString(date: Date): string {
 test.describe('Entrada y Salida (entrance-exit) — CRUD y flujos', () => {
   test('Dashboard: renderiza la página con sus controles principales', async ({ page }) => {
     await page.goto('/entrance-exit');
-    await expect(page.getByRole('heading', { name: 'Control de Acceso' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Control de Acceso' })).toBeVisible({ timeout: DATA_TIMEOUT });
     await expect(page.getByRole('main').getByRole('button', { name: 'Actualizar' })).toBeVisible();
     await expect(navButton(page, 'Dashboard')).toBeVisible();
     await expect(navButton(page, 'Historial')).toBeVisible();
@@ -63,7 +66,7 @@ test.describe('Entrada y Salida (entrance-exit) — CRUD y flujos', () => {
 
   test('Navegación: los tabs del módulo enrutan correctamente', async ({ page }) => {
     await page.goto('/entrance-exit');
-    await expect(page.getByRole('heading', { name: 'Control de Acceso' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Control de Acceso' })).toBeVisible({ timeout: DATA_TIMEOUT });
 
     await navButton(page, 'Historial').click();
     await expect(page).toHaveURL(/\/entrance-exit\/history$/);
@@ -71,7 +74,7 @@ test.describe('Entrada y Salida (entrance-exit) — CRUD y flujos', () => {
 
     await navButton(page, 'Reg. Entrada').click();
     await expect(page).toHaveURL(/\/entrance-exit\/register\?type=entrance$/);
-    await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible({ timeout: DATA_TIMEOUT });
 
     await navButton(page, 'Reg. Salida').click();
     await expect(page).toHaveURL(/\/entrance-exit\/register\?type=exit$/);
@@ -83,7 +86,7 @@ test.describe('Entrada y Salida (entrance-exit) — CRUD y flujos', () => {
     twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
 
     await page.goto('/entrance-exit/register?type=entrance');
-    await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible({ timeout: DATA_TIMEOUT });
 
     await page.locator('#type').selectOption('employee');
     await page.locator('#identification').fill(uniqueIdentification());
@@ -105,7 +108,7 @@ test.describe('Entrada y Salida (entrance-exit) — CRUD y flujos', () => {
     const identification = uniqueIdentification();
     try {
       await page.goto('/entrance-exit/register?type=entrance');
-      await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Registrar Entrada' })).toBeVisible({ timeout: DATA_TIMEOUT });
 
       await page.locator('#type').selectOption('employee');
       await page.locator('#identification').fill(identification);

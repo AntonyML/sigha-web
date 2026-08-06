@@ -16,6 +16,42 @@ export function uniqueProgramName(): string {
   return `Programa E2E ${Date.now()}${sequence}`;
 }
 
+/** Genera un nombre de rol único (evita el conflicto 400 del backend por duplicado). */
+export function uniqueRoleName(): string {
+  sequence += 1;
+  return `Rol E2E ${Date.now()}${sequence}`;
+}
+
+/** Genera un correo único para crear usuarios e2e (evita el 409 de email duplicado). */
+export function uniqueUserEmail(): string {
+  sequence += 1;
+  return `e2e.user.${Date.now()}.${sequence}@example.com`;
+}
+
+/**
+ * Nombre/identificación por defecto para los usuarios e2e.
+ * La identificación es única; el nombre puede repetirse sin problema.
+ */
+export function buildUserPayload(opts?: {
+  uIdentification?: string;
+  uName?: string;
+  uFLastName?: string;
+  uSLastName?: string;
+  uEmail?: string;
+  uPassword?: string;
+  roleId?: number;
+}): Record<string, unknown> {
+  return {
+    uIdentification: opts?.uIdentification ?? uniqueIdentification(),
+    uName: opts?.uName ?? 'E2E',
+    uFLastName: opts?.uFLastName ?? 'Prueba',
+    uSLastName: opts?.uSLastName ?? undefined,
+    uEmail: opts?.uEmail ?? uniqueUserEmail(),
+    uPassword: opts?.uPassword ?? 'E2eClave2026!',
+    roleId: opts?.roleId ?? 4, // nurse
+  };
+}
+
 /**
  * Payload válido para POST /virtual-records/create.
  * Cumple las validaciones del DTO (CreateVirtualRecordDirectDto) y de la

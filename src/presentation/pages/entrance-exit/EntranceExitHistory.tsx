@@ -19,7 +19,11 @@ const fmtDT = (s?: string) => s ? new Date(s).toLocaleString('es-CR') : 'N/A'
 function inRange(dateStr: string | undefined, from: string, to: string): boolean {
   if (!dateStr) return true
   const d = new Date(dateStr).getTime()
-  if (from && d < new Date(from).getTime()) return false
+  // Los strings date-only ("YYYY-MM-DD") se parsean como medianoche UTC;
+  // forzamos el horario local ("T00:00:00") para que "Desde" respete el día
+  // local del usuario (igual que "Hasta" con T23:59:59). Sin esto, en zonas
+  // con offset negativo "Desde" incluye hasta 6h del día anterior.
+  if (from && d < new Date(from + 'T00:00:00').getTime()) return false
   if (to   && d > new Date(to + 'T23:59:59').getTime()) return false
   return true
 }
