@@ -32,13 +32,15 @@ test.describe('Usuarios (/users) — Navegación', () => {
   test.describe.configure({ mode: 'serial' });
 
   test('Lista: renderiza la página con sus controles principales', async ({ page }) => {
+    // La primera carga compila los módulos de Vite en frío (firefox es más lento).
+    test.setTimeout(TEST_TIMEOUT);
     const list = new UsersListPage(page);
     await list.goto();
 
-    await expect(list.title).toBeVisible();
-    await expect(list.newUserButton).toBeVisible();
-    await expect(list.deletedUsersButton).toBeVisible();
-    await expect(list.searchInput).toBeVisible();
+    await expect(list.title).toBeVisible({ timeout: DATA_TIMEOUT });
+    await expect(list.newUserButton).toBeVisible({ timeout: DATA_TIMEOUT });
+    await expect(list.deletedUsersButton).toBeVisible({ timeout: DATA_TIMEOUT });
+    await expect(list.searchInput).toBeVisible({ timeout: DATA_TIMEOUT });
   });
 
   test('Crear: navega al formulario desde el botón', async ({ page }) => {
@@ -48,7 +50,7 @@ test.describe('Usuarios (/users) — Navegación', () => {
     await list.newUserButton.click();
     await expect(page).toHaveURL(/\/users\/create$/);
     const create = new CreateUserPage(page);
-    await expect(create.title).toBeVisible();
+    await expect(create.title).toBeVisible({ timeout: DATA_TIMEOUT });
   });
 
   test('Eliminados: navega a la vista de usuarios eliminados', async ({ page }) => {

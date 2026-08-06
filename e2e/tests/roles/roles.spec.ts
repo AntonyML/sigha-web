@@ -341,7 +341,7 @@ test.describe('Roles (/roles) — CRUD', () => {
     }
   });
 
-  test('Editar: cancelar la edición mantiene los datos originales', async ({ page }) => {
+  test('Editar: cancelar el diálogo de salida mantiene la edición en curso', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
     const name = uniqueRoleName();
     const { id } = await createDisposableRole(name);
@@ -358,10 +358,13 @@ test.describe('Roles (/roles) — CRUD', () => {
       const dialog = page.getByRole('dialog');
       await expect(dialog).toBeVisible();
       await expect(dialog.getByText('Salir sin guardar', { exact: true })).toBeVisible();
+
+      // Confirmar "Cancelar" en el diálogo descarta la salida: el usuario se
+      // queda en el formulario y los cambios sin guardar se conservan.
       await dialog.getByRole('button', { name: 'Cancelar' }).click();
 
-      // Se mantiene en el formulario con los datos originales sin cambios.
-      await expect(edit.nameInput).toHaveValue(name);
+      await expect(edit.nameInput).toHaveValue(`${name} NO GUARDADO`);
+      await expect(edit.unsavedWarning).toBeVisible();
     } finally {
       await deleteRoleDirect(id).catch(() => undefined);
     }
