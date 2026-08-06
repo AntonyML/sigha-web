@@ -16,7 +16,7 @@ export default function TwoFactorVerificationPage() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const location = useLocation()
-  const { refresh } = useTwoFactorStatus()
+  const { refresh, markEnabled } = useTwoFactorStatus()
 
   // Get data from navigation state
   const email = location.state?.email || ''
@@ -53,10 +53,13 @@ export default function TwoFactorVerificationPage() {
       }
 
       if (result.user) {
-        // Esperar a que el estado 2FA se refresque (isEnabled === true) antes
-        // de navegar; si no, el TwoFactorGuard lee un isEnabled obsoleto
-        // (false) y redirige a /two-factor.
+        // 1) Esperar a que el estado 2FA se refresque desde el backend.
+        // 2) Forzar isEnabled = true de forma SÍNCRONA en el mismo batch de
+        //    render que navigate('/dashboard'): si no, el TwoFactorGuard puede
+        //    leer un isEnabled obsoleto (false) y redirigir a /two-factor por
+        //    la carrera entre el setState asíncrono de refresh() y el navigate.
         await refresh()
+        markEnabled()
         navigate('/dashboard')
       } else {
         setError('Verificación exitosa pero no se recibió información del usuario')

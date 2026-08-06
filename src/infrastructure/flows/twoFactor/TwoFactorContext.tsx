@@ -5,6 +5,7 @@ interface TwoFactorContextType {
     isEnabled: boolean | null;
     loading: boolean;
     refresh: () => Promise<void>;
+    markEnabled: () => void;
 }
 
 const TwoFactorContext = createContext<TwoFactorContextType | undefined>(undefined);
@@ -45,6 +46,16 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
         await check2FAStatus();
     }, [check2FAStatus]);
 
+    // Establece isEnabled = true de forma síncrona. Se usa tras completar el
+    // login con 2FA: el usuario acaba de pasar la verificación, así que el
+    // estado no puede depender de la carrera del GET /2fa/status (el
+    // setState asíncrono de refresh() puede commitearse en un batch distinto
+    // al de navigate(), dejando al TwoFactorGuard con un isEnabled=false
+    // obsoleto y redirigiendo a /two-factor).
+    const markEnabled = useCallback(() => {
+        setIsEnabled(true);
+    }, []);
+
     useEffect(() => {
             check2FAStatus();
 
@@ -73,6 +84,7 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
         isEnabled,
         loading,
         refresh,
+        markEnabled,
     };
 
     return (

@@ -4,12 +4,13 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 import type { AuthUser } from '../../../types/auth';
 
-const { authFlowMock, refreshMock } = vi.hoisted(() => ({
+const { authFlowMock, refreshMock, markEnabledMock } = vi.hoisted(() => ({
   authFlowMock: {
     verify2FA: vi.fn(),
     clearLocalSession: vi.fn(),
   },
   refreshMock: vi.fn(),
+  markEnabledMock: vi.fn(),
 }));
 
 vi.mock('../../../infrastructure/flows/auth', () => ({
@@ -21,6 +22,7 @@ vi.mock('../../../infrastructure/flows/twoFactor', () => ({
     isEnabled: null,
     loading: false,
     refresh: refreshMock,
+    markEnabled: markEnabledMock,
   }),
 }));
 
@@ -70,7 +72,7 @@ describe('TwoFactorVerificationPage — navegación post-verificación', () => {
     refreshMock.mockResolvedValue(undefined);
   });
 
-  it('espera el refresh del estado 2FA antes de navegar a /dashboard', async () => {
+  it('espera el refresh del estado 2FA y marca isEnabled=true antes de navegar a /dashboard', async () => {
     const user = userEvent.setup();
     let resolveRefresh: () => void = () => {};
     refreshMock.mockReturnValue(
@@ -88,12 +90,14 @@ describe('TwoFactorVerificationPage — navegación post-verificación', () => {
     // La página debe llamar refresh() (estado 2FA) antes de navegar.
     await waitFor(() => expect(refreshMock).toHaveBeenCalled(), { timeout: 2000 });
     expect(currentPath).toBe('/auth/verify-2fa');
+    expect(markEnabledMock).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveRefresh();
     });
 
     await waitFor(() => expect(currentPath).toBe('/dashboard'));
+    expect(markEnabledMock).toHaveBeenCalledTimes(1);
   });
 
   it('navega a /dashboard cuando la verificación es exitosa y el refresh ya resolvió', async () => {
@@ -106,6 +110,7 @@ describe('TwoFactorVerificationPage — navegación post-verificación', () => {
     await user.click(screen.getByRole('button', { name: 'Verificar Código' }));
 
     await waitFor(() => expect(currentPath).toBe('/dashboard'));
+    expect(markEnabledMock).toHaveBeenCalledTimes(1);
   });
 
   it('no navega y muestra error cuando verify2FA falla', async () => {
