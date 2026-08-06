@@ -6,6 +6,7 @@ import {
   buildEntranceExitPayload,
   buildUserPayload,
   uniqueIdentification,
+  uniquePermissionName,
 } from './factories';
 import type { EeAccessType } from './factories';
 
@@ -310,6 +311,193 @@ export async function getRolePermissionIds(roleId: number): Promise<number[]> {
     return (Array.isArray(body) ? body : [])
       .filter((rp) => rp.rpGranted)
       .map((rp) => rp.permissionId);
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/* ─────────── Permisos (módulo /permissions) ─────────────────────────────── */
+
+/**
+ * Módulos válidos del enum e_permission_module (espejo de
+ * sigha-db/supabase/migrations/008_permissions.sql). Se usan para encontrar
+ * combinaciones (módulo × acción) libres al crear permisos desechables.
+ */
+const PERMISSION_MODULES = [
+  'users',
+  'roles',
+  'permissions',
+  'dashboard',
+  'virtualFiles',
+  'audits',
+  'programs',
+  'vaccines',
+  'subPrograms',
+  'entranceExit',
+  'twoFactor',
+  'nursing',
+  'physiotherapy',
+  'psychology',
+  'socialWork',
+  'clinicalHistory',
+  'clinicalMedication',
+  'medicalRecords',
+  'emergencyContacts',
+  'olderAdultFamily',
+  'olderAdultUpdates',
+  'specializedAreas',
+  'specializedAppointments',
+];
+
+/**
+ * Módulos que ofrece el formulario de crear/editar permisos
+ * (src/presentation/pages/permissions/CreatePermissionPage.tsx).
+ * El select del formulario no incluye todos los módulos del enum.
+ */
+export const UI_PERMISSION_MODULES = [
+  'users',
+  'roles',
+  'dashboard',
+  'virtualFiles',
+  'audits',
+  'programs',
+  'vaccines',
+  'subPrograms',
+  'entranceExit',
+  'twoFactor',
+];
+
+const PERMISSION_ACTIONS = ['view', 'create', 'edit', 'delete'] as const;
+
+/**
+ * Primera combinación (módulo, acción) libre en el catálogo.
+ * Con `restrictToUi` solo considera los módulos que ofrece el formulario
+ * (relevante porque la unicidad del backend es por módulo × acción).
+ * Devuelve null si el catálogo ya cubre todas las combinaciones.
+ */
+export async function findFreePermissionCombo(
+  restrictToUi = false,
+): Promise<{ pModule: string; pAction: string } | null> {
+  const catalog = await getPermissionCatalog();
+  const taken = new Set(catalog.map((p) => `${p.pModule}:${p.pAction}`));
+  const modules = restrictToUi ? UI_PERMISSION_MODULES : PERMISSION_MODULES;
+  for (const pModule of modules) {
+    for (const pAction of PERMISSION_ACTIONS) {
+      if (!taken.has(`${pModule}:${pAction}`)) {
+        return { pModule, pAction };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Crea un permiso desechable vía API (POST /permissions) y devuelve sus datos.
+ * Si no se pasan módulo/acción, elige automáticamente una combinación libre
+ * del catálogo (la unicidad del backend es por módulo × acción, no por nombre).
+ * Nota: POST /permissions exige rol SUPER_ADMIN; el token e2e (global-setup)
+ * debe cumplirlo para que esta helper funcione.
+ */
+export async function createDisposablePermission(opts?: {
+  pName?: string;
+  pModule?: string;
+  pAction?: string;
+  pEnabled?: boolean;
+}): Promise<PermissionCatalogItem> {
+  // La unicidad del backend es por (módulo × acción), no por nombre: si no se
+  // pasan, se resuelve una combinación libre antes de abrir el contexto.
+  let { pModule, pAction } = opts ?? {};
+  if (!pModule || !pAction) {
+    const combo = await findFreePermissionCombo();
+    if (!combo) {
+      throw new Error(
+        'createPermission: el catálogo ya cubre todas las combinaciones módulo/acción',
+      );
+    }
+    pModule = combo.pModule;
+    pAction = combo.pAction;
+  }
+
+  const payload = {
+    pName: opts?.pName ?? uniquePermissionName(),
+    pDescription: 'Permiso creado por test e2e',
+    pModule,
+    pAction,
+    pEnabled: opts?.pEnabled ?? true,
+  };
+
+  const ctx = await authedApi();
+  try {
+    // Reintento con backoff si el throttler global (100 req/min) responde 429.
+    const MAX_ATTEMPTS = 4;
+    let res: import('@playwright/test').APIResponse;
+    for (let attempt = 1; ; attempt++) {
+      res = await ctx.post('/permissions', { data: payload });
+      if (res.status() !== 429 || attempt >= MAX_ATTEMPTS) break;
+      await new Promise((r) => setTimeout(r, attempt * 5_000));
+    }
+    if (!res.ok()) {
+      throw new Error(`createPermission falló (${res.status()}): ${await res.text()}`);
+    }
+
+    // POST /permissions devuelve la entidad Permission directamente (sin wrapper).
+    const body = (await res.json()) as PermissionCatalogItem & { data?: { id?: number } };
+    const id = body?.data?.id ?? body?.id;
+    if (!id) throw new Error(`createPermission: respuesta sin id: ${JSON.stringify(body)}`);
+
+    return {
+      id,
+      pName: payload.pName,
+      pDescription: payload.pDescription,
+      pModule: payload.pModule,
+      pAction: payload.pAction,
+      pEnabled: payload.pEnabled,
+    };
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Busca un permiso por nombre exacto (para limpiar lo creado por la UI). */
+export async function findPermissionByName(
+  pName: string,
+): Promise<PermissionCatalogItem | null> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.get('/permissions');
+    if (!res.ok()) {
+      throw new Error(`getPermissions falló (${res.status()}): ${await res.text()}`);
+    }
+    const body = (await res.json()) as PermissionCatalogItem[] | { data?: PermissionCatalogItem[] };
+    const list = Array.isArray(body) ? body : body.data ?? [];
+    return list.find((p) => p.pName === pName) ?? null;
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Obtiene un permiso por id vía API (verificación de persistencia). */
+export async function getPermissionById(id: number): Promise<PermissionCatalogItem> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.get(`/permissions/${id}`);
+    if (!res.ok()) {
+      throw new Error(`getPermission falló (${res.status()}): ${await res.text()}`);
+    }
+    return (await res.json()) as PermissionCatalogItem;
+  } finally {
+    await ctx.dispose();
+  }
+}
+
+/** Elimina un permiso directamente vía API (limpieza/seguridad). */
+export async function deletePermissionDirect(id: number): Promise<void> {
+  const ctx = await authedApi();
+  try {
+    const res = await ctx.delete(`/permissions/${id}`);
+    if (!res.ok()) {
+      throw new Error(`deletePermission falló (${res.status()}): ${await res.text()}`);
+    }
   } finally {
     await ctx.dispose();
   }

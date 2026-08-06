@@ -117,7 +117,7 @@ test.describe('Usuarios (/users) — CRUD', () => {
     const create = new CreateUserPage(page);
     await create.fillStep1({
       identification,
-      name: 'E2E',
+      name: 'Ana',
       firstLastName: 'Prueba',
       secondLastName: 'Qa',
     });
@@ -137,7 +137,7 @@ test.describe('Usuarios (/users) — CRUD', () => {
     if (id) await deleteUserDirect(id).catch(() => undefined);
   });
 
-  test('Crear: un correo duplicado muestra el error 409', async ({ page }) => {
+  test('Crear: un correo duplicado muestra el error del backend', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
     const email = uniqueUserEmail();
     const { id } = await createDisposableUser({ uEmail: email });
@@ -146,7 +146,7 @@ test.describe('Usuarios (/users) — CRUD', () => {
       await create.goto();
       await create.fillStep1({
         identification: uniqueIdentification(),
-        name: 'E2E',
+        name: 'Ana',
         firstLastName: 'Prueba',
       });
       await create.next();
@@ -155,7 +155,9 @@ test.describe('Usuarios (/users) — CRUD', () => {
       await create.selectRole('nurse');
       await create.submit();
 
-      await expect(page.getByText(/Conflicto de datos/)).toBeVisible({ timeout: DATA_TIMEOUT });
+      // El backend responde 400 con "El email ya está en uso" (NO 409): el
+      // frontend pinta ese mensaje tal cual en el toast de error.
+      await expect(page.getByText(/ya está en uso/)).toBeVisible({ timeout: DATA_TIMEOUT });
     } finally {
       await deleteUserDirect(id).catch(() => undefined);
     }
@@ -192,7 +194,7 @@ test.describe('Usuarios (/users) — CRUD', () => {
     const { id } = await createDisposableUser({
       uIdentification: identification,
       uEmail: email,
-      uName: 'E2E',
+      uName: 'Ana',
       uFLastName: 'Prueba',
       uSLastName: 'Qa',
     });
@@ -207,14 +209,14 @@ test.describe('Usuarios (/users) — CRUD', () => {
       await expect(page).toHaveURL(/\/users\/edit\/\d+$/);
       const edit = new EditUserPage(page);
       await expect(edit.identificationInput).toHaveValue(identification, { timeout: DATA_TIMEOUT });
-      await expect(edit.nameInput).toHaveValue('E2E');
+      await expect(edit.nameInput).toHaveValue('Ana');
 
-      await edit.nameInput.fill('E2E Editado');
+      await edit.nameInput.fill('Ana Editado');
       await edit.save();
       await expect(page).toHaveURL(/\/users$/, { timeout: DATA_TIMEOUT });
 
       await list.search(identification);
-      await expect(list.rowFor(identification)).toContainText('E2E Editado', {
+      await expect(list.rowFor(identification)).toContainText('Ana Editado', {
         timeout: DATA_TIMEOUT,
       });
     } finally {

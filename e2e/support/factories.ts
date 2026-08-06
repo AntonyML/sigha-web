@@ -22,6 +22,12 @@ export function uniqueRoleName(): string {
   return `Rol E2E ${Date.now()}${sequence}`;
 }
 
+/** Genera un nombre de permiso único (para búsquedas/limpieza deterministas). */
+export function uniquePermissionName(): string {
+  sequence += 1;
+  return `Permiso E2E ${Date.now()}${sequence}`;
+}
+
 /** Genera un correo único para crear usuarios e2e (evita el 409 de email duplicado). */
 export function uniqueUserEmail(): string {
   sequence += 1;

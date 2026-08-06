@@ -104,7 +104,7 @@ async function tryReuseSession(): Promise<AuthBody | null> {
   if (!authToken) return null;
 
   const check = await request.newContext({
-    baseURL: process.env.E2E_API_URL ?? 'http://localhost:3000',
+    baseURL: process.env.E2E_API_URL ?? 'http://127.0.0.1:3000',
     extraHTTPHeaders: { Authorization: `Bearer ${authToken}` },
   });
   let user: User | null = null;
@@ -158,7 +158,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
     );
   }
 
-  const apiURL = process.env.E2E_API_URL ?? 'http://localhost:3000';
+  const apiURL = process.env.E2E_API_URL ?? 'http://127.0.0.1:3000';
   const origin = config.projects[0].use.baseURL ?? 'http://localhost:5173';
 
   // 1) Intentar reutilizar una sesión aún válida (sin digitar 2FA).

@@ -50,6 +50,9 @@ export class CreateRolePage {
   /** Marca el checkbox "Todos" de un módulo (selecciona todos sus permisos). */
   async selectModule(module: string): Promise<void> {
     const toggle = this.moduleToggle(module);
+    // El catálogo se carga vía API al montar; espera a que el módulo exista
+    // antes de interactuar (si no, el toggle no está renderizado todavía).
+    await toggle.waitFor();
     if (!(await toggle.isChecked())) {
       await toggle.check();
     }
@@ -58,6 +61,9 @@ export class CreateRolePage {
   /** Marca el checkbox "Todos" de todos los módulos del catálogo de permisos. */
   async selectAllModules(): Promise<void> {
     const toggles = this.page.locator('input[id^="mod-"]');
+    // Espera a que el catálogo de permisos termine de cargar (vía API) antes
+    // de seleccionar; si se corre antes, count() es 0 y la selección no hace nada.
+    await toggles.first().waitFor();
     const count = await toggles.count();
     for (let i = 0; i < count; i++) {
       const toggle = toggles.nth(i);
