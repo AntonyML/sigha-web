@@ -48,15 +48,15 @@ export default function HomePage() {
 
           <div aria-label="Vista ilustrativa de la plataforma SIGHa" className="product-preview">
             <div className="preview-window">
-              <div className="preview-topbar"><span className="preview-dots"><i /><i /><i /></span><span>SIGHa · Vista ilustrativa</span><span className="preview-user">AM</span></div>
+              <div className="preview-topbar"><span className="preview-dots"><i /><i /><i /></span><span>SIGHa · Centro operacional</span><span className="preview-user">AM</span></div>
               <div className="preview-body">
                 <aside className="preview-sidebar"><b>S</b><span className="active" /><span /><span /><span /><span /></aside>
                 <div className="preview-main">
-                  <div className="preview-greeting"><div><span>RESUMEN DE EJEMPLO</span><h3>Buenos días, Ana</h3><p>Resumen de la operación de hoy</p></div><div className="preview-avatar">AM</div></div>
+                  <div className="preview-greeting"><div><span>CENTRO OPERACIONAL</span><h3>Buenos días, Ana</h3><p>Resumen de la operación de hoy</p></div><div className="preview-avatar">AM</div></div>
                   <div className="preview-metrics">
-                    <div><span>Residentes activos</span><b>128</b><small><i className="metric-dot green" /> Registros al día</small></div>
-                    <div><span>Atenciones de hoy</span><b>16</b><small><i className="metric-dot blue" /> En agenda</small></div>
-                    <div><span>Seguimientos</span><b>08</b><small><i className="metric-dot amber" /> Por completar</small></div>
+                    <div><span>Residentes activos</span><b>128</b><small><i className="metric-dot blue" /> En el centro</small></div>
+                    <div><span>Movimientos del día</span><b>16</b><small><i className="metric-dot green" /> Entradas y salidas</small></div>
+                    <div><span>Notificaciones</span><b>08</b><small><i className="metric-dot amber" /> Pendientes</small></div>
                   </div>
                   <div className="preview-lower">
                     <div className="preview-agenda"><div className="preview-section-title"><b>Próximas atenciones</b><span>Ver agenda →</span></div><div className="agenda-row"><i className="agenda-icon blue-bg"><HeartPulse size={15} /></i><div><b>Control de enfermería</b><small>María R. · 9:30 a. m.</small></div><span>En 20 min</span></div><div className="agenda-row"><i className="agenda-icon green-bg"><CalendarDays size={15} /></i><div><b>Sesión de fisioterapia</b><small>José C. · 10:00 a. m.</small></div><span>En 50 min</span></div></div>
