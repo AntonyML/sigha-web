@@ -17,11 +17,11 @@ import { AppProviders } from './providers'
 
 export const metadata: Metadata = {
   title: {
-    default: 'SIGHa | Gestión integral para hogares de larga estancia',
+    default: 'SIGHa | Sistema Integral de Gestión Holística y de Asistencia',
     template: '%s | SIGHa',
   },
   description:
-    'Una plataforma para coordinar la atención, los expedientes y la operación diaria de hogares de larga estancia.',
+    'Una plataforma para coordinar la atención, los expedientes y la operación diaria del Sistema Integral de Gestión Holística y de Asistencia.',
 }
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

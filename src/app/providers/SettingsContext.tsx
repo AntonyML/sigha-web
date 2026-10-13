@@ -16,7 +16,7 @@ export interface InterfaceSettings {
 }
 
 const GENERAL_DEFAULTS: AppSettings = {
-  appName: 'ASOPOGUA',
+  appName: 'SIGHA',
   logoUrl: '',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };

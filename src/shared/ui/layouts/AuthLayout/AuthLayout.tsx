@@ -1,5 +1,5 @@
 import React from 'react'
-import fallbackLogo from '@/shared/assets/images/asopogua.png'
+import fallbackLogo from '@/shared/assets/images/sigha.png'
 import { useAppSettings } from '@/app/providers/SettingsContext'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/shared/ui'
 

@@ -37,7 +37,7 @@ export default function HomePage() {
             <span className="eyebrow"><HeartHandshake size={16} /> Tecnología para cuidar mejor</span>
             <h1>Más tiempo para cuidar. <span>Menos tiempo buscando información.</span></h1>
             <p className="hero-lead">
-              SIGHa reúne la gestión de residentes, la atención clínica y la operación diaria de un hogar de larga estancia en un solo espacio de trabajo.
+              SIGHa reúne la gestión de residentes, la atención clínica y la operación diaria del Sistema Integral de Gestión Holística y de Asistencia en un solo espacio de trabajo.
             </p>
             <div className="hero-actions">
               <Link className="button button-primary" href="/contacto">Solicitar una demostración <ArrowRight size={17} /></Link>
@@ -72,7 +72,7 @@ export default function HomePage() {
       </section>
 
       <section className="trust-strip">
-        <div className="marketing-container trust-inner"><span>Una plataforma para conectar las tareas esenciales del hogar</span><div><b>Personas</b><i /> <b>Atención</b><i /> <b>Operación</b><i /> <b>Seguridad</b></div></div>
+        <div className="marketing-container trust-inner"><span>Una plataforma para conectar las tareas esenciales del centro</span><div><b>Personas</b><i /> <b>Atención</b><i /> <b>Operación</b><i /> <b>Seguridad</b></div></div>
       </section>
 
       <section className="section-padding">
@@ -88,7 +88,7 @@ export default function HomePage() {
 
       <section className="security-section section-padding"><div className="marketing-container security-grid"><div><span className="eyebrow">Privacidad desde el diseño</span><h2>La información sensible necesita <span>accesos responsables.</span></h2><p>Define funciones para cada integrante del equipo y conserva el registro de acciones importantes dentro de la plataforma.</p><Link className="text-link" href="/funcionalidades#seguridad">Conocer los controles de acceso <ArrowRight size={16} /></Link></div><div className="security-visual"><div className="security-shield"><LockKeyhole size={31} /></div><div className="security-bubble bubble-a">Acceso por rol <b>Activo</b></div><div className="security-bubble bubble-b">Actividad registrada <b>✓</b></div><div className="security-ring ring-outer" /><div className="security-ring ring-inner" /></div></div></section>
 
-      <section className="final-cta-section"><div className="marketing-container final-cta"><div><span className="eyebrow">Conoce SIGHa</span><h2>Una conversación puede aclarar el siguiente paso.</h2><p>Cuéntanos cómo trabaja tu hogar y conversemos sobre la plataforma.</p></div><Link className="button button-light" href="/contacto">Solicitar una demostración <ArrowRight size={17} /></Link></div></section>
+      <section className="final-cta-section"><div className="marketing-container final-cta"><div><span className="eyebrow">Conoce SIGHa</span><h2>Una conversación puede aclarar el siguiente paso.</h2><p>Cuéntanos cómo trabaja tu centro y conversemos sobre la plataforma.</p></div><Link className="button button-light" href="/contacto">Solicitar una demostración <ArrowRight size={17} /></Link></div></section>
     </main>
   )
 }
