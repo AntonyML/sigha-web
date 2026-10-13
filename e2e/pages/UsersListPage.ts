@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del listado de usuarios
- * (/users, src/presentation/pages/users/UserListPage.tsx).
+ * (/users, src/modules/identity/presentation/pages/users/UserListPage.tsx).
  */
 export class UsersListPage {
   readonly page: Page;

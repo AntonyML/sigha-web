@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del formulario de creación de programas
- * (/programs/create, src/presentation/pages/programs/CreateProgramPage.tsx).
+ * (/programs/create, src/modules/care-planning/presentation/pages/programs/CreateProgramPage.tsx).
  */
 export class CreateProgramPage {
   readonly page: Page;

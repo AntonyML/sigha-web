@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../../src/services/authService', () => ({
+vi.mock('@/infrastructure/api/services/authService', () => ({
   authService: {
     forgotPassword: vi.fn(),
     resetPassword: vi.fn(),
   },
 }));
 
-import { passwordRecoveryFlow } from '../../../src/infrastructure/flows/passwordRecovery/passwordRecoveryFlow';
-import { authService } from '../../../src/services/authService';
+import { passwordRecoveryFlow } from '@/modules/auth/application/flows/passwordRecovery/passwordRecoveryFlow';
+import { authService } from '@/infrastructure/api/services/authService';
 
 const mockedForgotPassword = vi.mocked(authService.forgotPassword);
 const mockedResetPassword = vi.mocked(authService.resetPassword);

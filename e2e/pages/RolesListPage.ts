@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del listado de roles
- * (/roles, src/presentation/pages/roles/RoleListPage.tsx).
+ * (/roles, src/modules/identity/presentation/pages/roles/RoleListPage.tsx).
  */
 export class RolesListPage {
   readonly page: Page;

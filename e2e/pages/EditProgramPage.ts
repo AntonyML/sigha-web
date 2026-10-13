@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del formulario de edición de programas
- * (/programs/edit/:id, src/presentation/pages/programs/EditProgramPage.tsx).
+ * (/programs/edit/:id, src/modules/care-planning/presentation/pages/programs/EditProgramPage.tsx).
  */
 export class EditProgramPage {
   readonly page: Page;

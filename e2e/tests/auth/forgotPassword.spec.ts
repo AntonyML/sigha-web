@@ -21,15 +21,12 @@ const EMAIL_INEXISTENTE = `usuario-e2e-${Date.now()}@example.com`;
 
 /**
  * Predicado de ruta para mockear SOLO la API NestJS.
- * El navegador llama a VITE_API_URL (por defecto http://localhost:3000),
- * mientras que E2E_API_URL (http://127.0.0.1:3000) solo aplica a las llamadas
- * directas de Node (IPv4). page.route() matchea por dominio exacto, así que un
- * glob con doble asterisco también interceptaría la ruta SPA
- * /auth/forgot-password del frontend (puerto 5173). Este predicado ancla el
- * match al puerto 3000 + pathname + método, sin tocar el SPA.
+ * El navegador llama al proxy de Next con el prefijo /api/backend; Next reenvía
+ * la solicitud a NestJS. E2E_API_URL solo aplica a las llamadas directas de Node.
+ * El predicado intercepta solo el prefijo del proxy y no la ruta de la página.
  */
 function apiRoute(path: string) {
-  return (url: URL): boolean => url.port === '3000' && url.pathname === path;
+  return (url: URL): boolean => url.pathname === `/api/backend${path}`;
 }
 
 /**
@@ -283,11 +280,9 @@ test.describe('Recuperación de contraseña', () => {
       // test no cayó silenciosamente al backend real (p. ej. si la URL no coincide).
       let forgotCalls = 0;
       let resetCalls = 0;
-      // El navegador llama a VITE_API_URL (por defecto http://localhost:3000),
-      // mientras que E2E_API_URL usa 127.0.0.1 para las llamadas directas de
-      // Node (IPv4). page.route es por dominio exacto, así que se usa un glob
-      // `**` que cubre ambos hosts y se valida con los contadores que el mock
-      // sí interceptó (y no se cayó al backend real).
+      // El navegador entra por /api/backend y Next reenvía a NestJS. E2E_API_URL
+      // usa 127.0.0.1 solo para llamadas directas de Node; el mock intercepta
+      // la ruta del proxy y los contadores detectan si la solicitud pasó por él.
       await page.route(apiRoute('/auth/forgot-password'), (route) => {
         forgotCalls += 1;
         return route.fulfill({ json: { message: 'Código de recuperación enviado al email' } });

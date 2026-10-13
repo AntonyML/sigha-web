@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del formulario de creación de roles
- * (/roles/create, src/presentation/pages/roles/CreateRolePage.tsx).
+ * (/roles/create, src/modules/identity/presentation/pages/roles/CreateRolePage.tsx).
  *
  * El formulario solo tiene el campo nombre (rName) + permisos por módulo.
  * No existe campo de descripción ni estado activo/inactivo. Los permisos son

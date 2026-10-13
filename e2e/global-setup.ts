@@ -159,7 +159,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   }
 
   const apiURL = process.env.E2E_API_URL ?? 'http://127.0.0.1:3000';
-  const origin = config.projects[0].use.baseURL ?? 'http://localhost:5173';
+  const origin = config.projects[0].use.baseURL ?? 'http://localhost:3001';
 
   // 1) Intentar reutilizar una sesión aún válida (sin digitar 2FA).
   const reused = await tryReuseSession();

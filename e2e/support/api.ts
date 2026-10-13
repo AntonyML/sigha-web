@@ -351,7 +351,7 @@ const PERMISSION_MODULES = [
 
 /**
  * Módulos que ofrece el formulario de crear/editar permisos
- * (src/presentation/pages/permissions/CreatePermissionPage.tsx).
+ * (src/modules/identity/presentation/pages/permissions/CreatePermissionPage.tsx).
  * El select del formulario no incluye todos los módulos del enum.
  */
 export const UI_PERMISSION_MODULES = [

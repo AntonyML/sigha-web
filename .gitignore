@@ -9,6 +9,9 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.next
+out
+next-env.d.ts
 *.local
 
 # Editor directories and files
@@ -30,6 +33,7 @@ debug-page.png
 *.png
 *.jpg
 *.jpeg
+!src/shared/assets/images/asopogua.png
 
 .env
 .env.*

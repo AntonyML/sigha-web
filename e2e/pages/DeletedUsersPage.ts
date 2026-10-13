@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model de la vista de usuarios eliminados
- * (/users/deleted, src/presentation/pages/users/DeletedUsersPage.tsx).
+ * (/users/deleted, src/modules/identity/presentation/pages/users/DeletedUsersPage.tsx).
  */
 export class DeletedUsersPage {
   readonly page: Page;

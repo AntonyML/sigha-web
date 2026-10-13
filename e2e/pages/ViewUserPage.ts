@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del detalle de usuario
- * (/users/view/:id, src/presentation/pages/users/ViewUserPage.tsx).
+ * (/users/view/:id, src/modules/identity/presentation/pages/users/ViewUserPage.tsx).
  *
  * El título es el nombre completo del usuario (dinámico); las aserciones de
  * datos se hacen por los valores (identificación, correo, rol, estado).

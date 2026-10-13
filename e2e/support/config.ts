@@ -5,7 +5,7 @@ import { setDefaultResultOrder } from 'node:dns';
 // (mismo arreglo que en global-setup.ts).
 setDefaultResultOrder('ipv4first');
 
-export const WEB_URL = process.env.E2E_WEB_URL ?? 'http://localhost:5173';
+export const WEB_URL = process.env.E2E_WEB_URL ?? 'http://localhost:3001';
 export const API_URL = process.env.E2E_API_URL ?? 'http://127.0.0.1:3000';
 
 export const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL ?? '';

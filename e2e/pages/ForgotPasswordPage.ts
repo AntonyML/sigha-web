@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model de la página de solicitud de recuperación de contraseña
- * (/auth/forgot-password, src/presentation/pages/login/PasswordRecoveryRequestPage.tsx).
+ * (/auth/forgot-password, src/modules/auth/presentation/pages/login/PasswordRecoveryRequestPage.tsx).
  */
 export class ForgotPasswordPage {
   readonly page: Page;

@@ -3,7 +3,7 @@ import {
   getPasswordRecoveryErrorMessage,
   validatePasswordRecoveryRequest,
   validatePasswordResetRequest,
-} from '../../../src/infrastructure/flows/passwordRecovery/validation/passwordRecoveryValidations';
+} from '@/modules/auth/application/flows/passwordRecovery/validation/passwordRecoveryValidations';
 
 describe('validatePasswordRecoveryRequest', () => {
   it('rechaza emails vacíos o no string', () => {

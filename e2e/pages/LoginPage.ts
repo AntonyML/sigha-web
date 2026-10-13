@@ -1,7 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 /**
- * Page Object Model de la página de Login (src/presentation/pages/login/LoginPage.tsx).
+ * Page Object Model de la página de Login (src/modules/auth/presentation/pages/login/LoginPage.tsx).
  * Encapsula los selectores y las acciones; los specs no dependen de la UI concreta.
  */
 export class LoginPage {

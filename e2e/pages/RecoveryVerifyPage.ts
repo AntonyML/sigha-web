@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model de la página de verificación del código de recuperación
- * (/auth/recovery/verify, src/presentation/pages/login/PasswordRecoveryVerifyPage.tsx).
+ * (/auth/recovery/verify, src/modules/auth/presentation/pages/login/PasswordRecoveryVerifyPage.tsx).
  *
  * La verificación es local (formato de 8 dígitos); no hace llamadas HTTP.
  */

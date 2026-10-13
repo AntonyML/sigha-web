@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del formulario de edición de permisos
- * (/permissions/edit/:id, src/presentation/pages/permissions/EditPermissionPage.tsx).
+ * (/permissions/edit/:id, src/modules/identity/presentation/pages/permissions/EditPermissionPage.tsx).
  *
  * El botón "Guardar Cambios" está deshabilitado si no hay cambios. Al pulsar
  * "Cancelar" con cambios sin guardar se abre un modal de confirmación

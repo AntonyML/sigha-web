@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del detalle de un permiso
- * (/permissions/view/:id, src/presentation/pages/permissions/ViewPermissionPage.tsx).
+ * (/permissions/view/:id, src/modules/identity/presentation/pages/permissions/ViewPermissionPage.tsx).
  *
  * Muestra el nombre (h3), el badge "ID: #n", módulo, acción y estado
  * (Habilitado/Deshabilitado), además de los botones "Editar Permiso" y

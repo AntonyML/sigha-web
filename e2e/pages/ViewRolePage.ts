@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del detalle de un rol
- * (/roles/view/:id, src/presentation/pages/roles/ViewRolePage.tsx).
+ * (/roles/view/:id, src/modules/identity/presentation/pages/roles/ViewRolePage.tsx).
  *
  * Muestra nombre, badge "ID: #n" y los permisos agrupados por módulo. Cada
  * card de módulo tiene un badge "otorgados/total" y las acciones como

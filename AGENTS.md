@@ -1,16 +1,24 @@
-# AGENTS.md — Frontend (`sigha-web/`)
+# AGENTS.md — Frontend (sigha-web/)
 
-> **You are an AI agent working on the React web frontend of the Hogar de Ancianos platform.**
-> This file contains the frontend-specific rules and the shared Git workflow for this repository.
+> Instrucciones locales para agentes que trabajan en el frontend Next.js de SIGHa.
 
----
+## 0. Alcance y Git
 
-## 0. Scope and authority
+- Trabaja solo en el repositorio sigha-web; coordina trabajo de API o base de datos en su propio repositorio.
+- No hagas push ni amend de commits publicados. El usuario conserva la revisión y publicación remotas.
+- No confirmes secretos, .env, node_modules, artefactos de build ni release.
+- dev es la rama de integración. Trabaja en un worktree y una rama agent/<id>/<tarea> creada desde dev; main queda reservada.
+- No compartas worktrees, ramas ni sesiones de edición. Ejecuta como máximo un comando Git a la vez por worktree.
+- El coordinador serializa la creación/eliminación de worktrees y la integración/rebase sobre dev.
+- El coordinador mantiene CHANGELOG.md; entrega una nota de cambios sin editarlo.
 
-- **Work only in the `sigha-web` repository.** Cross-repository work is assigned to a separate agent and worktree for each repository.
-- **You do not push** to the remote. The user reviews and pushes.
-- **You do not amend** published commits.
-- **You do not** commit secrets, `.env`, `node_modules/`, `dist/`, `release/`.
+### CodeGraph
+
+- Para mapas de repositorio, arquitectura, flujos, dependencias, referencias e impacto, consulta CodeGraph antes de búsquedas amplias.
+- Cada worktree debe tener su propio .codegraph/. Si falta y CodeGraph está disponible, ejecuta gentle-ai codegraph init --cwd <raíz-del-worktree>.
+- No copies, enlaces ni reutilices índices de otro checkout. Después de cambios, deja que el watcher actualice el índice; usa codegraph sync solo si está apagado o informa archivos obsoletos.
+- Nunca ejecutes codegraph uninit, install, uninstall ni upgrade. Usa codegraph index solo para recuperar un índice corrupto.
+
 
 ## Coordinación de agentes y Git (protocolo multi-agente)
 
@@ -51,7 +59,7 @@ bun run build --cwd "C:\DEV\sigha\_wt\sigha-web\<id>-<tarea>"
 bun run lint --cwd "C:\DEV\sigha\_wt\sigha-web\<id>-<tarea>"
 ```
 
-No levantes dos `bun run dev` en el puerto `5173`; si necesitas dev server, pide al coordinador un puerto distinto.
+No levantes dos `bun run dev` en el puerto `3001`; si necesitas dev server, pide al coordinador un puerto distinto.
 
 ### Entrega al coordinador (no integras tú)
 
@@ -59,305 +67,102 @@ Commit en tu rama, `git status` limpio, marca tu claim `done`/`blocked` y entreg
 
 ---
 
+
 ## 1. Stack
 
-- **Runtime / Package Manager:** Bun (v1.3+)
-- **Framework:** React 18 + TypeScript
-- **Build:** Vite 5 (dev server on port 5173, web build)
-- **Styling:** Bootstrap 5 (no inline styles), Tailwind sparingly (legacy)
-- **Routing:** React Router v6 (in `App.tsx`)
-- **State:** React Context (`NotificationProvider`, `TwoFactorProvider`)
-- **HTTP:** Axios with interceptors for JWT
-- **UI primitives:** Radix UI for some components
-- **Forms:** controlled-component pattern + per-flow validation
-- **Tests:** Vitest (unit), Playwright (e2e), legacy Selenium
+- Gestor: Bun 1.3+.
+- Web: Next.js 16 App Router, React 19 y TypeScript.
+- Puerto web: 3001. NestJS usa 3000 por defecto.
+- Bootstrap 5 y Tailwind se mantienen durante la transición de pantallas.
+- HTTP: Axios en adaptadores de src/infrastructure/api.
+- Pruebas: Vitest y Playwright. Vite permanece como dependencia interna de Vitest; ya no sirve ni empaqueta la web.
 
----
+## 2. Estructura
 
-## 2. Folder map (this repo)
+    src/
+    ├── app/                         rutas, layouts, metadata y composición
+    │   ├── (marketing)/             superficies públicas y SEO
+    │   ├── (auth)/                  login y recuperación
+    │   └── (workspace)/             producto, sesión, permisos y 2FA
+    ├── modules/<domain>/
+    │   ├── application/flows/       casos de uso y validaciones actuales
+    │   └── presentation/pages/      pantallas del dominio
+    ├── application/                 fachada de casos de uso compartidos
+    ├── infrastructure/              API y almacenamiento
+    └── shared/                      UI, hooks, tipos, config, estilos y utilidades
 
-```
-sigha-web/
-├── AGENTS.md                                # this file
-├── docs/                                    # AI-facing reference docs
-│   ├── pages-catalog.md                     # all 26 pages
-│   ├── flows-catalog.md                     # all 22 flows (10 exported)
-│   ├── services-catalog.md                  # 17 services + missing
-│   ├── routes-map.md                        # App.tsx routes
-│   ├── flow-pattern.md                      # the mandatory pattern in detail
-│   └── _legacy/                             # archived TAREAS.md (after cleanup)
-├── src/
-│   ├── App.tsx                              # routes
-│   ├── main.tsx                             # entry
-│   ├── presentation/
-│   │   ├── pages/                           # one folder per page route
-│   │   │   ├── login/                       # Login, password recovery, 2FA verify, create-user
-│   │   │   ├── main-menu/                   # MainMenuPage
-│   │   │   ├── dashboard/                   # DashboardPage
-│   │   │   ├── older-adults/                # virtual files (legacy name)
-│   │   │   ├── users/
-│   │   │   ├── profile/
-│   │   │   ├── roles/
-│   │   │   ├── permissions/
-│   │   │   ├── programs/
-│   │   │   ├── sub-programs/
-│   │   │   ├── vaccines/
-│   │   │   ├── two-factor/
-│   │   │   ├── entrance-exit/
-│   │   │   ├── nursing/                     # appointments, dashboard, complete
-│   │   │   ├── audit/                       # menu, list, view, dashboard
-│   │   │   ├── clinical-history/            # 🟡 partial
-│   │   │   ├── clinical-medication/         # 🟡 partial
-│   │   │   ├── emergency-contacts/          # 🟡 partial
-│   │   │   ├── medical-records/             # 🟡 partial
-│   │   │   ├── older-adult-family/          # 🟡 partial
-│   │   │   ├── older-adult-updates/         # 🟡 partial
-│   │   │   ├── physiotherapy/               # 🟡 partial
-│   │   │   ├── psychology/                  # 🟡 partial
-│   │   │   ├── social-work/                 # 🟡 partial
-│   │   │   ├── specialized-appointments/    # 🟡 partial
-│   │   │   └── specialized-areas/           # 🟡 partial
-│   │   ├── components/
-│   │   │   ├── atoms/                       # small UI primitives
-│   │   │   ├── molecules/                   # composed UI
-│   │   │   └── organisms/                   # AppLayout, NotificationCenter
-│   │   ├── context/                         # global state
-│   │   └── hooks/                           # reusable hooks
-│   ├── infrastructure/
-│   │   ├── flows/                           # ★ business logic (10 exported)
-│   │   │   ├── auth/
-│   │   │   ├── userManagement/
-│   │   │   ├── role/
-│   │   │   ├── audit/
-│   │   │   ├── twoFactor/
-│   │   │   ├── profile/
-│   │   │   ├── permission/
-│   │   │   ├── passwordRecovery/
-│   │   │   ├── notifuse/                    # being replaced by email/
-│   │   │   ├── virtualFile/                 # commented out
-│   │   │   ├── clinical-history/            # 🟡 not exported
-│   │   │   ├── clinical-medication/         # 🟡 not exported
-│   │   │   ├── emergency-contact/           # 🟡 not exported
-│   │   │   ├── medical-record/              # 🟡 not exported
-│   │   │   ├── nursing/                     # 🟡 not exported
-│   │   │   ├── older-adult-family/          # 🟡 not exported
-│   │   │   ├── older-adult-update/          # 🟡 not exported
-│   │   │   ├── physiotherapy/               # 🟡 not exported
-│   │   │   ├── psychology/                  # 🟡 not exported
-│   │   │   ├── social-work/                 # 🟡 not exported
-│   │   │   ├── specialized-appointment/     # 🟡 not exported
-│   │   │   ├── specialized-area/            # 🟡 not exported
-│   │   │   └── role-changes/                # 🟡 not exported
-│   │   ├── storage/                         # localStorage / IndexedDB wrappers
-│   │   └── utils/                           # pure utility functions
-│   ├── services/                            # ★ HTTP services (17 currently, 11 missing)
-│   │   ├── http.ts (or httpClient.ts)       # base Axios instance with interceptors
-│   │   ├── authService.ts
-│   │   ├── userManagementService.ts
-│   │   ├── roleService.ts
-│   │   ├── permissionService.ts
-│   │   ├── permissionEntityService.ts
-│   │   ├── profileService.ts
-│   │   ├── twoFactorService.ts
-│   │   ├── notifuseService.ts               # 🟡 deprecated
-│   │   ├── virtualFileService.ts
-│   │   ├── nursingService.ts
-│   │   ├── vaccineService.ts
-│   │   ├── programService.ts
-│   │   ├── subProgramService.ts
-│   │   ├── clinicalConditionService.ts
-│   │   ├── entranceExitService.ts
-│   │   ├── auditService.ts
-│   │   └── roleChangesService.ts
-│   ├── types/                               # shared TypeScript types
-│   ├── assets/                              # icons, images, styles
-│   ├── config/
-│   ├── test/
-│   ├── tests/
-│   └── utils/
-├── public/
-├── tests/                                   # legacy e2e (Selenium/JMeter)
-├── docs/                                    # (also holds _legacy/ after cleanup)
-├── package.json
-├── tareas.md                                # (legacy, Spanish, CI/CD history)
-└── tsconfig.json
-```
+Agrega domain/, application/, infrastructure/ y presentation/ dentro de un módulo cuando haya código real para esas capas. No crees carpetas vacías. Los servicios API siguen temporalmente centralizados en src/infrastructure/api/services.
 
----
+## 3. Dependencias y SOLID
 
-## 3. Routing (from `App.tsx`)
+Dirección objetivo: presentation → application → domain. Infrastructure implementa los puertos de application/domain; app compone módulos, layouts y adaptadores.
 
-Two zones:
+- Las páginas presentan datos e interacción; no agregues Axios ni reglas de negocio a pantallas nuevas.
+- Los casos de uso coordinan operaciones; no importan Next.js, React, Axios ni almacenamiento del navegador.
+- Define puertos pequeños en los límites de API, almacenamiento e integración. Implementa los puertos en infrastructure y compón adaptadores en app.
+- Mantén responsabilidades pequeñas, contratos sustituibles e interfaces enfocadas. No añadas abstracciones sin una frontera o consumidor concreto.
+- Mapea DTO de NestJS en infraestructura. El dominio no depende del formato HTTP.
+- Usa contratos públicos entre módulos; evita imports a archivos internos de otro dominio.
 
-1. **No-layout routes** (no `AppLayout`):
-   - `/` and `/login` → `LoginPage`
-   - `/auth/forgot-password`
-   - `/auth/recovery/verify`
-   - `/auth/recovery/reset`
-   - `/auth/verify-2fa`
-   - `/auth/create-user`
+Las pantallas migradas aún tienen imports directos a servicios y algunos flujos usan adaptadores concretos. Refactoriza por dominio según docs/architecture/sigha-nextjs-implementation-plan.md; no declares terminada la inversión de dependencias hasta retirar esos imports.
 
-2. **Layout routes** (wrapped in `AppLayout`):
-   - `main-menu`, `dashboard`
-   - `virtualFiles`, `virtualFiles/create`, `virtualFiles/edit/:id`, `virtualFiles/view/:id`
-   - `users`, `users/create`, `users/view/:id`, `users/edit/:id`, `users/deleted`
-   - `profile`, `profile/edit`
-   - `roles`, `roles/create`, `roles/view/:id`, `roles/edit/:id`
-   - `permissions`, `permissions/create`, `permissions/view/:id`, `permissions/edit/:id`
-   - `programs`, `programs/create`
-   - `vaccines`, `vaccines/create`
-   - `sub-programs`, `sub-programs/create`
-   - `two-factor`
-   - `entrance-exit`, `entrance-exit/register`, `entrance-exit/history`
-   - `nursing`, `nursing/appointments/new`, `nursing/appointments/history`, `nursing/appointments/:id/view`, `nursing/appointments/:id/results`, `nursing/appointments/:id/complete`, `nursing/patients/:patientId/appointments`
-   - `audits`, `audits/list`, `audits/view/:id`, `audits/dashboard`
+## 4. Next.js y rutas
 
-For the full routes map see `docs/routes-map.md`.
+- Las rutas viven en src/app; los grupos entre paréntesis cambian layouts sin cambiar la URL.
+- / es marketing. /login y /auth/* pertenecen a autenticación. Las rutas de producto viven en (workspace).
+- Las pantallas viven en src/modules/<domain>/presentation/pages; page.tsx selecciona y envuelve la pantalla, no concentra lógica de negocio.
+- Usa segmentos [id] de Next para parámetros y conserva URLs del producto durante la migración.
+- Mantén marketing como Server Components. Añade "use client" solo por estado, eventos, APIs del navegador o hooks cliente.
+- Usa next/link y next/navigation para código nuevo. src/shared/navigation.ts es un adaptador temporal para pantallas existentes.
+- useSearchParams en componentes cliente prerenderizados requiere Suspense.
+- Los guards del navegador son UX. NestJS sigue siendo autoridad para permisos, sesión y aislamiento.
 
-> 🚨 **Missing routes** (no `<Route>` declared, but the backend has the endpoints): `physiotherapy`, `psychology`, `social-work`, `clinical-history`, `clinical-medication`, `medical-records`, `emergency-contacts`, `older-adult-family`, `older-adult-updates`, `specialized-appointments`, `specialized-areas`. See TareasPendientes §ÉPICA 3.
+## 5. Sesión y SaaS
 
----
+- El contrato actual mantiene tokens en localStorage por compatibilidad. No agregues tokens duraderos nuevos ahí; acuerda cookies HttpOnly, Secure y SameSite con el backend antes de cambiar el contrato.
+- No uses un tenant ID del navegador como autorización. El servidor debe resolver tenant desde una sesión validada y limitar cada operación y trabajo asíncrono.
+- No inventes URL o selector de tenant hasta acordar identidad, selección, cambio y scoping con NestJS.
+- No registres tokens, datos clínicos, información identificable de residentes ni códigos de recuperación.
+- Mantén providers de marketing, auth y workspace en sus route groups salvo que el estado sea transversal.
 
-## 4. The Flow pattern (mandatory)
+## 6. API y entorno
 
-`Page → Flow → Service → HTTP` — see `docs/flow-pattern.md` for the full guide.
+- URL del navegador: NEXT_PUBLIC_API_URL, normalmente /api/backend.
+- Origen privado NestJS: BACKEND_API_URL, por defecto http://localhost:3000. No lo expongas con NEXT_PUBLIC_.
+- El proxy está en next.config.ts. Conserva contratos NestJS salvo coordinación explícita en ambos repositorios.
+- Lee variables desde src/shared/config/app.config.ts. No hardcodees orígenes.
+- Infrastructure contiene HTTP/DTO; application contiene orquestación y reglas de aplicación.
 
-**Why this matters:**
-- UI logic in pages stays minimal.
-- Validation and error wrapping live in flows.
-- Services are pure HTTP and easy to mock.
-- Swapping the HTTP client, adding retry, caching, optimistic updates, etc. all live in the service.
+## 7. UI y estilos
 
----
+- UI en español salvo requerimiento de localización.
+- No reintroduzcas Atomic Design (atoms, molecules, organisms). Organiza src/shared/ui por función: forms, navigation, feedback, overlays, data display e icons.
+- UI compartido no conoce reglas de negocio; UI de dominio pertenece al módulo.
+- Importa CSS global solo desde src/app/layout.tsx. Para código nuevo, prefiere CSS Modules o estilos acotados.
+- Elimina legacy-pages.css pantalla por pantalla cuando deje de usarse.
+- Conserva teclado, foco visible, semántica, mensajes accesibles y responsividad.
 
-## 5. Flows (currently)
+## 8. Comandos
 
-10 exported, 12 not yet exported (see `docs/flows-catalog.md`).
+    bun install
+    bun run dev       # Next.js, http://localhost:3001
+    bun run build     # producción y TypeScript
+    bun run start     # producción, puerto 3001
+    bun run lint
+    bun run test:run
+    bun run test:e2e
 
-To add a new flow:
-1. Create `src/infrastructure/flows/<feature>/main.ts` exporting `<feature>Flow` (object with async methods).
-2. Create `src/infrastructure/flows/<feature>/validation/<feature>Validations.ts`.
-3. Add the export in `src/infrastructure/flows/index.ts`.
-4. Update `docs/flows-catalog.md`.
+Playwright usa E2E_WEB_URL=http://localhost:3001 y E2E_API_URL=http://localhost:3000.
 
----
+## 9. Verificación
 
-## 6. Services
+- Ejecuta bun run build cuando se cambien rutas, configuración Next o prerender y sea necesario verificar compilación.
+- Ejecuta pruebas puntuales solo cuando se soliciten o sean requeridas expresamente; no ejecutes la suite completa por defecto.
+- Distingue build, lint, unitarias y e2e en la entrega. No reportes pruebas que no se ejecutaron.
 
-17 implemented, 11 missing (see `docs/services-catalog.md`).
+## 10. Documentación
 
-To add a new service:
-1. Create `src/services/<feature>Service.ts` exporting a `<feature>Service` object with HTTP methods.
-2. Reuse the shared Axios instance (set up JWT interceptor and error normalization).
-3. Update `docs/services-catalog.md`.
-
----
-
-## 7. Pages
-
-26 pages total. See `docs/pages-catalog.md`.
-
-To add a new page:
-1. Create the page component in `src/presentation/pages/<feature>/<Name>Page.tsx`.
-2. Add the route in `src/App.tsx` (inside the layout `/*` block).
-3. Update `docs/pages-catalog.md` and `docs/routes-map.md`.
-4. Wire the page to a flow (and ensure the flow + service exist).
-
----
-
-## 8. UI conventions
-
-- **UI strings in Spanish** ("Iniciar sesión", "Crear usuario", etc.).
-- **No inline styles.** Use Bootstrap 5 classes or component-scoped CSS.
-- **Bootstrap 5 first.** Tailwind is allowed for utilities but not for full layouts.
-- **Use atomic components:** atoms → molecules → organisms.
-- **Confirm destructive actions** (sweetalert2 is installed).
-- **Use toasts** via the `NotificationProvider` for success/error feedback.
-
----
-
-## 9. Forms
-
-- Controlled components (`useState` for each field, or a single `useState({ ... })`).
-- Validate with the flow's `validation/<feature>Validations.ts` before submission.
-- Show field errors near the field (Bootstrap `is-invalid` + `invalid-feedback`).
-- Disable submit button while pending.
-- Show server errors via the `NotificationProvider` toast.
-
----
-
-## 10. Auth state in the frontend
-
-- On successful login, store the access token + refresh token in `localStorage` (or `sessionStorage`).
-- Add the access token to every request via an Axios request interceptor.
-- On 401, attempt a refresh, then retry. If refresh fails, redirect to `/login`.
-- Wrap the layout routes with a `<RequireAuth>` component (or similar) that redirects to `/login` if no token.
-- 2FA flow: if `/auth/login` returns `requires2fa: true`, redirect to `/auth/verify-2fa` with the `tempToken`.
-
----
-
-## 11. Env variables
-
-Frontend env vars are prefixed with `VITE_` and baked at build time.
-
-| Var | Example | Notes |
-|---|---|---|
-| `VITE_API_URL` | `http://localhost:3000` | Backend base URL |
-| `VITE_ENABLE_2FA` | `false` | Dev shortcut: skip real 2FA |
-| `VITE_*` | — | Add as needed; document in `.env.example` |
-
----
-
-## 12. Running locally
-
-```bash
-cd sigha-web
-bun install
-bun run dev              # web (Vite, http://localhost:5173)
-bun run build            # production web build
-bun run test:run         # Vitest
-bun run test:e2e         # Playwright
-bun run lint
-```
-
----
-
-## 13. Testing
-
-- **Unit (Vitest):** `*.test.ts` or `*.spec.ts` next to the code.
-- **E2E (Playwright):** `tests/e2e/` or `src/tests/`.
-- **Legacy E2E (Selenium):** `tests/` — keep for Jenkins pipeline parity.
-
-For a new feature:
-- Add unit tests for any new validation / transformation logic (in flow).
-- Add a unit test for the service (mock the HTTP client).
-- Add at least one happy-path e2e test if the feature is user-facing.
-
----
-
-## 14. Common pitfalls
-
-- ❌ `axios` import in a page or component.
-- ❌ Business logic in a service.
-- ❌ `any` left in the code (ESLint will flag it).
-- ❌ Inline `style={{ ... }}` (use Bootstrap or component CSS).
-- ❌ Calling `notifuseService` — it's deprecated. Use `emailService` after ÉPICA 1.
-- ❌ Forgetting to add a `<Route>` in `App.tsx` after creating a page.
-- ❌ Hardcoding the API URL — use `import.meta.env.VITE_API_URL` or the shared `httpClient`.
-
----
-
-## 15. Documentation in this repo
-
-| File | Purpose |
-|---|---|
-| `AGENTS.md` | This file |
-| `docs/pages-catalog.md` | All 26 pages |
-| `docs/flows-catalog.md` | All 22 flows |
-| `docs/services-catalog.md` | All 17 services + missing 11 |
-| `docs/routes-map.md` | Routes from `App.tsx` |
-| `docs/flow-pattern.md` | `Page → Flow → Service → HTTP` in detail |
-| `docs/_legacy/` | Archived `TAREAS.md` (after cleanup) |
-| `tareas.md` | Legacy Spanish doc (CI/CD history) — keep for reference |
-
----
+- README.md: instalación y resumen arquitectónico.
+- docs/routes-map.md: inventario público, auth y workspace.
+- docs/architecture/sigha-nextjs-implementation-plan.md: estado de migración, SOLID, auth, tenancy y despliegue.
+- Actualiza el plan y el mapa cuando cambien route groups o límites de módulos.

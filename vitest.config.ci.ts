@@ -10,9 +10,9 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: 'coverage',
       include: [
-        'src/services/entranceExitService.ts',
-        'src/types/entranceExit.ts',
-        'src/presentation/pages/entrance-exit/**/*.tsx'
+        'src/infrastructure/api/services/entranceExitService.ts',
+        'src/shared/types/entranceExit.ts',
+        'src/modules/resident-access/presentation/pages/entrance-exit/**/*.tsx'
       ],
       exclude: [
         'node_modules/',

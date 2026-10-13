@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model de la página de cambio de contraseña
- * (/auth/recovery/reset, src/presentation/pages/login/PasswordRecoveryResetPage.tsx).
+ * (/auth/recovery/reset, src/modules/auth/presentation/pages/login/PasswordRecoveryResetPage.tsx).
  *
  * Requiere recovery_email y recovery_token en sessionStorage; si faltan, redirige
  * a /auth/forgot-password.

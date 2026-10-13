@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del formulario de creación de permisos
- * (/permissions/create, src/presentation/pages/permissions/CreatePermissionPage.tsx).
+ * (/permissions/create, src/modules/identity/presentation/pages/permissions/CreatePermissionPage.tsx).
  *
  * El formulario tiene nombre, descripción, módulo (select), acción (select) y
  * un switch de estado (pEnabled, activado por defecto). Los errores de

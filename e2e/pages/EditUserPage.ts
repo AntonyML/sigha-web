@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model de la edición de usuario
- * (/users/edit/:id, src/presentation/pages/users/EditUserPage.tsx).
+ * (/users/edit/:id, src/modules/identity/presentation/pages/users/EditUserPage.tsx).
  *
  * Nota: los <label> de FieldGroup NO están asociados a los inputs (sin htmlFor),
  * por lo que no se pueden usar getByLabel(); los inputs del formulario se

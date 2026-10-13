@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del wizard de creación de usuario
- * (/users/create, src/presentation/pages/users/CreateUserPage.tsx).
+ * (/users/create, src/modules/identity/presentation/pages/users/CreateUserPage.tsx).
  *
  * Nota: los <label> del wizard NO están asociados a los inputs (sin htmlFor),
  * por lo que no se pueden usar getByLabel(); se usan placeholders.

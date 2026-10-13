@@ -3,7 +3,7 @@ import { config as loadEnv } from 'dotenv';
 
 loadEnv({ path: '.env.e2e' });
 
-const WEB_URL = process.env.E2E_WEB_URL ?? 'http://localhost:5173';
+const WEB_URL = process.env.E2E_WEB_URL ?? 'http://localhost:3001';
 
 // "true" abre una ventana con GUI (headed); "false"/vacío corre headless.
 // Al pasarlo explícito (''|'true'|'false') evita el aviso de conflicto con
@@ -12,8 +12,8 @@ const HEADED = process.env.E2E_HEADED === 'true';
 
 /**
  * Antes de ejecutar los tests, el proyecto necesita:
- *   - El frontend corriendo en http://localhost:5173 (se reutiliza si ya está activo)
- *   - La API NestJS corriendo en http://localhost:3000
+ *   - El frontend Next.js corriendo en http://localhost:3001 (se reutiliza si ya está activo)
+ *   - La API NestJS corriendo en http://localhost:3000 (proxy de Next.js)
  *   - Un `.env.e2e` con `E2E_ADMIN_EMAIL` y `E2E_ADMIN_PASSWORD` (ver .env.e2e.example)
  */
 export default defineConfig({

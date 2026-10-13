@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del listado de programas
- * (/programs, src/presentation/pages/programs/ProgramListPage.tsx).
+ * (/programs, src/modules/care-planning/presentation/pages/programs/ProgramListPage.tsx).
  */
 export class ProgramsListPage {
   readonly page: Page;

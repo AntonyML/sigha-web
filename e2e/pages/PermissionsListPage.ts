@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 /**
  * Page Object Model del listado de permisos
- * (/permissions, src/presentation/pages/permissions/PermissionListPage.tsx).
+ * (/permissions, src/modules/identity/presentation/pages/permissions/PermissionListPage.tsx).
  *
  * Muestra ID, nombre/descripción, módulo, acción, estado (Activo/Inactivo) y
  * las acciones Ver/Editar/Eliminar. El botón "Eliminar" solo se renderiza

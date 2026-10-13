@@ -1,0 +1,66 @@
+// src/infrastructure/api/services/emergencyContactService.ts
+// CRUD sincronizado con backend: controller/emergency-contacts/emergency-contacts.controller.ts
+// Endpoints:
+//   POST   /emergency-contacts
+//   GET    /emergency-contacts?olderAdultId=
+//   GET    /emergency-contacts/by-older-adult/:olderAdultId
+//   GET    /emergency-contacts/:id
+//   PATCH  /emergency-contacts/:id
+//   DELETE /emergency-contacts/:id
+
+import { httpClient } from '@/infrastructure/api/httpClient';
+
+export interface EmergencyContactApi {
+  id: number;
+  enPhoneNumber: string;
+  enContactName?: string | null;
+  idOlderAdult?: number;
+  createAt?: string;
+}
+
+export interface CreateEmergencyContactDto {
+  enPhoneNumber: string;
+  idOlderAdult?: number;
+}
+
+export interface UpdateEmergencyContactDto {
+  enPhoneNumber?: string;
+  idOlderAdult?: number;
+}
+
+export const emergencyContactService = {
+  getAll(olderAdultId?: number): Promise<EmergencyContactApi[]> {
+    const params = olderAdultId !== undefined ? { olderAdultId } : undefined;
+    return httpClient
+      .get<{ message: string; data: EmergencyContactApi[] }>('/emergency-contacts', { params })
+      .then((r) => r.data?.data ?? []);
+  },
+
+  getById(id: number): Promise<EmergencyContactApi> {
+    return httpClient
+      .get<{ message: string; data: EmergencyContactApi }>(`/emergency-contacts/${id}`)
+      .then((r) => r.data.data);
+  },
+
+  getByOlderAdult(olderAdultId: number): Promise<EmergencyContactApi[]> {
+    return httpClient
+      .get<{ message: string; data: EmergencyContactApi[] }>(`/emergency-contacts/by-older-adult/${olderAdultId}`)
+      .then((r) => r.data?.data ?? []);
+  },
+
+  create(payload: CreateEmergencyContactDto): Promise<EmergencyContactApi> {
+    return httpClient
+      .post<{ message: string; data: EmergencyContactApi }>('/emergency-contacts', payload)
+      .then((r) => r.data.data);
+  },
+
+  update(id: number, payload: UpdateEmergencyContactDto): Promise<EmergencyContactApi> {
+    return httpClient
+      .patch<{ message: string; data: EmergencyContactApi }>(`/emergency-contacts/${id}`, payload)
+      .then((r) => r.data.data);
+  },
+
+  remove(id: number): Promise<void> {
+    return httpClient.delete(`/emergency-contacts/${id}`).then(() => undefined);
+  },
+};
