@@ -1,6 +1,6 @@
 # AGENTS.md — Frontend (`sigha-web/`)
 
-> **You are an AI agent working on the React/Electron frontend of the Hogar de Ancianos platform.**
+> **You are an AI agent working on the React web frontend of the Hogar de Ancianos platform.**
 > This file contains the frontend-specific rules and the shared Git workflow for this repository.
 
 ---
@@ -39,9 +39,9 @@ El agente entrega al coordinador el resumen, archivos modificados y verificacion
 
 ## 1. Stack
 
+- **Runtime / Package Manager:** Bun (v1.3+)
 - **Framework:** React 18 + TypeScript
 - **Build:** Vite 5 (dev server on port 5173, web build)
-- **Desktop:** Electron 28 (Windows packaging)
 - **Styling:** Bootstrap 5 (no inline styles), Tailwind sparingly (legacy)
 - **Routing:** React Router v6 (in `App.tsx`)
 - **State:** React Context (`NotificationProvider`, `TwoFactorProvider`)
@@ -155,7 +155,6 @@ sigha-web/
 │   └── utils/
 ├── public/
 ├── tests/                                   # legacy e2e (Selenium/JMeter)
-├── electron/                                # Electron main process
 ├── docs/                                    # (also holds _legacy/ after cleanup)
 ├── package.json
 ├── tareas.md                                # (legacy, Spanish, CI/CD history)
@@ -291,13 +290,12 @@ Frontend env vars are prefixed with `VITE_` and baked at build time.
 
 ```bash
 cd sigha-web
-npm install
-npm run dev              # web (Vite, http://localhost:5173)
-npm run dev:electron     # Electron desktop in dev
-npm run build            # production web build
-npm run test:run         # Vitest
-npm run test:e2e         # Playwright
-npm run lint
+bun install
+bun run dev              # web (Vite, http://localhost:5173)
+bun run build            # production web build
+bun run test:run         # Vitest
+bun run test:e2e         # Playwright
+bun run lint
 ```
 
 ---

@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -26,22 +26,14 @@ window.addEventListener('authTokenChanged', () => {
   void preloadPermissions();
 });
 
-const isFileProtocol = window.location.protocol === 'file:';
-
 createRoot(document.getElementById('root')!).render(
   <SettingsProvider>
-  <FeedbackProvider>
-    <Toast />
-    {isFileProtocol ? (
-      <HashRouter>
-        <App />
-      </HashRouter>
-    ) : (
+    <FeedbackProvider>
+      <Toast />
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    )}
-  </FeedbackProvider>
+    </FeedbackProvider>
   </SettingsProvider>
 );
 

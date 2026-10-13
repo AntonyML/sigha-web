@@ -4,7 +4,6 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
@@ -44,9 +43,6 @@ Session_starter.md
 
 test-results/
 e2e/.auth/
-
-# Electron build
-dist-electron/
 
 # Build artifacts
 e2e/*.tsbuildinfo

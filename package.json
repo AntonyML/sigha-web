@@ -3,17 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main": "dist-electron/main.cjs",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "concurrently -k \"pnpm run start:dev:main\" \"pnpm run start:dev:renderer\" \"pnpm run start:dev:electron-wait\"",
-    "start:dev:main": "node scripts/watch-electron.js",
-    "start:dev:renderer": "cross-env VITE_DEV_SERVER_URL=http://localhost:5173 vite",
-    "start:dev:electron-wait": "wait-on http://localhost:5173 && wait-on file:dist-electron/main.cjs && electron ./dist-electron/main.cjs",
-    "build:renderer": "vite build",
-    "build:electron": "tsc -p electron/tsconfig.json && node scripts/rename-to-cjs.js",
-    "build": "pnpm run build:renderer && pnpm run build:electron",
-    "start:prod": "electron ./dist-electron/main.cjs",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
@@ -27,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:selenium": "jest --config jest.selenium.config.cjs",
     "test:gui": "jest --config jest.selenium.config.cjs",
-    "build:prod": "cross-env NODE_ENV=production pnpm run build"
+    "build:prod": "cross-env NODE_ENV=production vite build"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -65,11 +57,8 @@
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/coverage-v8": "^4.0.9",
     "autoprefixer": "^10.4.21",
-    "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
-    "electron": "^42.4.0",
-    "electron-builder": "^26.0.12",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
@@ -83,7 +72,6 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "^7.1.7",
-    "vitest": "^4.0.2",
-    "wait-on": "^9.0.1"
+    "vitest": "^4.0.2"
   }
 }

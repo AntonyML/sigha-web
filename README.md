@@ -4,7 +4,6 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Electron](https://img.shields.io/badge/Electron-28.0-47848F?style=for-the-badge&logo=electron&logoColor=white)
 
 ![Status](https://img.shields.io/badge/Status-En_Desarrollo-yellow?style=for-the-badge)
 ![Created By](https://img.shields.io/badge/Creado_por-Luis_|_Tony_|_Jona-%23ff69b4?style=for-the-badge&logo=starship&logoColor=white)
@@ -32,7 +31,7 @@
 
 ## Descripción
 
-Aplicación frontend desarrollada con **React 18** y **TypeScript** para la gestión integral de un hogar de ancianos. La aplicación se compila como aplicación de escritorio usando **Electron** para Windows, garantizando una experiencia nativa y segura.
+Aplicación web frontend desarrollada con **React 18** y **TypeScript** para la gestión integral de un hogar de ancianos, completamente responsive y compatible con navegadores web en todos los dispositivos.
 
 La interfaz está diseñada con **componentes reutilizables** siguiendo principios de **Atomic Design** y **Clean Architecture**, con énfasis en usabilidad para personal administrativo con habilidades digitales básicas.
 
@@ -139,10 +138,10 @@ Gestión de expedientes virtuales (en desarrollo)
 
 | Categoría | Tecnología |
 |-----------|-----------|
+| Runtime / Package Manager | Bun 1.3+ |
 | Framework | React 18.3 |
 | Lenguaje | TypeScript 5.3 |
 | Build Tool | Vite 5.0 |
-| Escritorio | Electron 28 |
 | Estilos | Bootstrap 5.3 |
 | Estado Global | React Hooks (useState, useEffect) |
 | Formularios | Validación nativa + React |
@@ -159,20 +158,9 @@ Gestión de expedientes virtuales (en desarrollo)
 
 Asegúrate de tener instalado:
 
-- **Node.js**: v20.x LTS o superior
-- **pnpm**: v8.x o superior (gestionado via [Corepack](https://nodejs.org/api/corepack.html))
+- **Bun**: v1.2.0 o superior ([bun.com](https://bun.com/))
 - **Git**: v2.40 o superior
 - **Backend API**: Corriendo en `http://localhost:3000`
-
-### Habilitar Corepack (recomendado)
-
-```bash
-# Habilitar Corepack (incluido con Node.js v20+)
-corepack enable
-
-# Activar la versión de pnpm definida en package.json
-corepack prepare pnpm@latest --activate
-```
 
 ---
 
@@ -188,7 +176,7 @@ cd sigha-web
 ### 2. Instalar Dependencias
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### 3. Configurar Variables de Entorno
@@ -209,31 +197,21 @@ VITE_APP_VERSION=1.0.0
 
 ## Ejecución
 
-### Modo Desarrollo (Web)
+### Modo Desarrollo
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 La aplicación estará disponible en: `http://localhost:5173`
 
-### Modo Electron (Desarrollo)
-
-```bash
-pnpm electron:dev
-```
-
 ### Build para Producción
 
 ```bash
-# Build web
-pnpm build
-
-# Build Electron (Windows)
-pnpm electron:build
+bun run build
 ```
 
-El instalador se generará en `dist/electron/`
+Los archivos estáticos optimizados se generarán en `dist/`
 
 ---
 
@@ -243,11 +221,6 @@ El instalador se generará en `dist/electron/`
 sigha-web/
 │
 ├── public/                                    # Archivos estáticos
-│
-├── electron/                                  # Configuración Electron
-│   ├── main.ts                                # Proceso principal
-│   ├── preload.ts                             # Preload script
-│   └── tsconfig.json
 │
 ├── src/
 │   ├── main.tsx                               # Entry point
@@ -362,7 +335,6 @@ sigha-web/
 │   │   └── pages/
 │   └── e2e/
 │
-├── dist-electron/                             # Build de Electron
 ├── .env.example                               # Variables de entorno ejemplo
 ├── .env                                       # Variables de entorno (no commitear)
 ├── .gitignore                                 # Archivos ignorados por git
@@ -632,20 +604,20 @@ Menú Principal → Configuración 2FA
 
 ```bash
 # Ejecutar todos los tests
-pnpm test
+bun run test:run
 
 # Ejecutar en modo watch
-pnpm test:watch
+bun run test
 
 # Generar coverage
-pnpm test:coverage
+bun run test:unit
 ```
 
 ### Tests E2E
 
 ```bash
 # Ejecutar tests end-to-end
-pnpm test:e2e
+bun run test:e2e
 ```
 
 ### Estructura de Tests
@@ -675,34 +647,13 @@ tests/
 
 ```bash
 # Build de producción
-pnpm build
+bun run build
 
 # Preview del build
-pnpm preview
+bun run preview
 ```
 
 Los archivos se generan en `dist/`
-
-### Build para Electron (Windows)
-
-```bash
-# Build instalador .exe
-pnpm electron:build
-
-# Build portable
-pnpm electron:build:portable
-```
-
-Los instaladores se generan en `dist/electron/`
-
-### Configuración de Electron Builder
-
-El archivo `electron-builder.config.js` incluye:
-- Icono de la aplicación
-- Nombre del instalador
-- Configuración de auto-update
-- Permisos necesarios
-- Firma digital (opcional)
 
 ---
 
@@ -710,16 +661,14 @@ El archivo `electron-builder.config.js` incluye:
 
 | Script | Descripción |
 |--------|-------------|
-| `pnpm dev` | Iniciar servidor de desarrollo |
-| `pnpm build` | Compilar para producción |
-| `pnpm preview` | Vista previa del build |
-| `pnpm electron:dev` | Ejecutar en Electron (desarrollo) |
-| `pnpm electron:build` | Compilar instalador Electron |
-| `pnpm lint` | Ejecutar linter ESLint |
-| `pnpm format` | Formatear código con Prettier |
-| `pnpm test` | Ejecutar tests unitarios |
-| `pnpm test:e2e` | Ejecutar tests end-to-end |
-| `pnpm test:coverage` | Generar reporte de cobertura |
+| `bun dev` | Iniciar servidor de desarrollo |
+| `bun run build` | Compilar para producción |
+| `bun run preview` | Vista previa del build |
+| `bun run lint` | Ejecutar linter ESLint |
+| `bun run test` | Ejecutar tests en modo interactivo |
+| `bun run test:run` | Ejecutar tests unitarios una sola vez |
+| `bun run test:e2e` | Ejecutar tests end-to-end |
+| `bun run test:unit` | Generar reporte de cobertura |
 
 ---
 
@@ -803,10 +752,6 @@ VITE_ALLOWED_FILE_TYPES=image/jpeg,image/png,application/pdf
 VITE_ENABLE_OFFLINE_MODE=true
 VITE_ENABLE_NOTIFICATIONS=true
 VITE_ENABLE_AUTO_SAVE=true
-
-# Electron
-VITE_ELECTRON_WINDOW_WIDTH=1280
-VITE_ELECTRON_WINDOW_HEIGHT=800
 ```
 
 ---
