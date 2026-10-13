@@ -960,17 +960,13 @@ export const localStorageService = {
 
 ---
 
-## Contribución
+## Contribución (multi-agente con worktrees)
 
-Para contribuir al proyecto:
+`dev` es la rama de integración y el checkout principal (`C:\DEV\sigha\sigha-web`) **no se edita**. Cada agente trabaja en su worktree aislado `C:\DEV\sigha\_wt\sigha-web\<id>-<tarea>` con rama `agent/<id>/<tarea>` desde `origin/dev`, previo reclamo de archivos en `C:\DEV\sigha\_wt\_claims\sigha-web.json`. Solo el coordinador integra a `dev` y actualiza el `CHANGELOG.md`. Protocolo completo en `C:\DEV\sigha\AGENTS.md` y `AGENTS.md`.
 
-1. Fork el repositorio
-2. Crea una rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Asegúrate de que el código pase los tests (`npm run test`)
-4. Asegúrate de que el código pase el linter (`npm run lint`)
-5. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-6. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-7. Abre un Pull Request en GitLab
+1. Reclama archivos, crea tu worktree/rama y verifica en él (`bun run test:run`, `bun run build`, `bun run lint`)
+2. Commit en tu rama y entrega resumen + verificaciones + nota de changelog al coordinador
+3. El coordinador integra a `dev` (el push remoto lo hace el usuario)
 
 ### Checklist antes de PR
 
