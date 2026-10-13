@@ -1,5 +1,5 @@
 // permissions.ts
-// Sistema de permisos dinámico para el Hogar de Ancianos
+// Sistema de permisos dinámico para el Sistema Integral de Gestión Holística y de Asistencia
 
 /**
  * Acciones básicas disponibles en el sistema

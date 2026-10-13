@@ -66,7 +66,7 @@ export default function CreateSpecializedAreaPage() {
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Email de Contacto</label>
-                <input name="saContactEmail" type="email" className="form-control" placeholder="area@hogar.com" value={form.saContactEmail ?? ''} onChange={handleChange} disabled={loading} />
+                <input name="saContactEmail" type="email" className="form-control" placeholder="area@sigha.cr" value={form.saContactEmail ?? ''} onChange={handleChange} disabled={loading} />
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">Teléfono de Contacto</label>

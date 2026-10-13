@@ -18,7 +18,7 @@ export class LoginPage {
   constructor(page: Page) {
     this.page = page;
     this.title = page.getByText('Iniciar Sesión', { exact: true });
-    this.subtitle = page.getByText('Hogar de Ancianos ASOPOGUA');
+    this.subtitle = page.getByText('Sistema Integral de Gestión Holística y de Asistencia');
     this.emailInput = page.getByLabel('Correo Electrónico', { exact: true });
     this.passwordInput = page.getByLabel('Contraseña', { exact: true });
     this.submitButton = page.getByRole('button', { name: 'Entrar' });

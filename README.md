@@ -1,6 +1,6 @@
 # SIGHa Web
 
-Frontend para coordinar la gestión y la atención de hogares de larga estancia. Está construido con **Next.js App Router**, **React**, **TypeScript** y **Bun**.
+Frontend del Sistema Integral de Gestión Holística y de Asistencia (SIGHA) para coordinar la gestión y la atención. Está construido con **Next.js App Router**, **React**, **TypeScript** y **Bun**.
 
 ## Empezar
 

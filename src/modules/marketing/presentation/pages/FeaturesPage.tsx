@@ -5,7 +5,7 @@ const features = [
   { id: 'residentes', icon: UsersRound, title: 'Gestión de residentes', text: 'Organiza expedientes y consulta la información de las personas atendidas desde un registro centralizado.' },
   { id: 'atencion', icon: CalendarDays, title: 'Atenciones y seguimientos', text: 'Coordina citas, consultas y actividades de los equipos clínicos y profesionales.' },
   { id: 'expediente', icon: FileHeart, title: 'Información clínica', text: 'Conecta expedientes, antecedentes, medicamentos y registros de atención.' },
-  { id: 'operacion', icon: ClipboardList, title: 'Operación diaria', text: 'Da seguimiento a ingresos, salidas, notificaciones y tareas frecuentes del hogar.' },
+  { id: 'operacion', icon: ClipboardList, title: 'Operación diaria', text: 'Da seguimiento a ingresos, salidas, notificaciones y tareas frecuentes del centro.' },
   { id: 'seguridad', icon: LockKeyhole, title: 'Acceso y trazabilidad', text: 'Asigna permisos por módulo y rol y conserva un historial de actividad relevante.' },
 ]
 

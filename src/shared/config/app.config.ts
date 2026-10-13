@@ -14,7 +14,7 @@ export const config = {
     },
 
     app: {
-        name: 'Hogar de Ancianos',
+        name: 'Sistema Integral de Gestión Holística y de Asistencia',
         version: '1.0.0',
         environment: nodeEnv,
     },

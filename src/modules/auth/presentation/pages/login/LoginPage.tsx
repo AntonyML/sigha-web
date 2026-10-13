@@ -58,7 +58,7 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Iniciar Sesión"
-      description="Hogar de Ancianos ASOPOGUA"
+      description="Sistema Integral de Gestión Holística y de Asistencia"
     >
       {/* Error Alert */}
       {error && (

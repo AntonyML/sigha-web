@@ -45,12 +45,12 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <span>Atención</span>
             <Link href="/contacto">Contacto</Link>
             <Link href="/login">Acceso al sistema</Link>
-            <a href="mailto:soporte@hogar-ancianos.com">Soporte</a>
+            <a href="mailto:soporte@sigha.cr">Soporte</a>
           </div>
         </div>
         <div className="marketing-container footer-bottom">
           <span>© {new Date().getFullYear()} SIGHa</span>
-          <span>Plataforma de gestión para hogares de larga estancia</span>
+          <span>Plataforma del Sistema Integral de Gestión Holística y de Asistencia</span>
         </div>
       </footer>
     </div>
