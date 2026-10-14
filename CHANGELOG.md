@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-14 | sigha-web-20261014-pn3u | tipo: fix auth Network Error: proxy same-origin para URL local y exclusión de artefactos generados del lint | verificación: typecheck OK; tests 51/51; lint 0 errores (45 warnings); build 109 rutas; proxy health 200/login vacío 400
 2026-10-14 | sigha-web-20261014-43ez | tipo: fix crear expediente: parentesco obligatorio en paso 2 del wizard y chequeo duplicado a GET /virtual-records/search (elimina 404 a /virtual-files/search) | verificación: tsc --noEmit 0 errores en worktree y dev; diff --check limpio; build worktree con timeout de entorno (30s) pendiente de CI
 2026-10-13 | sigha-web-20261013-e029 | tipo: fix ci: agregar setup-bun al job deploy para compatibilidad con wrangler-action | verificación: dev y worktree: test:unit 21/21 OK, yaml sintaxis válida
 2026-10-13 | sigha-web-20261013-a3lo | tipo: pipeline CI/CD en GitHub Actions (QA, auto-versionado con release y deploy a Cloudflare Pages) | verificación: worktree y dev: test:unit 21/21 OK, build OK (109 rutas out/), tsc --noEmit OK (0 errores), yaml sintaxis válida
