@@ -17,6 +17,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
+  function handleBack() {
+    if (!loading) {
+      router.push('/')
+    }
+  }
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -62,6 +68,9 @@ export default function LoginPage() {
     <AuthLayout
       title="Iniciar Sesión"
       description="Sistema Integral de Gestión Holística y de Asistencia"
+      showBackButton={true}
+      onBackClick={handleBack}
+      backButtonText="Volver"
     >
       {/* Error Alert */}
       {error && (
