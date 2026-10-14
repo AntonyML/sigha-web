@@ -12,7 +12,7 @@ export default function FeaturesPage() {
           <p>Explora los módulos por área y encuentra herramientas para organizar registros, atenciones y tareas del centro.</p>
         </div>
       </section>
-      <section aria-label="Catálogo de módulos de SIGHa" className="section-padding">
+      <section aria-label="Catálogo de módulos de SIGHA" className="section-padding">
         <div className="marketing-container">
           <ModuleCatalog />
         </div>

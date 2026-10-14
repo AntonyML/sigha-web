@@ -8,7 +8,7 @@ export default function PrivacyPage() {
         <div className="marketing-container">
           <span className="eyebrow">Privacidad y seguridad</span>
           <h1>La información de cada organización requiere <span>accesos responsables.</span></h1>
-          <p>Estos son los controles disponibles en SIGHa y el canal para consultar sobre el tratamiento de información.</p>
+          <p>Estos son los controles disponibles en SIGHA y el canal para consultar sobre el tratamiento de información.</p>
         </div>
       </section>
       <section className="section-padding">
@@ -27,14 +27,14 @@ export default function PrivacyPage() {
             <span className="legal-page-icon"><LockKeyhole size={22} /></span>
             <h2>Consultas sobre datos</h2>
             <p>Las consultas sobre finalidades, conservación, derechos y responsabilidades aplicables a una organización deben revisarse con el equipo responsable de esa organización.</p>
-            <p>Para consultas sobre SIGHa, escribe a <a href="mailto:soporte@sigha.cr">soporte@sigha.cr</a>. No incluyas datos clínicos ni información identificable de residentes en el correo.</p>
+            <p>Para consultas sobre SIGHA, escribe a <a href="mailto:soporte@sigha.cr">soporte@sigha.cr</a>. No incluyas datos clínicos ni información identificable de residentes en el correo.</p>
           </article>
         </div>
       </section>
       <section className="public-bottom-cta" id="contact-cta">
         <div className="marketing-container public-bottom-cta-inner">
           <div><h2>¿Tienes una consulta sobre privacidad?</h2><p>Escríbenos sin incluir información personal de residentes.</p></div>
-          <Link className="button button-primary" href="/contacto">Contactar a SIGHa <ArrowRight size={16} /></Link>
+          <Link className="button button-primary" href="/contacto">Contactar a SIGHA <ArrowRight size={16} /></Link>
         </div>
       </section>
     </main>

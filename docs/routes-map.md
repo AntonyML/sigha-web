@@ -6,7 +6,7 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 
 | URL | Contenido |
 |---|---|
-| `/` | Landing de SIGHa |
+| `/` | Landing de SIGHA |
 | `/funcionalidades` | Capacidades de la plataforma |
 | `/como-funciona` | Flujo de uso |
 | `/planes` | Implementación y conversación comercial, sin precios inventados |

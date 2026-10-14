@@ -8,7 +8,7 @@ export default function AccessibilityPage() {
         <div className="marketing-container">
           <span className="eyebrow">Accesibilidad</span>
           <h1>Una experiencia que busca ser <span>clara y utilizable.</span></h1>
-          <p>Trabajamos para que la información y las acciones de SIGHa se puedan encontrar y usar con diferentes dispositivos y formas de navegación.</p>
+          <p>Trabajamos para que la información y las acciones de SIGHA se puedan encontrar y usar con diferentes dispositivos y formas de navegación.</p>
         </div>
       </section>
       <section className="section-padding">

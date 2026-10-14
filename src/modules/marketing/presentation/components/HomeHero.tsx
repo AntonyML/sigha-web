@@ -26,7 +26,7 @@ export default function HomeHero() {
             Más tiempo para cuidar. <span className={styles.accent}>Menos tiempo buscando información.</span>
           </h1>
           <p className={`hero-lead ${shared.enter}`} style={stagger(2)}>
-            SIGHa reúne la gestión de residentes, la atención clínica y la operación diaria del Sistema Integral de Gestión Holística y de Asistencia en un solo espacio de trabajo.
+            SIGHA reúne la gestión de residentes, la atención clínica y la operación diaria del Sistema Integral de Gestión Holística y de Asistencia en un solo espacio de trabajo.
           </p>
           <div className={`hero-actions ${shared.enter}`} style={stagger(3)}>
             <Link className="button button-primary" href="/contacto">
@@ -40,7 +40,7 @@ export default function HomeHero() {
         </div>
 
         <div
-          aria-label="Vista de ejemplo de SIGHa con datos ficticios"
+          aria-label="Vista de ejemplo de SIGHA con datos ficticios"
           className={`product-preview ${shared.enterRight}`}
           role="img"
         >

@@ -22,7 +22,7 @@ export default function ContactInquiryForm() {
       '',
       message,
     ].join('\n')
-    const href = `mailto:${contactEmail}?subject=${encodeURIComponent('Consulta sobre SIGHa')}&body=${encodeURIComponent(body)}`
+    const href = `mailto:${contactEmail}?subject=${encodeURIComponent('Consulta sobre SIGHA')}&body=${encodeURIComponent(body)}`
 
     setDraftRequested(true)
     window.location.assign(href)

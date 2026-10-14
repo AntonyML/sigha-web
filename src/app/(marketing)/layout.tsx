@@ -9,9 +9,9 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="marketing-site">
       <header className="marketing-header">
         <div className="marketing-container marketing-header-inner">
-          <Link aria-label="SIGHa, inicio" className="brand" href="/">
+          <Link aria-label="SIGHA, inicio" className="brand" href="/">
             <span aria-hidden="true" className="brand-mark">S</span>
-            <span>SIGHa</span>
+            <span>SIGHA</span>
           </Link>
           <MarketingNavigation />
           <div className="marketing-header-actions">
@@ -24,13 +24,13 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       <footer className="marketing-footer">
         <div className="marketing-container footer-main">
           <div>
-            <Link aria-label="SIGHa, inicio" className="brand footer-brand" href="/">
-              <span aria-hidden="true" className="brand-mark">S</span><span>SIGHa</span>
+            <Link aria-label="SIGHA, inicio" className="brand footer-brand" href="/">
+              <span aria-hidden="true" className="brand-mark">S</span><span>SIGHA</span>
             </Link>
             <p>Información clara para coordinar mejor el cuidado de cada persona.</p>
           </div>
           <div className="footer-links">
-            <span>Explora SIGHa</span>
+            <span>Explora SIGHA</span>
             <Link href="/funcionalidades">Funcionalidades</Link>
             <Link href="/como-funciona">Cómo funciona</Link>
             <Link href="/planes">Planes</Link>
@@ -47,7 +47,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="marketing-container footer-bottom">
-          <span>© {new Date().getFullYear()} SIGHa</span>
+          <span>© {new Date().getFullYear()} SIGHA</span>
           <span>Plataforma del Sistema Integral de Gestión Holística y de Asistencia</span>
         </div>
       </footer>

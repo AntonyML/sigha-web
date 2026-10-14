@@ -1,6 +1,6 @@
 # AGENTS.md — Frontend (sigha-web/)
 
-> Instrucciones locales para agentes que trabajan en el frontend Next.js de SIGHa.
+> Instrucciones locales para agentes que trabajan en el frontend Next.js de SIGHA.
 
 ## 0. Alcance y Git
 

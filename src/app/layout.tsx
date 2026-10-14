@@ -19,8 +19,8 @@ import { AppProviders } from './providers'
 export const metadata: Metadata = {
   metadataBase: new URL(config.site.url),
   title: {
-    default: 'SIGHa | Sistema Integral de Gestión Holística y de Asistencia',
-    template: '%s | SIGHa',
+    default: 'SIGHA | Sistema Integral de Gestión Holística y de Asistencia',
+    template: '%s | SIGHA',
   },
   description:
     'Una plataforma para coordinar la atención, los expedientes y la operación diaria del Sistema Integral de Gestión Holística y de Asistencia.',

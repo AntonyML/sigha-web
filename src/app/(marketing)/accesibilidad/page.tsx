@@ -3,7 +3,7 @@ import AccessibilityPage from '@/modules/marketing/presentation/pages/Accessibil
 
 export const metadata: Metadata = {
   title: 'Accesibilidad',
-  description: 'Canal para reportar barreras y prácticas de accesibilidad de la experiencia pública de SIGHa.',
+  description: 'Canal para reportar barreras y prácticas de accesibilidad de la experiencia pública de SIGHA.',
 }
 
 export default function PublicAccessibilityPage() {

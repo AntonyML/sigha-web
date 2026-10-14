@@ -49,13 +49,13 @@ export default function HomePage() {
           <div className="workflow-copy">
             <span className="eyebrow">De la información a la acción</span>
             <h2 id="workflow-title">El equipo comparte contexto. <span>El cuidado gana continuidad.</span></h2>
-            <p>Desde el ingreso de una persona hasta sus controles y seguimientos, SIGHa ayuda a que cada área consulte la información que necesita para realizar su trabajo.</p>
+            <p>Desde el ingreso de una persona hasta sus controles y seguimientos, SIGHA ayuda a que cada área consulte la información que necesita para realizar su trabajo.</p>
             <ul>
               <li><span>01</span> Organiza registros en un espacio de trabajo.</li>
               <li><span>02</span> Coordina las atenciones entre áreas.</li>
               <li><span>03</span> Consulta actividad y cambios registrados.</li>
             </ul>
-            <Link className="text-link" href="/como-funciona">Así funciona SIGHa <ArrowRight aria-hidden="true" size={16} /></Link>
+            <Link className="text-link" href="/como-funciona">Así funciona SIGHA <ArrowRight aria-hidden="true" size={16} /></Link>
           </div>
         </div>
       </section>
@@ -83,7 +83,7 @@ export default function HomePage() {
       <section aria-labelledby="contact-cta-title" className="final-cta-section" id="contact-cta">
         <div className="marketing-container final-cta">
           <div>
-            <span className="eyebrow">Conoce SIGHa</span>
+            <span className="eyebrow">Conoce SIGHA</span>
             <h2 id="contact-cta-title">Una conversación puede aclarar el siguiente paso.</h2>
             <p>Cuéntanos cómo trabaja tu centro y conversemos sobre la plataforma.</p>
           </div>

@@ -264,9 +264,9 @@ export interface FaqItem {
 export const faqItems: readonly FaqItem[] = [
   {
     id: 'que-es',
-    question: '¿Qué es SIGHa?',
+    question: '¿Qué es SIGHA?',
     answer:
-      'SIGHa es la plataforma web del Sistema Integral de Gestión Holística y de Asistencia. Reúne en un solo espacio de trabajo la gestión de residentes, la atención clínica y la operación diaria del centro.',
+      'SIGHA es la plataforma web del Sistema Integral de Gestión Holística y de Asistencia. Reúne en un solo espacio de trabajo la gestión de residentes, la atención clínica y la operación diaria del centro.',
   },
   {
     id: 'para-quien',
@@ -290,7 +290,7 @@ export const faqItems: readonly FaqItem[] = [
     id: 'trazabilidad',
     question: '¿Queda registro de lo que ocurre en la plataforma?',
     answer:
-      'Sí. SIGHa incluye paneles de auditoría con el registro de actividad, la revisión de seguridad y el estado del sistema.',
+      'Sí. SIGHA incluye paneles de auditoría con el registro de actividad, la revisión de seguridad y el estado del sistema.',
   },
   {
     id: 'dos-pasos',

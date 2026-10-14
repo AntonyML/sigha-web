@@ -1,4 +1,4 @@
-# Plan de implementación: SIGHa SaaS con Next.js
+# Plan de implementación: SIGHA SaaS con Next.js
 
 ## Objetivo
 

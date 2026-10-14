@@ -32,7 +32,7 @@ export default function ContactPage() {
               <li>La configuración para tu equipo</li>
               <li>La forma de iniciar una demostración</li>
             </ul>
-            <p>Si ya tienes una cuenta de SIGHa, puedes entrar al espacio de trabajo.</p>
+            <p>Si ya tienes una cuenta de SIGHA, puedes entrar al espacio de trabajo.</p>
             <Link className="text-link" href="/login">Ir al inicio de sesión <ArrowRight aria-hidden="true" size={15} /></Link>
           </aside>
         </div>
