@@ -140,6 +140,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -152,3 +157,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'sigha-web' }} --branch=main
+          packageManager: bun
