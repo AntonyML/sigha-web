@@ -1,0 +1,142 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px 7px 11px;
+  border: 1px solid var(--marketing-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  color: var(--marketing-primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pulse {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--marketing-sage);
+}
+
+.pulse::after {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid var(--marketing-sage);
+  border-radius: 50%;
+  content: '';
+  opacity: 0;
+  animation: kfPing 2.2s ease-out infinite;
+}
+
+@keyframes kfPing {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.accent {
+  font-family: var(--marketing-serif);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  background-image: linear-gradient(transparent 84%, rgba(245, 158, 11, 0.38) 84%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@keyframes kfHighlight {
+  to {
+    background-size: 100% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .accent {
+    background-size: 0% 100%;
+    animation: kfHighlight 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.7s forwards;
+  }
+}
+
+.chip {
+  position: absolute;
+  top: 46px;
+  left: -26px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--marketing-border);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.1);
+  animation: kfBob 6s ease-in-out infinite;
+}
+
+.chipIcon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--marketing-sage-soft);
+  color: var(--marketing-sage-ink);
+}
+
+.chipTitle,
+.chipHint {
+  display: block;
+}
+
+.chipTitle {
+  color: var(--marketing-ink);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chipHint {
+  margin-top: 3px;
+  color: var(--marketing-muted);
+  font-size: 8px;
+}
+
+@keyframes kfBob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -8px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .chip {
+    left: -8px;
+  }
+}
+
+@media (max-width: 760px) {
+  .chip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    animation: none;
+  }
+
+  .pulse::after {
+    animation: none;
+  }
+}

@@ -19,6 +19,11 @@ export const config = {
         environment: nodeEnv,
     },
 
+    site: {
+        // Public origin used for canonical URLs, sitemap and robots (no trailing slash).
+        url: (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001').replace(/\/$/, ''),
+    },
+
     features: {
         enableDebugLogs: nodeEnv !== 'production',
         enableMockData: false,

@@ -1,0 +1,49 @@
+.menu a:focus-visible,
+.toggle:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--marketing-border);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--marketing-ink);
+  cursor: pointer;
+}
+
+@media (max-width: 760px) {
+  .toggle {
+    display: inline-flex;
+    order: 2;
+    flex: 0 0 auto;
+  }
+
+  .menu[data-open='false'] {
+    display: none;
+  }
+
+  .menu[data-open='true'] {
+    display: flex;
+    order: 4;
+    flex: 0 0 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    overflow: visible;
+    padding: 7px 0 0;
+    border-top: 1px solid var(--marketing-border);
+  }
+
+  .menu[data-open='true'] a {
+    padding: 12px 4px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--marketing-ink);
+    font-size: 14px;
+  }
+}

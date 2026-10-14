@@ -1,0 +1,53 @@
+.strip {
+  border-bottom: 1px solid var(--marketing-border);
+  background: #fff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--marketing-border);
+}
+
+.value {
+  display: block;
+  background: linear-gradient(135deg, var(--marketing-primary) 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(34px, 5vw, 54px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.label {
+  display: block;
+  max-width: 230px;
+  margin: 10px auto 0;
+  color: var(--marketing-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .stat {
+    padding: 24px 8px;
+  }
+
+  .label {
+    margin-top: 8px;
+    font-size: 11px;
+  }
+}

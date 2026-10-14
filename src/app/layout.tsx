@@ -13,9 +13,11 @@ import '@/shared/ui/navigation/Navbar/NavbarDateTime.css'
 import '@/shared/ui/navigation/Navbar/UserMenu.css'
 import '@/shared/ui/navigation/Sidebar/Sidebar.css'
 import '@/modules/marketing/presentation/marketing.css'
+import { config } from '@/shared/config/app.config'
 import { AppProviders } from './providers'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(config.site.url),
   title: {
     default: 'SIGHa | Sistema Integral de Gestión Holística y de Asistencia',
     template: '%s | SIGHa',
