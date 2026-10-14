@@ -85,6 +85,9 @@ export default function CreateVirtualFile() {
   const [familyCedulaIsForeign, setFamilyCedulaIsForeign] = useState(false)
   // Marca qué pasos ya intentaron avanzar: solo entonces se muestran los errores de obligatorios
   const [stepAttempted, setStepAttempted] = useState<Record<number, boolean>>({})
+  // Errores devueltos por el backend al guardar (400 de validación): se muestran
+  // en línea en vez de explotar en la consola con un alert genérico.
+  const [submitError, setSubmitError] = useState<string[] | null>(null)
 
   // Duplicate cedula check state
   const [dupCheck, setDupCheck] = useState<{ loading: boolean; exists: boolean; existingId: number | null }>(
@@ -287,20 +290,11 @@ export default function CreateVirtualFile() {
     return []
   }
   function step2Errors(): string[] {
-    /* El DTO del API (FamilyDataDto) exige familia completa con kinship válido;
-       el SQL create_virtual_file también rechaza familia incompleta. Si el paso 2
-       trae algún dato de familia, todo el bloque es obligatorio. */
+    /* Contrato web↔api↔db: el familiar responsable es SIEMPRE obligatorio al
+       crear el expediente (DTO FamilyDataDto requerido + SQL create_virtual_file
+       migración 019). Ya no se permite saltar el paso 2 con la familia vacía:
+       antes eso reventaba en el backend con 400. */
     const f = familyData
-    const hasAnyFamily = Boolean(
-      (f.pf_identification || '').trim() ||
-      (f.pf_name || '').trim() ||
-      (f.pf_f_last_name || '').trim() ||
-      (f.pf_s_last_name || '').trim() ||
-      (f.pf_phone_number || '').trim() ||
-      (f.pf_email || '').trim() ||
-      (f.pf_kinship || '').trim(),
-    )
-    if (!hasAnyFamily) return []
     const errs: string[] = []
     if (!(f.pf_identification || '').trim()) {
       errs.push('La cédula del familiar es obligatoria.')
@@ -354,6 +348,7 @@ export default function CreateVirtualFile() {
       return
     }
     setSaving(true)
+    setSubmitError(null)
     try {
       // Derive document type from the foreign toggle and useCedulaLookup detection
       const docType = cedulaIsForeign ? 'pasaporte' : (cedulaKind === 'unknown' ? 'nacional' : cedulaKind)
@@ -367,10 +362,30 @@ export default function CreateVirtualFile() {
       navigate('/virtualFiles')
     } catch (err) {
       console.error(err)
-      alert('Error al guardar el expediente. Revise la consola.')
+      setSubmitError(extractBackendMessages(err))
     } finally {
       setSaving(false)
     }
+  }
+
+  /* Extrae mensajes legibles del error del backend (400 de validación del DTO
+     o de create_virtual_file). El filtro global del API responde
+     { message: string | string[] }; si no hay nada útil, mensaje genérico. */
+  function extractBackendMessages(err: unknown): string[] {
+    const data = (err as { response?: { data?: { message?: unknown }; status?: number } })?.response
+    const status = data?.status
+    const message = data?.data?.message
+    if (Array.isArray(message)) {
+      const items = message.map(m => String(m)).filter(Boolean)
+      if (items.length > 0) return items
+    } else if (typeof message === 'string' && message.trim()) {
+      return [message.trim()]
+    }
+    const local = (err as Error)?.message
+    if (typeof local === 'string' && local.trim() && !/status code 400/.test(local)) {
+      return [local.trim()]
+    }
+    return [`El servidor rechazó la solicitud${status ? ` (HTTP ${status})` : ''}. Revise los datos e intente de nuevo.`]
   }
 
   const imc = imcColor(formData.imc)
@@ -849,6 +864,16 @@ export default function CreateVirtualFile() {
           <strong>Complete los datos obligatorios para continuar:</strong>
           <ul style={{ margin: '0.375rem 0 0', paddingLeft: '1.25rem' }}>
             {visibleErrors.map(m => <li key={m}>{m}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {/* Errores devueltos por el backend al guardar */}
+      {submitError && submitError.length > 0 && (
+        <div role="alert" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.625rem', color: '#b91c1c', fontSize: '0.8125rem' }}>
+          <strong>No se pudo crear el expediente:</strong>
+          <ul style={{ margin: '0.375rem 0 0', paddingLeft: '1.25rem' }}>
+            {submitError.map(m => <li key={m}>{m}</li>)}
           </ul>
         </div>
       )}
