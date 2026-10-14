@@ -9,17 +9,18 @@ Desde la raíz de `sigha-web`, con Wrangler instalado por Bun:
 ```powershell
 bunx wrangler login
 bunx wrangler whoami
-$env:NEXT_PUBLIC_API_URL = 'https://api.example.com'
-$env:NEXT_PUBLIC_SITE_URL = 'https://sigha-web.pages.dev'
+$env:NEXT_PUBLIC_API_URL = 'https://sigha-api.onrender.com'
+$env:NEXT_PUBLIC_SITE_URL = 'https://www.sigha.tonyml.com'
 $env:NEXT_PUBLIC_APP_ENV = 'production'
 $env:NEXT_PUBLIC_ENABLE_2FA = 'true'
 bun run build
-bunx wrangler pages deploy out --project-name=sigha-web
+bunx wrangler pages project create sigha-web --production-branch=main --force
+bunx wrangler pages deploy out --project-name=sigha-web --branch=main
 ```
 
-Reemplaza `https://api.example.com` por el origen público real de NestJS, sin una ruta de proxy de Next.js. En la primera carga, Wrangler crea el proyecto `sigha-web` como **Direct Upload** y sube `out/`; las siguientes cargas son despliegues directos al mismo proyecto. Esta modalidad no se convierte después a Git Integration, que es justo lo que evita builds automáticos de Cloudflare. La Action de GitHub también desplegará directamente `out/` con Wrangler.
+Para SIGHA, `NEXT_PUBLIC_API_URL` es `https://sigha-api.onrender.com` y `NEXT_PUBLIC_SITE_URL` es `https://www.sigha.tonyml.com`. La API debe permitir CORS desde el dominio personalizado. La creación inicial usa **Direct Upload** y `--force` para evitar que Wrangler intente configurar un Worker; el despliegue se marca con `--branch=main`, que es la rama de producción del proyecto. En las siguientes cargas basta con repetir `bunx wrangler pages deploy out --project-name=sigha-web --branch=main`. Esta modalidad no conecta Git ni activa builds automáticos de Cloudflare. La Action de GitHub también desplegará directamente `out/` con Wrangler.
 
-La salida `*.pages.dev` se muestra al terminar el comando. Añade ese origen, y el dominio personalizado si luego configuras uno, a la lista CORS del backend.
+La salida `*.pages.dev` se muestra al terminar el comando. El dominio personalizado deseado es `www.sigha.tonyml.com`; debe estar asignado al proyecto `sigha-web` en **Workers & Pages → sigha-web → Custom domains** y tener su DNS activo en Cloudflare. Añade `https://www.sigha.tonyml.com` a la lista CORS del backend. Mientras verificas el primer despliegue, también puedes permitir el origen `https://sigha-web.pages.dev`.
 
 ## Variables para GitHub Actions
 
@@ -28,14 +29,14 @@ En GitHub abre **Settings → Secrets and variables → Actions**. Añade lo sig
 | Nombre | Tipo recomendado | Valor |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | Repository secret | Token de Cloudflare con permiso **Account → Cloudflare Pages → Edit**. No lo escribas en el repo, en el panel de variables de Pages ni en `NEXT_PUBLIC_*`. |
-| `CLOUDFLARE_ACCOUNT_ID` | Repository secret | Account ID de la cuenta Cloudflare donde vive Pages. No es una credencial por sí solo, pero Cloudflare documenta configurarlo como secret junto con el token. |
+| `CLOUDFLARE_ACCOUNT_ID` | Repository variable | Account ID de la cuenta Cloudflare donde vive Pages. No es un secreto. |
 | `CLOUDFLARE_PAGES_PROJECT` | Repository variable | `sigha-web`. |
-| `NEXT_PUBLIC_API_URL` | Repository variable | Origen público del backend NestJS que usará el navegador. Este valor se compila dentro de los archivos públicos, por lo que **no es secreto**. |
-| `NEXT_PUBLIC_SITE_URL` | Repository variable | URL pública del sitio, sin barra final; por ejemplo `https://sigha-web.pages.dev`. |
+| `NEXT_PUBLIC_API_URL` | Repository variable | `https://sigha-api.onrender.com`. Este valor se compila dentro de los archivos públicos, por lo que **no es secreto**. |
+| `NEXT_PUBLIC_SITE_URL` | Repository variable | `https://www.sigha.tonyml.com` (sin barra final). |
 | `NEXT_PUBLIC_APP_ENV` | Repository variable | `production`. |
 | `NEXT_PUBLIC_ENABLE_2FA` | Repository variable | `true` si el backend y la instancia están preparados para 2FA; de lo contrario, `false`. |
 
-La Action debe pasar esas cuatro variables `NEXT_PUBLIC_*` al paso de **build**, y después publicar `out/`. Las variables del panel de Cloudflare Pages no sustituyen las variables de build de GitHub porque esta aplicación no ejecuta un servidor en Cloudflare. No hay secretos de ejecución de Pages para esta exportación estática.
+La Action debe pasar las cuatro variables `NEXT_PUBLIC_*` al paso de **build**, y después publicar `out/`. Las variables del panel de Cloudflare Pages no sustituyen las variables de build de GitHub porque esta aplicación no ejecuta un servidor en Cloudflare. No hay secretos de ejecución de Pages para esta exportación estática. En GitHub, solo `CLOUDFLARE_API_TOKEN` va en **Secrets**; `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_PAGES_PROJECT` y las cuatro variables `NEXT_PUBLIC_*` van en **Variables**.
 
 La Action de Cloudflare para Wrangler es `cloudflare/wrangler-action@v4`; el comando debe ser `pages deploy out --project-name=sigha-web` (o usar la variable `CLOUDFLARE_PAGES_PROJECT`). El job necesita `contents: read` y `deployments: write`. `GITHUB_TOKEN` lo proporciona GitHub Actions automáticamente; no crees un secret manual para él.
 
