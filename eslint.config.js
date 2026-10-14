@@ -5,5 +5,12 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  globalIgnores(['coverage/**', 'test-results/**']),
+  globalIgnores([
+    'coverage/**',
+    'test-results/**',
+    'dist/**',
+    'dist-ssr/**',
+    '.next/**',
+    'out/**',
+  ]),
 ])
