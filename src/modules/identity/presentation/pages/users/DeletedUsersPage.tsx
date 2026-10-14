@@ -11,8 +11,14 @@ export default function DeletedUsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
     const navigate = useNavigate();
     const feedback = useFeedbackWithNotifications();
+
+    // Cargar usuarios eliminados al montar el componente
+    useEffect(() => {
+        loadDeletedUsers();
+    }, []);
 
     const loadDeletedUsers = async () => {
         setLoading(true);
@@ -25,6 +31,7 @@ export default function DeletedUsersPage() {
                 // Filtrar solo usuarios eliminados (inactivos por soft delete)
                 const deletedUsers = result.users.filter(user => user.uIsActive === false);
                 setUsers(deletedUsers);
+                setFilteredUsers(deletedUsers);
             } else {
                 setError(result.error || 'Error al cargar usuarios eliminados');
             }
@@ -37,28 +44,18 @@ export default function DeletedUsersPage() {
     };
 
     useEffect(() => {
-      let active = true;
-      let cleanup: (() => void) | undefined;
-      void Promise.resolve().then(() => {
-        if (!active) return;
-        const maybeCleanup = (() => {
-        loadDeletedUsers();
+        let filtered = users;
 
-        })();
-        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-      });
-      return () => {
-        active = false;
-        cleanup?.();
-      };
-    }, []);
+        if (searchTerm.trim()) {
+            filtered = filtered.filter(user =>
+                user.uName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.uEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.uIdentification || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
 
-    const filteredUsers = users.filter(user => {
-        if (!searchTerm.trim()) return true;
-        return user.uName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.uEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (user.uIdentification || '').toString().toLowerCase().includes(searchTerm.toLowerCase());
-    });
+        setFilteredUsers(filtered);
+    }, [users, searchTerm]);
 
     // Función para limpiar la búsqueda
     const handleClearSearch = () => {

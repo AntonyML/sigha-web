@@ -64,24 +64,17 @@ export function validateSocialWorkId(id: string | number): ValidationResult {
  * @param data - Datos a validar
  * @returns Mensaje de error si la validación falla, null si es válida
  */
-interface SocialWorkValidationData {
-    beneficiaryId?: string | number;
-    socialWorkerId?: string | number;
-    reportDate?: string;
-    interventionType?: string;
-    description?: string;
-}
-
-export function validateSocialWorkData(input: object): string | null {
-    const data = input as SocialWorkValidationData;
+export function validateSocialWorkData(data: any): string | null {
     if (!data) {
         return getSocialWorkErrorMessage(SocialWorkValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar campos requeridos
-    if (!data.beneficiaryId || !data.socialWorkerId || !data.reportDate ||
-        !data.interventionType || !data.description) {
-        return getSocialWorkErrorMessage(SocialWorkValidationError.MISSING_REQUIRED_FIELDS);
+    const requiredFields = ['beneficiaryId', 'socialWorkerId', 'reportDate', 'interventionType', 'description'];
+    for (const field of requiredFields) {
+        if (!data[field]) {
+            return getSocialWorkErrorMessage(SocialWorkValidationError.MISSING_REQUIRED_FIELDS);
+        }
     }
 
     // Validar fecha
@@ -97,16 +90,16 @@ export function validateSocialWorkData(input: object): string | null {
     }
 
     // Validar IDs de trabajador social y beneficiario
-    if (!validateSocialWorkId(data.beneficiaryId ?? '').isValid) {
+    if (!validateSocialWorkId(data.beneficiaryId).isValid) {
         return getSocialWorkErrorMessage(SocialWorkValidationError.INVALID_BENEFICIARY);
     }
 
-    if (!validateSocialWorkId(data.socialWorkerId ?? '').isValid) {
+    if (!validateSocialWorkId(data.socialWorkerId).isValid) {
         return getSocialWorkErrorMessage(SocialWorkValidationError.INVALID_SOCIAL_WORKER);
     }
 
     // Validar contenido de la descripción (mínimo 50 caracteres)
-    if ((data.description ?? '').trim().length < 50) {
+    if (data.description.trim().length < 50) {
         return getSocialWorkErrorMessage(SocialWorkValidationError.INVALID_REPORT_CONTENT);
     }
 
@@ -117,7 +110,7 @@ export function validateSocialWorkData(input: object): string | null {
         'educational_support', 'community_integration', 'elder_care',
         'disability_support', 'crisis_intervention', 'other'
     ];
-    if (!validInterventionTypes.includes(data.interventionType ?? '')) {
+    if (!validInterventionTypes.includes(data.interventionType)) {
         return getSocialWorkErrorMessage(SocialWorkValidationError.INVALID_INTERVENTION_TYPE);
     }
 

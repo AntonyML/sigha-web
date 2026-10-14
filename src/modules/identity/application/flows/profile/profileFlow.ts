@@ -59,7 +59,7 @@ export const profileFlow = {
                 success: true,
                 user,
             };
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error en profileFlow.getProfile:', error);
             return {
                 success: false,
@@ -91,7 +91,7 @@ export const profileFlow = {
                 success: true,
                 user,
             };
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error en profileFlow.updateProfile:', error);
             return {
                 success: false,
@@ -123,7 +123,7 @@ export const profileFlow = {
                 success: true,
                 message: 'Contraseña cambiada exitosamente.',
             };
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Error en profileFlow.changePassword:', error);
             return {
                 success: false,

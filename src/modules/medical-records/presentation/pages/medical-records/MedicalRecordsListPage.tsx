@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { FileText, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { medicalRecordService, type MedicalRecord } from '@/infrastructure/api/services/medicalRecordService'
@@ -34,20 +34,7 @@ export default function MedicalRecordsListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadRecords()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [loadRecords])
+  useEffect(() => { loadRecords() }, [loadRecords])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar registro', '¿Está seguro de que desea eliminar este registro médico?')

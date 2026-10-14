@@ -17,7 +17,7 @@ import { validateOlderAdultUpdateData, validateOlderAdultUpdateId, getOlderAdult
 /**
  * Resultado de operaciones del flujo de actualizaciones de adultos mayores
  */
-export interface OlderAdultUpdateFlowResult<T = unknown> {
+export interface OlderAdultUpdateFlowResult<T = any> {
     success: boolean;
     data?: T;
     error?: string;
@@ -36,7 +36,7 @@ export const olderAdultUpdateFlow = {
      * @param filters - Filtros opcionales (patientId, updateType, dateFrom, dateTo)
      * @returns Lista de actualizaciones
      */
-    async getAllUpdates(_filters?: unknown): Promise<OlderAdultUpdateFlowResult> {
+    async getAllUpdates(_filters?: any): Promise<OlderAdultUpdateFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await olderAdultUpdateService.getOlderAdultUpdates(filters);
@@ -161,7 +161,7 @@ export const olderAdultUpdateFlow = {
      * @param data - Datos de la actualización a crear
      * @returns Actualización creada
      */
-    async createUpdate(data: Record<string, unknown>): Promise<OlderAdultUpdateFlowResult> {
+    async createUpdate(data: any): Promise<OlderAdultUpdateFlowResult> {
         try {
             // Validar datos de la actualización
             const validation = validateOlderAdultUpdateData(data);
@@ -196,7 +196,7 @@ export const olderAdultUpdateFlow = {
      * @param data - Datos a actualizar
      * @returns Actualización actualizada
      */
-    async updateUpdate(id: string | number, data: Record<string, unknown>): Promise<OlderAdultUpdateFlowResult> {
+    async updateUpdate(id: string | number, data: any): Promise<OlderAdultUpdateFlowResult> {
         try {
             // Validar ID de la actualización
             const idValidation = validateOlderAdultUpdateId(id);

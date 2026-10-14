@@ -98,34 +98,8 @@ export default function RoleChangesListPage() {
     }
   }
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadChanges()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [startDate, endDate])
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadStats()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [])
+  useEffect(() => { loadChanges() }, [startDate, endDate])
+  useEffect(() => { loadStats() }, [])
 
   const filtered = useMemo(() => {
     if (!searchTerm.trim()) return changes

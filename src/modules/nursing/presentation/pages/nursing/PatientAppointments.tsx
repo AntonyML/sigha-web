@@ -18,6 +18,12 @@ export default function PatientAppointments() {
   const navigate = useNavigate();
   const { patientId } = useParams<{ patientId: string }>();
 
+  useEffect(() => {
+    if (patientId) {
+      loadAppointments();
+    }
+  }, [patientId]);
+
   const loadAppointments = async () => {
     if (!patientId) return;
 
@@ -39,25 +45,6 @@ export default function PatientAppointments() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    if (patientId) {
-      loadAppointments();
-    }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [patientId]);
 
   const formatDateTime = (dateTime: string) => {
     const appointmentDate = new Date(dateTime);

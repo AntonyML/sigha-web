@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Icon } from '@/shared/ui'
 import { userManagementFlow } from '@/modules/identity/application/flows/userManagement'
@@ -18,6 +18,8 @@ export default function UserListPage() {
   const [canCreateUsers, setCanCreateUsers] = useState(false)
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
+
+  useEffect(() => { loadUsersAndPermissions() }, [])
 
   const loadUsersAndPermissions = async () => {
     setLoading(true)
@@ -43,21 +45,6 @@ export default function UserListPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadUsersAndPermissions()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [])
 
   const handleDeleteClick = async (user: User) => {
     if (!canDeleteUsers) {

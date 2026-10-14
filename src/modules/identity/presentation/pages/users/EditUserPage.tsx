@@ -171,21 +171,8 @@ export default function EditUserPage() {
   }, [id]);
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     if (!id) { setLoading(false); return; }
     loadData();
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [id, loadData]);
 
   /* ── Cambio de campos ───────────────────────────────────── */
@@ -460,7 +447,7 @@ export default function EditUserPage() {
                 ))}
               </select>
               <small style={{ color: '#94a3b8', marginTop: '0.25rem' }}>
-                Deja en &quot;Mantener rol actual&quot; si no deseas cambiar el rol.
+                Deja en "Mantener rol actual" si no deseas cambiar el rol.
               </small>
             </FieldGroup>
 

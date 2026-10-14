@@ -28,40 +28,23 @@ export const subProgramService = {
   getAllSubPrograms: async (): Promise<SubProgram[]> => {
     try {
       console.log('🔍 Conectando con backend para obtener subprogramas desde /programs...');
-      const response = await apiClient.get<unknown>('/programs');
+      const response = await apiClient.get('/programs');
       console.log('✅ Respuesta del backend (programas con subprogramas):', response.data);
       
       // Extraer todos los subprogramas de todos los programas
-      const responseData = response.data;
-      const programs = Array.isArray(responseData)
-        ? responseData
-        : typeof responseData === 'object' && responseData !== null &&
-            'data' in responseData && Array.isArray(responseData.data)
-          ? responseData.data
-          : [];
+      const programs = Array.isArray(response.data) ? response.data : (response.data.data || []);
       const allSubPrograms: SubProgram[] = [];
       
-      programs.forEach((program: unknown) => {
-        if (typeof program !== 'object' || program === null || !('id' in program) ||
-            typeof program.id !== 'number' || !('pName' in program) || typeof program.pName !== 'string') return;
-        const programId = program.id;
-        const programName = program.pName;
-        if ('subPrograms' in program && Array.isArray(program.subPrograms)) {
-          program.subPrograms.forEach((subProgram: unknown) => {
-            if (typeof subProgram !== 'object' || subProgram === null || !('id' in subProgram) ||
-                typeof subProgram.id !== 'number' || !('spName' in subProgram) || typeof subProgram.spName !== 'string') return;
-            const subProgramId = subProgram.id;
-            const subProgramName = subProgram.spName;
-            const relationProgramId = 'idProgram' in subProgram && typeof subProgram.idProgram === 'number'
-              ? subProgram.idProgram
-              : programId;
+      programs.forEach((program: any) => {
+        if (program.subPrograms && Array.isArray(program.subPrograms)) {
+          program.subPrograms.forEach((subProgram: any) => {
             allSubPrograms.push({
-              id: subProgramId,
-              spName: subProgramName,
-              programId: relationProgramId, // usar idProgram del subprograma o id del programa padre
+              id: subProgram.id,
+              spName: subProgram.spName,
+              programId: subProgram.idProgram || program.id, // usar idProgram del subprograma o id del programa padre
               program: {
-                id: programId,
-                pName: programName
+                id: program.id,
+                pName: program.pName
               }
             });
           });

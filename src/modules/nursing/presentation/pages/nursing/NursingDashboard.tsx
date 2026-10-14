@@ -22,6 +22,10 @@ export default function NursingDashboard() {
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    loadPendingAppointments();
+  }, []);
+
   const loadPendingAppointments = async () => {
     setLoading(true);
     setError('');
@@ -35,23 +39,6 @@ export default function NursingDashboard() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    loadPendingAppointments();
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, []);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {

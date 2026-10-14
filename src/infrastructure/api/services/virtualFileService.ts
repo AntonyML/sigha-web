@@ -12,7 +12,6 @@ import type {
 } from '@/shared/types/virtualFile';
 import { transformVirtualFileToApiPayload, mapApiToVirtualFile } from '@/shared/types/virtualFile';
 import { config } from '@/shared/config/app.config';
-import axios from 'axios';
 
 const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
@@ -33,13 +32,13 @@ apiClient.interceptors.request.use((config) => {
 export const virtualFileService = {
 
   getAllVirtualFiles: async (): Promise<VirtualFile[]> => {
-    const response = await apiClient.get<{ message: string; data: unknown[] }>('/virtual-records/all');
+    const response = await apiClient.get<{ message: string; data: any[] }>('/virtual-records/all');
     return (response.data.data ?? []).map(mapApiToVirtualFile);
   },
 
 
   getVirtualFileById: async (id: number): Promise<VirtualFile> => {
-    const response = await apiClient.get<{ message: string; data: unknown }>(`/virtual-records/${id}`);
+    const response = await apiClient.get<{ message: string; data: any }>(`/virtual-records/${id}`);
     return mapApiToVirtualFile(response.data.data);
   },
 
@@ -88,9 +87,9 @@ export const virtualFileService = {
       
       const response = await apiClient.post<VirtualFile>('/virtual-records/create', apiPayload);
       return response.data;
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('❌ Error en createVirtualFile:', error);
-      if (axios.isAxiosError(error) && error.response) {
+      if (error.response) {
         console.error('📄 Respuesta del servidor:', {
           status: error.response.status,
           data: error.response.data,
@@ -116,7 +115,7 @@ export const virtualFileService = {
     
     console.log('📤 Payload de actualización enviado al API:', JSON.stringify(apiPayload, null, 2));
     
-    const response = await apiClient.put<{ message: string; data: unknown }>(`/virtual-records/${id}`, apiPayload);
+    const response = await apiClient.put<{ message: string; data: any }>(`/virtual-records/${id}`, apiPayload);
     return mapApiToVirtualFile(response.data.data);
   },
 
@@ -131,7 +130,7 @@ export const virtualFileService = {
        duplicada, así que consulta /virtual-records/search?search=<cedula>. */
     const raw = (params.cedula || params.nombreApellido || '').trim()
     if (!raw) return { data: [], total: 0, page: 1, limit: 0 }
-    const response = await apiClient.get<{ message: string; data: unknown[] }>(
+    const response = await apiClient.get<{ message: string; data: any[] }>(
       '/virtual-records/search',
       { params: { search: raw } },
     )

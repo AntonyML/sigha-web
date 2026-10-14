@@ -30,6 +30,12 @@ export default function CompleteAppointment() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (id) {
+      loadAppointmentDetails();
+    }
+  }, [id]);
+
   const loadAppointmentDetails = async () => {
     setLoading(true);
     setError('');
@@ -54,26 +60,7 @@ export default function CompleteAppointment() {
     }
   };
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    if (id) {
-      loadAppointmentDetails();
-    }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [id]);
-
-  const handleInputChange = (field: keyof CompleteAppointmentDto, value: CompleteAppointmentDto[keyof CompleteAppointmentDto]) => {
+  const handleInputChange = (field: keyof CompleteAppointmentDto, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => {

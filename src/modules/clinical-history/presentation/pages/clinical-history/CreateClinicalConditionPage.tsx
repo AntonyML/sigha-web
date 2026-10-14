@@ -1,4 +1,3 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { clinicalConditionService } from '@/infrastructure/api/services/clinicalConditionService';
@@ -33,9 +32,13 @@ export default function CreateClinicalConditionPage() {
       await clinicalConditionService.createClinicalCondition(form);
       setSuccess('Condición clínica creada exitosamente');
       setTimeout(() => navigate('/clinical-history'), 1500);
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Error creating clinical condition:', err);
-      setError(getApiErrorMessage(err, 'Error al crear la condición clínica'));
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Error al crear la condición clínica';
+      setError(Array.isArray(msg) ? msg.join(', ') : msg);
     } finally {
       setLoading(false);
     }

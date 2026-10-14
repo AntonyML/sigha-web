@@ -17,7 +17,7 @@ import { validateOlderAdultFamilyData, validateOlderAdultFamilyId, getOlderAdult
 /**
  * Resultado de operaciones del flujo de familia de adultos mayores
  */
-export interface OlderAdultFamilyFlowResult<T = unknown> {
+export interface OlderAdultFamilyFlowResult<T = any> {
     success: boolean;
     data?: T;
     error?: string;
@@ -36,7 +36,7 @@ export const olderAdultFamilyFlow = {
      * @param filters - Filtros opcionales (patientId, relationship, active)
      * @returns Lista de miembros de familia
      */
-    async getAllFamilyMembers(_filters?: unknown): Promise<OlderAdultFamilyFlowResult> {
+    async getAllFamilyMembers(_filters?: any): Promise<OlderAdultFamilyFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await olderAdultFamilyService.getOlderAdultFamilyMembers(filters);
@@ -161,7 +161,7 @@ export const olderAdultFamilyFlow = {
      * @param data - Datos del miembro de familia a crear
      * @returns Miembro de familia creado
      */
-    async createFamilyMember(data: object): Promise<OlderAdultFamilyFlowResult> {
+    async createFamilyMember(data: any): Promise<OlderAdultFamilyFlowResult> {
         try {
             // Validar datos del miembro de familia
             const validation = validateOlderAdultFamilyData(data);
@@ -196,7 +196,7 @@ export const olderAdultFamilyFlow = {
      * @param data - Datos a actualizar
      * @returns Miembro de familia actualizado
      */
-    async updateFamilyMember(id: string | number, data: object): Promise<OlderAdultFamilyFlowResult> {
+    async updateFamilyMember(id: string | number, data: any): Promise<OlderAdultFamilyFlowResult> {
         try {
             // Validar ID del miembro de familia
             const idValidation = validateOlderAdultFamilyId(id);

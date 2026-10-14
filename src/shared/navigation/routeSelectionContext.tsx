@@ -200,11 +200,6 @@ export function RouteSelectionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     const currentTarget = `${window.location.pathname}${window.location.search}${window.location.hash}`
     const normalized = normalizeNavigationTarget(currentTarget)
     const restored = readStoredSelections()
@@ -222,14 +217,6 @@ export function RouteSelectionProvider({ children }: { children: ReactNode }) {
     setSelections(restored)
     if (normalized.href !== currentTarget) router.replace(normalized.href)
     setReady(true)
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [router])
 
   const setRouteParameters = useCallback((routePath: string, parameters: Record<string, string | null>) => {

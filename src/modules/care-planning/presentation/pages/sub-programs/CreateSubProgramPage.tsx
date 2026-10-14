@@ -13,6 +13,10 @@ export default function CreateSubProgramPage() {
   const [loadingPrograms, setLoadingPrograms] = useState(true);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    loadPrograms();
+  }, []);
+
   async function loadPrograms() {
     try {
       setLoadingPrograms(true);
@@ -30,23 +34,6 @@ export default function CreateSubProgramPage() {
       setLoadingPrograms(false);
     }
   }
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    loadPrograms();
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, []);
 
   function onInputChange(field: keyof CreateSubProgramData, value: string | number) {
     setFormData(prev => ({ ...prev, [field]: value }));

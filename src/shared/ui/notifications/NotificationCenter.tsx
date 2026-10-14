@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/shared/lib/cn';
 import { NotificationContext, useNotification } from '@/shared/ui/notifications/NotificationContext';
@@ -40,9 +40,13 @@ const getIcon = (variant: string, customIcon?: string) => {
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const removeNotificationRef = useRef<(id: string) => void>(() => {});
+
   const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
+
+  removeNotificationRef.current = removeNotification;
 
   const addNotification = useCallback((notificationData: Omit<Notification, 'id' | 'timestamp'>): string => {
     const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -58,12 +62,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Auto-remove after duration
     if (notificationData.duration !== 0) {
       setTimeout(() => {
-        removeNotification(id);
+        removeNotificationRef.current?.(id);
       }, notificationData.duration || 5000);
     }
 
     return id;
-  }, [removeNotification]);
+  }, []);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev =>

@@ -23,22 +23,9 @@ export default function PasswordRecoveryResetPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     setEmail(sessionStorage.getItem('recovery_email') || '')
     setRecoveryToken(sessionStorage.getItem('recovery_token') || '')
     setStorageReady(true)
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [])
 
   useEffect(() => {

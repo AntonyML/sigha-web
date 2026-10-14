@@ -69,10 +69,10 @@ export interface OlderAdultUpdate {
   approval_comments?: string;
 
   /** Campos anteriores (antes del cambio) */
-  previous_values?: Record<string, unknown>;
+  previous_values?: Record<string, any>;
 
   /** Campos nuevos (después del cambio) */
-  new_values?: Record<string, unknown>;
+  new_values?: Record<string, any>;
 
   /** Fecha de creación */
   created_at: string;
@@ -86,7 +86,7 @@ export interface OlderAdultUpdate {
  */
 export interface OlderAdultUpdateData {
   // Los campos específicos varían según el tipo de actualización
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 /**
@@ -276,7 +276,7 @@ export interface OtherUpdateData extends OlderAdultUpdateData {
   category?: string;
 
   /** Detalles adicionales */
-  details: Record<string, unknown>;
+  details: Record<string, any>;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Brain, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { psychologyService, type PsychologySessionApi } from '@/infrastructure/api/services/psychologyService'
@@ -56,20 +56,7 @@ export default function PsychologySessionsListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadSessions()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [loadSessions])
+  useEffect(() => { loadSessions() }, [loadSessions])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar sesión', '¿Está seguro de que desea eliminar esta sesión?')

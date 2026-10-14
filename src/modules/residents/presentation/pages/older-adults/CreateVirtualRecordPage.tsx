@@ -109,11 +109,6 @@ export default function CreateVirtualFile() {
   // When the cedula is normalized and valid, query the backend to see if a
   // virtual file already exists for that cedula. Block form progression if so.
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     const raw = cedulaNormalized?.trim() ?? ''
     // Only check when we have a meaningful cedula (at least 9 digits for nacional,
     // or any non-empty value for foreign documents)
@@ -146,14 +141,6 @@ export default function CreateVirtualFile() {
     }, 600)
 
     return () => { cancelled = true; clearTimeout(timer) }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [cedulaNormalized, cedulaIsForeign])
 
   const currentProgram   = programs.find(p => p.id === programId)
@@ -173,25 +160,12 @@ export default function CreateVirtualFile() {
 
   /* ── Auto-calc IMC ─────────────────────────────────────── */
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     const peso = parseFloat(formData.peso)
     const cm   = parseFloat(formData.talla)
     if (!isNaN(peso) && !isNaN(cm) && cm > 0) {
       const m = cm / 100
       setFormData(p => ({ ...p, imc: (peso / (m * m)).toFixed(1) }))
     }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [formData.peso, formData.talla])
 
   /* ── Helpers ───────────────────────────────────────────── */

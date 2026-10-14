@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Pill, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { clinicalMedicationService, type ClinicalMedicationApi, type TreatmentType } from '@/infrastructure/api/services/clinicalMedicationService'
@@ -33,20 +33,7 @@ export default function ClinicalMedicationListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { load()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar medicamento', '¿Eliminar este medicamento?')

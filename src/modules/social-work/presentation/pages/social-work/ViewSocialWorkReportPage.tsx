@@ -48,24 +48,11 @@ export default function ViewSocialWorkReportPage() {
   const [error, setError]     = useState('')
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     if (!id) return
     setLoading(true)
     socialWorkService.getReportById(Number(id))
       .then(data => { setReport(data); setLoading(false) })
       .catch(() => { setError('No se pudo cargar el reporte de trabajo social.'); setLoading(false) })
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [id])
 
   if (loading) return (

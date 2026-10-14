@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { nursingService } from '@/infrastructure/api/services/nursingService';
 import type { NursingAppointment } from '@/shared/types/nursing';
@@ -6,6 +6,7 @@ import { appointmentStatusLabels, appointmentTypeLabels, appointmentStatusColors
 
 export default function AppointmentHistory() {
   const [appointments, setAppointments] = useState<NursingAppointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<NursingAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
   const [filters, setFilters] = useState({
@@ -16,6 +17,14 @@ export default function AppointmentHistory() {
     dateTo: ''
   });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [appointments, filters]);
 
   const loadAppointments = async () => {
     setLoading(true);
@@ -35,7 +44,7 @@ export default function AppointmentHistory() {
     }
   };
 
-  const filteredAppointments = useMemo(() => {
+  const applyFilters = () => {
     let filtered = [...appointments];
 
     if (filters.status) {
@@ -60,25 +69,8 @@ export default function AppointmentHistory() {
       filtered = filtered.filter(apt => apt.appointmentDate <= filters.dateTo);
     }
 
-    return filtered;
-  }, [appointments, filters]);
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    loadAppointments();
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, []);
+    setFilteredAppointments(filtered);
+  };
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));

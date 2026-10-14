@@ -1,4 +1,3 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService';
@@ -39,8 +38,9 @@ export default function EditSpecializedAppointmentPage() {
       await specializedAppointmentsService.update(Number(id), form);
       setSuccess('Cita actualizada exitosamente');
       setTimeout(() => navigate('/specialized-appointments'), 1500);
-    } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Error al actualizar'));
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al actualizar';
+      setError(Array.isArray(msg) ? msg.join(', ') : msg);
     } finally { setSaving(false); }
   };
 

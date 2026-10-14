@@ -1,5 +1,4 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Building2, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { specializedAreasService } from '@/infrastructure/api/services/specializedAreasService'
@@ -37,20 +36,7 @@ export default function SpecializedAreasListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { load()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar área', '¿Confirmar eliminación?')
@@ -58,8 +44,8 @@ export default function SpecializedAreasListPage() {
     try {
       await specializedAreasService.remove(id)
       load()
-    } catch (err: unknown) {
-      feedback.error(getApiErrorMessage(err, 'Error al eliminar'))
+    } catch (err: any) {
+      feedback.error(err?.response?.data?.message ?? 'Error al eliminar')
     }
   }
 

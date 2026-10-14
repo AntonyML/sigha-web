@@ -57,11 +57,6 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
     }, []);
 
     useEffect(() => {
-      let active = true;
-      let cleanup: (() => void) | undefined;
-      void Promise.resolve().then(() => {
-        if (!active) return;
-        const maybeCleanup = (() => {
             check2FAStatus();
 
             // Verificar cada 60 segundos (reducido de 30s para evitar throttling)
@@ -83,14 +78,6 @@ export const TwoFactorProvider: React.FC<TwoFactorProviderProps> = ({ children }
             window.removeEventListener('focus', handleFocus);
             window.removeEventListener('authTokenChanged', handleAuthTokenChanged);
         };
-
-        })();
-        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-      });
-      return () => {
-        active = false;
-        cleanup?.();
-      };
     }, [check2FAStatus, refresh]);
 
     const value: TwoFactorContextType = {

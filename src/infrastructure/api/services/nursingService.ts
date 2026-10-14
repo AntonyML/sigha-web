@@ -1,7 +1,6 @@
 import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import type {
   NursingAppointment,
-  NursingRecord,
   GetNursingAppointmentsDto,
   CreateAppointmentDto,
   UpdateAppointmentDto,
@@ -174,7 +173,7 @@ export const nursingService = {
    * 
    * Endpoint: GET /nursing/appointments/:id/records
    */
-  async getNursingRecordsByAppointment(appointmentId: number): Promise<NursingRecord[]> {
+  async getNursingRecordsByAppointment(appointmentId: number): Promise<any[]> {
     try {
       const response = await apiClient.get<NursingRecordsResponse>(
         `/nursing/appointments/${appointmentId}/records`
@@ -297,7 +296,7 @@ export const nursingService = {
    */
   async completeAppointment(id: number, completeDto: CompleteAppointmentDto): Promise<{
     appointment: NursingAppointment;
-    nursingRecord: NursingRecord;
+    nursingRecord: any;
   }> {
     try {
       const response = await apiClient.post<CompleteAppointmentResponse>(

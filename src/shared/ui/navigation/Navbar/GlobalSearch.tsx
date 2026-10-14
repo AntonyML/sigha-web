@@ -151,7 +151,7 @@ export default function GlobalSearch() {
         >
           {results.length === 0 && !loading && (
             <li className="gsearch-empty">
-              Sin resultados para &quot;{query}&quot;
+              Sin resultados para "{query}"
             </li>
           )}
 

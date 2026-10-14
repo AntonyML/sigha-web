@@ -139,11 +139,6 @@ export default function ViewUserPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     if (!id) { setLoading(false); return; }
 
     const load = async () => {
@@ -172,14 +167,6 @@ export default function ViewUserPage() {
     };
 
     load();
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [id]);
 
   /* ── Estados de carga / error ─────────────────────────── */

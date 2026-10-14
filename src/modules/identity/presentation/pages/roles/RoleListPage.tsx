@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { ShieldCheck, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2, RefreshCw, History } from 'lucide-react'
 import { roleFlow } from '@/modules/identity/application/flows/role'
@@ -14,6 +14,8 @@ export default function RoleListPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
+
+  useEffect(() => { loadRoles() }, [])
 
   const loadRoles = async () => {
     setLoading(true)
@@ -32,21 +34,6 @@ export default function RoleListPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadRoles()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [])
 
     const handleDeleteRole = async (role: UserRole) => {
         if (isSystemRoleName(role.rName)) {

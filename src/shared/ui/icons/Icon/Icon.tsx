@@ -1,10 +1,10 @@
-import type { SVGProps } from 'react'
+import type { HTMLAttributes } from 'react'
 import * as OutlineIcons from '@heroicons/react/24/outline'
 import * as SolidIcons from '@heroicons/react/24/solid'
 
 type IconName = string
 
-type Props = SVGProps<SVGSVGElement> & {
+type Props = HTMLAttributes<HTMLSpanElement> & {
   name: IconName
   size?: 'sm' | 'md' | 'lg' | 'xl'
   variant?: 'outlined' | 'filled' | 'sharp'
@@ -140,11 +140,11 @@ export default function Icon({
   const heroName = nameMap[mappedName] || mappedName
   const iconName = heroName.split('_').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('') + 'Icon'
   const iconSet = variant === 'outlined' ? OutlineIcons : SolidIcons
-  const IconComponent = iconSet[iconName as keyof typeof iconSet]
+  const IconComponent = (iconSet as any)[iconName]
 
   if (!IconComponent) {
     console.warn(`Icon ${name} not found in Heroicons`)
-    return <span role="img" aria-label={name} className={`${sizeDimensions[size]} ${className}`} style={color ? { color } : undefined}>?</span>
+    return <div className={`${sizeDimensions[size]} ${className}`} style={color ? { color } : undefined} {...rest}>?</div>
   }
 
   return (

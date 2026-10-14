@@ -1,4 +1,4 @@
-import { useId, useState, type InputHTMLAttributes } from 'react'
+import { useState, type InputHTMLAttributes } from 'react'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
@@ -6,8 +6,7 @@ type Props = InputHTMLAttributes<HTMLInputElement> & {
 
 export default function PasswordInput({ label, id, className = '', ...rest }: Props) {
   const [showPassword, setShowPassword] = useState(false)
-  const generatedId = useId()
-  const inputId = id ?? `password_input_${generatedId}`
+  const inputId = id ?? `password_input_${Math.random().toString(36).slice(2, 8)}`
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)

@@ -6,7 +6,7 @@ const { get2FAStatusMock } = vi.hoisted(() => ({
   get2FAStatusMock: vi.fn(),
 }));
 
-vi.mock('@/infrastructure/api/services/twoFactorService', () => ({
+vi.mock('../../../services/twoFactorService', () => ({
   twoFactorService: {
     get2FAStatus: get2FAStatusMock,
   },

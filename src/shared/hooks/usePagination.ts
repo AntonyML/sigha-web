@@ -35,20 +35,7 @@ export function usePagination<T>(
 
   // Reset to page 1 when filter results change
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     setPage(1)
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [total])
 
   const goToPage = (n: number) =>

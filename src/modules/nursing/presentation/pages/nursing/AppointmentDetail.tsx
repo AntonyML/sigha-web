@@ -23,6 +23,12 @@ export default function AppointmentDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<UpdateAppointmentDto>({});
 
+  useEffect(() => {
+    if (id) {
+      loadAppointmentDetails();
+    }
+  }, [id]);
+
   const loadAppointmentDetails = async () => {
     setLoading(true);
     setError('');
@@ -49,25 +55,6 @@ export default function AppointmentDetail() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
-    if (id) {
-      loadAppointmentDetails();
-    }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [id]);
 
   const handleCancelAppointment = async () => {
     const result = await Swal.fire({

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Users, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { socialWorkService, type SocialWorkReportApi, type SocialWorkVisitType } from '@/infrastructure/api/services/socialWorkService'
@@ -47,20 +47,7 @@ export default function SocialWorkReportsListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { loadReports()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [loadReports])
+  useEffect(() => { loadReports() }, [loadReports])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar reporte', '¿Está seguro de que desea eliminar este reporte?')

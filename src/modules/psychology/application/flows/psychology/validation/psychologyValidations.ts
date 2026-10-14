@@ -65,25 +65,17 @@ export function validatePsychologyId(id: string | number): ValidationResult {
  * @param data - Datos a validar
  * @returns Mensaje de error si la validación falla, null si es válida
  */
-interface PsychologyValidationData {
-    patientId?: string | number;
-    psychologistId?: string | number;
-    sessionDate?: string;
-    startTime?: string;
-    duration?: string | number;
-    sessionType?: string;
-}
-
-export function validatePsychologyData(input: object): string | null {
-    const data = input as PsychologyValidationData;
+export function validatePsychologyData(data: any): string | null {
     if (!data) {
         return getPsychologyErrorMessage(PsychologyValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar campos requeridos
-    if (!data.patientId || !data.psychologistId || !data.sessionDate || !data.startTime ||
-        !data.duration || !data.sessionType) {
-        return getPsychologyErrorMessage(PsychologyValidationError.MISSING_REQUIRED_FIELDS);
+    const requiredFields = ['patientId', 'psychologistId', 'sessionDate', 'startTime', 'duration', 'sessionType'];
+    for (const field of requiredFields) {
+        if (!data[field]) {
+            return getPsychologyErrorMessage(PsychologyValidationError.MISSING_REQUIRED_FIELDS);
+        }
     }
 
     // Validar fecha
@@ -100,29 +92,29 @@ export function validatePsychologyData(input: object): string | null {
     }
 
     // Validar duración (entre 30 y 90 minutos para sesiones psicológicas)
-    const duration = Number.parseInt(String(data.duration), 10);
+    const duration = parseInt(data.duration, 10);
     if (isNaN(duration) || duration < 30 || duration > 90) {
         return getPsychologyErrorMessage(PsychologyValidationError.INVALID_DURATION);
     }
 
     // Validar IDs de psicólogo y paciente
-    if (!validatePsychologyId(data.patientId ?? '').isValid) {
+    if (!validatePsychologyId(data.patientId).isValid) {
         return getPsychologyErrorMessage(PsychologyValidationError.INVALID_PATIENT);
     }
 
-    if (!validatePsychologyId(data.psychologistId ?? '').isValid) {
+    if (!validatePsychologyId(data.psychologistId).isValid) {
         return getPsychologyErrorMessage(PsychologyValidationError.INVALID_PSYCHOLOGIST);
     }
 
     // Validar formato de hora (HH:MM)
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(data.startTime ?? '')) {
+    if (!timeRegex.test(data.startTime)) {
         return getPsychologyErrorMessage(PsychologyValidationError.INVALID_DATE);
     }
 
     // Validar tipo de sesión
     const validSessionTypes = ['individual', 'group', 'family', 'couples'];
-    if (!validSessionTypes.includes(data.sessionType ?? '')) {
+    if (!validSessionTypes.includes(data.sessionType)) {
         return getPsychologyErrorMessage(PsychologyValidationError.INVALID_SESSION_TYPE);
     }
 

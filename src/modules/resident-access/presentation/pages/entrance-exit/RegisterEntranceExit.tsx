@@ -42,24 +42,11 @@ export default function RegisterEntranceExit() {
     });
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     setFormData(prev => ({
       ...prev,
       accessType: accessType,
       datetime: toLocalInput(new Date())
     }));
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [accessType]);
 
   const validateForm = (): boolean => {

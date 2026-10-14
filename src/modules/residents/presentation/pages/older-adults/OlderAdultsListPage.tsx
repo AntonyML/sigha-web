@@ -112,20 +112,7 @@ export default function ListVirtualFile() {
       .catch(() => setError('No se pudo cargar la lista. Verifique la conexión.'))
       .finally(() => setLoading(false))
   }, [])
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { load()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   /* ── Filters ───────────────────────────────────────────── */
   const term = search.trim().toLowerCase()

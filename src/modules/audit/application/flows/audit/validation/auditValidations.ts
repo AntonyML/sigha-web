@@ -4,7 +4,6 @@
 import type { LogAuditRequest, SearchAuditReportsDto } from '@/shared/types/audit';
 import { AuditReportType, AuditAction } from '@/shared/types/audit';
 import type { AxiosError } from 'axios';
-import { isNetworkError } from '@/shared/lib/apiError';
 
 
 // Validaciones de negocio para registrar auditoría
@@ -18,7 +17,7 @@ export function validateLogAuditRequest(data: LogAuditRequest): string | null {
     return 'El tipo de reporte de auditoría es requerido.';
   }
   const validTypes = Object.values(AuditReportType);
-  if (!(validTypes as string[]).includes(data.type)) {
+  if (!validTypes.includes(data.type as any)) {
     return `El tipo de reporte debe ser uno de: ${validTypes.join(', ')}.`;
   }
 
@@ -27,7 +26,7 @@ export function validateLogAuditRequest(data: LogAuditRequest): string | null {
     return 'La acción de auditoría es requerida.';
   }
   const validActions = Object.values(AuditAction);
-  if (!(validActions as string[]).includes(data.action)) {
+  if (!validActions.includes(data.action as any)) {
     return `La acción debe ser una de: ${validActions.join(', ')}.`;
   }
 
@@ -76,7 +75,7 @@ export function validateSearchAuditReportsDto(params: SearchAuditReportsDto): st
       return 'El tipo debe ser un texto válido.';
     }
     const validTypes = Object.values(AuditReportType);
-    if (!(validTypes as string[]).includes(params.type)) {
+    if (!validTypes.includes(params.type as any)) {
       return `El tipo debe ser uno de: ${validTypes.join(', ')}.`;
     }
   }
@@ -116,7 +115,7 @@ export function validateSearchAuditReportsDto(params: SearchAuditReportsDto): st
       return 'La acción debe ser un texto válido.';
     }
     const validActions = Object.values(AuditAction);
-    if (!(validActions as string[]).includes(params.action)) {
+    if (!validActions.includes(params.action as any)) {
       return `La acción debe ser una de: ${validActions.join(', ')}.`;
     }
   }
@@ -164,6 +163,14 @@ export function validateSearchAuditReportsDto(params: SearchAuditReportsDto): st
 
 
 // Reglas de red/Axios para auditoría
+function isNetworkError(error: AxiosError | Error | unknown): boolean {
+  return (
+    (error as any)?.code === 'ERR_NETWORK' ||
+    (error as any)?.message === 'Network Error' ||
+    (error as any)?.isAxiosError && !(error as any).response
+  );
+}
+
 export function getAuditErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';

@@ -17,24 +17,11 @@ function AuthenticationGate({ children }: { children: ReactNode }) {
   const [authenticated, setAuthenticated] = useState(false)
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     if (!authStorage.isAuthenticated()) {
       router.replace('/login')
       return
     }
     setAuthenticated(true)
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [router])
 
   if (!authenticated) return <LoadingSpinner message="Verificando sesión..." />

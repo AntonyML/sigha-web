@@ -1,4 +1,3 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
 /**
  * SecuritySettingsPage — Configuración de seguridad del sistema
  *
@@ -122,8 +121,8 @@ export default function SecuritySettingsPage() {
       const updated = await securityService.updatePasswordPolicy(passwordPolicy);
       setPasswordPolicy(updated);
       setMessage('Política de contraseñas guardada correctamente.');
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar la política de contraseñas.'));
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar la política de contraseñas.');
     } finally { setSavingPassword(false); }
   };
 
@@ -134,8 +133,8 @@ export default function SecuritySettingsPage() {
       const updated = await securityService.updateTwoFactorPolicy(twoFactorPolicy);
       setTwoFactorPolicy(updated);
       setMessage('Política 2FA guardada correctamente.');
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar la política 2FA.'));
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar la política 2FA.');
     } finally { setSaving2FA(false); }
   };
 
@@ -146,8 +145,8 @@ export default function SecuritySettingsPage() {
       const updated = await securityService.updateSessionPolicy(sessionPolicy);
       setSessionPolicy(updated);
       setMessage('Política de sesiones guardada correctamente.');
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar la política de sesiones.'));
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar la política de sesiones.');
     } finally { setSavingSession(false); }
   };
 
@@ -158,8 +157,8 @@ export default function SecuritySettingsPage() {
       const updated = await securityService.updateLoginAttemptsPolicy(loginAttemptsPolicy);
       setLoginAttemptsPolicy(updated);
       setMessage('Política de intentos guardada correctamente.');
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar la política de intentos.'));
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar la política de intentos.');
     } finally { setSavingAttempts(false); }
   };
 

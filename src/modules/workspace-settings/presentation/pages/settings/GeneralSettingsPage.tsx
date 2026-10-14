@@ -1,4 +1,3 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Settings as SettingsIcon, Save, Upload } from 'lucide-react'
@@ -96,8 +95,8 @@ export default function GeneralSettingsPage() {
       })
       setForm(prev => ({ ...prev, logoUrl: result.logoUrl || '' }))
       setMessage('Configuración guardada correctamente.')
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar.'))
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al guardar.')
     } finally {
       setSaving(false)
     }
@@ -115,8 +114,8 @@ export default function GeneralSettingsPage() {
       setForm(prev => ({ ...prev, logoUrl: result.logoUrl }))
       updateGeneral({ appName: form.appName, logoUrl: result.logoUrl, timezone: form.timezone })
       setMessage('Logo subido correctamente.')
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al subir el logo.'))
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Error al subir el logo.')
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''

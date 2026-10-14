@@ -7,7 +7,7 @@
 import { physiotherapyService, type PhysiotherapySessionApi, type CreatePhysiotherapySessionDto, type UpdatePhysiotherapySessionDto } from '@/infrastructure/api/services/physiotherapyService';
 import { validatePhysiotherapyData, validatePhysiotherapyId } from '@/modules/physiotherapy/application/flows/physiotherapy/validation/physiotherapyValidations';
 
-export interface PhysiotherapyFlowResult<T = unknown> {
+export interface PhysiotherapyFlowResult<T = any> {
     success: boolean;
     data?: T;
     error?: string;

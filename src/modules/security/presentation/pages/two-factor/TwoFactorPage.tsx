@@ -48,6 +48,11 @@ export default function TwoFactorPage() {
     // Estados UI
     const [showBackupCodes, setShowBackupCodes] = useState(false);
 
+    // Cargar estado de 2FA al montar
+    useEffect(() => {
+        loadStatus();
+    }, []);
+
     /**
      * Cargar el estado actual de 2FA usando el flow
      */
@@ -68,24 +73,6 @@ export default function TwoFactorPage() {
 
         setLoading(false);
     };
-
-    // Cargar estado de 2FA al montar
-    useEffect(() => {
-      let active = true;
-      let cleanup: (() => void) | undefined;
-      void Promise.resolve().then(() => {
-        if (!active) return;
-        const maybeCleanup = (() => {
-        loadStatus();
-
-        })();
-        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-      });
-      return () => {
-        active = false;
-        cleanup?.();
-      };
-    }, []);
 
     /**
      * Iniciar el proceso de configuración de 2FA usando el flow

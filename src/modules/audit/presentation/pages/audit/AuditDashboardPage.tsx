@@ -159,20 +159,7 @@ export default function AuditDashboardPage() {
     }, [dateRange.start, dateRange.end]);
 
     useEffect(() => {
-      let active = true;
-      let cleanup: (() => void) | undefined;
-      void Promise.resolve().then(() => {
-        if (!active) return;
-        const maybeCleanup = (() => {
         loadDashboardData();
-
-        })();
-        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-      });
-      return () => {
-        active = false;
-        cleanup?.();
-      };
     }, [loadDashboardData]);
 
     const handleRefresh = () => {

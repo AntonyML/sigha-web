@@ -286,23 +286,10 @@ export default function Sidebar() {
   /* Auto-expand el grupo cuyo hijo coincide con la ruta actual.
      Debe estar ANTES de cualquier early return para respetar las Rules of Hooks. */
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname);
     if (activeId) {
       setOpenGroups(prev => prev[activeId] ? prev : { ...prev, [activeId]: true });
     }
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [location.pathname]);
 
   // No renderizar menú completo hasta que sepamos el estado real de 2FA y permisos

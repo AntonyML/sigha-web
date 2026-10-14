@@ -12,7 +12,6 @@ import { medicalRecordService } from '@/infrastructure/api/services/medicalRecor
 import type { VirtualFile } from '@/shared/types/virtualFile'
 import type { SpecializedAppointmentApi } from '@/shared/types/specializedAppointment'
 import type { NursingAppointment } from '@/shared/types/nursing'
-import type { MedicalRecord } from '@/infrastructure/api/services/medicalRecordService'
 import { AppointmentStatusApi, AppointmentPriorityApi, AppointmentTypeApi } from '@/shared/types/specializedAppointment'
 import { appointmentStatusColors, appointmentPriorityColors, appointmentTypeLabels, appointmentStatusLabels, appointmentPriorityLabels } from '@/shared/types/nursing'
 
@@ -96,11 +95,6 @@ function TabAppointments({ patientId, navigate }: { patientId: number; navigate:
   const [error, setError] = useState('')
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     setLoading(true)
     Promise.allSettled([
       specializedAppointmentsService.getByPatient(patientId),
@@ -128,14 +122,6 @@ function TabAppointments({ patientId, navigate }: { patientId: number; navigate:
       }
       setItems(unified)
     }).finally(() => setLoading(false))
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [patientId])
 
   if (loading) return <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}><Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} /> Cargando citas…</div>
@@ -245,29 +231,16 @@ function TabAppointments({ patientId, navigate }: { patientId: number; navigate:
 
 /* ─── Tab: Registros Médicos del residente ────────────── */
 function TabMedicalRecords({ patientId, navigate }: { patientId: number; navigate: (r: string) => void }) {
-  const [records, setRecords] = useState<MedicalRecord[]>([])
+  const [records, setRecords] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     setLoading(true)
     medicalRecordService.getMedicalRecords(patientId)
       .then(setRecords)
       .catch(() => setError('No se pudieron cargar los registros médicos'))
       .finally(() => setLoading(false))
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [patientId])
 
   if (loading) return <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}><Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} /> Cargando registros…</div>
@@ -300,14 +273,14 @@ function TabMedicalRecords({ patientId, navigate }: { patientId: number; navigat
               </tr>
             </thead>
             <tbody>
-              {records.map((r) => (
+              {records.map((r: any) => (
                 <tr key={r.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '0.625rem 0.75rem' }}><span style={{ background: '#f1f5f9', padding: '0.125rem 0.4rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: 600 }}>#{r.id}</span></td>
-                  <td style={{ padding: '0.625rem 0.75rem' }}>{fmtDate(r.create_at ?? r.mr_record_date)}</td>
+                  <td style={{ padding: '0.625rem 0.75rem' }}>{fmtDate(r.createdAt ?? r.date ?? r.recordDate)}</td>
                   <td style={{ padding: '0.625rem 0.75rem', maxWidth: '220px' }}>
-                    <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.mr_diagnosis ?? r.mr_summary ?? '—'}</span>
+                    <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.diagnosis ?? r.description ?? '—'}</span>
                   </td>
-                  <td style={{ padding: '0.625rem 0.75rem' }}>{r.id_staff?.u_name ?? '—'}</td>
+                  <td style={{ padding: '0.625rem 0.75rem' }}>{r.doctor ?? r.staff ?? r.physician ?? '—'}</td>
                   <td style={{ padding: '0.625rem 0.75rem' }}>
                     <button
                       onClick={() => navigate(`/medical-records/view/${r.id}`)}
@@ -344,11 +317,6 @@ export default function ViewAdultsPage() {
   const [activeTab, setActiveTab] = useState<TabId>('personal')
 
   useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => {
     if (!id) { setLoading(false); return }
     setLoading(true)
     setError(null)
@@ -359,14 +327,6 @@ export default function ViewAdultsPage() {
         setError('No se pudo cargar el expediente. Verifique la conexión e intente de nuevo.')
       })
       .finally(() => setLoading(false))
-
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
   }, [id])
 
   if (!id) {

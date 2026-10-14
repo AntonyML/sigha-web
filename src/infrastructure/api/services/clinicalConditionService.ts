@@ -28,12 +28,12 @@ export const clinicalConditionService = {
   getAllClinicalConditions: async (): Promise<ClinicalCondition[]> => {
     try {
       console.log('🔍 Conectando con backend para obtener condiciones clínicas...');
-      const response = await apiClient.get<{ data?: unknown }>('/clinical-conditions');
+      const response = await apiClient.get('/clinical-conditions');
       console.log('✅ Respuesta del backend (condiciones clínicas):', response.data);
       console.log('🔍 Estructura de response.data:', JSON.stringify(response.data, null, 2));
       
       // El backend devuelve los datos en response.data.data según el controller
-      const rawConditions = Array.isArray(response.data.data) ? response.data.data : [];
+      const rawConditions = response.data.data || [];
       console.log('🔍 Raw conditions array:', JSON.stringify(rawConditions, null, 2));
       
       // Verificar la estructura de las condiciones clínicas
@@ -43,10 +43,11 @@ export const clinicalConditionService = {
       }
       
       // Filtrar y validar que las condiciones tengan las propiedades necesarias
-      const conditions = rawConditions.filter((condition): condition is ClinicalCondition => {
-        const isValid = typeof condition === 'object' && condition !== null &&
-          'ccName' in condition && typeof condition.ccName === 'string' &&
-          (!('id' in condition) || typeof condition.id === 'number');
+      const conditions = rawConditions.filter((condition: any) => {
+        const isValid = condition && 
+          typeof condition === 'object' && 
+          condition.ccName && 
+          typeof condition.ccName === 'string';
         
         if (!isValid) {
           console.log('❌ Condición clínica inválida filtrada:', JSON.stringify(condition, null, 2));

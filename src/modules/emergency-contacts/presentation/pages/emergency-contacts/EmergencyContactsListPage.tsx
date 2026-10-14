@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Phone, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { emergencyContactService } from '@/infrastructure/api/services/emergencyContactService'
@@ -27,20 +27,7 @@ export default function EmergencyContactsListPage() {
     }
   }, [])
 
-  useEffect(() => {
-    let active = true;
-    let cleanup: (() => void) | undefined;
-    void Promise.resolve().then(() => {
-      if (!active) return;
-      const maybeCleanup = (() => { load()
-      })();
-      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
-    });
-    return () => {
-      active = false;
-      cleanup?.();
-    };
-  }, [load])
+  useEffect(() => { load() }, [load])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar contacto', '¿Eliminar este contacto de emergencia?')
