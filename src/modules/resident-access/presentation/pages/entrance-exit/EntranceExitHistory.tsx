@@ -5,7 +5,6 @@ import { entranceExitService } from '@/infrastructure/api/services/entranceExitS
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
 import type { EntranceExitResponse } from '@/shared/types/entranceExit'
-import EntranceExitNav from '@/modules/resident-access/presentation/pages/entrance-exit/EntranceExitNav'
 
 const TYPE_LABELS: Record<string, string> = {
   'employee': 'Empleado', 'older adult': 'Adulto Mayor', 'visitor': 'Visitante',
@@ -132,9 +131,6 @@ export default function EntranceExitHistory() {
           </button>
         </div>
       </div>
-
-      {/* Nav */}
-      <div className="no-print"><EntranceExitNav /></div>
 
       {/* Filters */}
       <div className="no-print" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '0.75rem', padding: '1rem', marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end' }}>
