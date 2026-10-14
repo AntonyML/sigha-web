@@ -1,10 +1,18 @@
-import { getApiErrorMessage } from '@/shared/lib/apiError';
-import { useEffect, useState, useRef } from 'react'
+/* eslint-disable @next/next/no-img-element -- Logo URLs come from storage and may not match configured Next image hosts. */
+import { getApiErrorMessage } from '@/shared/lib/apiError'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@/shared/navigation'
-import { Settings as SettingsIcon, Save, Upload } from 'lucide-react'
+import { Building2, CheckCircle2, Globe2, Image as ImageIcon, MapPin, Save, Upload } from 'lucide-react'
 import { settingsService } from '@/infrastructure/api/services/settingsService'
 import { PermissionUtils, usePermissions } from '@/shared/lib/permissionUtils'
 import { useGeneralSettingsUpdate } from '@/app/providers/SettingsContext'
+import { Alert } from '@/shared/ui/feedback/Alert/Alert'
+import { LoadingSpinner } from '@/shared/ui/feedback/LoadingSpinner/LoadingSpinner'
+import { Button } from '@/shared/ui/forms/Button/ButtonNew'
+import { Input } from '@/shared/ui/forms/Input/InputNew'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/shared/ui/data-display/Card/Card'
+import { PageHeader } from '@/shared/ui/layouts/PageHeader/PageHeader'
+import styles from './GeneralSettingsPage.module.css'
 
 const TIMEZONES = [
   'America/Costa_Rica',
@@ -64,7 +72,7 @@ export default function GeneralSettingsPage() {
         setLoading(false)
       }
     })()
-  }, [hasAccess, isLoaded])
+  }, [hasAccess, isLoaded, navigate])
 
   if (!hasAccess) return null
 
@@ -124,105 +132,216 @@ export default function GeneralSettingsPage() {
   }
 
   if (loading) {
-    return <div className="centered">Cargando...</div>
+    return (
+      <div className={`lp-page ${styles.loading}`}>
+        <LoadingSpinner message="Cargando la configuración general..." />
+      </div>
+    )
   }
 
   return (
-    <div className="lp-page">
-      <div className="lp-header">
-        <h2 className="lp-title">
-          <SettingsIcon size={22} className="mr-2" />
-          General
-        </h2>
-        <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>
-          Identidad institucional, idioma, zona horaria y logo de la aplicación.
-        </p>
-      </div>
+    <div className={`lp-page ${styles.page}`}>
+      <PageHeader
+        title="Configuración general"
+        subtitle="Administra el nombre, el idioma, la zona horaria y el logo que identifican este espacio de trabajo."
+        icon="bi-sliders"
+        className={styles.pageHeader}
+      />
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4 max-w-lg">
-        {/* Nombre de la app */}
-        <div>
-          <label className="block font-medium mb-1">Nombre de la aplicación</label>
-          <input
-            name="appName"
-            value={form.appName}
-            onChange={handleChange}
-            className="input"
-            placeholder="Ej.: SIGHA"
-            disabled={!hasEdit}
-          />
-        </div>
-
-        {/* Idioma */}
-        <div>
-          <label className="block font-medium mb-1">Idioma</label>
-          <select name="language" value={form.language} onChange={handleChange} className="input" disabled={!hasEdit}>
-            <option value="es">Español</option>
-          </select>
-        </div>
-
-        {/* Zona horaria */}
-        <div>
-          <label className="block font-medium mb-1">Zona horaria</label>
-          <select name="timezone" value={form.timezone} onChange={handleChange} className="input" disabled={!hasEdit}>
-            {TIMEZONES.map(tz => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Logo */}
-        <div>
-          <label className="block font-medium mb-1">Logo de la aplicación</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{
-              width: '96px', height: '96px', borderRadius: '0.5rem', border: '1px solid #e2e8f0',
-              overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: '#f8fafc', flexShrink: 0,
-            }}>
-              {form.logoUrl ? (
-                <img src={form.logoUrl} alt="Logo" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-              ) : (
-                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Sin logo</span>
-              )}
+      <div className={styles.layout}>
+        <Card className={styles.formCard}>
+          <CardHeader className={styles.cardHeader}>
+            <div className={styles.sectionIcon} aria-hidden="true">
+              <Building2 size={20} />
             </div>
             <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={handleLogoUpload}
-                disabled={uploading || !hasEdit}
-                style={{ display: 'block', marginBottom: '0.25rem' }}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading || !hasEdit}
-                className="btn btn-outline-secondary btn-sm"
-              >
-                {uploading ? 'Subiendo…' : 'Subir logo'}
-                {!uploading && hasEdit && <Upload size={14} className="ml-1 inline" />}
-              </button>
-              <p style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#94a3b8' }}>
-                PNG, JPG o WebP. Máximo 2 MB.
-              </p>
+              <h3 className={styles.cardTitle}>Identidad y región</h3>
+              <CardDescription className={styles.cardDescription}>
+                Define cómo se presenta el sistema y cómo organiza las fechas y horas.
+              </CardDescription>
             </div>
-          </div>
-        </div>
+            {!hasEdit && <span className={styles.readOnly}>Solo lectura</span>}
+          </CardHeader>
 
-        {/* Guardar */}
-        <div style={{ marginTop: '1.5rem' }}>
-          <button type="submit" disabled={saving || !hasEdit} className="btn btn-primary">
-            {saving ? 'Guardando…' : 'Guardar cambios'}
-            {hasEdit && <Save size={16} className="ml-2 inline" />}
-          </button>
-          {!hasEdit && <p className="text-sm text-gray-500 mt-2">Solo tienes permiso de visualización.</p>}
-        </div>
-      </form>
+          <form onSubmit={handleSubmit} aria-busy={saving || uploading}>
+            <CardContent className={styles.formContent}>
+              {error && <Alert variant="error" title="No se pudo completar la operación">{error}</Alert>}
+              {message && <Alert variant="success" title="Listo">{message}</Alert>}
+
+              <div className={styles.fields}>
+                <div className={styles.fieldWide}>
+                  <label htmlFor="general-app-name" className={styles.label}>Nombre de la aplicación</label>
+                  <Input
+                    id="general-app-name"
+                    name="appName"
+                    value={form.appName}
+                    onChange={handleChange}
+                    className={styles.control}
+                    placeholder="Ej.: SIGHA"
+                    autoComplete="organization"
+                    disabled={!hasEdit}
+                    aria-describedby="general-app-name-help"
+                  />
+                  <p id="general-app-name-help" className={styles.helpText}>
+                    Este nombre aparece en las áreas principales del sistema.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="general-language" className={styles.label}>Idioma</label>
+                  <select
+                    id="general-language"
+                    name="language"
+                    value={form.language}
+                    onChange={handleChange}
+                    className={styles.selectControl}
+                    disabled={!hasEdit}
+                  >
+                    <option value="es">Español</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="general-timezone" className={styles.label}>Zona horaria</label>
+                  <select
+                    id="general-timezone"
+                    name="timezone"
+                    value={form.timezone}
+                    onChange={handleChange}
+                    className={styles.selectControl}
+                    disabled={!hasEdit}
+                    aria-describedby="general-timezone-help"
+                  >
+                    {TIMEZONES.map(timezone => <option key={timezone} value={timezone}>{timezone}</option>)}
+                  </select>
+                  <p id="general-timezone-help" className={styles.helpText}>
+                    Se utiliza para mostrar horarios en todo el sistema.
+                  </p>
+                </div>
+              </div>
+
+              <section className={styles.logoSection} aria-labelledby="logo-section-title">
+                <div className={styles.logoHeading}>
+                  <div>
+                    <h3 id="logo-section-title" className={styles.label}>Logo de la aplicación</h3>
+                    <p className={styles.helpText}>Usa una imagen cuadrada para que se vea bien en la navegación.</p>
+                  </div>
+                </div>
+
+                <div className={styles.logoRow}>
+                  <div className={styles.logoPreview}>
+                    {form.logoUrl ? (
+                      <img
+                        src={form.logoUrl}
+                        alt={`Logo de ${form.appName || 'la aplicación'}`}
+                        width={88}
+                        height={88}
+                        loading="lazy"
+                        decoding="async"
+                        className={styles.logoImage}
+                      />
+                    ) : (
+                      <div className={styles.logoEmpty}>
+                        <ImageIcon size={22} aria-hidden="true" />
+                        <span>Sin logo</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={styles.uploadControls}>
+                    <input
+                      ref={fileInputRef}
+                      id="general-logo-upload"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleLogoUpload}
+                      disabled={uploading || saving || !hasEdit}
+                      className={styles.fileInput}
+                      tabIndex={-1}
+                      aria-label="Seleccionar logo"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || !hasEdit}
+                    >
+                      <Upload size={16} aria-hidden="true" />
+                      {uploading ? 'Subiendo…' : 'Subir logo'}
+                    </Button>
+                    <p className={styles.helpText}>PNG, JPG o WebP · Máximo 2 MB</p>
+                  </div>
+                </div>
+              </section>
+            </CardContent>
+
+            <CardFooter className={styles.cardFooter}>
+              {!hasEdit && <p className={styles.permissionNote}>Tienes acceso de consulta. Contacta a una persona administradora para editar estos datos.</p>}
+              <Button type="submit" disabled={saving || uploading || !hasEdit} className={styles.saveButton}>
+                <Save size={16} aria-hidden="true" />
+                {saving ? 'Guardando…' : 'Guardar cambios'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+
+        <aside className={styles.previewColumn} aria-label="Vista previa de la identidad">
+          <Card className={styles.previewCard}>
+            <CardHeader className={styles.previewHeader}>
+              <h3 className={styles.previewTitle}>Vista previa</h3>
+              <CardDescription className={styles.cardDescription}>
+                Así se verá la identidad del espacio de trabajo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className={styles.previewContent}>
+              <div className={styles.previewCanvas}>
+                <div className={styles.previewBrand}>
+                  <div className={styles.previewMark}>
+                    {form.logoUrl ? (
+                      <img
+                        src={form.logoUrl}
+                        alt=""
+                        width={44}
+                        height={44}
+                        loading="lazy"
+                        decoding="async"
+                        className={styles.previewImage}
+                      />
+                    ) : (
+                      <Building2 size={21} aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className={styles.previewName}>
+                    <span className={styles.previewEyebrow}>Espacio de trabajo</span>
+                    <strong>{form.appName.trim() || 'Nombre de la aplicación'}</strong>
+                  </div>
+                </div>
+
+                <div className={styles.previewDivider} />
+
+                <div className={styles.previewDetails}>
+                  <div className={styles.previewDetail}>
+                    <Globe2 size={16} aria-hidden="true" />
+                    <span>Idioma</span>
+                    <strong>{form.language === 'es' || !form.language ? 'Español' : form.language}</strong>
+                  </div>
+                  <div className={styles.previewDetail}>
+                    <MapPin size={16} aria-hidden="true" />
+                    <span>Zona horaria</span>
+                    <strong>{form.timezone || 'America/Costa_Rica'}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <p className={styles.previewNote}>
+                <CheckCircle2 size={16} aria-hidden="true" />
+                La vista se actualiza mientras editas los campos.
+              </p>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
     </div>
   )
 }
