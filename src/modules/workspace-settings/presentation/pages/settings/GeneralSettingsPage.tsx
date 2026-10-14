@@ -1,15 +1,18 @@
-/* eslint-disable @next/next/no-img-element -- Logo URLs come from storage and may not match configured Next image hosts. */
+/* eslint-disable @next/next/no-img-element -- Organization logos are hosted outside configured Next image domains. */
 import { getApiErrorMessage } from '@/shared/lib/apiError'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from '@/shared/navigation'
-import { Building2, CheckCircle2, Globe2, Image as ImageIcon, MapPin, Save, Upload } from 'lucide-react'
+import { Building2, CheckCircle2, Globe2, MapPin, Save } from 'lucide-react'
 import { settingsService } from '@/infrastructure/api/services/settingsService'
 import { PermissionUtils, usePermissions } from '@/shared/lib/permissionUtils'
-import { useGeneralSettingsUpdate } from '@/app/providers/SettingsContext'
+import {
+  useAppSettings,
+  useGeneralSettingsUpdate,
+  useOrganizationSettings,
+} from '@/app/providers/SettingsContext'
 import { Alert } from '@/shared/ui/feedback/Alert/Alert'
 import { LoadingSpinner } from '@/shared/ui/feedback/LoadingSpinner/LoadingSpinner'
 import { Button } from '@/shared/ui/forms/Button/ButtonNew'
-import { Input } from '@/shared/ui/forms/Input/InputNew'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/shared/ui/data-display/Card/Card'
 import { PageHeader } from '@/shared/ui/layouts/PageHeader/PageHeader'
 import styles from './GeneralSettingsPage.module.css'
@@ -31,28 +34,33 @@ const TIMEZONES = [
   'UTC',
 ]
 
+function isNotFoundError(error: unknown): boolean {
+  if (!error || typeof error !== 'object' || !('response' in error)) return false
+  const response = (error as { response?: { status?: unknown } }).response
+  return response?.status === 404
+}
+
 export default function GeneralSettingsPage() {
   const navigate = useNavigate()
-  const { canPerformAction, isLoaded } = usePermissions()
+  const { canPerformAction, isLoaded, isAdminOrDirectorSync } = usePermissions()
   const hasEdit = canPerformAction('settings', 'edit')
   const hasAccess = PermissionUtils.canAccessModule('settings')
+  const canManageOrganization = isAdminOrDirectorSync()
   const updateGeneral = useGeneralSettingsUpdate()
+  const currentSettings = useAppSettings()
+  const { activeOrganization, loaded: organizationSettingsLoaded } = useOrganizationSettings()
 
-  const [form, setForm] = useState({
-    appName: '',
-    language: '',
-    timezone: '',
-    logoUrl: '',
-  })
+  const [form, setForm] = useState({ language: 'es', timezone: 'America/Costa_Rica' })
+  const [globalIdentity, setGlobalIdentity] = useState({ appName: 'SIGHA', logoUrl: '' })
   const [loading, setLoading] = useState(true)
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false)
+  const [needsInitialization, setNeedsInitialization] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!isLoaded) return
+    if (!isLoaded || !organizationSettingsLoaded) return
     if (!hasAccess) {
       navigate('/settings')
       return
@@ -60,25 +68,33 @@ export default function GeneralSettingsPage() {
     ;(async () => {
       try {
         const data = await settingsService.getGeneralSettings()
+        setGlobalIdentity({ appName: data.appName || 'SIGHA', logoUrl: data.logoUrl || '' })
         setForm({
-          appName: data.appName || '',
           language: data.language || 'es',
           timezone: data.timezone || 'America/Costa_Rica',
-          logoUrl: data.logoUrl || '',
         })
-      } catch {
-        setError('No se pudo cargar la configuración general. Si es la primera vez, guarda los valores para inicializarla.')
+        setPreferencesLoaded(true)
+      } catch (loadError: unknown) {
+        if (isNotFoundError(loadError)) {
+          setGlobalIdentity({ appName: 'SIGHA', logoUrl: '' })
+          setPreferencesLoaded(true)
+          setNeedsInitialization(true)
+        } else {
+          setError('No se pudieron cargar las preferencias generales. Inténtalo de nuevo antes de guardar.')
+        }
       } finally {
         setLoading(false)
       }
     })()
-  }, [hasAccess, isLoaded, navigate])
+  }, [hasAccess, isLoaded, navigate, organizationSettingsLoaded])
 
   if (!hasAccess) return null
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
+    setError(null)
+    setMessage(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,52 +102,36 @@ export default function GeneralSettingsPage() {
     setError(null)
     setMessage(null)
     if (!hasEdit) {
-      setError('No tienes permiso para editar la configuración general.')
+      setError('No tienes permiso para editar las preferencias generales.')
       return
     }
+    if (!preferencesLoaded) {
+      setError('No se pudieron cargar las preferencias generales. Inténtalo de nuevo antes de guardar.')
+      return
+    }
+
     setSaving(true)
     try {
       const result = await settingsService.updateGeneralSettings({
-        appName: form.appName,
+        ...globalIdentity,
         language: form.language,
         timezone: form.timezone,
-        logoUrl: form.logoUrl,
       })
       updateGeneral({
-        appName: form.appName,
-        logoUrl: result.logoUrl || '',
-        timezone: form.timezone,
+        appName: activeOrganization?.name || currentSettings.appName,
+        logoUrl: activeOrganization?.logoUrl || '',
+        timezone: result.timezone || form.timezone,
       })
-      setForm(prev => ({ ...prev, logoUrl: result.logoUrl || '' }))
-      setMessage('Configuración guardada correctamente.')
+      setNeedsInitialization(false)
+      setMessage('Preferencias guardadas correctamente.')
     } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al guardar.'))
+      setError(getApiErrorMessage(e, 'Error al guardar las preferencias.'))
     } finally {
       setSaving(false)
     }
   }
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setError(null)
-    setMessage(null)
-    setUploading(true)
-    try {
-      const result = await settingsService.uploadLogo(file)
-      setForm(prev => ({ ...prev, logoUrl: result.logoUrl }))
-      updateGeneral({ appName: form.appName, logoUrl: result.logoUrl, timezone: form.timezone })
-      setMessage('Logo subido correctamente.')
-    } catch (e: unknown) {
-      setError(getApiErrorMessage(e, 'Error al subir el logo.'))
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
-
-  if (loading) {
+  if (loading || !organizationSettingsLoaded) {
     return (
       <div className={`lp-page ${styles.loading}`}>
         <LoadingSpinner message="Cargando la configuración general..." />
@@ -143,7 +143,7 @@ export default function GeneralSettingsPage() {
     <div className={`lp-page ${styles.page}`}>
       <PageHeader
         title="Configuración general"
-        subtitle="Administra el nombre, el idioma, la zona horaria y el logo que identifican este espacio de trabajo."
+        subtitle="Administra el idioma y la zona horaria. El nombre y el logo se configuran por organización."
         icon="bi-sliders"
         className={styles.pageHeader}
       />
@@ -152,41 +152,28 @@ export default function GeneralSettingsPage() {
         <Card className={styles.formCard}>
           <CardHeader className={styles.cardHeader}>
             <div className={styles.sectionIcon} aria-hidden="true">
-              <Building2 size={20} />
+              <Globe2 size={20} />
             </div>
             <div>
-              <h3 className={styles.cardTitle}>Identidad y región</h3>
+              <h3 className={styles.cardTitle}>Preferencias regionales</h3>
               <CardDescription className={styles.cardDescription}>
-                Define cómo se presenta el sistema y cómo organiza las fechas y horas.
+                Ajusta cómo se muestran el idioma y las fechas en SIGHA.
               </CardDescription>
             </div>
             {!hasEdit && <span className={styles.readOnly}>Solo lectura</span>}
           </CardHeader>
 
-          <form onSubmit={handleSubmit} aria-busy={saving || uploading}>
+          <form onSubmit={handleSubmit} aria-busy={saving}>
             <CardContent className={styles.formContent}>
               {error && <Alert variant="error" title="No se pudo completar la operación">{error}</Alert>}
               {message && <Alert variant="success" title="Listo">{message}</Alert>}
+              {needsInitialization && (
+                <p className={styles.helpText}>
+                  Aún no hay preferencias generales guardadas. Al guardar se inicializarán con los valores predeterminados de SIGHA.
+                </p>
+              )}
 
               <div className={styles.fields}>
-                <div className={styles.fieldWide}>
-                  <label htmlFor="general-app-name" className={styles.label}>Nombre de la aplicación</label>
-                  <Input
-                    id="general-app-name"
-                    name="appName"
-                    value={form.appName}
-                    onChange={handleChange}
-                    className={styles.control}
-                    placeholder="Ej.: SIGHA"
-                    autoComplete="organization"
-                    disabled={!hasEdit}
-                    aria-describedby="general-app-name-help"
-                  />
-                  <p id="general-app-name-help" className={styles.helpText}>
-                    Este nombre aparece en las áreas principales del sistema.
-                  </p>
-                </div>
-
                 <div>
                   <label htmlFor="general-language" className={styles.label}>Idioma</label>
                   <select
@@ -195,7 +182,7 @@ export default function GeneralSettingsPage() {
                     value={form.language}
                     onChange={handleChange}
                     className={styles.selectControl}
-                    disabled={!hasEdit}
+                    disabled={!hasEdit || !preferencesLoaded}
                   >
                     <option value="es">Español</option>
                   </select>
@@ -209,99 +196,44 @@ export default function GeneralSettingsPage() {
                     value={form.timezone}
                     onChange={handleChange}
                     className={styles.selectControl}
-                    disabled={!hasEdit}
+                    disabled={!hasEdit || !preferencesLoaded}
                     aria-describedby="general-timezone-help"
                   >
                     {TIMEZONES.map(timezone => <option key={timezone} value={timezone}>{timezone}</option>)}
                   </select>
                   <p id="general-timezone-help" className={styles.helpText}>
-                    Se utiliza para mostrar horarios en todo el sistema.
+                    Se utiliza para mostrar horarios en todo SIGHA.
                   </p>
                 </div>
               </div>
-
-              <section className={styles.logoSection} aria-labelledby="logo-section-title">
-                <div className={styles.logoHeading}>
-                  <div>
-                    <h3 id="logo-section-title" className={styles.label}>Logo de la aplicación</h3>
-                    <p className={styles.helpText}>Usa una imagen cuadrada para que se vea bien en la navegación.</p>
-                  </div>
-                </div>
-
-                <div className={styles.logoRow}>
-                  <div className={styles.logoPreview}>
-                    {form.logoUrl ? (
-                      <img
-                        src={form.logoUrl}
-                        alt={`Logo de ${form.appName || 'la aplicación'}`}
-                        width={88}
-                        height={88}
-                        loading="lazy"
-                        decoding="async"
-                        className={styles.logoImage}
-                      />
-                    ) : (
-                      <div className={styles.logoEmpty}>
-                        <ImageIcon size={22} aria-hidden="true" />
-                        <span>Sin logo</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.uploadControls}>
-                    <input
-                      ref={fileInputRef}
-                      id="general-logo-upload"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={handleLogoUpload}
-                      disabled={uploading || saving || !hasEdit}
-                      className={styles.fileInput}
-                      tabIndex={-1}
-                      aria-label="Seleccionar logo"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading || !hasEdit}
-                    >
-                      <Upload size={16} aria-hidden="true" />
-                      {uploading ? 'Subiendo…' : 'Subir logo'}
-                    </Button>
-                    <p className={styles.helpText}>PNG, JPG o WebP · Máximo 2 MB</p>
-                  </div>
-                </div>
-              </section>
             </CardContent>
 
             <CardFooter className={styles.cardFooter}>
               {!hasEdit && <p className={styles.permissionNote}>Tienes acceso de consulta. Contacta a una persona administradora para editar estos datos.</p>}
-              <Button type="submit" disabled={saving || uploading || !hasEdit} className={styles.saveButton}>
+              <Button type="submit" disabled={saving || !hasEdit || !preferencesLoaded} className={styles.saveButton}>
                 <Save size={16} aria-hidden="true" />
-                {saving ? 'Guardando…' : 'Guardar cambios'}
+                {saving ? 'Guardando…' : 'Guardar preferencias'}
               </Button>
             </CardFooter>
           </form>
         </Card>
 
-        <aside className={styles.previewColumn} aria-label="Vista previa de la identidad">
+        <aside className={styles.previewColumn} aria-label="Identidad de la organización activa">
           <Card className={styles.previewCard}>
             <CardHeader className={styles.previewHeader}>
-              <h3 className={styles.previewTitle}>Vista previa</h3>
+              <h3 className={styles.previewTitle}>Organización activa</h3>
               <CardDescription className={styles.cardDescription}>
-                Así se verá la identidad del espacio de trabajo.
+                Cada organización conserva su propio nombre y logo.
               </CardDescription>
             </CardHeader>
             <CardContent className={styles.previewContent}>
               <div className={styles.previewCanvas}>
                 <div className={styles.previewBrand}>
                   <div className={styles.previewMark}>
-                    {form.logoUrl ? (
+                    {activeOrganization?.logoUrl ? (
                       <img
-                        src={form.logoUrl}
-                        alt=""
+                        src={activeOrganization.logoUrl}
+                        alt={`Logo de ${activeOrganization.name}`}
                         width={44}
                         height={44}
                         loading="lazy"
@@ -313,31 +245,41 @@ export default function GeneralSettingsPage() {
                     )}
                   </div>
                   <div className={styles.previewName}>
-                    <span className={styles.previewEyebrow}>Espacio de trabajo</span>
-                    <strong>{form.appName.trim() || 'Nombre de la aplicación'}</strong>
+                    <span className={styles.previewEyebrow}>Nombre visible en esta organización</span>
+                    <strong>{activeOrganization?.name || 'No hay organización activa'}</strong>
                   </div>
                 </div>
 
-                <div className={styles.previewDivider} />
-
-                <div className={styles.previewDetails}>
-                  <div className={styles.previewDetail}>
-                    <Globe2 size={16} aria-hidden="true" />
-                    <span>Idioma</span>
-                    <strong>{form.language === 'es' || !form.language ? 'Español' : form.language}</strong>
-                  </div>
-                  <div className={styles.previewDetail}>
-                    <MapPin size={16} aria-hidden="true" />
-                    <span>Zona horaria</span>
-                    <strong>{form.timezone || 'America/Costa_Rica'}</strong>
-                  </div>
-                </div>
+                {activeOrganization?.slug && (
+                  <>
+                    <div className={styles.previewDivider} />
+                    <div className={styles.previewDetail}>
+                      <MapPin size={16} aria-hidden="true" />
+                      <span>Identificador</span>
+                      <strong>{activeOrganization.slug}</strong>
+                    </div>
+                  </>
+                )}
               </div>
 
               <p className={styles.previewNote}>
                 <CheckCircle2 size={16} aria-hidden="true" />
-                La vista se actualiza mientras editas los campos.
+                Cambiar esta identidad no modifica SIGHA ni las demás organizaciones.
               </p>
+
+              {canManageOrganization ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/settings/organization')}
+                  disabled={!activeOrganization}
+                  className={styles.organizationButton}
+                >
+                  Administrar nombre y logo
+                </Button>
+              ) : (
+                <p className={styles.permissionNote}>Solo administración o dirección pueden cambiar la identidad de la organización.</p>
+              )}
             </CardContent>
           </Card>
         </aside>

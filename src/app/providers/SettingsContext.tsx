@@ -38,6 +38,7 @@ interface SettingsContextType {
   activeOrganization: ActiveOrganization | null;
   selectionRequired: boolean;
   switchOrganization: (organizationId: number) => Promise<ActiveOrganization>;
+  updateActiveOrganization: (organization: ActiveOrganization) => void;
   updateGeneral: (s: AppSettings) => void;
   updateInterface: (s: InterfaceSettings) => void;
 }
@@ -141,7 +142,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
         setGeneral({
           appName: active.name,
-          logoUrl: active.logoUrl || generalData?.logoUrl || '',
+          // A logo belongs to the active organization; global settings are not a fallback brand.
+          logoUrl: active.logoUrl || '',
           timezone: generalData?.timezone || GENERAL_DEFAULTS.timezone,
         });
         document.title = active.name;
@@ -202,14 +204,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setGeneral((current) => ({
       ...current,
       appName: organization.name,
-      logoUrl: organization.logoUrl || current.logoUrl,
+      // Clear the previous organization's logo when the new organization has none.
+      logoUrl: organization.logoUrl || '',
     }));
     document.title = organization.name;
     return organization;
   }, []);
 
+  const updateActiveOrganization = useCallback((organization: ActiveOrganization) => {
+    setActiveOrganization(organization);
+    setOrganizations((current) => current.map((item) => (
+      item.id === organization.id ? { ...item, ...organization } : item
+    )));
+    setGeneral((current) => ({
+      ...current,
+      appName: organization.name,
+      logoUrl: organization.logoUrl || '',
+    }));
+    document.title = organization.name;
+  }, []);
+
   const updateGeneral = useCallback((s: AppSettings) => {
-    const next = { ...s, appName: activeOrganization?.name ?? s.appName };
+    const next = {
+      ...s,
+      appName: activeOrganization?.name ?? s.appName,
+      logoUrl: activeOrganization?.logoUrl || '',
+    };
     setGeneral(next);
     document.title = next.appName;
   }, [activeOrganization]);
@@ -228,6 +248,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       activeOrganization,
       selectionRequired,
       switchOrganization,
+      updateActiveOrganization,
       updateGeneral,
       updateInterface,
     }}>
@@ -252,6 +273,7 @@ export function useOrganizationSettings() {
     switchOrganization: ctx?.switchOrganization ?? (async () => {
       throw new Error('SettingsProvider no está disponible');
     }),
+    updateActiveOrganization: ctx?.updateActiveOrganization ?? (() => {}),
   };
 }
 
