@@ -4,7 +4,7 @@
  * Set values in .env.local (development) or hosting environment variables.
  */
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '/api/backend';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 const nodeEnv = (process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test';
 
 export const config = {

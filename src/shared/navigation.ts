@@ -7,14 +7,18 @@ import {
   useRouter,
   useSearchParams as useNextSearchParams,
 } from 'next/navigation'
+import { normalizeNavigationTarget, useRouteSelection } from '@/shared/navigation/routeSelectionContext'
 
 export interface NavigationOptions {
   replace?: boolean
+  params?: Record<string, string | number>
 }
 
 /** Small compatibility seam while feature screens transition to Next navigation. */
 export function useNavigate() {
   const router = useRouter()
+  const pathname = usePathname() ?? '/'
+  const routeSelection = useRouteSelection()
 
   return useCallback((destination: string | number, options?: NavigationOptions) => {
     if (typeof destination === 'number') {
@@ -23,9 +27,21 @@ export function useNavigate() {
       return
     }
 
-    if (options?.replace) router.replace(destination)
-    else router.push(destination)
-  }, [router])
+    const normalized = normalizeNavigationTarget(destination)
+    const nextPathname = new URL(normalized.href, window.location.origin).pathname
+
+    if (pathname !== nextPathname) routeSelection?.clearRouteSelection(pathname)
+    for (const [routePath, parameters] of Object.entries(normalized.selections)) {
+      routeSelection?.setRouteParameters(routePath, parameters)
+    }
+    if (options?.params) {
+      const parameters = Object.fromEntries(Object.entries(options.params).map(([key, value]) => [key, String(value)]))
+      routeSelection?.setRouteParameters(nextPathname, parameters)
+    }
+
+    if (options?.replace) router.replace(normalized.href)
+    else router.push(normalized.href)
+  }, [pathname, router, routeSelection])
 }
 
 export function useLocation() {
@@ -39,9 +55,23 @@ export function useLocation() {
 export function useParams<
   T extends Record<string, string | undefined> = Record<string, string | undefined>,
 >(): T {
-  return useNextParams() as T
+  const pathname = usePathname() ?? '/'
+  const routeSelection = useRouteSelection()
+  const nextParams = useNextParams() as T | null
+  return { ...(nextParams ?? {}), ...(routeSelection?.selections[pathname] ?? {}) } as T
 }
 
 export function useSearchParams() {
-  return [useNextSearchParams()] as const
+  const pathname = usePathname() ?? '/'
+  const nextSearchParams = useNextSearchParams()
+  const routeSelection = useRouteSelection()
+  const searchParams = useMemo(() => {
+    const merged = new URLSearchParams(nextSearchParams?.toString())
+    for (const [key, value] of Object.entries(routeSelection?.selections[pathname] ?? {})) {
+      if (!merged.has(key)) merged.set(key, value)
+    }
+    return merged
+  }, [nextSearchParams, pathname, routeSelection?.selections])
+
+  return [searchParams] as const
 }

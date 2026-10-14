@@ -12,7 +12,7 @@ Copy-Item .env.example .env.local
 bun run dev
 ```
 
-La web queda en `http://localhost:3001`; la API local usa `http://localhost:3000`. Next.js reescribe las llamadas bajo `/api/backend` hacia NestJS.
+La web queda en `http://localhost:3001`; la API local usa `http://localhost:3000`. La interfaz llama directamente al backend. El rewrite opcional `/api/backend` se conserva solo para desarrollo local.
 
 Comandos disponibles:
 
@@ -29,12 +29,12 @@ bun run test:e2e  # Playwright
 
 | Variable | Dónde | Uso |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | navegador | Prefijo del proxy de Next; por defecto `/api/backend` |
-| `BACKEND_API_URL` | servidor | Destino NestJS del proxy; por defecto `http://localhost:3000` |
+| `NEXT_PUBLIC_API_URL` | navegador | URL base pública de NestJS; por defecto `http://localhost:3000` |
+| `BACKEND_API_URL` | servidor local | Destino del rewrite opcional de desarrollo; por defecto `http://localhost:3000` |
 | `NEXT_PUBLIC_APP_ENV` | navegador | Entorno de la aplicación |
 | `NEXT_PUBLIC_ENABLE_2FA` | navegador | Configuración de la interfaz 2FA |
 
-`BACKEND_API_URL` es privada y no debe llevar el prefijo `NEXT_PUBLIC_`. En despliegues, configúrala en el entorno del servidor Next. El proxy evita que el navegador dependa de CORS para comunicarse con la API.
+En producción configura `NEXT_PUBLIC_API_URL` en el entorno del build y permite el origen de Pages en CORS del backend. El export estático no ejecuta un servidor Next ni usa rewrites.
 
 Para Playwright, copia `.env.e2e.example` a `.env.e2e`; la URL web es `http://localhost:3001` y `E2E_API_URL` apunta directamente a NestJS.
 
@@ -83,11 +83,13 @@ Las pantallas que provienen de la SPA se conservan como componentes cliente para
 - **Autenticación:** `/login` y `/auth/*`.
 - **Producto:** `/dashboard`, `/users/*`, `/roles/*`, `/virtualFiles/*`, `/nursing/*`, registros clínicos, auditoría, configuración y módulos de atención.
 
-Las rutas existentes del producto se representan mediante archivos `page.tsx` del App Router. Los segmentos dinámicos de Next (`[id]`, `[patientId]`) conservan los parámetros de las rutas anteriores.
+Las rutas existentes del producto se representan mediante archivos `page.tsx` del App Router. Las vistas que antes incluían IDs usan rutas estáticas; la selección se conserva en Context respaldado por `sessionStorage`.
 
 ## Implementación y siguientes pasos
 
 La migración del framework, el enrutamiento, los grupos públicos/privados y la estructura por capas están descritos en [el plan de arquitectura y migración](docs/architecture/sigha-nextjs-implementation-plan.md). Ese plan incluye endurecimiento de autenticación, tenancy SaaS, inversión de dependencias, retirada de compatibilidad y criterios de salida.
+
+Para compilar y publicar la exportación estática en Cloudflare Pages, consulta la [guía de Pages y GitHub Actions](docs/cloudflare-pages.md).
 
 ## Contribución (multi-agente con worktrees)
 
