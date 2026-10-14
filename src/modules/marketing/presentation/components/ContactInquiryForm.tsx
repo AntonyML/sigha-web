@@ -6,6 +6,18 @@ import { contactEmail } from '../content/marketingContent'
 import { contactInquiryService } from '@/infrastructure/api/services/contactInquiryService'
 import styles from './ContactInquiryForm.module.css'
 
+function getResponseErrorMessage(error: unknown): string | string[] | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) return undefined
+  const response = error.response
+  if (typeof response !== 'object' || response === null || !('data' in response)) return undefined
+  const data = response.data
+  if (typeof data !== 'object' || data === null || !('message' in data)) return undefined
+  const message = data.message
+  if (typeof message === 'string') return message
+  if (Array.isArray(message) && message.every(item => typeof item === 'string')) return message
+  return undefined
+}
+
 export default function ContactInquiryForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -37,10 +49,10 @@ export default function ContactInquiryForm() {
           'Tu consulta fue enviada con éxito. Te hemos enviado un acuse de recibo a tu correo.',
       )
       form.reset()
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error')
       const errorMsg =
-        err?.response?.data?.message ||
+        getResponseErrorMessage(err) ||
         `No se pudo enviar la consulta en este momento. Puedes escribirnos directamente a ${contactEmail}.`
       setStatusMessage(Array.isArray(errorMsg) ? errorMsg.join('. ') : errorMsg)
     } finally {
