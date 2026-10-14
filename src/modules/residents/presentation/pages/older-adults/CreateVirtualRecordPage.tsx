@@ -30,6 +30,14 @@ const STEPS = [
 ]
 
 const BLOOD_TYPES = ['A+','A-','B+','B-','AB+','AB-','O+','O-','UNKNOWN']
+/* Fecha local de hoy (YYYY-MM-DD) para validar "no futura" sin llamadas
+   impuras durante el render. Se calcula una vez al cargar el módulo. */
+const TODAY_LOCAL = (() => {
+  const n = new Date()
+  const m = String(n.getMonth() + 1).padStart(2, '0')
+  const d = String(n.getDate()).padStart(2, '0')
+  return `${n.getFullYear()}-${m}-${d}`
+})()
 const RCVG_OPTIONS: [string, string][] = [
   ['< 10%',       '< 10%'],
   ['e /10y20%', '10 – 20%'],
@@ -75,6 +83,8 @@ export default function CreateVirtualFile() {
   const [ingresoDisplay, setIngresoDisplay] = useState('')
   const [cedulaIsForeign, setCedulaIsForeign] = useState(false)
   const [familyCedulaIsForeign, setFamilyCedulaIsForeign] = useState(false)
+  // Marca qué pasos ya intentaron avanzar: solo entonces se muestran los errores de obligatorios
+  const [stepAttempted, setStepAttempted] = useState<Record<number, boolean>>({})
 
   // Duplicate cedula check state
   const [dupCheck, setDupCheck] = useState<{ loading: boolean; exists: boolean; existingId: number | null }>(
@@ -214,8 +224,69 @@ export default function CreateVirtualFile() {
     }
   )
 
+  /* ── Validación de obligatorios por paso ─────────────────── */
+  /* Solo los campos marcados con * bloquean el botón Siguiente;
+     el resto del formulario sigue siendo opcional. */
+  function step1Errors(): string[] {
+    const errs: string[] = []
+    if (!formData.cedula.trim()) {
+      errs.push('La cédula es obligatoria.')
+    } else if (cedulaStatus === 'error') {
+      errs.push('La cédula no es válida.')
+    }
+    if (dupCheck.loading) {
+      errs.push('Verificando duplicado, espere un momento…')
+    } else if (dupCheck.exists) {
+      errs.push('Ya existe un expediente con esta cédula.')
+    }
+    const rawFecha = (formData.fechaNacimiento || '').trim()
+    if (!rawFecha) {
+      errs.push('La fecha de nacimiento es obligatoria.')
+    } else {
+      const d = new Date(rawFecha)
+      if (isNaN(d.getTime())) {
+        errs.push('La fecha de nacimiento no es válida.')
+      } else if (rawFecha > TODAY_LOCAL) {
+        errs.push('La fecha de nacimiento no puede ser futura.')
+      }
+    }
+    if (!formData.nombreApellido.trim()) {
+      errs.push('El nombre completo es obligatorio.')
+    }
+    return errs
+  }
+  function step4Errors(): string[] {
+    if (programs.length === 0) return ['No hay programas disponibles.']
+    if (!programs.some(p => p.id === programId)) return ['Seleccione el programa principal.']
+    return []
+  }
+  function stepErrors(s: number): string[] {
+    if (s === 1) return step1Errors()
+    if (s === 4) return step4Errors()
+    return []
+  }
+  function handleNext() {
+    if (stepErrors(step).length > 0) {
+      setStepAttempted(p => ({ ...p, [step]: true }))
+      return
+    }
+    setStep(s => s + 1)
+  }
+
   /* ── Submit ────────────────────────────────────────────── */
   async function handleSubmit() {
+    const e1 = step1Errors()
+    if (e1.length > 0) {
+      setStepAttempted(p => ({ ...p, 1: true }))
+      setStep(1)
+      return
+    }
+    const e4 = step4Errors()
+    if (e4.length > 0) {
+      setStepAttempted(p => ({ ...p, 4: true }))
+      setStep(4)
+      return
+    }
     setSaving(true)
     try {
       // Derive document type from the foreign toggle and useCedulaLookup detection
@@ -237,6 +308,8 @@ export default function CreateVirtualFile() {
   }
 
   const imc = imcColor(formData.imc)
+  // Errores visibles del paso actual (solo tras intentar avanzar o guardar)
+  const visibleErrors = stepAttempted[step] ? stepErrors(step) : []
 
   /* ══════════════════════════════════════════════════════ */
   return (
@@ -310,6 +383,16 @@ export default function CreateVirtualFile() {
                   Ya existe un expediente con esta cédula.
                 </div>
               )}
+              {stepAttempted[1] && !formData.cedula.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  La cédula es obligatoria.
+                </div>
+              )}
+              {stepAttempted[1] && !!formData.cedula.trim() && cedulaStatus === 'error' && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  La cédula no es válida.
+                </div>
+              )}
             </Field>
             {showForeignDialog && (
               <ForeignConfirmDialog
@@ -319,6 +402,7 @@ export default function CreateVirtualFile() {
             )}
             <Field label="Fecha de nacimiento *">
               <input type="date" className="form-control" value={formData.fechaNacimiento}
+                style={{ borderColor: stepAttempted[1] && !(formData.fechaNacimiento || '').trim() ? '#f87171' : undefined }}
                 onChange={e => {
                   set('fechaNacimiento', e.target.value)
                   const d = e.target.value ? new Date(e.target.value) : null
@@ -327,6 +411,11 @@ export default function CreateVirtualFile() {
                     set('edad', String(age))
                   } else { set('edad', '') }
                 }} />
+              {stepAttempted[1] && !(formData.fechaNacimiento || '').trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  La fecha de nacimiento es obligatoria.
+                </div>
+              )}
             </Field>
             <Field label="Edad">
               <input type="number" min={0} max={130} className="form-control" value={formData.edad}
@@ -337,7 +426,13 @@ export default function CreateVirtualFile() {
           <Grid cols={2}>
             <Field label="Nombre completo *">
               <input className="form-control" value={formData.nombreApellido}
+                style={{ borderColor: stepAttempted[1] && !formData.nombreApellido.trim() ? '#f87171' : undefined }}
                 onChange={e => set('nombreApellido', e.target.value)} placeholder="Nombre y apellidos" />
+              {stepAttempted[1] && !formData.nombreApellido.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El nombre completo es obligatorio.
+                </div>
+              )}
             </Field>
             <Field label="Estado civil">
               <select className="form-select" value={formData.estadoCivil} onChange={e => set('estadoCivil', e.target.value)}>
@@ -636,6 +731,11 @@ export default function CreateVirtualFile() {
               </select>
             </Field>
           </Grid>
+          {stepAttempted[4] && step4Errors().length > 0 && (
+            <div role="alert" style={{ color: '#b91c1c', fontSize: '0.8125rem', marginTop: '0.25rem' }}>
+              {step4Errors().map(m => <div key={m}>{m}</div>)}
+            </div>
+          )}
 
           <SectionTitle style={{ marginTop: '1.5rem' }}>Vacunas aplicadas</SectionTitle>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.5rem' }}>
@@ -675,6 +775,16 @@ export default function CreateVirtualFile() {
         </Card>
       )}
 
+      {/* Errores del paso actual (solo tras intentar avanzar) */}
+      {visibleErrors.length > 0 && (
+        <div role="alert" style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.625rem', color: '#b91c1c', fontSize: '0.8125rem' }}>
+          <strong>Complete los datos obligatorios para continuar:</strong>
+          <ul style={{ margin: '0.375rem 0 0', paddingLeft: '1.25rem' }}>
+            {visibleErrors.map(m => <li key={m}>{m}</li>)}
+          </ul>
+        </div>
+      )}
+
       {/* ── Navigation ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1.5rem' }}>
         <button type="button"
@@ -684,7 +794,7 @@ export default function CreateVirtualFile() {
         </button>
 
         {step < STEPS.length ? (
-          <button type="button" onClick={() => setStep(s => s + 1)}
+          <button type="button" onClick={handleNext}
             disabled={dupCheck.exists || dupCheck.loading}
             style={{ padding: '0.625rem 1.5rem', background: dupCheck.exists || dupCheck.loading ? '#93c5fd' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '0.625rem', cursor: dupCheck.exists || dupCheck.loading ? 'not-allowed' : 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>
             Siguiente →
