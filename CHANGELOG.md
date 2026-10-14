@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-13 | sigha-web-20261013-e029 | tipo: fix ci: agregar setup-bun al job deploy para compatibilidad con wrangler-action | verificación: dev y worktree: test:unit 21/21 OK, yaml sintaxis válida
 2026-10-13 | sigha-web-20261013-a3lo | tipo: pipeline CI/CD en GitHub Actions (QA, auto-versionado con release y deploy a Cloudflare Pages) | verificación: worktree y dev: test:unit 21/21 OK, build OK (109 rutas out/), tsc --noEmit OK (0 errores), yaml sintaxis válida
 2026-10-14 | sigha-web-20261014-rcyq | tipo: legibilidad y accesibilidad del hub /admin (anula nowrap heredado, sube contraste ≥4.5:1 y tamaños, aria-labelledby, foco visible) | verificación: build OK 80 rutas en worktree y dev (/admin prerenderizado); eslint 0 errores; sin tests del módulo (grep vacío); funcional: wrap+minWidth+contraste verificados en dev
 2026-10-14 | sigha-web-20261014-kzsf | tipo: botón Volver en /login (AuthLayout → landing /) | verificación: build OK 80 rutas en worktree y dev; eslint 0 errores en el archivo; vitest login+AuthLayout 11/11 en ambos; funcional: showBackButton→router.push('/') verificado en dev
