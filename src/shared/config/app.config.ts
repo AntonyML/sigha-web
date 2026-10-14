@@ -7,7 +7,26 @@
 const defaultApiBaseUrl = process.env.NODE_ENV === 'development'
     ? '/api/backend'
     : 'http://localhost:3000';
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiBaseUrl;
+const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+// Browser requests to a local API origin need the Next.js rewrite to avoid CORS.
+const localDevelopmentApiPath = (() => {
+    if (process.env.NODE_ENV !== 'development' || !configuredApiBaseUrl) {
+        return null;
+    }
+
+    try {
+        const url = new URL(configuredApiBaseUrl);
+        const isHttpUrl = ['http:', 'https:'].includes(url.protocol);
+        const isLoopbackHost = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+
+        return isHttpUrl && isLoopbackHost ? url.pathname.replace(/\/+$/, '') : null;
+    } catch {
+        return null;
+    }
+})();
+const apiBaseUrl = localDevelopmentApiPath !== null
+    ? `/api/backend${localDevelopmentApiPath}`
+    : configuredApiBaseUrl || defaultApiBaseUrl;
 const nodeEnv = (process.env.NEXT_PUBLIC_APP_ENV || process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test';
 
 export const config = {
