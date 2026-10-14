@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-13 | sigha-web-20261013-a7k2 | tipo: completar landing pública, catálogo de módulos y páginas legales | verificación: build OK (80 rutas); lint dirigido OK, global con 197 errores y 2239 avisos preexistentes; test:run 49/51 (2 fallos baseline de TwoFactorContext); revisión funcional OK
 2026-10-13 | sigha-web-20261013-u1sg | tipo: login compartido con selección y cambio de organización por hogar | verificación: build OK; 49/51 tests (2 fallos preexistentes de TwoFactorContext); aislamiento API 10/10; lint con deuda preexistente, sin errores nuevos en cambios.
 
 Registra aquí solo cambios integrados en `dev`. El agente que integra agrega una entrada bajo el lock `dev-sigha-web` tras re-verificar el cambio en `dev`; las demás tareas no editan este archivo.
