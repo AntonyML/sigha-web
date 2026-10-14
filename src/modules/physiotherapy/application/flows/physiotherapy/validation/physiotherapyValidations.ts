@@ -64,17 +64,23 @@ export function validatePhysiotherapyId(id: string | number): ValidationResult {
  * @param data - Datos a validar
  * @returns Mensaje de error si la validación falla, null si es válida
  */
-export function validatePhysiotherapyData(data: any): string | null {
+interface PhysiotherapyValidationData {
+    patientId?: string | number;
+    therapistId?: string | number;
+    sessionDate?: string;
+    startTime?: string;
+    duration?: string | number;
+}
+
+export function validatePhysiotherapyData(input: object): string | null {
+    const data = input as PhysiotherapyValidationData;
     if (!data) {
         return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar campos requeridos
-    const requiredFields = ['patientId', 'therapistId', 'sessionDate', 'startTime', 'duration'];
-    for (const field of requiredFields) {
-        if (!data[field]) {
-            return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.MISSING_REQUIRED_FIELDS);
-        }
+    if (!data.patientId || !data.therapistId || !data.sessionDate || !data.startTime || !data.duration) {
+        return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar fecha
@@ -91,23 +97,23 @@ export function validatePhysiotherapyData(data: any): string | null {
     }
 
     // Validar duración (entre 15 y 120 minutos)
-    const duration = parseInt(data.duration, 10);
+    const duration = Number.parseInt(String(data.duration), 10);
     if (isNaN(duration) || duration < 15 || duration > 120) {
         return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.INVALID_DURATION);
     }
 
     // Validar IDs de terapeuta y paciente
-    if (!validatePhysiotherapyId(data.patientId).isValid) {
+    if (!validatePhysiotherapyId(data.patientId ?? '').isValid) {
         return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.INVALID_PATIENT);
     }
 
-    if (!validatePhysiotherapyId(data.therapistId).isValid) {
+    if (!validatePhysiotherapyId(data.therapistId ?? '').isValid) {
         return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.INVALID_THERAPIST);
     }
 
     // Validar formato de hora (HH:MM)
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(data.startTime)) {
+    if (!timeRegex.test(data.startTime ?? '')) {
         return getPhysiotherapyErrorMessage(PhysiotherapyValidationError.INVALID_DATE);
     }
 

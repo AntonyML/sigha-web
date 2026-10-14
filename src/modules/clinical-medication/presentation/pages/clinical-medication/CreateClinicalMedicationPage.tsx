@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { clinicalMedicationService } from '@/infrastructure/api/services/clinicalMedicationService';
@@ -26,9 +27,8 @@ export default function CreateClinicalMedicationPage() {
       await clinicalMedicationService.create(form);
       setSuccess('Medicamento creado exitosamente');
       setTimeout(() => navigate('/clinical-medication'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al crear';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al crear'));
     } finally { setLoading(false); }
   };
 

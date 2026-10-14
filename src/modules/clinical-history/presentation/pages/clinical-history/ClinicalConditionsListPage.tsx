@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { HeartPulse, ArrowLeft, Plus, Search, X, AlertCircle } from 'lucide-react'
 import { clinicalConditionService } from '@/infrastructure/api/services/clinicalConditionService'
@@ -27,7 +27,20 @@ export default function ClinicalConditionsListPage() {
     }
   }, [])
 
-  useEffect(() => { loadConditions() }, [loadConditions])
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadConditions()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [loadConditions])
 
   const filtered = conditions.filter(c =>
     !searchTerm.trim() || c.ccName.toLowerCase().includes(searchTerm.toLowerCase())

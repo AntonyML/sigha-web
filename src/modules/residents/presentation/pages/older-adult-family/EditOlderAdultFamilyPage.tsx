@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { olderAdultFamilyService } from '@/infrastructure/api/services/olderAdultFamilyService';
@@ -30,9 +31,8 @@ export default function EditOlderAdultFamilyPage() {
       await olderAdultFamilyService.update(Number(id), form);
       setSuccess('Familiar actualizado exitosamente');
       setTimeout(() => navigate('/older-adult-family'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al actualizar';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al actualizar'));
     } finally { setSaving(false); }
   };
 

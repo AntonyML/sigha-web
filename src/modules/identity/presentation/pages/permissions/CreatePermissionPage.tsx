@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { permissionApiService } from '@/infrastructure/api/services/permissionApiService';
@@ -78,9 +79,9 @@ export default function CreatePermissionPage() {
                 variant: 'success'
             });
             navigate('/permissions');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error creando permiso:', err);
-            setError(err?.response?.data?.message || err?.message || 'Error al crear permiso en el servidor');
+            setError(getApiErrorMessage(err, 'Error al crear permiso en el servidor'));
         } finally {
             setLoading(false);
         }

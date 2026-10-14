@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '@/shared/navigation';
 import { permissionApiService } from '@/infrastructure/api/services/permissionApiService';
@@ -16,9 +17,9 @@ export default function ViewPermissionPage() {
             try {
                 const p = await permissionApiService.getById(Number(id));
                 setPermission(p);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error cargando permiso:', err);
-                setError(err?.response?.data?.message || 'Error al cargar permiso desde el servidor');
+                setError(getApiErrorMessage(err, 'Error al cargar permiso desde el servidor'));
             } finally {
                 setLoading(false);
             }

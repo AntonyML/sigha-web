@@ -3,6 +3,7 @@
 
 import type { CreateUserData, UpdateUserData, UserChangePasswordData, UserSearchParams } from '@/shared/types/user';
 import type { AxiosError } from 'axios';
+import { isNetworkError } from '@/shared/lib/apiError';
 
 
 // Validaciones de negocio para crear usuario
@@ -338,14 +339,6 @@ export function validateUserSearchParams(params: UserSearchParams): string | nul
 
 
 // Reglas de red/Axios para user management
-function isNetworkError(error: AxiosError | Error | unknown): boolean {
-  return (
-    (error as any)?.code === 'ERR_NETWORK' ||
-    (error as any)?.message === 'Network Error' ||
-    (error as any)?.isAxiosError && !(error as any).response
-  );
-}
-
 export function getUserManagementErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';

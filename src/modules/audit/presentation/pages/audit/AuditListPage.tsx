@@ -63,7 +63,20 @@ export default function AuditListPage() {
     }, [currentPage, pageSize, filterAction, filterTable, startDate, endDate]);
 
     useEffect(() => {
+      let active = true;
+      let cleanup: (() => void) | undefined;
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        const maybeCleanup = (() => {
         loadRecords();
+
+        })();
+        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+      });
+      return () => {
+        active = false;
+        cleanup?.();
+      };
     }, [loadRecords]);
 
     const filteredRecords = records.filter(record => {

@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { getApiErrorMessage } from '@/shared/lib/apiError';
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { CalendarCheck, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService'
@@ -62,7 +63,20 @@ export default function SpecializedAppointmentsListPage() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { load()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [load])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar cita', '¿Confirmar eliminación de la cita?')
@@ -70,8 +84,8 @@ export default function SpecializedAppointmentsListPage() {
     try {
       await specializedAppointmentsService.remove(id)
       load()
-    } catch (err: any) {
-      feedback.error(err?.response?.data?.message ?? 'Error al eliminar la cita')
+    } catch (err: unknown) {
+      feedback.error(getApiErrorMessage(err, 'Error al eliminar la cita'))
     }
   }
 

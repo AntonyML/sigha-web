@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { specializedAreasService } from '@/infrastructure/api/services/specializedAreasService';
@@ -42,9 +43,8 @@ export default function EditSpecializedAreaPage() {
       await specializedAreasService.update(Number(id), form);
       setSuccess('Área actualizada exitosamente');
       setTimeout(() => navigate('/specialized-areas'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al actualizar';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al actualizar'));
     } finally { setSaving(false); }
   };
 

@@ -64,9 +64,22 @@ export default function NavbarBell() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     fetchNotifications();
     const id = setInterval(fetchNotifications, POLL_INTERVAL_MS);
     return () => clearInterval(id);
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [fetchNotifications]);
 
   /* ── Close on outside click / Escape ──────────────── */

@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 // src/modules/workspace-settings/presentation/pages/settings/InterfaceSettingsPage.tsx
 import { useEffect, useState } from 'react'
 import { useNavigate } from '@/shared/navigation'
@@ -46,8 +47,8 @@ export default function InterfaceSettingsPage() {
           typography: data.typography || 'system-ui, -apple-system, sans-serif',
           brandColor: data.brandColor || '#2563eb',
         })
-      } catch (e: any) {
-        setError(e?.response?.data?.message ?? 'No se pudo cargar la configuración de interfaz. Si es la primera vez, guarda los valores para inicializarla.')
+      } catch (e: unknown) {
+        setError(getApiErrorMessage(e, 'No se pudo cargar la configuración de interfaz. Si es la primera vez, guarda los valores para inicializarla.'))
       } finally {
         setLoading(false)
       }
@@ -74,8 +75,8 @@ export default function InterfaceSettingsPage() {
       await settingsService.updateInterfaceSettings(form)
       updateInterface(form)
       setMessage('Configuración guardada correctamente.')
-    } catch (e: any) {
-      setError(e?.response?.data?.message ?? 'Error al guardar.')
+    } catch (e: unknown) {
+      setError(getApiErrorMessage(e, 'Error al guardar.'))
     } finally {
       setSaving(false)
     }

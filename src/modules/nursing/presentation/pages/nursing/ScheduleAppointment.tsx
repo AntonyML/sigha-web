@@ -37,41 +37,25 @@ interface ValidationErrors {
 }
 
 export default function ScheduleAppointment() {
-  const [formData, setFormData] = useState<AppointmentForm>(defaultAppointmentForm);
+  const [searchParams] = useSearchParams();
+  const preselectedPatientId = searchParams.get('patientId');
+  const [formData, setFormData] = useState<AppointmentForm>(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return {
+      ...defaultAppointmentForm,
+      patientId: preselectedPatientId ?? '',
+      appointmentDate: tomorrow.toISOString().split('T')[0],
+      appointmentTime: '09:00',
+    };
+  });
   const [patients, setPatients] = useState<PatientBasicInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState<PatientBasicInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const preselectedPatientId = searchParams.get('patientId');
-
-  useEffect(() => {
-    // Si hay un paciente preseleccionado, cargarlo
-    if (preselectedPatientId) {
-      loadPreselectedPatient(preselectedPatientId);
-      setFormData(prev => ({ ...prev, patientId: preselectedPatientId }));
-    }
-    
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    setFormData(prev => ({
-      ...prev,
-      appointmentDate: tomorrow.toISOString().split('T')[0],
-      appointmentTime: '09:00'
-    }));
-  }, [preselectedPatientId]);
-
-  useEffect(() => {
-    if (formData.patientId && patients.length > 0) {
-      const patient = patients.find(p => p.id.toString() === formData.patientId);
-      setSelectedPatient(patient || null);
-    }
-  }, [formData.patientId, patients]);
+  const selectedPatient = patients.find(patient => patient.id.toString() === formData.patientId) ?? null;
 
   const loadPreselectedPatient = async (patientId: string) => {
     setSearchLoading(true);
@@ -95,7 +79,6 @@ export default function ScheduleAppointment() {
           status: 'alive'
         };
         setPatients([patientInfo]);
-        setSelectedPatient(patientInfo);
       }
     } catch (error) {
       console.warn('No se pudo cargar el paciente preseleccionado:', error);
@@ -103,6 +86,25 @@ export default function ScheduleAppointment() {
       setSearchLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
+    if (preselectedPatientId) {
+      loadPreselectedPatient(preselectedPatientId);
+    }
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [preselectedPatientId]);
 
   const loadPatients = async () => {
     if (!searchTerm.trim()) {
@@ -313,7 +315,6 @@ export default function ScheduleAppointment() {
                         className={`list-group-item list-group-item-action ${formData.patientId === patient.id.toString() ? 'active' : ''}`}
                         onClick={() => {
                           setFormData(prev => ({ ...prev, patientId: patient.id.toString() }));
-                          setSelectedPatient(patient);
                           setErrors(prev => ({ ...prev, patientId: undefined }));
                         }}
                       >

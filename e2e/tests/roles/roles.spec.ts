@@ -160,13 +160,13 @@ test.describe('Roles (/roles) — CRUD', () => {
     test.setTimeout(TEST_TIMEOUT);
     const name = uniqueRoleName();
     const catalog = await getPermissionCatalog();
-    const module = catalog.find((p) => p.pEnabled)?.pModule;
-    test.skip(!module, 'Catálogo de permisos vacío en este entorno');
+    const permissionModule = catalog.find((p) => p.pEnabled)?.pModule;
+    test.skip(!permissionModule, 'Catálogo de permisos vacío en este entorno');
 
     const create = new CreateRolePage(page);
     await create.goto();
     await create.fillName(name);
-    await create.selectModule(module!);
+    await create.selectModule(permissionModule!);
     await create.submit();
 
     await expect(page).toHaveURL(/\/roles$/, { timeout: DATA_TIMEOUT });
@@ -222,8 +222,8 @@ test.describe('Roles (/roles) — CRUD', () => {
 
     // Otorga todos los permisos habilitados del primer módulo del catálogo
     // (set determinista para verificar el badge "n/n" y el contador de stats).
-    const module = enabledPerm!.pModule;
-    const modulePerms = catalog.filter((p) => p.pModule === module && p.pEnabled);
+    const permissionModule = enabledPerm!.pModule;
+    const modulePerms = catalog.filter((p) => p.pModule === permissionModule && p.pEnabled);
     const { id } = await createDisposableRole(
       name,
       modulePerms.map((p) => p.id),
@@ -246,7 +246,7 @@ test.describe('Roles (/roles) — CRUD', () => {
         timeout: DATA_TIMEOUT,
       });
 
-      const label = MODULE_LABELS[module] ?? module;
+      const label = MODULE_LABELS[permissionModule] ?? permissionModule;
       const card = view.moduleCard(label);
       await expect(card).toBeVisible();
       await expect(

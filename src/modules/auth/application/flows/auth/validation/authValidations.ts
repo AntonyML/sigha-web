@@ -2,6 +2,7 @@
 // Centraliza las validaciones y mensajes de error para los flujos de autenticación
 
 import type { AxiosError } from 'axios';
+import { isNetworkError } from '@/shared/lib/apiError';
 
 
 // Validaciones de negocio para login
@@ -60,14 +61,6 @@ export function validateLoginCredentials(email: string, password: string): strin
 
 
 // Reglas de red/Axios para login
-function isNetworkError(error: AxiosError | Error | unknown): boolean {
-  return (
-    (error as any)?.code === 'ERR_NETWORK' ||
-    (error as any)?.message === 'Network Error' ||
-    (error as any)?.isAxiosError && !(error as any).response
-  );
-}
-
 export function getLoginErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';

@@ -6,11 +6,11 @@
  */
 
 import { nursingService } from '@/infrastructure/api/services/nursingService';
-import type { NursingAppointment } from '@/shared/types/nursing';
+import type { NursingAppointment, NursingRecord } from '@/shared/types/nursing';
 import type { GetNursingAppointmentsDto, CreateAppointmentDto, UpdateAppointmentDto, CancelAppointmentDto, CompleteAppointmentDto } from '@/shared/types/nursing';
 import { validateNursingAppointmentData, validateNursingRecordData, validateNursingId, getNursingErrorMessage, validateAppointmentCancellation, validateAppointmentCompletion } from '@/modules/nursing/application/flows/nursing/validation/nursingValidations';
 
-export interface NursingFlowResult<T = any> {
+export interface NursingFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -71,7 +71,7 @@ export const nursingFlow = {
         }
     },
 
-    async getRecordsByAppointment(appointmentId: string | number): Promise<NursingFlowResult<any[]>> {
+    async getRecordsByAppointment(appointmentId: string | number): Promise<NursingFlowResult<NursingRecord[]>> {
         try {
             const idValidation = validateNursingId(appointmentId);
             if (!idValidation.isValid) {
@@ -124,7 +124,7 @@ export const nursingFlow = {
         }
     },
 
-    async completeAppointment(id: string | number, recordData: CompleteAppointmentDto): Promise<NursingFlowResult<{ appointment: NursingAppointment; nursingRecord: any }>> {
+    async completeAppointment(id: string | number, recordData: CompleteAppointmentDto): Promise<NursingFlowResult<{ appointment: NursingAppointment; nursingRecord: NursingRecord }>> {
         try {
             const idValidation = validateNursingId(id);
             if (!idValidation.isValid) return { success: false, error: getNursingErrorMessage(idValidation.error!) };

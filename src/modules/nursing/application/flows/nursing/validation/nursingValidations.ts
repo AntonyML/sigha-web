@@ -5,6 +5,8 @@
  * Incluye validaciones de datos, IDs y operaciones específicas del dominio.
  */
 
+import type { CompleteAppointmentDto, CreateAppointmentDto } from '@/shared/types/nursing';
+
 /**
  * Resultado de validación
  */
@@ -69,17 +71,15 @@ export function validateNursingId(id: string | number): ValidationResult {
  * @param data - Datos a validar
  * @returns Mensaje de error si la validación falla, null si es válida
  */
-export function validateNursingAppointmentData(data: any): string | null {
+export function validateNursingAppointmentData(data: CreateAppointmentDto): string | null {
     if (!data) {
         return getNursingErrorMessage(NursingValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar campos requeridos
-    const requiredFields = ['saAppointmentDate', 'saAppointmentType', 'saPriority', 'idArea', 'idPatient', 'idStaff'];
-    for (const field of requiredFields) {
-        if (!data[field]) {
-            return getNursingErrorMessage(NursingValidationError.MISSING_REQUIRED_FIELDS);
-        }
+    if (!data.saAppointmentDate || !data.saAppointmentType || !data.saPriority ||
+        !data.idArea || !data.idPatient || !data.idStaff) {
+        return getNursingErrorMessage(NursingValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar fecha
@@ -96,9 +96,9 @@ export function validateNursingAppointmentData(data: any): string | null {
     }
 
     // Validar duración si se proporciona (entre 15 y 120 minutos)
-    if (data.saDurationMinutes) {
-        const duration = parseInt(data.saDurationMinutes, 10);
-        if (isNaN(duration) || duration < 15 || duration > 120) {
+    if (data.saDurationMinutes !== undefined) {
+        const duration = data.saDurationMinutes;
+        if (!Number.isInteger(duration) || duration < 15 || duration > 120) {
             return getNursingErrorMessage(NursingValidationError.INVALID_DURATION);
         }
     }
@@ -137,15 +137,15 @@ export function validateNursingAppointmentData(data: any): string | null {
  * @param data - Datos del registro a validar
  * @returns Mensaje de error si la validación falla, null si es válida
  */
-export function validateNursingRecordData(data: any): string | null {
+export function validateNursingRecordData(data: CompleteAppointmentDto): string | null {
     if (!data) {
         return getNursingErrorMessage(NursingValidationError.MISSING_REQUIRED_FIELDS);
     }
 
     // Validar signos vitales si se proporcionan
-    if (data.nrTemperature) {
-        const temp = parseFloat(data.nrTemperature);
-        if (isNaN(temp) || temp < 30 || temp > 45) {
+    if (data.nrTemperature !== undefined) {
+        const temp = data.nrTemperature;
+        if (!Number.isFinite(temp) || temp < 30 || temp > 45) {
             return getNursingErrorMessage(NursingValidationError.INVALID_VITAL_SIGNS);
         }
     }
@@ -154,16 +154,16 @@ export function validateNursingRecordData(data: any): string | null {
         return getNursingErrorMessage(NursingValidationError.INVALID_VITAL_SIGNS);
     }
 
-    if (data.nrHeartRate) {
-        const heartRate = parseInt(data.nrHeartRate, 10);
-        if (isNaN(heartRate) || heartRate < 30 || heartRate > 250) {
+    if (data.nrHeartRate !== undefined) {
+        const heartRate = data.nrHeartRate;
+        if (!Number.isInteger(heartRate) || heartRate < 30 || heartRate > 250) {
             return getNursingErrorMessage(NursingValidationError.INVALID_VITAL_SIGNS);
         }
     }
 
-    if (data.nrPainLevel) {
-        const painLevel = parseInt(data.nrPainLevel, 10);
-        if (isNaN(painLevel) || painLevel < 0 || painLevel > 10) {
+    if (data.nrPainLevel !== undefined) {
+        const painLevel = data.nrPainLevel;
+        if (!Number.isInteger(painLevel) || painLevel < 0 || painLevel > 10) {
             return getNursingErrorMessage(NursingValidationError.INVALID_VITAL_SIGNS);
         }
     }
@@ -177,13 +177,10 @@ export function validateNursingRecordData(data: any): string | null {
     }
 
     // Validar niveles de calidad si se proporcionan
-    const qualityFields = ['nrAppetite', 'nrSleepQuality'];
     const validQualityLevels = ['good', 'regular', 'poor'];
-
-    for (const field of qualityFields) {
-        if (data[field] && !validQualityLevels.includes(data[field])) {
-            return getNursingErrorMessage(NursingValidationError.INVALID_QUALITY_LEVEL);
-        }
+    if ((data.nrAppetite && !validQualityLevels.includes(data.nrAppetite)) ||
+        (data.nrSleepQuality && !validQualityLevels.includes(data.nrSleepQuality))) {
+        return getNursingErrorMessage(NursingValidationError.INVALID_QUALITY_LEVEL);
     }
 
     return null;
@@ -221,7 +218,7 @@ export function validateAppointmentCancellation(appointmentId: string | number, 
  * @param recordData - Datos del registro
  * @returns Resultado de la validación
  */
-export function validateAppointmentCompletion(appointmentId: string | number, recordData?: any): ValidationResult {
+export function validateAppointmentCompletion(appointmentId: string | number, recordData?: CompleteAppointmentDto): ValidationResult {
     // Validar ID de la cita
     const idValidation = validateNursingId(appointmentId);
     if (!idValidation.isValid) {
