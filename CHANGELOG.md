@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-14 | sigha-web-20261014-xfro | tipo: feat wizard /virtualFiles/create paso 2 familia obligatorio y errores 400 visibles | verificación: test:run 52/52 PASS en dev; lint 0 errores; build PASS en worktree
 2026-10-14 | sigha-web-20261014-zisb | tipo: feat slide menu Entradas y Salidas: Dashboard/Historial/Reg. Entrada/Reg. Salida con iconos (query ?type=), elimina mini navbar EntranceExitNav | verificacion: tsc --noEmit 0 errores y eslint 0 errores en worktree y dev; build worktree PASS (rutas entrance-exit prerender); dev server HTTP 200 /entrance-exit y health 200
 2026-10-14 | sigha-web-20261014-ql39 | tipo: fix navegación editar programa desde detalle y documentar verificación automatizada de interfaz | verificación: unitarias 52/52 PASS; lint 0 errores (45 warnings); build PASS en worktree; E2E requiere E2E_2FA_CODE
 2026-10-14 | sigha-web-20261014-pn3u | tipo: fix auth Network Error: proxy same-origin para URL local y exclusión de artefactos generados del lint | verificación: typecheck OK; tests 51/51; lint 0 errores (45 warnings); build 109 rutas; proxy health 200/login vacío 400
