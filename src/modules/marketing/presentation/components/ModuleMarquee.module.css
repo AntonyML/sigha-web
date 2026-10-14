@@ -1,0 +1,129 @@
+.marquee {
+  overflow: hidden;
+  padding: 22px 0 24px;
+  border-bottom: 1px solid var(--marketing-border);
+  background: #fff;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.caption {
+  margin: 0;
+  color: var(--marketing-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--marketing-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--marketing-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.toggle:hover {
+  border-color: var(--marketing-primary);
+  color: var(--marketing-primary);
+}
+
+.toggle:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.viewport {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: kfScroll 60s linear infinite;
+}
+
+.viewport:hover .track,
+.track[data-paused='true'] {
+  animation-play-state: paused;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid var(--marketing-border);
+  border-radius: 999px;
+  background: var(--marketing-surface);
+  color: var(--marketing-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.icon {
+  flex: 0 0 auto;
+  color: var(--marketing-primary);
+}
+
+.duplicate {
+  display: inline-flex;
+}
+
+@keyframes kfScroll {
+  to {
+    transform: translateX(calc(-50% - 6px));
+  }
+}
+
+@media (max-width: 640px) {
+  .head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .viewport {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .track {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+    padding: 0 24px;
+    animation: none;
+  }
+
+  .duplicate {
+    display: none;
+  }
+
+  .toggle {
+    display: none;
+  }
+}

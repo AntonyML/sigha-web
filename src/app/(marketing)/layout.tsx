@@ -1,12 +1,8 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-
-const navigation = [
-  { href: '/funcionalidades', label: 'Funcionalidades' },
-  { href: '/como-funciona', label: 'Cómo funciona' },
-  { href: '/planes', label: 'Planes' },
-  { href: '/nosotros', label: 'Nosotros' },
-]
+import MarketingNavigation from '@/modules/marketing/presentation/components/MarketingNavigation'
+import StickyDemoCta from '@/modules/marketing/presentation/components/StickyDemoCta'
+import { contactEmail, legalNavigation } from '@/modules/marketing/presentation/content/marketingContent'
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
@@ -17,9 +13,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <span aria-hidden="true" className="brand-mark">S</span>
             <span>SIGHa</span>
           </Link>
-          <nav aria-label="Navegación principal" className="marketing-nav">
-            {navigation.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
-          </nav>
+          <MarketingNavigation />
           <div className="marketing-header-actions">
             <Link className="login-link" href="/login">Iniciar sesión</Link>
             <Link className="button button-primary button-small" href="/contacto">Solicitar demo</Link>
@@ -45,7 +39,11 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <span>Atención</span>
             <Link href="/contacto">Contacto</Link>
             <Link href="/login">Acceso al sistema</Link>
-            <a href="mailto:soporte@sigha.cr">Soporte</a>
+            <a href={`mailto:${contactEmail}`}>Soporte</a>
+          </div>
+          <div className="footer-links">
+            <span>Información</span>
+            {legalNavigation.map(({ href, label }) => <Link href={href} key={href}>{label}</Link>)}
           </div>
         </div>
         <div className="marketing-container footer-bottom">
@@ -53,6 +51,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           <span>Plataforma del Sistema Integral de Gestión Holística y de Asistencia</span>
         </div>
       </footer>
+      <StickyDemoCta />
     </div>
   )
 }

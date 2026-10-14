@@ -1,0 +1,53 @@
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: var(--marketing-ink);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--marketing-ink);
+  font: inherit;
+  font-weight: 450;
+}
+
+.field textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  border-color: var(--marketing-primary);
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+}
+
+.privacyHint,
+.status {
+  margin: -4px 0 0;
+  color: var(--marketing-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.form button {
+  justify-self: start;
+}
+
+.status {
+  margin: 0;
+  color: var(--marketing-sage-ink);
+}

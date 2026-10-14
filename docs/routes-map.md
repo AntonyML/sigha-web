@@ -11,7 +11,9 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 | `/como-funciona` | Flujo de uso |
 | `/planes` | Implementación y conversación comercial, sin precios inventados |
 | `/nosotros` | Propósito y principios |
-| `/contacto` | Canal de contacto existente |
+| `/contacto` | Formulario que prepara un correo para revisión y envío |
+| `/privacidad` | Información de controles y canal para consultas de privacidad |
+| `/accesibilidad` | Prácticas de accesibilidad y canal para reportar barreras |
 
 ## Autenticación
 
