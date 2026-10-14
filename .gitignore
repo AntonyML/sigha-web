@@ -49,4 +49,4 @@ test-results/
 e2e/.auth/
 
 # Build artifacts
-e2e/*.tsbuildinfo
+*.tsbuildinfo
