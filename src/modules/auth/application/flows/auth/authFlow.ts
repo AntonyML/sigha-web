@@ -1,5 +1,6 @@
 import { authService } from '@/infrastructure/api/services/authService';
 import type { AuthUser, LoginResponse } from '@/shared/types/auth';
+import type { OrganizationSummary } from '@/shared/types/organization';
 import {
     validateLoginCredentials,
     getLoginErrorMessage,
@@ -11,12 +12,16 @@ export interface LoginFlowResult {
     success: boolean;
     requiresTwoFactor: boolean;
     user?: AuthUser;
+    organizations?: OrganizationSummary[];
+    activeOrganizationId?: number | null;
     error?: string;
 }
 
 export interface Verify2FAFlowResult {
     success: boolean;
     user?: AuthUser;
+    organizations?: OrganizationSummary[];
+    activeOrganizationId?: number | null;
     error?: string;
 }
 
@@ -46,6 +51,7 @@ export const authFlow = {
                 return {
                     success: true,
                     requiresTwoFactor: true,
+                    organizations: response.organizations ?? [],
                 };
             }
 
@@ -55,6 +61,8 @@ export const authFlow = {
                     success: true,
                     requiresTwoFactor: false,
                     user: stored ?? response.user,
+                    organizations: response.organizations ?? [],
+                    activeOrganizationId: authService.getActiveOrganizationId(),
                 };
             }
 
@@ -90,6 +98,8 @@ export const authFlow = {
                 return {
                     success: true,
                     user: stored ?? response.user,
+                    organizations: response.organizations ?? [],
+                    activeOrganizationId: authService.getActiveOrganizationId(),
                 };
             }
 

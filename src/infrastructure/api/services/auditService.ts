@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import {
   AuditReportType,
   AuditAction,
@@ -40,7 +40,7 @@ export interface SearchAuditRecordsParams {
   limit?: number;
 }
 
-const apiClient = axios.create({
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: { 'Content-Type': 'application/json' },
 });

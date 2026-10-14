@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from '@/shared/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AlertCircle, Loader2, Shield } from 'lucide-react'
 import { authFlow } from '@/modules/auth/application/flows/auth'
 import { useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor'
@@ -14,8 +14,8 @@ export default function TwoFactorVerificationPage() {
   const [twoFactorCode, setTwoFactorCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { refresh, markEnabled } = useTwoFactorStatus()
 
   const email = searchParams.get('email') || ''
@@ -23,9 +23,9 @@ export default function TwoFactorVerificationPage() {
   useEffect(() => {
     if (!email) {
       // If no email in state, redirect to login
-      navigate('/login')
+      router.replace('/login')
     }
-  }, [email, navigate])
+  }, [email, router])
 
   async function handleVerify2FA(e: React.FormEvent) {
     e.preventDefault()
@@ -52,14 +52,17 @@ export default function TwoFactorVerificationPage() {
       }
 
       if (result.user) {
-        // 1) Esperar a que el estado 2FA se refresque desde el backend.
-        // 2) Forzar isEnabled = true de forma SÍNCRONA en el mismo batch de
-        //    render que navigate('/dashboard'): si no, el TwoFactorGuard puede
-        //    leer un isEnabled obsoleto (false) y redirigir a /two-factor por
-        //    la carrera entre el setState asíncrono de refresh() y el navigate.
-        await refresh()
-        markEnabled()
-        navigate('/dashboard')
+        const organizations = result.organizations ?? []
+        const hasSingleActiveOrganization = organizations.length === 1
+          && organizations[0].id === result.activeOrganizationId
+
+        if (hasSingleActiveOrganization) {
+          // Refresh 2FA before the workspace mounts, preserving the guard's
+          // state while avoiding product API requests before org selection.
+          await refresh()
+          markEnabled()
+        }
+        router.replace(hasSingleActiveOrganization ? '/dashboard' : '/seleccionar-organizacion')
       } else {
         setError('Verificación exitosa pero no se recibió información del usuario')
       }
@@ -73,7 +76,7 @@ export default function TwoFactorVerificationPage() {
 
   function handleCancel() {
     authFlow.clearLocalSession()
-    navigate('/login')
+    router.replace('/login')
   }
 
   return (

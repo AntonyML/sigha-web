@@ -1,9 +1,13 @@
 import axios from 'axios';
 import type { LoginResponse, AuthUser } from '@/shared/types/auth'
+import type { ActiveOrganizationResponse, OrganizationSummary } from '@/shared/types/organization';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import { navigateTo, getCurrentPath } from '@/shared/lib/navigationUtils'
 import { config } from '@/shared/config/app.config';
 
-const apiClient = axios.create({
+const ORGANIZATION_SELECTION_KEY = 'organizationSelectionPending';
+
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',
@@ -45,6 +49,7 @@ interface JwtPayload {
   roleIds?: number[];
   roles?: string[];
   twoFactorVerified?: boolean;
+  orgId?: number | null;
   [key: string]: unknown;
 }
 
@@ -75,7 +80,11 @@ function extractRolesFromToken(token: string): string[] {
 
 export const authService = {
   login: async (credentials: { uEmail: string; uPassword: string }): Promise<LoginResponse> => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
     localStorage.removeItem('tempToken');
+    authService.setOrganizationSelectionPending(false);
 
     const requestBody: {
       uEmail: string;
@@ -111,6 +120,8 @@ export const authService = {
       if (response.data.refreshToken) {
         localStorage.setItem('refreshToken', response.data.refreshToken);
       }
+      authService.setOrganizationSelectionPending((response.data.organizations?.length ?? 0) > 1);
+      window.dispatchEvent(new CustomEvent('authTokenChanged'));
     }
 
     return response.data;
@@ -144,6 +155,7 @@ export const authService = {
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(enrichedUser));
+      authService.setOrganizationSelectionPending((response.data.organizations?.length ?? 0) > 1);
       localStorage.removeItem('tempToken');
       window.dispatchEvent(new CustomEvent('authTokenChanged'));
     }
@@ -198,6 +210,54 @@ export const authService = {
 
   getToken: (): string | null => localStorage.getItem('authToken'),
 
+  getOrganizations: async (): Promise<OrganizationSummary[]> => {
+    const response = await apiClient.get<OrganizationSummary[]>('/auth/organizations');
+    return response.data;
+  },
+
+  getActiveOrganizationId: (): number | null => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return null;
+    const orgId = decodeJwtPayload(token)?.orgId;
+    return typeof orgId === 'number' ? orgId : null;
+  },
+
+  hasPendingOrganizationSelection: (): boolean =>
+    typeof window !== 'undefined' && sessionStorage.getItem(ORGANIZATION_SELECTION_KEY) === 'true',
+
+  setOrganizationSelectionPending: (pending: boolean): void => {
+    if (typeof window === 'undefined') return;
+    if (pending) sessionStorage.setItem(ORGANIZATION_SELECTION_KEY, 'true');
+    else sessionStorage.removeItem(ORGANIZATION_SELECTION_KEY);
+  },
+
+  switchActiveOrganization: async (organizationId: number): Promise<ActiveOrganizationResponse> => {
+    const response = await apiClient.post<ActiveOrganizationResponse>('/auth/active-organization', {
+      organizationId,
+    });
+    const { accessToken, refreshToken } = response.data;
+    localStorage.setItem('authToken', accessToken);
+    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    else localStorage.removeItem('refreshToken');
+    const tokenPayload = decodeJwtPayload(accessToken);
+    const currentUser = authService.getStoredUser();
+    if (currentUser && tokenPayload) {
+      const updatedUser: AuthUser = {
+        ...currentUser,
+        ...(Array.isArray(tokenPayload.roles)
+          ? { roles: tokenPayload.roles.filter((role): role is string => typeof role === 'string') }
+          : {}),
+        ...(Array.isArray(tokenPayload.roleIds)
+          ? { roleIds: tokenPayload.roleIds.filter((roleId): roleId is number => typeof roleId === 'number') }
+          : {}),
+      };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    }
+    authService.setOrganizationSelectionPending(false);
+    window.dispatchEvent(new CustomEvent('authTokenChanged'));
+    return response.data;
+  },
+
   getTempToken: (): string | null => localStorage.getItem('tempToken'),
 
   getStoredUser: (): AuthUser | null => {
@@ -222,8 +282,10 @@ export const authService = {
 
   clearLocalSession: (): void => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     localStorage.removeItem('tempToken');
+    authService.setOrganizationSelectionPending(false);
   },
 
   logout: async (): Promise<void> => {

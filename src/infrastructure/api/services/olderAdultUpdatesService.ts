@@ -5,7 +5,7 @@
 //   GET  /older-adult-updates/by-older-adult/:olderAdultId
 //   GET  /older-adult-updates/:id
 
-import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import { config } from '@/shared/config/app.config';
 
 export interface OlderAdultUpdateApi {
@@ -25,7 +25,7 @@ export interface OlderAdultUpdatesFilterParams {
   changedBy?: number;
 }
 
-const apiClient = axios.create({
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: { 'Content-Type': 'application/json' },
 });

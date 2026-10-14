@@ -7,7 +7,6 @@ import type { Locator, Page } from '@playwright/test';
 export class LoginPage {
   readonly page: Page;
   readonly title: Locator;
-  readonly subtitle: Locator;
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
@@ -18,7 +17,6 @@ export class LoginPage {
   constructor(page: Page) {
     this.page = page;
     this.title = page.getByText('Iniciar Sesión', { exact: true });
-    this.subtitle = page.getByText('Sistema Integral de Gestión Holística y de Asistencia');
     this.emailInput = page.getByLabel('Correo Electrónico', { exact: true });
     this.passwordInput = page.getByLabel('Contraseña', { exact: true });
     this.submitButton = page.getByRole('button', { name: 'Entrar' });
@@ -43,5 +41,12 @@ export class LoginPage {
   async login(email: string, password: string): Promise<void> {
     await this.fillCredentials(email, password);
     await this.submit();
+  }
+
+  async waitForPostLoginDestination(): Promise<string> {
+    await this.page.waitForURL(/\/(?:auth\/verify-2fa|seleccionar-organizacion|dashboard)$/, {
+      timeout: 30_000,
+    });
+    return new URL(this.page.url()).pathname;
   }
 }

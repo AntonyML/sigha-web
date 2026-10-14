@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import type {
   EntranceExitApiPayload,
   EntranceExitResponse
@@ -9,7 +9,7 @@ import type {
 } from '@/shared/types/entranceExitApi';
 import { config } from '@/shared/config/app.config';
 
-const apiClient = axios.create({
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',

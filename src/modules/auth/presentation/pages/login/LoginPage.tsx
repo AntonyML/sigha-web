@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from '@/shared/navigation'
+import { useRouter } from 'next/navigation'
 import { AlertCircle, Loader2, UserPlus } from 'lucide-react'
 import { authFlow } from '@/modules/auth/application/flows/auth'
 import {
@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const navigate = useNavigate()
+  const router = useRouter()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -38,12 +38,15 @@ export default function LoginPage() {
 
       if (result.requiresTwoFactor) {
         // Navigate to 2FA verification page
-          navigate(`/auth/verify-2fa?email=${encodeURIComponent(email)}`)
+        router.push(`/auth/verify-2fa?email=${encodeURIComponent(email)}`)
         return
       }
 
       if (result.user) {
-        navigate('/dashboard')
+        const organizations = result.organizations ?? []
+        const hasSingleActiveOrganization = organizations.length === 1
+          && organizations[0].id === result.activeOrganizationId
+        router.replace(hasSingleActiveOrganization ? '/dashboard' : '/seleccionar-organizacion')
       } else {
         setError('Login exitoso pero no se recibió información del usuario')
       }
@@ -144,7 +147,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="link"
-            onClick={() => navigate('/auth/forgot-password')}
+            onClick={() => router.push('/auth/forgot-password')}
             className="text-sm text-muted-foreground hover:text-primary justify-start p-0 h-auto"
             disabled={loading}
           >
@@ -153,7 +156,7 @@ export default function LoginPage() {
           <Button
             type="button"
             variant="link"
-            onClick={() => navigate('/auth/create-user')}
+            onClick={() => router.push('/auth/create-user')}
             className="text-sm text-muted-foreground hover:text-primary justify-start p-0 h-auto"
             disabled={loading}
           >

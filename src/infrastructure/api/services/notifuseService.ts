@@ -6,6 +6,7 @@
 //   POST /notifuse/send-code-verify
 
 import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import type {
   SendCodeVerifyRequest,
   SendBackupCodesRequest,
@@ -13,7 +14,7 @@ import type {
 } from '@/shared/types/notifuse';
 import { config } from '@/shared/config/app.config';
 
-const notifuseClient = axios.create({
+const notifuseClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: { 'Content-Type': 'application/json' },
 });

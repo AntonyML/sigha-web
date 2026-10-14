@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../pages/LoginPage';
+import { OrganizationPickerPage } from '../../pages/OrganizationPickerPage';
 import { requireAdminCredentials } from '../../support/config';
 
 /**
@@ -17,7 +18,6 @@ test.describe('Autenticación (/login)', () => {
     await login.goto();
 
     await expect(login.title).toBeVisible();
-    await expect(login.subtitle).toBeVisible();
     await expect(login.emailInput).toBeVisible();
     await expect(login.passwordInput).toBeVisible();
     await expect(login.submitButton).toBeVisible();
@@ -60,11 +60,11 @@ test.describe('Autenticación (/login)', () => {
     // El login con 2FA tarda ~4s y hasta que responde el botón muestra
     // "Iniciando sesión..." (cambia su nombre). El gate correcto es esperar a
     // abandonar /login, no a que el botón "Entrar" desaparezca a mitad del POST.
-    await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
+    const destination = await login.waitForPostLoginDestination();
     const authToken = await page.evaluate(() => localStorage.getItem('authToken'));
     const tempToken = await page.evaluate(() => localStorage.getItem('tempToken'));
     expect(authToken || tempToken).toBeTruthy();
-    expect(new URL(page.url()).pathname).not.toBe('/login');
+    expect(['/auth/verify-2fa', '/seleccionar-organizacion', '/dashboard']).toContain(destination);
   });
 
   test('login con 2FA: completa el código de 6 dígitos y aterriza en /dashboard', async ({ page }) => {
@@ -80,18 +80,21 @@ test.describe('Autenticación (/login)', () => {
     await login.login(email, password);
 
     // Salir de /login (con 2FA llega a /auth/verify-2fa).
-    await expect(page).not.toHaveURL(/\/login$/, { timeout: 30_000 });
+    const destination = await login.waitForPostLoginDestination();
 
     // Si la cuenta exige 2FA, completar el código.
-    if (/\/auth\/verify-2fa$/.test(new URL(page.url()).pathname)) {
+    if (destination === '/auth/verify-2fa') {
       const codeInput = page.getByLabel('Código de Verificación');
       await expect(codeInput).toBeVisible({ timeout: 15_000 });
       await codeInput.fill(process.env.E2E_2FA_CODE!);
       await page.getByRole('button', { name: 'Verificar Código' }).click();
     }
 
-    // REGRESIÓN: tras el login + 2FA debe aterrizar en /dashboard,
-    // NO ser redirigido a /two-factor (bug de la race condition del guard).
+    const organizationPicker = new OrganizationPickerPage(page);
+    await organizationPicker.continueWithFirstOrganizationIfVisible();
+
+    // Tras el login + 2FA, se elige organización si hay varias y luego se abre
+    // el dashboard (sin perder la protección del guard de 2FA).
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 20_000 });
   });
 

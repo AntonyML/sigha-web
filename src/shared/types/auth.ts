@@ -1,3 +1,5 @@
+import type { OrganizationSummary } from '@/shared/types/organization';
+
 export interface LoginCredentials {
   uEmail: string;
   uPassword: string;
@@ -10,6 +12,7 @@ export interface LoginResponse {
   user?: AuthUser;
   requiresTwoFactor?: boolean;
   tempToken?: string;
+  organizations?: OrganizationSummary[];
 }
 
 export interface AuthResponse {

@@ -1,7 +1,8 @@
 // src/infrastructure/api/httpClient.ts
-import axios, { type AxiosInstance, type AxiosError, AxiosHeaders } from 'axios';
+import { type AxiosInstance, type AxiosError, AxiosHeaders } from 'axios';
 import { config } from '@/shared/config/app.config';
 import { navigateTo } from '@/shared/lib/navigationUtils';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 
 // ── Concurrency limiter ──────────────────────────────────────────────────────
 // Prevents too many simultaneous requests (avoids 429 rate limits on startup).
@@ -30,7 +31,7 @@ function releaseSlot(): void {
 
 // ── Axios instance ───────────────────────────────────────────────────────────
 
-const httpClient: AxiosInstance = axios.create({
+const httpClient: AxiosInstance = createApiClient({
   baseURL: config.api.baseUrl,
   headers: {
     'Content-Type': 'application/json',

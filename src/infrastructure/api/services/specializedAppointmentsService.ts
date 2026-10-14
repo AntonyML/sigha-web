@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import {
   type SpecializedAppointmentApi,
   type CreateSpecializedAppointmentDto,
@@ -10,7 +10,7 @@ import { navigateTo } from '@/shared/lib/navigationUtils';
 
 export type { SpecializedAppointmentApi, CreateSpecializedAppointmentDto, UpdateSpecializedAppointmentDto, AppointmentStatusApi };
 
-const apiClient = axios.create({
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: { 'Content-Type': 'application/json' },
 });
