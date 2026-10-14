@@ -3,15 +3,23 @@ import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { emergencyContactService } from '@/infrastructure/api/services/emergencyContactService';
 import type { CreateEmergencyContactDto } from '@/infrastructure/api/services/emergencyContactService';
+import type { PatientBasicInfo } from '@/shared/types/virtualFile';
+import OlderAdultSelector from '../../components/OlderAdultSelector';
 
 const initial: CreateEmergencyContactDto = { enPhoneNumber: '', idOlderAdult: undefined };
 
 export default function CreateEmergencyContactPage() {
   const [form, setForm] = useState<CreateEmergencyContactDto>(initial);
+  const [selectedAdult, setSelectedAdult] = useState<PatientBasicInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+
+  const handleSelectAdult = (patient: PatientBasicInfo | null) => {
+    setSelectedAdult(patient);
+    setForm((p) => ({ ...p, idOlderAdult: patient ? patient.id : undefined }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,12 +46,11 @@ export default function CreateEmergencyContactPage() {
         <div className="card-body">
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Número de Teléfono <span className="text-danger">*</span></label>
-              <input className="form-control" placeholder="Ej: +506 8888-0000" value={form.enPhoneNumber} onChange={e => setForm(p => ({ ...p, enPhoneNumber: e.target.value }))} disabled={loading} maxLength={20} autoFocus />
+              <label className="form-label fw-semibold" htmlFor="enPhoneNumber">Número de Teléfono <span className="text-danger">*</span></label>
+              <input id="enPhoneNumber" className="form-control" placeholder="Ej: +506 8888-0000" value={form.enPhoneNumber} onChange={e => setForm(p => ({ ...p, enPhoneNumber: e.target.value }))} disabled={loading} maxLength={20} autoFocus />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">ID Adulto Mayor</label>
-              <input type="number" className="form-control" placeholder="Opcional" value={form.idOlderAdult ?? ''} onChange={e => setForm(p => ({ ...p, idOlderAdult: e.target.value ? Number(e.target.value) : undefined }))} disabled={loading} />
+              <OlderAdultSelector value={selectedAdult} onSelect={handleSelectAdult} disabled={loading} />
             </div>
             <div className="d-flex gap-2 justify-content-end">
               <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/emergency-contacts')} disabled={loading}>Cancelar</button>

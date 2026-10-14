@@ -127,9 +127,9 @@ export default function EmergencyContactsListPage() {
                   </div>
                   <div>
                     <strong>{item.enPhoneNumber}</strong>
-                    {item.idOlderAdult && (
+                    {item.idOlderAdult != null && (
                       <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                        Adulto mayor ID: {item.idOlderAdult}
+                        Vinculado a adulto mayor
                       </div>
                     )}
                   </div>
