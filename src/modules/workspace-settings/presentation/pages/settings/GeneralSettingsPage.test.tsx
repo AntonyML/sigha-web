@@ -2,18 +2,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-const { settingsMocks, navigateMock, updateGeneralMock } = vi.hoisted(() => ({
+const { settingsMocks, navigateMock, updateGeneralMock, organizationSettingsMock } = vi.hoisted(() => ({
   settingsMocks: {
     getGeneralSettings: vi.fn(),
     updateGeneralSettings: vi.fn(),
-    uploadLogo: vi.fn(),
   },
   navigateMock: vi.fn(),
   updateGeneralMock: vi.fn(),
+  organizationSettingsMock: {
+    activeOrganization: {
+      id: 7,
+      name: 'Clínica Roble',
+      slug: 'clinica-roble',
+      logoUrl: 'https://cdn.example/org-logo.png',
+    },
+    loaded: true,
+  },
 }))
 
 let canEdit = true
 let canAccess = true
+let canManageOrganization = true
 
 vi.mock('@/infrastructure/api/services/settingsService', () => ({
   settingsService: settingsMocks,
@@ -28,11 +37,14 @@ vi.mock('@/shared/lib/permissionUtils', () => ({
   usePermissions: () => ({
     isLoaded: true,
     canPerformAction: () => canEdit,
+    isAdminOrDirectorSync: () => canManageOrganization,
   }),
 }))
 
 vi.mock('@/app/providers/SettingsContext', () => ({
+  useAppSettings: () => ({ appName: 'Clínica Roble', logoUrl: 'https://cdn.example/org-logo.png', timezone: 'America/Costa_Rica' }),
   useGeneralSettingsUpdate: () => updateGeneralMock,
+  useOrganizationSettings: () => organizationSettingsMock,
 }))
 
 import GeneralSettingsPage from './GeneralSettingsPage'
@@ -42,76 +54,105 @@ describe('GeneralSettingsPage', () => {
     vi.clearAllMocks()
     canEdit = true
     canAccess = true
+    canManageOrganization = true
     settingsMocks.getGeneralSettings.mockResolvedValue({
-      appName: 'ASOPOGUA',
+      appName: 'SIGHA global',
       language: 'es',
       timezone: 'America/Costa_Rica',
-      logoUrl: '',
+      logoUrl: 'https://cdn.example/global-logo.png',
     })
   })
 
-  it('presenta los ajustes con los componentes y la vista previa de identidad', async () => {
+  it('separa las preferencias del sistema de la identidad de la organización activa', async () => {
     render(<GeneralSettingsPage />)
 
     expect(await screen.findByRole('heading', { name: 'Configuración general' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Nombre de la aplicación')).toHaveValue('ASOPOGUA')
     expect(screen.getByLabelText('Idioma')).toHaveValue('es')
     expect(screen.getByLabelText('Zona horaria')).toHaveValue('America/Costa_Rica')
-    expect(screen.getByText('Vista previa')).toBeInTheDocument()
-    expect(screen.getByText('ASOPOGUA')).toBeInTheDocument()
-    expect(screen.getByText('Sin logo')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Organización activa' })).toBeInTheDocument()
+    expect(screen.getByText('Clínica Roble')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Logo de Clínica Roble' })).toHaveAttribute('src', 'https://cdn.example/org-logo.png')
+    expect(screen.getByText('Cambiar esta identidad no modifica SIGHA ni las demás organizaciones.')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Nombre de la aplicación')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Seleccionar logo')).not.toBeInTheDocument()
   })
 
-  it('guarda los valores y actualiza la configuración compartida', async () => {
+  it('guarda idioma/zona horaria y conserva la identidad global sin aplicarla al espacio activo', async () => {
     const user = userEvent.setup()
-    settingsMocks.updateGeneralSettings.mockResolvedValue({ logoUrl: '' })
+    settingsMocks.updateGeneralSettings.mockResolvedValue({
+      appName: 'SIGHA global',
+      language: 'es',
+      timezone: 'UTC',
+      logoUrl: 'https://cdn.example/global-logo.png',
+    })
     render(<GeneralSettingsPage />)
 
-    const appName = await screen.findByLabelText('Nombre de la aplicación')
-    await user.clear(appName)
-    await user.type(appName, 'Centro SIGHA')
-    await user.click(screen.getByRole('button', { name: /Guardar cambios/ }))
+    await screen.findByRole('heading', { name: 'Organización activa' })
+    await user.selectOptions(screen.getByLabelText('Zona horaria'), 'UTC')
+    await user.click(screen.getByRole('button', { name: /Guardar preferencias/ }))
 
     await waitFor(() => expect(settingsMocks.updateGeneralSettings).toHaveBeenCalledWith({
-      appName: 'Centro SIGHA',
+      appName: 'SIGHA global',
       language: 'es',
-      timezone: 'America/Costa_Rica',
-      logoUrl: '',
+      timezone: 'UTC',
+      logoUrl: 'https://cdn.example/global-logo.png',
     }))
     expect(updateGeneralMock).toHaveBeenCalledWith({
-      appName: 'Centro SIGHA',
-      logoUrl: '',
-      timezone: 'America/Costa_Rica',
+      appName: 'Clínica Roble',
+      logoUrl: 'https://cdn.example/org-logo.png',
+      timezone: 'UTC',
     })
-    expect(await screen.findByText('Configuración guardada correctamente.')).toBeInTheDocument()
+    expect(await screen.findByText('Preferencias guardadas correctamente.')).toBeInTheDocument()
   })
 
-  it('carga el logo y lo refleja en la previsualización', async () => {
+  it('enlaza la edición de nombre y logo a los ajustes de la organización', async () => {
     const user = userEvent.setup()
-    settingsMocks.uploadLogo.mockResolvedValue({ logoUrl: 'https://cdn.example/logo.png' })
     render(<GeneralSettingsPage />)
 
-    await screen.findByLabelText('Nombre de la aplicación')
-    const file = new File(['logo'], 'logo.png', { type: 'image/png' })
-    await user.upload(screen.getByLabelText('Seleccionar logo'), file)
+    await user.click(await screen.findByRole('button', { name: 'Administrar nombre y logo' }))
 
-    await waitFor(() => expect(settingsMocks.uploadLogo).toHaveBeenCalledWith(file))
-    expect(await screen.findByAltText('Logo de ASOPOGUA')).toHaveAttribute('src', 'https://cdn.example/logo.png')
-    expect(updateGeneralMock).toHaveBeenCalledWith({
-      appName: 'ASOPOGUA',
-      logoUrl: 'https://cdn.example/logo.png',
-      timezone: 'America/Costa_Rica',
-    })
-    expect(await screen.findByText('Logo subido correctamente.')).toBeInTheDocument()
+    expect(navigateMock).toHaveBeenCalledWith('/settings/organization')
+    expect(settingsMocks.updateGeneralSettings).not.toHaveBeenCalled()
   })
 
-  it('mantiene los controles en solo lectura cuando no hay permiso de edición', async () => {
+  it('mantiene las preferencias en solo lectura cuando no hay permiso de edición', async () => {
     canEdit = false
     render(<GeneralSettingsPage />)
 
     expect(await screen.findByText('Solo lectura')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nombre de la aplicación')).toBeDisabled()
-    expect(screen.getByRole('button', { name: /Guardar cambios/ })).toBeDisabled()
+    expect(screen.getByLabelText('Zona horaria')).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Guardar preferencias/ })).toBeDisabled()
+  })
+
+  it('deshabilita el guardado si no se pudieron cargar los valores globales que debe preservar', async () => {
+    settingsMocks.getGeneralSettings.mockRejectedValueOnce(new Error('offline'))
+    render(<GeneralSettingsPage />)
+
+    expect(await screen.findByText(/No se pudieron cargar las preferencias generales/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Guardar preferencias/ })).toBeDisabled()
+    expect(settingsMocks.updateGeneralSettings).not.toHaveBeenCalled()
+  })
+
+  it('inicializa preferencias ausentes con la marca oficial de SIGHA, no con la de una organización', async () => {
+    const user = userEvent.setup()
+    settingsMocks.getGeneralSettings.mockRejectedValueOnce({ response: { status: 404 } })
+    settingsMocks.updateGeneralSettings.mockResolvedValue({
+      appName: 'SIGHA',
+      language: 'es',
+      timezone: 'America/Costa_Rica',
+      logoUrl: '',
+    })
+    render(<GeneralSettingsPage />)
+
+    expect(await screen.findByText(/Aún no hay preferencias generales guardadas/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Guardar preferencias/ }))
+
+    await waitFor(() => expect(settingsMocks.updateGeneralSettings).toHaveBeenCalledWith({
+      appName: 'SIGHA',
+      language: 'es',
+      timezone: 'America/Costa_Rica',
+      logoUrl: '',
+    }))
   })
 
   it('redirige al centro de configuración si el usuario no tiene acceso', async () => {
