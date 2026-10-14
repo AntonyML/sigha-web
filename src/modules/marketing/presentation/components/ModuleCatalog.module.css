@@ -19,7 +19,7 @@
   color: var(--marketing-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -32,12 +32,8 @@
 .filter:focus-visible {
   outline: 3px solid #f59e0b;
   outline-offset: 3px;
-}
-
-.count {
-  margin: 0 0 13px;
-  color: var(--marketing-muted);
-  font-size: 12px;
+}.count { margin: 0 0 13px;  color: var(--marketing-muted);
+  font-size: 13px;
 }
 
 .grid {
@@ -72,7 +68,7 @@
   display: block;
   margin-top: 17px;
   color: var(--tone-ink);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -83,14 +79,7 @@
   color: var(--marketing-ink);
   font-size: 16px;
   font-weight: 700;
-}
-
-.card p {
-  margin: 0;
-  color: var(--marketing-muted);
-  font-size: 12px;
-  line-height: 1.7;
-}
+}.card p { margin: 0; color: var(--marketing-muted); font-size: 13px; line-height: 1.7; }
 
 @media (max-width: 900px) {
   .grid {

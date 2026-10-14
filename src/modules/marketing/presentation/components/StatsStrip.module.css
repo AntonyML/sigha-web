@@ -30,24 +30,4 @@
   font-weight: 750;
   letter-spacing: -0.045em;
   line-height: 1;
-}
-
-.label {
-  display: block;
-  max-width: 230px;
-  margin: 10px auto 0;
-  color: var(--marketing-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-@media (max-width: 640px) {
-  .stat {
-    padding: 24px 8px;
-  }
-
-  .label {
-    margin-top: 8px;
-    font-size: 11px;
-  }
-}
+}.label { display: block; max-width: 230px; margin: 10px auto 0; color: var(--marketing-muted); font-size: 14px; line-height: 1.5; }@media (max-width: 640px) { .stat { padding: 24px 8px; } .label { margin-top: 8px; font-size: 12px; } }

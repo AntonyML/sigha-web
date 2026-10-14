@@ -7,7 +7,7 @@
   display: grid;
   gap: 7px;
   color: var(--marketing-ink);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 
@@ -33,13 +33,11 @@
 .field textarea:focus-visible {
   border-color: var(--marketing-primary);
   outline: 3px solid rgba(37, 99, 235, 0.18);
-}
-
-.privacyHint,
+}.privacyHint,
 .status {
   margin: -4px 0 0;
   color: var(--marketing-muted);
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.6;
 }
 
