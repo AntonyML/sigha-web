@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { emergencyContactService } from '@/infrastructure/api/services/emergencyContactService';
 import type { UpdateEmergencyContactDto } from '@/infrastructure/api/services/emergencyContactService';
+import { virtualFileService } from '@/infrastructure/api/services/virtualFileService';
+import type { PatientBasicInfo } from '@/shared/types/virtualFile';
+import OlderAdultSelector from '../../components/OlderAdultSelector';
 
 export default function EditEmergencyContactPage() {
   const { id } = useParams<{ id: string }>();
   const [form, setForm] = useState<UpdateEmergencyContactDto>({ enPhoneNumber: '' });
+  const [selectedAdult, setSelectedAdult] = useState<PatientBasicInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -15,9 +19,43 @@ export default function EditEmergencyContactPage() {
 
   useEffect(() => {
     if (!id) return;
-    emergencyContactService.getById(Number(id)).then(d => { setForm({ enPhoneNumber: d.enPhoneNumber, idOlderAdult: d.idOlderAdult }); setLoading(false); })
-      .catch(() => { setError('Error al cargar contacto'); setLoading(false); });
+    let active = true;
+    emergencyContactService.getById(Number(id)).then(async (d) => {
+      if (!active) return;
+      setForm({ enPhoneNumber: d.enPhoneNumber, idOlderAdult: d.idOlderAdult });
+      if (d.idOlderAdult) {
+        try {
+          const vf = await virtualFileService.getVirtualFileById(d.idOlderAdult);
+          if (!active) return;
+          setSelectedAdult({
+            id: vf.id ?? d.idOlderAdult,
+            identification: vf.cedula,
+            name: vf.nombreApellido,
+            firstLastName: '',
+            secondLastName: '',
+            fullName: vf.nombreApellido || 'Adulto mayor vinculado',
+            birthdate: vf.fechaNacimiento,
+            gender: '',
+            phone: '',
+            email: '',
+            status: '',
+          });
+        } catch {
+          // Si no se puede resolver el nombre, se deja sin selección
+          // para que el usuario busque por cédula o nombre.
+          if (active) setSelectedAdult(null);
+        }
+      }
+      if (active) setLoading(false);
+    })
+      .catch(() => { if (active) { setError('Error al cargar contacto'); setLoading(false); } });
+    return () => { active = false; };
   }, [id]);
+
+  const handleSelectAdult = (patient: PatientBasicInfo | null) => {
+    setSelectedAdult(patient);
+    setForm((p) => ({ ...p, idOlderAdult: patient ? patient.id : undefined }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +83,11 @@ export default function EditEmergencyContactPage() {
         <div className="card-body">
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <label className="form-label fw-semibold">Número de Teléfono</label>
-              <input className="form-control" value={form.enPhoneNumber ?? ''} onChange={e => setForm(p => ({ ...p, enPhoneNumber: e.target.value }))} disabled={saving} maxLength={20} />
+              <label className="form-label fw-semibold" htmlFor="enPhoneNumber">Número de Teléfono</label>
+              <input id="enPhoneNumber" className="form-control" value={form.enPhoneNumber ?? ''} onChange={e => setForm(p => ({ ...p, enPhoneNumber: e.target.value }))} disabled={saving} maxLength={20} />
             </div>
             <div className="mb-4">
-              <label className="form-label fw-semibold">ID Adulto Mayor</label>
-              <input type="number" className="form-control" value={form.idOlderAdult ?? ''} onChange={e => setForm(p => ({ ...p, idOlderAdult: e.target.value ? Number(e.target.value) : undefined }))} disabled={saving} />
+              <OlderAdultSelector value={selectedAdult} onSelect={handleSelectAdult} disabled={saving} />
             </div>
             <div className="d-flex gap-2 justify-content-end">
               <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/emergency-contacts')} disabled={saving}>Cancelar</button>
