@@ -1,6 +1,7 @@
 # Registro de cambios
 2026-10-14 | sigha-web-20261014-rcyq | tipo: legibilidad y accesibilidad del hub /admin (anula nowrap heredado, sube contraste ≥4.5:1 y tamaños, aria-labelledby, foco visible) | verificación: build OK 80 rutas en worktree y dev (/admin prerenderizado); eslint 0 errores; sin tests del módulo (grep vacío); funcional: wrap+minWidth+contraste verificados en dev
 2026-10-14 | sigha-web-20261014-kzsf | tipo: botón Volver en /login (AuthLayout → landing /) | verificación: build OK 80 rutas en worktree y dev; eslint 0 errores en el archivo; vitest login+AuthLayout 11/11 en ambos; funcional: showBackButton→router.push('/') verificado en dev
+2026-10-13 | sigha-web-20261013-i9yp | tipo: exportación estática para Cloudflare Pages, navegación de detalle sin IDs en URL y primer Direct Upload | verificación: build OK (109 rutas) en worktree y dev; pages.dev y dominio personalizado responden HTTP 200; CORS de Render pendiente de confirmar (preflight agotó tiempo)
 2026-10-13 | sigha-web-20261013-a7k2 | tipo: completar landing pública, catálogo de módulos y páginas legales | verificación: build OK (80 rutas); lint dirigido OK, global con 197 errores y 2239 avisos preexistentes; test:run 49/51 (2 fallos baseline de TwoFactorContext); revisión funcional OK
 2026-10-13 | sigha-web-20261013-u1sg | tipo: login compartido con selección y cambio de organización por hogar | verificación: build OK; 49/51 tests (2 fallos preexistentes de TwoFactorContext); aislamiento API 10/10; lint con deuda preexistente, sin errores nuevos en cambios.
 
