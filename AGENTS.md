@@ -172,7 +172,8 @@ Playwright usa E2E_WEB_URL=http://localhost:3001 y E2E_API_URL=http://localhost:
 ## 9. Verificación
 
 - Ejecuta bun run build cuando se cambien rutas, configuración Next o prerender y sea necesario verificar compilación.
-- Ejecuta pruebas puntuales solo cuando se soliciten o sean requeridas expresamente; no ejecutes la suite completa por defecto.
+- Para cambios de navegación o comportamiento visible, verifica el flujo con pruebas automatizadas (unitarias o E2E, según corresponda); no solicites confirmación manual de la interfaz. Si el flujo requiere autenticación, usa el setup de pruebas autorizado del proyecto y agrega o ajusta cobertura automatizada cuando haga falta.
+- Ejecuta `bun run test:run` para pruebas unitarias y `bun run test:e2e` para Playwright cuando la tarea cambie un flujo cubierto por esos suites o cuando el usuario lo pida.
 - Distingue build, lint, unitarias y e2e en la entrega. No reportes pruebas que no se ejecutaron.
 
 ## 10. Documentación

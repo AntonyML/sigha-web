@@ -135,6 +135,31 @@ test.describe('Programas (/programs) — CRUD', () => {
     }
   });
 
+  test('Editar desde el detalle: abre el formulario con los datos del programa', async ({ page }) => {
+    test.setTimeout(TEST_TIMEOUT);
+    const name = uniqueProgramName();
+    const { id } = await createDisposableProgram(name);
+    try {
+      const list = new ProgramsListPage(page);
+      await list.goto();
+      await list.search(name);
+      const row = list.rowFor(name);
+      await expect(row).toHaveCount(1, { timeout: DATA_TIMEOUT });
+
+      await row.getByTitle('Ver detalles').click();
+      const view = new ViewProgramPage(page);
+      await expect(view.title).toBeVisible();
+      await expect(page.getByText(name, { exact: true })).toBeVisible();
+
+      await view.editButton.click();
+      const edit = new EditProgramPage(page);
+      await expect(edit.title).toBeVisible({ timeout: DATA_TIMEOUT });
+      await expect(edit.nameInput).toHaveValue(name, { timeout: DATA_TIMEOUT });
+    } finally {
+      await deleteProgramDirect(id).catch(() => undefined);
+    }
+  });
+
   test('Editar: carga los datos, renombra y lo refleja en el listado', async ({ page }) => {
     test.setTimeout(TEST_TIMEOUT);
     const name = uniqueProgramName();
