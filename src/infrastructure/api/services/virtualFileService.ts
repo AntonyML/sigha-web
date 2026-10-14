@@ -124,8 +124,24 @@ export const virtualFileService = {
   },
 
   searchVirtualFiles: async (params: VirtualFileSearchParams): Promise<VirtualFileApiResponse> => {
-    const response = await apiClient.get<VirtualFileApiResponse>('/virtual-files/search', { params });
-    return response.data;
+    /* Contrato acordado web↔api: el API no expone GET /virtual-files/search
+       (solo /virtual-records/search, /virtual-records/patients/search y
+       /virtual-records/all). Este helper solo se usa para el chequeo de cédula
+       duplicada, así que consulta /virtual-records/search?search=<cedula>. */
+    const raw = (params.cedula || params.nombreApellido || '').trim()
+    if (!raw) return { data: [], total: 0, page: 1, limit: 0 }
+    const response = await apiClient.get<{ message: string; data: any[] }>(
+      '/virtual-records/search',
+      { params: { search: raw } },
+    )
+    const list = Array.isArray(response.data.data) ? response.data.data : []
+    const items = list
+      .map(mapApiToVirtualFile)
+      .filter((item) => {
+        const ced = (item as VirtualFile).cedula
+        return !params.cedula || ced === params.cedula || ced === raw
+      })
+    return { data: items, total: items.length, page: 1, limit: items.length }
   },
 
   /**

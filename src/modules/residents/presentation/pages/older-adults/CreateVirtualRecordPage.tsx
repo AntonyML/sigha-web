@@ -260,8 +260,42 @@ export default function CreateVirtualFile() {
     if (!programs.some(p => p.id === programId)) return ['Seleccione el programa principal.']
     return []
   }
+  function step2Errors(): string[] {
+    /* El DTO del API (FamilyDataDto) exige familia completa con kinship válido;
+       el SQL create_virtual_file también rechaza familia incompleta. Si el paso 2
+       trae algún dato de familia, todo el bloque es obligatorio. */
+    const f = familyData
+    const hasAnyFamily = Boolean(
+      (f.pf_identification || '').trim() ||
+      (f.pf_name || '').trim() ||
+      (f.pf_f_last_name || '').trim() ||
+      (f.pf_s_last_name || '').trim() ||
+      (f.pf_phone_number || '').trim() ||
+      (f.pf_email || '').trim() ||
+      (f.pf_kinship || '').trim(),
+    )
+    if (!hasAnyFamily) return []
+    const errs: string[] = []
+    if (!(f.pf_identification || '').trim()) {
+      errs.push('La cédula del familiar es obligatoria.')
+    } else if (familyCedulaStatus === 'error') {
+      errs.push('La cédula del familiar no es válida.')
+    }
+    if (!(f.pf_name || '').trim()) errs.push('El nombre del familiar es obligatorio.')
+    if (!(f.pf_f_last_name || '').trim()) errs.push('El primer apellido del familiar es obligatorio.')
+    if (!(f.pf_s_last_name || '').trim()) errs.push('El segundo apellido del familiar es obligatorio.')
+    if (!(f.pf_phone_number || '').trim()) errs.push('El teléfono del familiar es obligatorio.')
+    if (!(f.pf_email || '').trim()) {
+      errs.push('El correo del familiar es obligatorio.')
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.pf_email.trim())) {
+      errs.push('El correo del familiar no es válido.')
+    }
+    if (!(f.pf_kinship || '').trim()) errs.push('El parentesco del familiar es obligatorio.')
+    return errs
+  }
   function stepErrors(s: number): string[] {
     if (s === 1) return step1Errors()
+    if (s === 2) return step2Errors()
     if (s === 4) return step4Errors()
     return []
   }
@@ -279,6 +313,12 @@ export default function CreateVirtualFile() {
     if (e1.length > 0) {
       setStepAttempted(p => ({ ...p, 1: true }))
       setStep(1)
+      return
+    }
+    const e2 = step2Errors()
+    if (e2.length > 0) {
+      setStepAttempted(p => ({ ...p, 2: true }))
+      setStep(2)
       return
     }
     const e4 = step4Errors()
@@ -553,9 +593,11 @@ export default function CreateVirtualFile() {
                 onDeny={denyFamilyForeign}
               />
             )}
-            <Field label="Parentesco">
+            <Field label="Parentesco *">
               <select className="form-select" value={familyData.pf_kinship}
-                onChange={e => setF('pf_kinship', e.target.value)}>
+                onChange={e => setF('pf_kinship', e.target.value)}
+                aria-invalid={visibleErrors.some(e => e.includes('parentesco'))}
+                style={visibleErrors.some(e => e.includes('parentesco')) ? { borderColor: '#dc2626' } : undefined}>
                 <option value="">Seleccionar parentesco</option>
                 <option value="son">Hijo</option>
                 <option value="daughter">Hija</option>
