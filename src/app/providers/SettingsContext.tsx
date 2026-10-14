@@ -171,6 +171,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     // Only fetch on mount if we have valid auth (token + user)
     // The authTokenChanged event will trigger fetch after login
     if (hasToken()) {
@@ -178,6 +183,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener('authTokenChanged', fetch);
     return () => window.removeEventListener('authTokenChanged', fetch);
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [fetch]);
 
   const switchOrganization = useCallback(async (organizationId: number) => {

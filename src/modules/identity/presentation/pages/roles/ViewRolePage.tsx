@@ -112,6 +112,11 @@ export default function ViewRolePage() {
 
     /* Cargar catálogo y permisos del rol desde el backend */
     useEffect(() => {
+      let active = true;
+      let cleanup: (() => void) | undefined;
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        const maybeCleanup = (() => {
         if (!id) return;
         const roleId = Number(id);
         setLoadingPerms(true);
@@ -129,6 +134,14 @@ export default function ViewRolePage() {
                 setErrorPerms('No se pudieron cargar los permisos del rol.');
             })
             .finally(() => setLoadingPerms(false));
+
+        })();
+        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+      });
+      return () => {
+        active = false;
+        cleanup?.();
+      };
     }, [id]);
 
     /* Agrupar permisos del catálogo por módulo + estado de otorgamiento del rol */

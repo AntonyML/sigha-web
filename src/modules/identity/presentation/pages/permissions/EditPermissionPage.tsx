@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from '@/shared/navigation';
 import { permissionApiService } from '@/infrastructure/api/services/permissionApiService';
@@ -57,9 +58,9 @@ export default function EditPermissionPage() {
                 };
                 setFormData(data);
                 setOriginalData(data);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error cargando permiso:', err);
-                setError(err?.response?.data?.message || 'Error al cargar permiso desde el servidor');
+                setError(getApiErrorMessage(err, 'Error al cargar permiso desde el servidor'));
             } finally {
                 setLoadingData(false);
             }
@@ -68,7 +69,20 @@ export default function EditPermissionPage() {
     }, [id]);
 
     useEffect(() => {
+      let active = true;
+      let cleanup: (() => void) | undefined;
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        const maybeCleanup = (() => {
         setHasChanges(JSON.stringify(formData) !== JSON.stringify(originalData));
+
+        })();
+        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+      });
+      return () => {
+        active = false;
+        cleanup?.();
+      };
     }, [formData, originalData]);
 
     function onInputChange(field: keyof PermissionFormData, value: string | boolean) {
@@ -99,9 +113,9 @@ export default function EditPermissionPage() {
             feedback.success('Permiso actualizado exitosamente');
             feedback.showNotification({ title: 'Permiso actualizado', message: 'El permiso ha sido actualizado exitosamente.', variant: 'success' });
             navigate(`/permissions/view/${id}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error actualizando permiso:', err);
-            setError(err?.response?.data?.message || 'Error al actualizar permiso en el servidor');
+            setError(getApiErrorMessage(err, 'Error al actualizar permiso en el servidor'));
         } finally {
             setLoading(false);
         }

@@ -8,7 +8,7 @@ import { clinicalMedicationService } from '@/infrastructure/api/services/clinica
 import type { ClinicalMedicationApi, CreateClinicalMedicationDto, UpdateClinicalMedicationDto } from '@/infrastructure/api/services/clinicalMedicationService';
 import { validateClinicalMedicationData, validateClinicalMedicationId, getClinicalMedicationErrorMessage } from '@/modules/clinical-medication/application/flows/clinical-medication/validation/medicationValidations';
 
-export interface ClinicalMedicationFlowResult<T = any> {
+export interface ClinicalMedicationFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

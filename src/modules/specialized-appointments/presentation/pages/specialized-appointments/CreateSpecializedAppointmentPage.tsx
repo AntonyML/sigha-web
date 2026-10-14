@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService';
@@ -29,9 +30,8 @@ export default function CreateSpecializedAppointmentPage() {
       await specializedAppointmentsService.create(form);
       setSuccess('Cita creada exitosamente');
       setTimeout(() => navigate('/specialized-appointments'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al crear';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al crear'));
     } finally { setLoading(false); }
   };
 

@@ -81,7 +81,7 @@ export async function getAuditReportById(id: number): Promise<GetAuditReportFlow
  * @param generateDto - Datos para generar el reporte
  * @returns Resultado con reporte generado
  */
-export async function generateAuditReport(generateDto: { type: AuditReportType; startDate: string; endDate: string; description?: string }): Promise<AuditFlowResult & { report?: any }> {
+export async function generateAuditReport(generateDto: { type: AuditReportType; startDate: string; endDate: string; description?: string }): Promise<AuditFlowResult & { report?: AuditReport }> {
   try {
     const report = await auditService.generateAuditReport(generateDto);
 

@@ -392,15 +392,15 @@ export default function CreateUserPage() {
                     ) : (
                         <WizardGrid cols={2}>
                             {(Object.keys(PermissionModule) as Array<keyof typeof PermissionModule>).map(moduleKey => {
-                                const module = PermissionModule[moduleKey] as PermissionModuleType;
-                                const modulePermissions = permissions.filter(p => p.module === module);
+                                const permissionModule = PermissionModule[moduleKey] as PermissionModuleType;
+                                const modulePermissions = permissions.filter(p => p.module === permissionModule);
                                 if (modulePermissions.length === 0) return null;
 
                                 return (
-                                    <div key={module} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.875rem' }}>
+                                    <div key={permissionModule} style={{ border: '1px solid #e2e8f0', borderRadius: '0.5rem', padding: '0.875rem' }}>
                                         <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '0.875rem', textTransform: 'capitalize' }}>
                                             <i className="bi bi-folder me-2 text-primary"></i>
-                                            {module.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                                            {permissionModule.replace(/([A-Z])/g, ' $1').toLowerCase()}
                                         </h6>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             {modulePermissions.map(permission => {

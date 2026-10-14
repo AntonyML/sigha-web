@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Activity, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { physiotherapyService, type PhysiotherapySessionApi } from '@/infrastructure/api/services/physiotherapyService'
@@ -42,7 +42,20 @@ export default function PhysiotherapySessionsListPage() {
     }
   }, [])
 
-  useEffect(() => { loadSessions() }, [loadSessions])
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadSessions()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [loadSessions])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar sesión', '¿Está seguro de que desea eliminar esta sesión?')

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Lock, Plus, Search, X, AlertCircle, Eye, Pencil, Trash2 } from 'lucide-react'
 import { permissionApiService } from '@/infrastructure/api/services/permissionApiService'
@@ -14,8 +14,6 @@ export default function PermissionListPage() {
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
 
-  useEffect(() => { loadPermissions() }, [])
-
   const loadPermissions = async () => {
     setLoading(true)
     setError('')
@@ -29,6 +27,21 @@ export default function PermissionListPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadPermissions()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [])
 
   const handleDelete = async (permissionId: number, enabled: boolean, name: string) => {
     if (!enabled) {

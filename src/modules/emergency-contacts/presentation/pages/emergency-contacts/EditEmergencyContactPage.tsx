@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { emergencyContactService } from '@/infrastructure/api/services/emergencyContactService';
@@ -25,9 +26,8 @@ export default function EditEmergencyContactPage() {
       await emergencyContactService.update(Number(id), form);
       setSuccess('Contacto actualizado exitosamente');
       setTimeout(() => navigate('/emergency-contacts'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al actualizar';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al actualizar'));
     } finally { setSaving(false); }
   };
 

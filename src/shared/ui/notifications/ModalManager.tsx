@@ -31,7 +31,6 @@ interface ModalManagerContextType {
 
 const ModalManagerContext = createContext<ModalManagerContextType | undefined>(undefined);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useModalManager = () => {
   const context = useContext(ModalManagerContext);
   if (!context) {

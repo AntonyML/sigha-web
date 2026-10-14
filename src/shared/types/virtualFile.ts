@@ -525,14 +525,14 @@ export function transformVirtualFileToApiPayload(
 
   // Obtener condiciones clínicas activas
   const activeConditions = Object.keys(CLINICAL_CONDITIONS_MAP)
-    .filter(condition => (virtualFile as any)[condition] === true)
+    .filter(condition => virtualFile[condition as keyof VirtualFile] === true)
     .map(condition => ({ id: CLINICAL_CONDITIONS_MAP[condition] }));
 
   // Obtener vacunas activas - usar IDs seleccionados si están disponibles, sino usar el mapeo tradicional
   const activeVaccines = additionalData.vaccineIds && additionalData.vaccineIds.length > 0
     ? additionalData.vaccineIds.map(id => ({ id }))
     : Object.keys(VACCINES_MAP)
-        .filter(vaccine => (virtualFile as any)[vaccine] === true)
+        .filter(vaccine => virtualFile[vaccine as keyof VirtualFile] === true)
         .map(vaccine => ({ id: VACCINES_MAP[vaccine] }));
 
   // Convertir datos numéricos con validaciones de rango

@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { emergencyContactService } from '@/infrastructure/api/services/emergencyContactService';
@@ -20,9 +21,8 @@ export default function CreateEmergencyContactPage() {
       await emergencyContactService.create(form);
       setSuccess('Contacto de emergencia creado exitosamente');
       setTimeout(() => navigate('/emergency-contacts'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al crear';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al crear'));
     } finally { setLoading(false); }
   };
 

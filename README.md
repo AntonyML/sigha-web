@@ -12,7 +12,7 @@ Copy-Item .env.example .env.local
 bun run dev
 ```
 
-La web queda en `http://localhost:3001`; la API local usa `http://localhost:3000`. La interfaz llama directamente al backend. El rewrite opcional `/api/backend` se conserva solo para desarrollo local.
+La web queda en `http://localhost:3001`; la API local usa `http://localhost:3000`. En desarrollo, la interfaz llama al proxy del mismo origen `/api/backend`, y Next reenvía esas solicitudes a la API local.
 
 Comandos disponibles:
 
@@ -29,12 +29,12 @@ bun run test:e2e  # Playwright
 
 | Variable | Dónde | Uso |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | navegador | URL base pública de NestJS; por defecto `http://localhost:3000` |
-| `BACKEND_API_URL` | servidor local | Destino del rewrite opcional de desarrollo; por defecto `http://localhost:3000` |
+| `NEXT_PUBLIC_API_URL` | navegador | URL base del API; por defecto `/api/backend` en desarrollo. En Pages configura la URL pública de NestJS. |
+| `BACKEND_API_URL` | servidor local | Destino del proxy de `next dev`; por defecto `http://localhost:3000` |
 | `NEXT_PUBLIC_APP_ENV` | navegador | Entorno de la aplicación |
 | `NEXT_PUBLIC_ENABLE_2FA` | navegador | Configuración de la interfaz 2FA |
 
-En producción configura `NEXT_PUBLIC_API_URL` en el entorno del build y permite el origen de Pages en CORS del backend. El export estático no ejecuta un servidor Next ni usa rewrites.
+En producción configura `NEXT_PUBLIC_API_URL` en el entorno del build y permite el origen de Pages en CORS del backend. El export estático no ejecuta un servidor Next ni usa rewrites, por lo que el navegador llama directamente al API.
 
 Para Playwright, copia `.env.e2e.example` a `.env.e2e`; la URL web es `http://localhost:3001` y `E2E_API_URL` apunta directamente a NestJS.
 

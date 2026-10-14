@@ -68,6 +68,11 @@ export default function EditVirtualFile() {
 
   /* ── Load data ─────────────────────────────────────────── */
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     if (!id) { setLoading(false); return }
     Promise.all([
       virtualFileService.getVirtualFileById(Number(id)),
@@ -86,15 +91,36 @@ export default function EditVirtualFile() {
       setCondIds(COND_FLAGS.filter(([k]) => file[k] === true).map(([,id]) => id))
     }).catch(() => setError('No se pudo cargar el expediente.'))
       .finally(() => setLoading(false))
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [id])
   /* ── Auto-calc IMC ─────────────────────────────────────── */
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     const peso = parseFloat(formData.peso)
     const cm   = parseFloat(formData.talla)
     if (!isNaN(peso) && !isNaN(cm) && cm > 0) {
       const m = cm / 100
       setFormData(p => ({ ...p, imc: (peso / (m * m)).toFixed(1) }))
     }
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [formData.peso, formData.talla])
 
   /* ── Helpers ───────────────────────────────────────────── */

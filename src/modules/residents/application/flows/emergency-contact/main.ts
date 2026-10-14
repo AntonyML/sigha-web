@@ -17,7 +17,7 @@ import { validateEmergencyContactData, validateEmergencyContactId, getEmergencyC
 /**
  * Resultado de operaciones del flujo de contactos de emergencia
  */
-export interface EmergencyContactFlowResult<T = any> {
+export interface EmergencyContactFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;
@@ -36,7 +36,7 @@ export const emergencyContactFlow = {
      * @param filters - Filtros opcionales (patientId, active, relationship)
      * @returns Lista de contactos de emergencia
      */
-    async getAllContacts(_filters?: any): Promise<EmergencyContactFlowResult> {
+    async getAllContacts(_filters?: unknown): Promise<EmergencyContactFlowResult> {
         try {
             // TODO: Implementar cuando el servicio esté disponible
             // const response = await emergencyContactService.getEmergencyContacts(filters);
@@ -129,7 +129,7 @@ export const emergencyContactFlow = {
      * @param data - Datos del contacto a crear
      * @returns Contacto creado
      */
-    async createContact(data: any): Promise<EmergencyContactFlowResult> {
+    async createContact(data: object): Promise<EmergencyContactFlowResult> {
         try {
             // Validar datos del contacto
             const validation = validateEmergencyContactData(data);
@@ -164,7 +164,7 @@ export const emergencyContactFlow = {
      * @param data - Datos a actualizar
      * @returns Contacto actualizado
      */
-    async updateContact(id: string | number, data: any): Promise<EmergencyContactFlowResult> {
+    async updateContact(id: string | number, data: object): Promise<EmergencyContactFlowResult> {
         try {
             // Validar ID del contacto
             const idValidation = validateEmergencyContactId(id);

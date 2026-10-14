@@ -265,7 +265,18 @@ export function validateEmergencyContactStatus(isEmergencyContact: boolean | nul
  * @param data - Datos del miembro de familia a validar
  * @returns Resultado de la validación
  */
-export function validateOlderAdultFamilyData(data: any): ValidationResult {
+interface OlderAdultFamilyValidationData {
+    patientId?: string | number | null;
+    name?: string | null;
+    relationship?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+    isEmergencyContact?: boolean | null;
+}
+
+export function validateOlderAdultFamilyData(input: object): ValidationResult {
+    const data = input as OlderAdultFamilyValidationData;
     if (!data || typeof data !== 'object') {
         return { isValid: false, error: OlderAdultFamilyValidationError.MISSING_REQUIRED_FIELD };
     }
@@ -310,7 +321,7 @@ export function validateOlderAdultFamilyData(data: any): ValidationResult {
 
     // Validar estado de contacto de emergencia
     if (data.isEmergencyContact !== undefined) {
-        const emergencyValidation = validateEmergencyContactStatus(data.isEmergencyContact, data.relationship);
+        const emergencyValidation = validateEmergencyContactStatus(data.isEmergencyContact, data.relationship ?? '');
         if (!emergencyValidation.isValid) {
             return emergencyValidation;
         }

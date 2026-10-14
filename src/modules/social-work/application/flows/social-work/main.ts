@@ -7,7 +7,7 @@
 import { socialWorkService, type SocialWorkReportApi, type CreateSocialWorkReportDto, type UpdateSocialWorkReportDto } from '@/infrastructure/api/services/socialWorkService';
 import { validateSocialWorkData, validateSocialWorkId } from '@/modules/social-work/application/flows/social-work/validation/socialWorkValidations';
 
-export interface SocialWorkFlowResult<T = any> {
+export interface SocialWorkFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

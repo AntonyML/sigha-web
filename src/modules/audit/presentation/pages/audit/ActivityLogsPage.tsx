@@ -13,8 +13,6 @@ export default function ActivityLogsPage() {
   const navigate = useNavigate();
 
   const loadLogs = useCallback(async () => {
-    setLoading(true);
-    setError('');
     try {
       const data = await auditService.searchAuditRecords({
         startDate: startDate || undefined,
@@ -31,7 +29,11 @@ export default function ActivityLogsPage() {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    loadLogs();
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) return loadLogs();
+    });
+    return () => { cancelled = true; };
   }, [loadLogs]);
 
   const filtered = logs.filter((log) => {

@@ -3,6 +3,7 @@
 
 import type { Enable2FARequest, Verify2FARequest } from '@/shared/types/twoFactor';
 import type { AxiosError } from 'axios';
+import { isNetworkError } from '@/shared/lib/apiError';
 
 
 // Validaciones de negocio para códigos TOTP
@@ -149,14 +150,6 @@ export function validateVerify2FAData(data: Verify2FARequest): string | null {
 
 
 // Reglas de red/Axios para 2FA
-function isNetworkError(error: AxiosError | Error | unknown): boolean {
-  return (
-    (error as any)?.code === 'ERR_NETWORK' ||
-    (error as any)?.message === 'Network Error' ||
-    (error as any)?.isAxiosError && !(error as any).response
-  );
-}
-
 export function getTwoFactorErrorMessage(error: AxiosError | Error | unknown): string {
   if (isNetworkError(error)) {
     return 'No se pudo conectar con el servidor. Verifica tu conexión de red o que el backend esté disponible.';

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { RefreshCw, ChevronLeft, CheckCircle2, Loader2, LogIn, LogOut, Inbox, ChevronsDown } from 'lucide-react'
 import { entranceExitService } from '@/infrastructure/api/services/entranceExitService'
@@ -22,8 +22,6 @@ export default function EntranceExitDashboard() {
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
 
-  useEffect(() => { loadData() }, [])
-
   const loadData = async () => {
     setLoading(true)
     try {
@@ -40,6 +38,21 @@ export default function EntranceExitDashboard() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadData()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [])
 
   const handleFinalize = async (item: EntranceExitResponse, type: 'entrance' | 'exit') => {
     const ok = await feedback.confirm(
