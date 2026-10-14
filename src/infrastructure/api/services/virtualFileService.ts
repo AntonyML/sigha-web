@@ -75,7 +75,32 @@ export const virtualFileService = {
       if (!apiPayload.oa_birthdate) {
         throw new Error('La fecha de nacimiento es requerida');
       }
-      
+
+      /* El backend exige el familiar responsable siempre (DTO + SQL 019):
+         fallar aquí con mensaje claro en vez de provocar un 400. */
+      const fam = apiPayload.family;
+      if (!fam || !fam.pf_identification?.trim()) {
+        throw new Error('La cédula del familiar es obligatoria.');
+      }
+      if (!fam.pf_name?.trim()) {
+        throw new Error('El nombre del familiar es obligatorio.');
+      }
+      if (!fam.pf_f_last_name?.trim()) {
+        throw new Error('El primer apellido del familiar es obligatorio.');
+      }
+      if (!fam.pf_s_last_name?.trim()) {
+        throw new Error('El segundo apellido del familiar es obligatorio.');
+      }
+      if (!fam.pf_phone_number?.trim()) {
+        throw new Error('El teléfono del familiar es obligatorio.');
+      }
+      if (!fam.pf_email?.trim()) {
+        throw new Error('El correo del familiar es obligatorio.');
+      }
+      if (!fam.pf_kinship?.trim()) {
+        throw new Error('El parentesco del familiar es obligatorio.');
+      }
+
       // Validar que clinical_history tenga valores numéricos válidos
       if (!apiPayload.clinical_history.ch_weight || apiPayload.clinical_history.ch_weight <= 0) {
         console.warn('⚠️ Peso inválido, usando valor por defecto');
