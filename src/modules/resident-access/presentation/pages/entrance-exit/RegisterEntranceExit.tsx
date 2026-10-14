@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from '@/shared/navigation';
 import Swal from 'sweetalert2';
-import EntranceExitNav from '@/modules/resident-access/presentation/pages/entrance-exit/EntranceExitNav';
 import { useCedulaLookup } from '@/shared/hooks/useCedulaLookup';
 
 import { entranceExitService } from '@/infrastructure/api/services/entranceExitService';
@@ -243,7 +242,6 @@ export default function RegisterEntranceExit() {
 
   return (
     <div className="container py-4">
-      <EntranceExitNav />
       <form onSubmit={handleSubmit}>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h3 className="mb-0">

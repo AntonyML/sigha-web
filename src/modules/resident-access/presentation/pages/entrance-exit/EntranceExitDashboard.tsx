@@ -4,7 +4,6 @@ import { RefreshCw, ChevronLeft, CheckCircle2, Loader2, LogIn, LogOut, Inbox, Ch
 import { entranceExitService } from '@/infrastructure/api/services/entranceExitService'
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import type { EntranceExitResponse } from '@/shared/types/entranceExit'
-import EntranceExitNav from '@/modules/resident-access/presentation/pages/entrance-exit/EntranceExitNav'
 
 const TYPE_LABELS: Record<string, string> = {
   'employee': 'Empleado', 'older adult': 'Adulto Mayor', 'visitor': 'Visitante',
@@ -123,9 +122,6 @@ export default function EntranceExitDashboard() {
           </button>
         </div>
       </div>
-
-      {/* Nav */}
-      <EntranceExitNav />
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '3rem', justifyContent: 'center', color: '#64748b' }}>

@@ -29,6 +29,8 @@ import {
   CalendarCheck,
   PhoneCall,
   History,
+  LogIn,
+  LogOut,
   Stethoscope,
   Brain,
   Activity,
@@ -113,9 +115,10 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
     icon: <ArrowLeftRight className={ICON_CLASS} />,
     requiredModule: 'entranceExit',
     children: [
-      { id: 'ee-dashboard', label: 'Dashboard', path: '/entrance-exit' },
-      { id: 'ee-register',  label: 'Registrar', path: '/entrance-exit/register' },
-      { id: 'ee-history',   label: 'Historial', path: '/entrance-exit/history' },
+      { id: 'ee-dashboard', label: 'Dashboard', path: '/entrance-exit', icon: <LayoutDashboard className={ICON_CLASS} /> },
+      { id: 'ee-history', label: 'Historial', path: '/entrance-exit/history', icon: <History className={ICON_CLASS} /> },
+      { id: 'ee-reg-entrance', label: 'Reg. Entrada', path: '/entrance-exit/register?type=entrance', icon: <LogIn className={ICON_CLASS} /> },
+      { id: 'ee-reg-exit', label: 'Reg. Salida', path: '/entrance-exit/register?type=exit', icon: <LogOut className={ICON_CLASS} /> },
     ],
   },
   {
@@ -260,18 +263,34 @@ const ALL_SECTIONS: NavSection[] = [
 
 /* ─── Helpers ─────────────────────────────────────────── */
 
-function findActiveGroupId(sections: NavSection[], pathname: string): string | null {
+function findActiveGroupId(sections: NavSection[], pathname: string, search = ''): string | null {
   for (const section of sections) {
     for (const item of section.items) {
-      if (isItemActive(item, pathname)) return item.id;
+      if (isItemActive(item, pathname, search)) return item.id;
     }
   }
   return null;
 }
 
-function isItemActive(item: MenuItem, pathname: string): boolean {
-  if (item.path && (pathname === item.path || pathname.startsWith(item.path + '/'))) return true;
-  return !!item.children?.some(c => c.path && (pathname === c.path || pathname.startsWith(c.path + '/')));
+function isItemActive(item: MenuItem, pathname: string, search = ''): boolean {
+  // Comparación sensible a query: '/entrance-exit/register?type=entrance'
+  // debe activar solo el hijo correspondiente, no todos los que comparten
+  // el mismo pathname. Para rutas sin query se conserva el prefijo clásico.
+  const matchesPath = ( candidate?: string) => {
+    if (!candidate) return false;
+    const [candidatePath, candidateQuery] = candidate.split('?');
+    const pathMatch = pathname === candidatePath || pathname.startsWith(candidatePath + '/');
+    if (!pathMatch) return false;
+    if (!candidateQuery) return true;
+    const candidateParams = new URLSearchParams(candidateQuery);
+    const currentParams = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+    for (const [key, value] of candidateParams) {
+      if (currentParams.get(key) !== value) return false;
+    }
+    return true;
+  };
+  if (item.path && matchesPath(item.path)) return true;
+  return !!item.children?.some(c => matchesPath(c.path));
 }
 
 /* ─── Component ───────────────────────────────────────── */
@@ -283,6 +302,10 @@ export default function Sidebar() {
   const { isLoaded: permsLoaded, canAccessModule } = usePermissions();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
+  /* location.search viene del adaptador '@/shared/navigation' (pathname + '?a=b').
+     Extraído a constante para usarlo en el effect y en deps sin expresiones complejas. */
+  const locationSearch = (location as { search?: string }).search ?? '';
+
   /* Auto-expand el grupo cuyo hijo coincide con la ruta actual.
      Debe estar ANTES de cualquier early return para respetar las Rules of Hooks. */
   useEffect(() => {
@@ -291,7 +314,7 @@ export default function Sidebar() {
     void Promise.resolve().then(() => {
       if (!active) return;
       const maybeCleanup = (() => {
-    const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname);
+    const activeId = findActiveGroupId(ALL_SECTIONS, location.pathname, locationSearch);
     if (activeId) {
       setOpenGroups(prev => prev[activeId] ? prev : { ...prev, [activeId]: true });
     }
@@ -303,7 +326,7 @@ export default function Sidebar() {
       active = false;
       cleanup?.();
     };
-  }, [location.pathname]);
+  }, [location.pathname, locationSearch]);
 
   // No renderizar menú completo hasta que sepamos el estado real de 2FA y permisos
   if (twoFALoading || !permsLoaded) {
@@ -350,10 +373,21 @@ export default function Sidebar() {
   /* ── Active checks ────────────────────────────────────── */
   const isActive = (path?: string) => {
     if (!path) return false;
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+    const [candidatePath, candidateQuery] = path.split('?');
+    const pathMatch = location.pathname === candidatePath || location.pathname.startsWith(candidatePath + '/');
+    if (!pathMatch) return false;
+    if (!candidateQuery) return true;
+    const candidateParams = new URLSearchParams(candidateQuery);
+    const currentParams = new URLSearchParams(locationSearch.startsWith('?') ? locationSearch.slice(1) : locationSearch);
+    // Sin ?type= en la URL (p. ej. '/entrance-exit/register' directo),
+    // ningún hijo con query se marca: evita doble-activo ambiguo.
+    for (const [key, value] of candidateParams) {
+      if (currentParams.get(key) !== value) return false;
+    }
+    return true;
   };
 
-  const isGroupActive = (item: MenuItem) => isItemActive(item, location.pathname);
+  const isGroupActive = (item: MenuItem) => isItemActive(item, location.pathname, locationSearch);
 
   /* ── Toggle grupo ─────────────────────────────────────── */
   const toggle = (id: string) =>
@@ -412,7 +446,11 @@ export default function Sidebar() {
                               className={`sidebar-child-btn${isActive(child.path) ? ' sidebar-child-btn--active' : ''}`}
                               onClick={() => navigate(child.path!)}
                               aria-current={isActive(child.path) ? 'page' : undefined}
+                              title={child.label}
                             >
+                              {child.icon && (
+                                <span className="sidebar-item-icon" aria-hidden="true">{child.icon}</span>
+                              )}
                               {child.label}
                             </button>
                           </li>

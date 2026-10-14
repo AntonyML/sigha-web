@@ -33,9 +33,9 @@ async function waitForDashboardData(page: Page): Promise<void> {
   await expect(page.getByText(/entradas activas/)).toBeVisible({ timeout: DATA_TIMEOUT });
 }
 
-/** Botones del nav del módulo (dentro del contenido, no del sidebar del AppLayout). */
+/** Botones del módulo Entradas y Salidas en el sidebar principal. */
 function navButton(page: Page, name: string) {
-  return page.getByRole('main').getByRole('button', { name, exact: true });
+  return page.getByRole('complementary').getByRole('button', { name, exact: true });
 }
 
 /** Fecha local en formato YYYY-MM-DD (para los inputs de tipo date). */
