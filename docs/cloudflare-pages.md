@@ -42,7 +42,7 @@ La Action de Cloudflare para Wrangler es `cloudflare/wrangler-action@v4`; el com
 
 ## Desarrollo local
 
-`.env.example` usa `http://localhost:3000` como backend local. `BACKEND_API_URL` solo alimenta el rewrite opcional de `next dev`; la exportación de producción no incluye rewrites y el navegador llama directamente a `NEXT_PUBLIC_API_URL`. El backend debe permitir CORS desde `http://localhost:3001` durante desarrollo y desde el origen de Pages en producción.
+`.env.example` usa `/api/backend` en `NEXT_PUBLIC_API_URL` durante el desarrollo local. `next dev` reenvía esa ruta al destino de `BACKEND_API_URL` (por defecto, `http://localhost:3000`), así que el navegador usa el mismo origen y no depende de CORS local. La exportación de producción no incluye rewrites: configura `NEXT_PUBLIC_API_URL` con el origen público del API y permite en CORS el origen de Pages.
 
 Los IDs seleccionados para las pantallas de detalle y edición se guardan en Context y `sessionStorage`. Las páginas tienen rutas fijas para que Pages pueda servirlas desde `out/`; una recarga conserva la selección en esa pestaña. La API mantiene sus endpoints actuales para consultar y modificar el registro seleccionado.
 

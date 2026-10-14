@@ -47,7 +47,20 @@ export default function SecurityAuditPage() {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     loadEvents();
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [loadEvents]);
 
   const filtered = events

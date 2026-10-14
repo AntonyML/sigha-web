@@ -8,7 +8,7 @@ import { medicalRecordService } from '@/infrastructure/api/services/medicalRecor
 import type { MedicalRecord, CreateMedicalRecordDto, UpdateMedicalRecordDto } from '@/infrastructure/api/services/medicalRecordService';
 import { validateMedicalRecordData, validateMedicalRecordId, getMedicalRecordErrorMessage } from '@/modules/medical-records/application/flows/medical-record/validation/medicalRecordValidations';
 
-export interface MedicalRecordFlowResult<T = any> {
+export interface MedicalRecordFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

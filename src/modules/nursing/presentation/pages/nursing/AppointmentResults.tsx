@@ -24,12 +24,6 @@ export default function AppointmentResults() {
   // Leer el parámetro returnTo de la URL
   const returnPath = searchParams.get('returnTo') || '/nursing/appointments/history';
 
-  useEffect(() => {
-    if (id) {
-      loadAppointmentResults();
-    }
-  }, [id]);
-
   const loadAppointmentResults = async () => {
     setLoading(true);
     setError('');
@@ -67,6 +61,25 @@ export default function AppointmentResults() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
+    if (id) {
+      loadAppointmentResults();
+    }
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [id]);
 
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);

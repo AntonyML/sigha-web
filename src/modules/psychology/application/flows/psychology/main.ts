@@ -7,7 +7,7 @@
 import { psychologyService, type PsychologySessionApi, type CreatePsychologySessionDto, type UpdatePsychologySessionDto } from '@/infrastructure/api/services/psychologyService';
 import { validatePsychologyData, validatePsychologyId } from '@/modules/psychology/application/flows/psychology/validation/psychologyValidations';
 
-export interface PsychologyFlowResult<T = any> {
+export interface PsychologyFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

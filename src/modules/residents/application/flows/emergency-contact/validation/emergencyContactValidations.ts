@@ -191,7 +191,16 @@ export function validatePatientId(patientId: string | number | null | undefined)
  * @param data - Datos del contacto a validar
  * @returns Resultado de la validación
  */
-export function validateEmergencyContactData(data: any): ValidationResult {
+interface EmergencyContactValidationData {
+    name?: string | null;
+    phone?: string | null;
+    relationship?: string | null;
+    patientId?: string | number | null;
+    email?: string | null;
+}
+
+export function validateEmergencyContactData(input: object): ValidationResult {
+    const data = input as EmergencyContactValidationData;
     if (!data || typeof data !== 'object') {
         return { isValid: false, error: EmergencyContactValidationError.MISSING_REQUIRED_FIELD };
     }

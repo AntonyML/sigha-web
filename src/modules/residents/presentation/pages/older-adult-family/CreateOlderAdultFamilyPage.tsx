@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { olderAdultFamilyService } from '@/infrastructure/api/services/olderAdultFamilyService';
@@ -69,9 +70,8 @@ export default function CreateOlderAdultFamilyPage() {
     try {
       await olderAdultFamilyService.create(form);
       navigate('/older-adult-family');
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al crear';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al crear'));
     } finally {
       setLoading(false);
     }

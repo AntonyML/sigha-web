@@ -69,8 +69,8 @@ export function validateOlderAdultUpdateId(id: string | number | null | undefine
  * @param patientId - ID del paciente a validar
  * @returns Resultado de la validación
  */
-export function validatePatientId(patientId: string | number | null | undefined): ValidationResult {
-    if (patientId === null || patientId === undefined) {
+export function validatePatientId(patientId: unknown): ValidationResult {
+    if (typeof patientId !== 'string' && typeof patientId !== 'number') {
         return { isValid: false, error: OlderAdultUpdateValidationError.INVALID_PATIENT_ID };
     }
 
@@ -89,7 +89,7 @@ export function validatePatientId(patientId: string | number | null | undefined)
  * @param updateType - Tipo de actualización a validar
  * @returns Resultado de la validación
  */
-export function validateUpdateType(updateType: string | null | undefined): ValidationResult {
+export function validateUpdateType(updateType: unknown): ValidationResult {
     if (!updateType || typeof updateType !== 'string') {
         return { isValid: false, error: OlderAdultUpdateValidationError.MISSING_REQUIRED_FIELD };
     }
@@ -115,7 +115,7 @@ export function validateUpdateType(updateType: string | null | undefined): Valid
  * @param date - Fecha a validar
  * @returns Resultado de la validación
  */
-export function validateUpdateDate(date: string | Date | null | undefined): ValidationResult {
+export function validateUpdateDate(date: unknown): ValidationResult {
     if (!date) {
         return { isValid: false, error: OlderAdultUpdateValidationError.MISSING_REQUIRED_FIELD };
     }
@@ -156,7 +156,7 @@ export function validateUpdateDate(date: string | Date | null | undefined): Vali
  * @param description - Descripción a validar
  * @returns Resultado de la validación
  */
-export function validateUpdateDescription(description: string | null | undefined): ValidationResult {
+export function validateUpdateDescription(description: unknown): ValidationResult {
     if (!description || typeof description !== 'string') {
         return { isValid: false, error: OlderAdultUpdateValidationError.MISSING_REQUIRED_FIELD };
     }
@@ -177,10 +177,11 @@ export function validateUpdateDescription(description: string | null | undefined
  * @param updateData - Datos específicos de la actualización
  * @returns Resultado de la validación
  */
-export function validateUpdateSpecificData(updateType: string, updateData: any): ValidationResult {
-    if (!updateData || typeof updateData !== 'object') {
+export function validateUpdateSpecificData(updateType: unknown, input: unknown): ValidationResult {
+    if (typeof input !== 'object' || input === null || Array.isArray(input)) {
         return { isValid: false, error: OlderAdultUpdateValidationError.INVALID_UPDATE_DATA };
     }
+    const updateData = input as Record<string, unknown>;
 
     switch (updateType) {
         case UpdateType.PERSONAL_INFO:
@@ -215,7 +216,7 @@ export function validateUpdateSpecificData(updateType: string, updateData: any):
 /**
  * Valida datos de información personal
  */
-function validatePersonalInfoData(data: any): ValidationResult {
+function validatePersonalInfoData(data: Record<string, unknown>): ValidationResult {
     // Al menos uno de los campos debe estar presente
     const hasValidField = data.name || data.birthDate || data.gender || data.nationality;
 
@@ -242,7 +243,7 @@ function validatePersonalInfoData(data: any): ValidationResult {
 /**
  * Valida datos de información médica
  */
-function validateMedicalInfoData(data: any): ValidationResult {
+function validateMedicalInfoData(data: Record<string, unknown>): ValidationResult {
     // Al menos uno de los campos debe estar presente
     const hasValidField = data.bloodType || data.allergies || data.chronicConditions || data.disabilities;
 
@@ -256,7 +257,7 @@ function validateMedicalInfoData(data: any): ValidationResult {
 /**
  * Valida datos de información de contacto
  */
-function validateContactInfoData(data: any): ValidationResult {
+function validateContactInfoData(data: Record<string, unknown>): ValidationResult {
     // Al menos uno de los campos debe estar presente
     const hasValidField = data.phone || data.email || data.address;
 
@@ -270,7 +271,7 @@ function validateContactInfoData(data: any): ValidationResult {
 /**
  * Valida datos de contacto de emergencia
  */
-function validateEmergencyContactData(data: any): ValidationResult {
+function validateEmergencyContactData(data: Record<string, unknown>): ValidationResult {
     // Debe tener al menos nombre y teléfono
     if (!data.name || !data.phone) {
         return { isValid: false, error: OlderAdultUpdateValidationError.INVALID_UPDATE_DATA };
@@ -282,7 +283,7 @@ function validateEmergencyContactData(data: any): ValidationResult {
 /**
  * Valida datos de estado de salud
  */
-function validateHealthStatusData(data: any): ValidationResult {
+function validateHealthStatusData(data: Record<string, unknown>): ValidationResult {
     // Al menos uno de los campos debe estar presente
     const hasValidField = data.generalHealth || data.mobility || data.mentalHealth || data.nutrition;
 
@@ -296,7 +297,7 @@ function validateHealthStatusData(data: any): ValidationResult {
 /**
  * Valida datos de medicación
  */
-function validateMedicationData(data: any): ValidationResult {
+function validateMedicationData(data: Record<string, unknown>): ValidationResult {
     // Debe tener al menos nombre del medicamento
     if (!data.medicationName) {
         return { isValid: false, error: OlderAdultUpdateValidationError.INVALID_UPDATE_DATA };
@@ -308,7 +309,7 @@ function validateMedicationData(data: any): ValidationResult {
 /**
  * Valida datos de situación de vivienda
  */
-function validateLivingSituationData(data: any): ValidationResult {
+function validateLivingSituationData(data: Record<string, unknown>): ValidationResult {
     // Al menos uno de los campos debe estar presente
     const hasValidField = data.livingArrangement || data.careLevel || data.assistanceNeeded;
 
@@ -322,7 +323,7 @@ function validateLivingSituationData(data: any): ValidationResult {
 /**
  * Valida datos de otros tipos de actualización
  */
-function validateOtherUpdateData(data: any): ValidationResult {
+function validateOtherUpdateData(data: Record<string, unknown>): ValidationResult {
     // Para otros tipos, solo verificar que haya algún dato
     if (Object.keys(data).length === 0) {
         return { isValid: false, error: OlderAdultUpdateValidationError.INVALID_UPDATE_DATA };
@@ -337,7 +338,7 @@ function validateOtherUpdateData(data: any): ValidationResult {
  * @param data - Datos de la actualización a validar
  * @returns Resultado de la validación
  */
-export function validateOlderAdultUpdateData(data: any): ValidationResult {
+export function validateOlderAdultUpdateData(data: Record<string, unknown>): ValidationResult {
     if (!data || typeof data !== 'object') {
         return { isValid: false, error: OlderAdultUpdateValidationError.MISSING_REQUIRED_FIELD };
     }

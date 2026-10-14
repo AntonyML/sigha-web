@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Bell, ArrowLeft, Plus, Search, X, AlertCircle, Eye, Trash2 } from 'lucide-react'
 import { notificationService } from '@/infrastructure/api/services/notificationService'
@@ -39,7 +39,20 @@ export default function NotificationsListPage() {
     }
   }, [])
 
-  useEffect(() => { loadNotifications() }, [loadNotifications])
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadNotifications()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [loadNotifications])
 
   const handleDelete = async (id: number) => {
     const ok = await feedback.confirm('Eliminar notificación', '¿Está seguro de que desea eliminar esta notificación?')

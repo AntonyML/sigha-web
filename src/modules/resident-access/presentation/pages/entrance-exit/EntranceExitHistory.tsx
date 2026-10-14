@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { RefreshCw, Search, X, Calendar, Download, Printer, ChevronLeft, Inbox, LogIn, LogOut } from 'lucide-react'
 import { entranceExitService } from '@/infrastructure/api/services/entranceExitService'
@@ -59,8 +59,6 @@ export default function EntranceExitHistory() {
   const [typeFilter,setTypeFilter]= useState('')   // entrance | exit | ''
   const navigate = useNavigate()
 
-  useEffect(() => { loadData() }, [])
-
   const loadData = async () => {
     setLoading(true)
     try {
@@ -72,6 +70,21 @@ export default function EntranceExitHistory() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => { loadData()
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
+  }, [])
 
   const term = search.trim().toLowerCase()
   const filtered = records.filter(r => {

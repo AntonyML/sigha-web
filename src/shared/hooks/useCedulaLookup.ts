@@ -132,6 +132,11 @@ export function useCedulaLookup(
 
   /* ── Effect principal ────────────────────────────────────── */
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     // Guardia para modo edición: saltear carga inicial
     if (opts?.skipFirstRun && isFirstRunRef.current) {
       isFirstRunRef.current = false
@@ -200,6 +205,14 @@ export function useCedulaLookup(
     setNormalizedRaw(digits)
     setHelperText('Formato de cédula no reconocido.')
   // eslint-disable-next-line react-hooks/exhaustive-deps
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [cedula])
 
   /* ── Handlers del diálogo de extranjero ─────────────────── */

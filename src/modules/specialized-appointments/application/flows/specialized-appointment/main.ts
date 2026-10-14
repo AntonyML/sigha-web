@@ -8,7 +8,7 @@ import { specializedAppointmentsService } from '@/infrastructure/api/services/sp
 import type { SpecializedAppointmentApi, CreateSpecializedAppointmentDto, UpdateSpecializedAppointmentDto } from '@/infrastructure/api/services/specializedAppointmentsService';
 import { validateSpecializedAppointmentData, validateSpecializedAppointmentId } from '@/modules/specialized-appointments/application/flows/specialized-appointment/validation/appointmentValidations';
 
-export interface SpecializedAppointmentFlowResult<T = any> {
+export interface SpecializedAppointmentFlowResult<T = unknown> {
     success: boolean;
     data?: T;
     error?: string;

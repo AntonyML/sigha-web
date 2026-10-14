@@ -1,11 +1,12 @@
-import type { InputHTMLAttributes } from 'react'
+import { useId, type InputHTMLAttributes } from 'react'
 
 type Props = InputHTMLAttributes<HTMLInputElement> & {
   label?: string
 }
 
 export default function TextInput({ label, id, className = '', ...rest }: Props) {
-  const inputId = id ?? `input_${Math.random().toString(36).slice(2, 8)}`
+  const generatedId = useId()
+  const inputId = id ?? `input_${generatedId}`
   return (
     <div className="mb-3">
       {label && (

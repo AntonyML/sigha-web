@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { clinicalMedicationService, type UpdateClinicalMedicationDto } from '@/infrastructure/api/services/clinicalMedicationService';
@@ -29,9 +30,8 @@ export default function EditClinicalMedicationPage() {
       await clinicalMedicationService.update(Number(id), form);
       setSuccess('Medicamento actualizado exitosamente');
       setTimeout(() => navigate('/clinical-medication'), 1500);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'Error al actualizar';
-      setError(Array.isArray(msg) ? msg.join(', ') : msg);
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Error al actualizar'));
     } finally { setSaving(false); }
   };
 

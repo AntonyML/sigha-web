@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from '@/shared/navigation';
 import { notificationService } from '@/infrastructure/api/services/notificationService';
 import type { Notification } from '@/shared/types/notification';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 
 const statusLabel: Record<string, string> = {
   pending: 'Pendiente',
@@ -31,11 +32,9 @@ export default function ViewNotificationPage() {
           await notificationService.markAsRead(Number(id));
           setNotification(prev => prev ? { ...prev, nStatus: 'read' } : prev);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error loading notification:', err);
-        console.error('Error response:', err.response?.data);
-        console.error('Error status:', err.response?.status);
-        setError(`Error al cargar la notificación: ${err.response?.data?.message || err.message || 'Error desconocido'}`);
+        setError(`Error al cargar la notificación: ${getApiErrorMessage(err, 'Error desconocido')}`);
       } finally {
         setLoading(false);
       }

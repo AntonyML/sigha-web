@@ -28,12 +28,18 @@ export const vaccineService = {
   getAllVaccines: async (): Promise<Vaccine[]> => {
     try {
       console.log('🔍 Conectando con backend para obtener vacunas...');
-      const response = await apiClient.get('/vaccines');
+      const response = await apiClient.get<unknown>('/vaccines');
       console.log('✅ Respuesta del backend (vacunas):', response.data);
       console.log('🔍 Estructura de response.data:', JSON.stringify(response.data, null, 2));
       
       // El backend puede devolver los datos directamente o en una estructura { data: [...] }
-      const rawVaccines = Array.isArray(response.data) ? response.data : (response.data.data || []);
+      const responseData = response.data;
+      const rawVaccines = Array.isArray(responseData)
+        ? responseData
+        : typeof responseData === 'object' && responseData !== null &&
+            'data' in responseData && Array.isArray(responseData.data)
+          ? responseData.data
+          : [];
       console.log('🔍 Raw vaccines array:', JSON.stringify(rawVaccines, null, 2));
       
       // Verificar la estructura de las vacunas
@@ -43,12 +49,10 @@ export const vaccineService = {
       }
       
       // Filtrar y validar que las vacunas tengan las propiedades necesarias
-      const vaccines = rawVaccines.filter((vaccine: any) => {
-        const isValid = vaccine && 
-          typeof vaccine === 'object' && 
-          vaccine.vName && 
-          typeof vaccine.vName === 'string' &&
-          vaccine.id !== undefined;
+      const vaccines = rawVaccines.filter((vaccine): vaccine is Vaccine => {
+        const isValid = typeof vaccine === 'object' && vaccine !== null &&
+          'vName' in vaccine && typeof vaccine.vName === 'string' &&
+          'id' in vaccine && typeof vaccine.id === 'number';
         
         if (!isValid) {
           console.log('❌ Vacuna inválida filtrada:', JSON.stringify(vaccine, null, 2));

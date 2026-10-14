@@ -68,11 +68,24 @@ export default function ViewPhysiotherapySessionPage() {
   const [error, setError]   = useState('')
 
   useEffect(() => {
+    let active = true;
+    let cleanup: (() => void) | undefined;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      const maybeCleanup = (() => {
     if (!id) return
     setLoading(true)
     physiotherapyService.getSessionById(Number(id))
       .then(data => { setSession(data); setLoading(false) })
       .catch(() => { setError('No se pudo cargar la sesión de fisioterapia.'); setLoading(false) })
+
+      })();
+      if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+    });
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [id])
 
   if (loading) return (

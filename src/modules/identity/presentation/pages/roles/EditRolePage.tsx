@@ -76,9 +76,22 @@ export default function EditRolePage() {
     }, [id]);
 
     useEffect(() => {
+      let active = true;
+      let cleanup: (() => void) | undefined;
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        const maybeCleanup = (() => {
         const formChanges = JSON.stringify(formData) !== JSON.stringify(originalData);
         const permChanges = !setsEqual(grantedIds, originalGrantedIds);
         setHasChanges(formChanges || permChanges);
+
+        })();
+        if (typeof maybeCleanup === "function") cleanup = maybeCleanup;
+      });
+      return () => {
+        active = false;
+        cleanup?.();
+      };
     }, [formData, originalData, grantedIds, originalGrantedIds]);
 
     const groupedByModule = useMemo(() => {
