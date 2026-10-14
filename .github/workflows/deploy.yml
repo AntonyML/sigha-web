@@ -1,0 +1,154 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  qa:
+    name: QA & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Unit Tests
+        run: bun run test:unit
+
+      - name: Build static export
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://sigha-api.onrender.com' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.sigha.tonyml.com' }}
+          NEXT_PUBLIC_APP_ENV: ${{ vars.NEXT_PUBLIC_APP_ENV || 'production' }}
+          NEXT_PUBLIC_ENABLE_2FA: ${{ vars.NEXT_PUBLIC_ENABLE_2FA || 'true' }}
+        run: bun run build
+
+      - name: Typecheck
+        run: bunx tsc --noEmit
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-artifact
+          path: out
+          retention-days: 1
+
+  release:
+    name: Auto-Versioning & Release
+    needs: qa
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.versioning.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculate next semantic version
+        id: versioning
+        run: |
+          git fetch --tags --force
+          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing tags found. Initializing release at v1.0.0"
+            NEW_TAG="v1.0.0"
+            CHANGELOG=$(git log -n 10 --pretty=format:"* %s (%h)")
+          else
+            echo "Latest tag detected: $LATEST_TAG"
+            VERSION="${LATEST_TAG#v}"
+            MAJOR=$(echo "$VERSION" | cut -d. -f1)
+            MINOR=$(echo "$VERSION" | cut -d. -f2)
+            PATCH=$(echo "$VERSION" | cut -d. -f3)
+
+            MAJOR=${MAJOR:-1}
+            MINOR=${MINOR:-0}
+            PATCH=${PATCH:-0}
+
+            COMMITS=$(git log "${LATEST_TAG}..HEAD" --pretty=format:"%s")
+
+            if echo "$COMMITS" | grep -qiE "(BREAKING CHANGE|feat!:)"; then
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+            elif echo "$COMMITS" | grep -qiE "^(feat|minor)(\(.*\))?:"; then
+              MINOR=$((MINOR + 1))
+              PATCH=0
+            else
+              PATCH=$((PATCH + 1))
+            fi
+
+            NEW_TAG="v${MAJOR}.${MINOR}.${PATCH}"
+            CHANGELOG=$(git log "${LATEST_TAG}..HEAD" --pretty=format:"* %s (%h)")
+          fi
+
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="* Despliegue de actualización a producción (${NEW_TAG})"
+          fi
+
+          echo "tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+
+          cat <<EOF > release_notes.md
+          ## SIGHA Web ${NEW_TAG}
+
+          ### Cambios incluidos
+          ${CHANGELOG}
+
+          ---
+          *Despliegue automático a Cloudflare Pages.*
+          EOF
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.versioning.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping creation."
+          else
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes-file release_notes.md \
+              --target "$GITHUB_SHA"
+          fi
+
+  deploy:
+    name: Deploy to Cloudflare Pages
+    needs: [qa, release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-artifact
+          path: out
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'sigha-web' }} --branch=main
