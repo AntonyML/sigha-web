@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import type {
   Notification,
   CreateNotificationDto,
@@ -10,7 +10,7 @@ import type {
 import { config } from '@/shared/config/app.config';
 import { navigateTo } from '@/shared/lib/navigationUtils';
 
-const apiClient = axios.create({
+const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
   headers: { 'Content-Type': 'application/json' },
 });

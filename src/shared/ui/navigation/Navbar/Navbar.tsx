@@ -17,6 +17,7 @@ import MobileBottomNav from '@/shared/ui/navigation/Navbar/MobileBottomNav';
 import GlobalSearch    from '@/shared/ui/navigation/Navbar/GlobalSearch';
 import NavbarDateTime  from '@/shared/ui/navigation/Navbar/NavbarDateTime';
 import NavbarBell      from '@/shared/ui/navigation/Navbar/NavbarBell';
+import OrganizationSwitcher from '@/shared/ui/navigation/Navbar/OrganizationSwitcher';
 
 /* ────────────────────────────────────────────────────── */
 
@@ -78,6 +79,8 @@ export default function Navbar() {
           <div className="navbar-actions">
             <NavbarDateTime />
 
+            <OrganizationSwitcher />
+
             <span className="navbar-divider" aria-hidden="true" />
 
             <NavbarBell />
@@ -102,6 +105,7 @@ export default function Navbar() {
               <span className="navbar-brand-name">{appName}</span>
           </div>
 
+          <OrganizationSwitcher />
           <NavbarBell />
         </div>
       </div>

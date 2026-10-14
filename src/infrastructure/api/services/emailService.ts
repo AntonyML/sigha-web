@@ -3,6 +3,7 @@
 // Reemplaza al legacy `notifuseService`.
 
 import axios from 'axios';
+import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import { getApiUrl, config } from '@/shared/config/app.config';
 import type {
   EmailContact,
@@ -11,7 +12,7 @@ import type {
   SendPasswordResetEmailRequest,
 } from '@/shared/types/email';
 
-const emailClient = axios.create({
+const emailClient = createApiClient({
   baseURL: config.api.baseUrl,
   timeout: 10000,
   headers: {

@@ -76,7 +76,12 @@ describe('TwoFactorVerificationPage — navegación post-verificación', () => {
         resolveRefresh = resolve;
       }),
     );
-    authFlowMock.verify2FA.mockResolvedValue({ success: true, user: TEST_USER });
+    authFlowMock.verify2FA.mockResolvedValue({
+      success: true,
+      user: TEST_USER,
+      organizations: [{ id: 12, name: 'Hogar Norte', slug: 'hogar-norte', logoUrl: null, isPrimary: true }],
+      activeOrganizationId: 12,
+    });
 
     renderPage();
 
@@ -98,7 +103,12 @@ describe('TwoFactorVerificationPage — navegación post-verificación', () => {
 
   it('navega a /dashboard cuando la verificación es exitosa y el refresh ya resolvió', async () => {
     const user = userEvent.setup();
-    authFlowMock.verify2FA.mockResolvedValue({ success: true, user: TEST_USER });
+    authFlowMock.verify2FA.mockResolvedValue({
+      success: true,
+      user: TEST_USER,
+      organizations: [{ id: 12, name: 'Hogar Norte', slug: 'hogar-norte', logoUrl: null, isPrimary: true }],
+      activeOrganizationId: 12,
+    });
 
     renderPage();
 

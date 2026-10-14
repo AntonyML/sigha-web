@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { SettingsProvider } from '@/app/providers/SettingsContext'
+import { SettingsProvider, useOrganizationSettings } from '@/app/providers/SettingsContext'
 import { TwoFactorProvider, useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor'
 import { authStorage } from '@/infrastructure/storage/authStorage'
 import { PermissionUtils } from '@/shared/lib/permissionUtils'
@@ -21,13 +21,36 @@ function AuthenticationGate({ children }: { children: ReactNode }) {
       router.replace('/login')
       return
     }
-    void PermissionUtils.load().catch((error: unknown) => {
-      console.error('No se pudieron cargar los permisos iniciales', error)
-    })
     setAuthenticated(true)
   }, [router])
 
   if (!authenticated) return <LoadingSpinner message="Verificando sesión..." />
+  return <>{children}</>
+}
+
+function OrganizationGate({ children }: { children: ReactNode }) {
+  const router = useRouter()
+  const { loaded, activeOrganization, selectionRequired } = useOrganizationSettings()
+
+  useEffect(() => {
+    if (!loaded) return
+    if (!authStorage.isAuthenticated()) {
+      router.replace('/login')
+      return
+    }
+    if (selectionRequired || !activeOrganization) {
+      router.replace('/seleccionar-organizacion')
+      return
+    }
+    void PermissionUtils.load().catch((error: unknown) => {
+      console.error('No se pudieron cargar los permisos iniciales', error)
+    })
+  }, [activeOrganization, loaded, router, selectionRequired])
+
+  if (!loaded || !activeOrganization || selectionRequired) {
+    return <LoadingSpinner message="Verificando organización activa..." />
+  }
+
   return <>{children}</>
 }
 
@@ -56,13 +79,15 @@ function TwoFactorGate({ children }: { children: ReactNode }) {
 export default function WorkspaceLayout({ children }: { children: ReactNode }) {
   return (
     <SettingsProvider>
-      <NotificationProvider>
-        <TwoFactorProvider>
-          <AuthenticationGate>
-            <TwoFactorGate>{children}</TwoFactorGate>
-          </AuthenticationGate>
-        </TwoFactorProvider>
-      </NotificationProvider>
+      <AuthenticationGate>
+        <OrganizationGate>
+          <NotificationProvider>
+            <TwoFactorProvider>
+              <TwoFactorGate>{children}</TwoFactorGate>
+            </TwoFactorProvider>
+          </NotificationProvider>
+        </OrganizationGate>
+      </AuthenticationGate>
     </SettingsProvider>
   )
 }
