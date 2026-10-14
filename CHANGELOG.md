@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-14 | sigha-web-20261014-vrsi | tipo: fix quitar ID adulto mayor de UI emergency-contacts: selector con búsqueda por cédula/nombre + select (create/edit) y lista sin ID | verificación: test:run 60/60 PASS en dev (4 nuevos); eslint focalizado 0 errores en dev; next build PASS en dev (rutas /emergency-contacts prerender OK)
 2026-10-14 | sigha-web-20261014-a3q8 | tipo: feat acoplar ContactInquiryForm al endpoint POST /contact-inquiries con estados y feedback accesible | verificación: test:run 56/56 PASS (4 tests nuevos) en dev; build 109 rutas PASS en worktree
 2026-10-14 | sigha-web-20261014-xfro | tipo: feat wizard /virtualFiles/create paso 2 familia obligatorio y errores 400 visibles | verificación: test:run 52/52 PASS en dev; lint 0 errores; build PASS en worktree
 2026-10-14 | sigha-web-20261014-zisb | tipo: feat slide menu Entradas y Salidas: Dashboard/Historial/Reg. Entrada/Reg. Salida con iconos (query ?type=), elimina mini navbar EntranceExitNav | verificacion: tsc --noEmit 0 errores y eslint 0 errores en worktree y dev; build worktree PASS (rutas entrance-exit prerender); dev server HTTP 200 /entrance-exit y health 200
