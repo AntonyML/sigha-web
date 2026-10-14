@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 
 const STORAGE_KEY = 'sigha-route-selection-v1'
@@ -198,6 +198,7 @@ export function RouteSelectionProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [selections, setSelections] = useState<RouteSelectionStore>({})
   const [ready, setReady] = useState(false)
+  const previousPathname = useRef(pathname)
 
   useEffect(() => {
     let active = true;
@@ -254,6 +255,17 @@ export function RouteSelectionProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [])
+
+  useEffect(() => {
+    if (!ready) {
+      previousPathname.current = pathname
+      return
+    }
+
+    const previous = previousPathname.current
+    previousPathname.current = pathname
+    if (previous !== pathname) clearRouteSelection(previous)
+  }, [clearRouteSelection, pathname, ready])
 
   useEffect(() => {
     if (!ready) return

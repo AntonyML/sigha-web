@@ -17,8 +17,7 @@ export interface NavigationOptions {
 /** Small compatibility seam while feature screens transition to Next navigation. */
 export function useNavigate() {
   const router = useRouter()
-  const pathname = usePathname() ?? '/'
-  const routeSelection = useRouteSelection()
+  const setRouteParameters = useRouteSelection()?.setRouteParameters
 
   return useCallback((destination: string | number, options?: NavigationOptions) => {
     if (typeof destination === 'number') {
@@ -30,18 +29,17 @@ export function useNavigate() {
     const normalized = normalizeNavigationTarget(destination)
     const nextPathname = new URL(normalized.href, window.location.origin).pathname
 
-    if (pathname !== nextPathname) routeSelection?.clearRouteSelection(pathname)
     for (const [routePath, parameters] of Object.entries(normalized.selections)) {
-      routeSelection?.setRouteParameters(routePath, parameters)
+      setRouteParameters?.(routePath, parameters)
     }
     if (options?.params) {
       const parameters = Object.fromEntries(Object.entries(options.params).map(([key, value]) => [key, String(value)]))
-      routeSelection?.setRouteParameters(nextPathname, parameters)
+      setRouteParameters?.(nextPathname, parameters)
     }
 
     if (options?.replace) router.replace(normalized.href)
     else router.push(normalized.href)
-  }, [pathname, router, routeSelection])
+  }, [router, setRouteParameters])
 }
 
 export function useLocation() {
