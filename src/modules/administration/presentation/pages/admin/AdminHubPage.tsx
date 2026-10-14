@@ -503,24 +503,30 @@ function ActionCard({ action, onNavigate }: { action: HubAction; onNavigate: (pa
       className="lp-btn lp-btn--back"
       style={{
         width: '100%',
+        minWidth: 0,
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        padding: '0.625rem 0.875rem',
+        padding: '0.75rem 0.875rem',
         borderRadius: '0.5rem',
         border: '1px solid #e2e8f0',
         textAlign: 'left',
         cursor: 'pointer',
         gap: '0.625rem',
+        // .lp-btn impone white-space: nowrap: sin esto el texto se corta
+        // en vez de envolverse (causa del desborde reportado).
+        whiteSpace: 'normal',
       }}
     >
-      <span style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', flex: 1 }}>
-        <span style={{ color: '#94a3b8', marginTop: '1px', flexShrink: 0 }}>{action.icon}</span>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: '0.125rem' }}>
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1e293b' }}>{action.label}</span>
-          <span style={{ fontSize: '0.75rem', color: '#94a3b8', lineHeight: 1.4 }}>{action.description}</span>
+      <span style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', flex: 1, minWidth: 0 }}>
+        <span aria-hidden="true" style={{ color: '#64748b', marginTop: '1px', flexShrink: 0 }}>{action.icon}</span>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', minWidth: 0 }}>
+          <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#1e293b', overflowWrap: 'break-word' }}>{action.label}</span>
+          <span style={{ fontSize: '0.8125rem', color: '#475569', lineHeight: 1.5, overflowWrap: 'break-word' }}>{action.description}</span>
         </span>
       </span>
-      <ChevronRight size={14} color="#cbd5e1" style={{ flexShrink: 0, marginTop: '3px' }} />
+      <span aria-hidden="true" style={{ flexShrink: 0, marginTop: '3px', color: '#64748b' }}>
+        <ChevronRight size={16} />
+      </span>
     </button>
   );
 }
@@ -535,6 +541,7 @@ function DomainGroup({ group, onNavigate }: { group: HubGroup; onNavigate: (path
 
   return (
     <section
+      aria-labelledby={`${group.id}-title`}
       style={{
         background: '#ffffff',
         border: '1px solid #e2e8f0',
@@ -572,9 +579,10 @@ function DomainGroup({ group, onNavigate }: { group: HubGroup; onNavigate: (path
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h3
+            id={`${group.id}-title`}
             style={{
               margin: 0,
-              fontSize: '0.9375rem',
+              fontSize: '1rem',
               fontWeight: 700,
               color: '#0f172a',
               lineHeight: 1.3,
@@ -585,9 +593,9 @@ function DomainGroup({ group, onNavigate }: { group: HubGroup; onNavigate: (path
           <p
             style={{
               margin: '0.25rem 0 0',
-              fontSize: '0.78125rem',
-              color: '#64748b',
-              lineHeight: 1.4,
+              fontSize: '0.875rem',
+              color: '#475569',
+              lineHeight: 1.5,
             }}
           >
             {group.subtitle}
@@ -595,15 +603,19 @@ function DomainGroup({ group, onNavigate }: { group: HubGroup; onNavigate: (path
         </div>
         <span
           style={{
-            fontSize: '0.6875rem',
+            fontSize: '0.75rem',
             fontWeight: 600,
-            color: group.accent,
+            // Texto en neutro oscuro (≈12:1): varios acentos de grupo
+            // no alcanzan 4.5:1 sobre blanco; el acento se conserva
+            // en el borde y el icono del grupo.
+            color: '#334155',
             background: '#ffffff',
-            border: `1px solid ${group.accent}22`,
+            border: `1px solid ${group.accent}55`,
             borderRadius: '999px',
-            padding: '0.15rem 0.55rem',
+            padding: '0.2rem 0.65rem',
             flexShrink: 0,
             alignSelf: 'flex-start',
+            whiteSpace: 'nowrap',
           }}
         >
           {visible.length} {visible.length === 1 ? 'módulo' : 'módulos'}
@@ -614,8 +626,8 @@ function DomainGroup({ group, onNavigate }: { group: HubGroup; onNavigate: (path
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '0.375rem',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))',
+          gap: '0.625rem',
           padding: '0.875rem',
         }}
       >
@@ -647,7 +659,7 @@ export default function AdminHubPage() {
           <h1 className="lp-title" style={{ fontSize: '1.625rem' }}>
             Administración
           </h1>
-          <p style={{ margin: '0.375rem 0 0', color: '#64748b', fontSize: '0.9rem', lineHeight: 1.5, maxWidth: '680px' }}>
+          <p style={{ margin: '0.375rem 0 0', color: '#475569', fontSize: '1rem', lineHeight: 1.6, maxWidth: '68ch' }}>
             Centro de operaciones del sistema. Gestiona usuarios, roles, permisos, residentes,
             programas, atención clínica, expedientes, auditoría y trazabilidad operativa
             desde un único punto de acceso.
@@ -668,7 +680,7 @@ export default function AdminHubPage() {
             <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
               {totalVisible}
             </div>
-            <div style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 500, marginTop: '0.25rem', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 500, marginTop: '0.25rem', whiteSpace: 'nowrap' }}>
               módulos accesibles
             </div>
           </div>
@@ -703,25 +715,26 @@ export default function AdminHubPage() {
                 key={item.path}
                 type="button"
                 onClick={() => navigate(item.path)}
+                className="lp-btn"
                 style={{
-                  padding: '0.375rem 0.875rem',
+                  padding: '0.5rem 1rem',
                   borderRadius: '999px',
                   border: '1.5px solid #e2e8f0',
                   background: '#ffffff',
-                  fontSize: '0.8125rem',
+                  fontSize: '0.875rem',
                   fontWeight: 500,
-                  color: '#475569',
+                  color: '#334155',
                   cursor: 'pointer',
                   transition: 'border-color 0.13s, color 0.13s, background 0.13s',
                 }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLButtonElement).style.borderColor = '#2563eb';
-                  (e.currentTarget as HTMLButtonElement).style.color = '#2563eb';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#1d4ed8';
                   (e.currentTarget as HTMLButtonElement).style.background = '#eff6ff';
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLButtonElement).style.borderColor = '#e2e8f0';
-                  (e.currentTarget as HTMLButtonElement).style.color = '#475569';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#334155';
                   (e.currentTarget as HTMLButtonElement).style.background = '#ffffff';
                 }}
               >
@@ -735,7 +748,7 @@ export default function AdminHubPage() {
       {!isLoaded && (
         <div className="lp-loading">
           <div className="lp-spinner" />
-          <span style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Cargando módulos…</span>
+          <span style={{ fontSize: '0.875rem', color: '#475569' }}>Cargando módulos…</span>
         </div>
       )}
 
@@ -760,8 +773,8 @@ export default function AdminHubPage() {
             background: '#ffffff',
             border: '1px solid #e2e8f0',
             borderRadius: '0.75rem',
-            fontSize: '0.8125rem',
-            color: '#64748b',
+            fontSize: '0.875rem',
+            color: '#475569',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem',
