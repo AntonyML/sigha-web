@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Activity, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { physiotherapyService, type PhysiotherapySessionApi } from '@/infrastructure/api/services/physiotherapyService'
+import BarthelEvaluationModal from '@/modules/physiotherapy/presentation/components/BarthelEvaluationModal'
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
@@ -25,6 +26,8 @@ export default function PhysiotherapySessionsListPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [showBarthelModal, setShowBarthelModal] = useState(false)
+  const [selectedOlderAdultId] = useState<number>(1)
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
 
@@ -97,6 +100,13 @@ export default function PhysiotherapySessionsListPage() {
         <div className="lp-actions">
           <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={16} /> Regresar
+          </button>
+          <button
+            className="lp-btn"
+            style={{ background: '#2563eb', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => setShowBarthelModal(true)}
+          >
+            <Activity size={16} /> Escala de Barthel
           </button>
           <button className="lp-btn lp-btn--success" onClick={() => navigate('/physiotherapy/create')}>
             <Plus size={16} /> Nueva Sesión
@@ -236,6 +246,17 @@ export default function PhysiotherapySessionsListPage() {
           </div>
           <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
         </div>
+      )}
+
+      {showBarthelModal && (
+        <BarthelEvaluationModal
+          idOlderAdult={selectedOlderAdultId}
+          onClose={() => setShowBarthelModal(false)}
+          onSuccess={() => {
+            setShowBarthelModal(false);
+            feedback.success('Evaluación del Índice de Barthel registrada exitosamente.');
+          }}
+        />
       )}
     </div>
   )

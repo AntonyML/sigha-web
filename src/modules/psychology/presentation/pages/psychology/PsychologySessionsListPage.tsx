@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Brain, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { psychologyService, type PsychologySessionApi } from '@/infrastructure/api/services/psychologyService'
+import YesavagePfeifferModal from '@/modules/psychology/presentation/components/YesavagePfeifferModal'
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
@@ -39,6 +40,8 @@ export default function PsychologySessionsListPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [moodFilter, setMoodFilter] = useState('')
+  const [showYesavageModal, setShowYesavageModal] = useState(false)
+  const [selectedOlderAdultId] = useState<number>(1)
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
 
@@ -110,6 +113,13 @@ export default function PsychologySessionsListPage() {
         <div className="lp-actions">
           <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={16} /> Regresar
+          </button>
+          <button
+            className="lp-btn"
+            style={{ background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => setShowYesavageModal(true)}
+          >
+            <Brain size={16} /> Yesavage / Pfeiffer
           </button>
           <button className="lp-btn lp-btn--purple" onClick={() => navigate('/psychology/create')}>
             <Plus size={16} /> Nueva Sesión
@@ -251,6 +261,17 @@ export default function PsychologySessionsListPage() {
           </div>
           <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
         </div>
+      )}
+
+      {showYesavageModal && (
+        <YesavagePfeifferModal
+          idOlderAdult={selectedOlderAdultId}
+          onClose={() => setShowYesavageModal(false)}
+          onSuccess={() => {
+            setShowYesavageModal(false);
+            feedback.success('Evaluación cognitiva y del estado de ánimo registrada exitosamente.');
+          }}
+        />
       )}
     </div>
   )

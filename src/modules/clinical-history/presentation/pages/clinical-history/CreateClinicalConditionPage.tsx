@@ -8,6 +8,27 @@ const initialForm: CreateClinicalConditionData = {
   ccName: '',
 };
 
+const ICD10_COMMON_CONDITIONS = [
+  { code: 'I10', name: 'Hipertensión esencial (primaria)' },
+  { code: 'E11', name: 'Diabetes mellitus tipo 2' },
+  { code: 'E78.0', name: 'Hipercolesterolemia pura / Dislipidemia' },
+  { code: 'N18', name: 'Enfermedad renal crónica' },
+  { code: 'I25', name: 'Enfermedad isquémica crónica del corazón' },
+  { code: 'I64', name: 'Accidente vascular encefálico (ACV)' },
+  { code: 'G20', name: 'Enfermedad de Parkinson' },
+  { code: 'F03', name: 'Demencia, no especificada' },
+  { code: 'N40', name: 'Hiperplasia de la próstata' },
+  { code: 'R32', name: 'Incontinencia urinaria, no especificada' },
+  { code: 'R29.6', name: 'Tendencia a las caídas' },
+  { code: 'M81', name: 'Osteoporosis sin fractura patológica' },
+  { code: 'J44', name: 'Enfermedad pulmonar obstructiva crónica (EPOC)' },
+  { code: 'F32', name: 'Episodio depresivo' },
+  { code: 'H54', name: 'Ceguera y disminución de la agudeza visual' },
+  { code: 'Z89', name: 'Amputación de miembro' },
+  { code: 'F17', name: 'Dependencia al tabaco' },
+  { code: 'F10', name: 'Dependencia al alcohol' },
+];
+
 export default function CreateClinicalConditionPage() {
   const [form, setForm] = useState<CreateClinicalConditionData>(initialForm);
   const [loading, setLoading] = useState(false);
@@ -75,22 +96,28 @@ export default function CreateClinicalConditionPage() {
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="form-label fw-semibold" htmlFor="ccName">
-                Nombre de la Condición Clínica <span className="text-danger">*</span>
+                Nombre de la Condición Clínica (CIE-10) <span className="text-danger">*</span>
               </label>
               <input
                 id="ccName"
                 name="ccName"
+                list="icd10-catalog"
                 type="text"
                 className="form-control"
-                placeholder="Ej: Hipertensión Arterial (HTA)"
+                placeholder="Buscar por código o descripción... Ej: I10 - Hipertensión"
                 value={form.ccName}
                 onChange={handleChange}
                 disabled={loading}
                 maxLength={200}
                 autoFocus
               />
+              <datalist id="icd10-catalog">
+                {ICD10_COMMON_CONDITIONS.map(c => (
+                  <option key={c.code} value={`${c.name} (${c.code})`} />
+                ))}
+              </datalist>
               <div className="form-text">
-                Ingrese el nombre completo o abreviatura de la condición clínica.
+                Seleccione una patología estándar según CIE-10 (OMS) o ingrese una condición personalizada.
               </div>
             </div>
 

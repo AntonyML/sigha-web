@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
 import { Users, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, Eye } from 'lucide-react'
 import { socialWorkService, type SocialWorkReportApi, type SocialWorkVisitType } from '@/infrastructure/api/services/socialWorkService'
+import ApgarEvaluationModal from '@/modules/social-work/presentation/components/ApgarEvaluationModal'
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
@@ -30,6 +31,8 @@ export default function SocialWorkReportsListPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [visitTypeFilter, setVisitTypeFilter] = useState('')
+  const [showApgarModal, setShowApgarModal] = useState(false)
+  const [selectedOlderAdultId] = useState<number>(1)
   const navigate = useNavigate()
   const feedback = useFeedbackWithNotifications()
 
@@ -101,6 +104,13 @@ export default function SocialWorkReportsListPage() {
         <div className="lp-actions">
           <button className="lp-btn lp-btn--back" onClick={() => navigate('/dashboard')}>
             <ArrowLeft size={16} /> Regresar
+          </button>
+          <button
+            className="lp-btn"
+            style={{ background: '#0891b2', color: '#fff', display: 'flex', alignItems: 'center', gap: '0.4rem', border: 'none', padding: '0.45rem 0.85rem', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 600 }}
+            onClick={() => setShowApgarModal(true)}
+          >
+            <Users size={16} /> Escala APGAR
           </button>
           <button className="lp-btn lp-btn--info" onClick={() => navigate('/social-work/create')}>
             <Plus size={16} /> Nuevo Reporte
@@ -242,6 +252,17 @@ export default function SocialWorkReportsListPage() {
           </div>
           <Pagination page={page} totalPages={totalPages} total={total} pageSize={pageSize} onPageChange={goToPage} />
         </div>
+      )}
+
+      {showApgarModal && (
+        <ApgarEvaluationModal
+          idOlderAdult={selectedOlderAdultId}
+          onClose={() => setShowApgarModal(false)}
+          onSuccess={() => {
+            setShowApgarModal(false);
+            feedback.success('Evaluación del APGAR Familiar registrada exitosamente.');
+          }}
+        />
       )}
     </div>
   )
