@@ -43,7 +43,6 @@ export default function ApgarEvaluationModal({
     try {
       await specialtiesEvaluationsService.createSocialWork({
         idOlderAdult,
-        evaluatorId: 1,
         apgarAdaptation: adaptation,
         apgarPartnership: partnership,
         apgarGrowth: growth,

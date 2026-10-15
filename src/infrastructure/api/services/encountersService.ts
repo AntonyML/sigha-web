@@ -123,12 +123,10 @@ export interface RecordVitalSignsPayload {
   weightKg?: number;
   heightCm?: number;
   notes?: string;
-  recordedBy?: number;
 }
 
 export interface RecordNursingRoundPayload {
   idOlderAdult: number;
-  idStaff: number;
   roundDate?: string;
   shift: NursingShift;
   idVitalSigns?: number;
@@ -162,14 +160,14 @@ export const encountersService = {
       .patch(`/clinical-encounters/${id}/soap`, payload)
       .then((r) => r.data?.data ?? r.data),
 
-  signEncounter: (id: number, signedBy: number): Promise<ClinicalEncounterItem> =>
+  signEncounter: (id: number): Promise<ClinicalEncounterItem> =>
     httpClient
-      .post(`/clinical-encounters/${id}/sign`, { signedBy })
+      .post(`/clinical-encounters/${id}/sign`)
       .then((r) => r.data?.data ?? r.data),
 
   createAddendum: (
     id: number,
-    payload: { authorId: number; addendumText: string; reasonForAddendum: string }
+    payload: { addendumText: string; reasonForAddendum: string }
   ): Promise<ClinicalNoteAddendumItem> =>
     httpClient
       .post(`/clinical-encounters/${id}/addendums`, payload)

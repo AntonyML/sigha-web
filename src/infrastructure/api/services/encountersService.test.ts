@@ -30,9 +30,9 @@ describe('encountersService', () => {
     const mockSigned = { id: 10, isSigned: true };
     vi.mocked(httpClient.post).mockResolvedValueOnce({ data: mockSigned } as never);
 
-    const res = await encountersService.signEncounter(10, 22);
+    const res = await encountersService.signEncounter(10);
 
-    expect(httpClient.post).toHaveBeenCalledWith('/clinical-encounters/10/sign', { signedBy: 22 });
+    expect(httpClient.post).toHaveBeenCalledWith('/clinical-encounters/10/sign');
     expect(res).toEqual(mockSigned);
   });
 
@@ -41,7 +41,6 @@ describe('encountersService', () => {
     vi.mocked(httpClient.post).mockResolvedValueOnce({ data: mockAddendum } as never);
 
     const payload = {
-      authorId: 22,
       addendumText: 'Texto aclaratorio',
       reasonForAddendum: 'Aclaración de dosis',
     };
@@ -66,7 +65,7 @@ describe('encountersService', () => {
     const mockRound = { id: 2, shift: 'morning' as const };
     vi.mocked(httpClient.post).mockResolvedValueOnce({ data: mockRound } as never);
 
-    const payload = { idOlderAdult: 1, idStaff: 1, shift: 'morning' as const };
+    const payload = { idOlderAdult: 1, shift: 'morning' as const };
     const res = await encountersService.recordNursingRound(payload);
 
     expect(httpClient.post).toHaveBeenCalledWith('/nursing-rounds', payload);

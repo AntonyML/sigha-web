@@ -47,8 +47,10 @@ export interface PsychologyEvaluationItem {
   evaluatorId: number;
   evaluationDate: string;
   yesavageGdsScore?: number;
+  yesavageResponses?: boolean[];
   depressionSeverity?: GdsLevel;
   pfeifferErrorsScore?: number;
+  pfeifferResponses?: boolean[];
   cognitiveImpairment?: PfeifferLevel;
   emotionalState?: string;
   behavioralObservations?: string;
@@ -59,6 +61,15 @@ export interface PsychologyEvaluationItem {
     name?: string;
   };
 }
+
+export type CreatePsychologyEvaluationPayload = Pick<PsychologyEvaluationItem, 'idOlderAdult'> & {
+  yesavageResponses: boolean[];
+  pfeifferResponses: boolean[];
+  emotionalState?: string;
+  behavioralObservations?: string;
+  interventionPlan?: string;
+  notes?: string;
+};
 
 export interface SocialWorkEvaluationItem {
   id: number;
@@ -85,7 +96,7 @@ export interface SocialWorkEvaluationItem {
 
 export const specialtiesEvaluationsService = {
   // Physiotherapy
-  createPhysio: (payload: Partial<PhysiotherapyEvaluationItem>): Promise<PhysiotherapyEvaluationItem> =>
+  createPhysio: (payload: Omit<Partial<PhysiotherapyEvaluationItem>, 'evaluatorId'>): Promise<PhysiotherapyEvaluationItem> =>
     httpClient
       .post('/specialties/physiotherapy', payload)
       .then((r) => r.data?.data ?? r.data),
@@ -96,7 +107,7 @@ export const specialtiesEvaluationsService = {
       .then((r) => (Array.isArray(r.data) ? r.data : r.data?.data ?? [])),
 
   // Psychology
-  createPsychology: (payload: Partial<PsychologyEvaluationItem>): Promise<PsychologyEvaluationItem> =>
+  createPsychology: (payload: CreatePsychologyEvaluationPayload): Promise<PsychologyEvaluationItem> =>
     httpClient
       .post('/specialties/psychology', payload)
       .then((r) => r.data?.data ?? r.data),
@@ -107,7 +118,7 @@ export const specialtiesEvaluationsService = {
       .then((r) => (Array.isArray(r.data) ? r.data : r.data?.data ?? [])),
 
   // Social Work
-  createSocialWork: (payload: Partial<SocialWorkEvaluationItem>): Promise<SocialWorkEvaluationItem> =>
+  createSocialWork: (payload: Omit<Partial<SocialWorkEvaluationItem>, 'evaluatorId'>): Promise<SocialWorkEvaluationItem> =>
     httpClient
       .post('/specialties/social-work', payload)
       .then((r) => r.data?.data ?? r.data),

@@ -88,13 +88,11 @@ export default function NursingRoundsPage() {
         spo2: spo2 !== '' ? Number(spo2) : undefined,
         glycemia: glycemia !== '' ? Number(glycemia) : undefined,
         painEva,
-        recordedBy: 1,
       });
 
       // 2. Record nursing round
       await encountersService.recordNursingRound({
         idOlderAdult,
-        idStaff: 1,
         roundDate: selectedDate,
         shift: selectedShift,
         idVitalSigns: vitals.id,

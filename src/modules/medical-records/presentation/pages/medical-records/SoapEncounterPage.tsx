@@ -105,7 +105,7 @@ export default function SoapEncounterPage({ encounterId, onBack }: SoapEncounter
       });
 
       // Then sign
-      const signed = await encountersService.signEncounter(encounter.id, 1);
+      const signed = await encountersService.signEncounter(encounter.id);
       setEncounter(signed);
       feedback.success('Nota clínica firmada y sellada con éxito.');
     } catch (err: unknown) {
@@ -123,7 +123,6 @@ export default function SoapEncounterPage({ encounterId, onBack }: SoapEncounter
     setSubmittingAddendum(true);
     try {
       await encountersService.createAddendum(encounter.id, {
-        authorId: 1,
         addendumText,
         reasonForAddendum,
       });
