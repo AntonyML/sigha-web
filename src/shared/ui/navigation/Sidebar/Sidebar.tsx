@@ -206,7 +206,16 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
 /* ─── Sección: Atención clínica ─────────────────────────── */
 
 const SECTION_CLINICA: MenuItem[] = [
-  { id: 'enfermeria',   label: 'Enfermería',           path: '/nursing',                  icon: <Stethoscope    className={ICON_CLASS} />, requiredModule: 'nursing' },
+  {
+    id: 'enfermeria',
+    label: 'Enfermería',
+    icon: <Stethoscope className={ICON_CLASS} />,
+    requiredModule: 'nursing',
+    children: [
+      { id: 'enf-citas',  label: 'Atenciones y Citas', path: '/nursing' },
+      { id: 'enf-rondas', label: 'Rondas de Sala',     path: '/nursing/rounds' },
+    ],
+  },
   { id: 'psicologia',   label: 'Psicología',           path: '/psychology',               icon: <Brain          className={ICON_CLASS} />, requiredModule: 'psychology' },
   { id: 'fisioterapia', label: 'Fisioterapia',         path: '/physiotherapy',            icon: <Activity       className={ICON_CLASS} />, requiredModule: 'physiotherapy' },
   { id: 'trabajoSoc',   label: 'Trabajo Social',       path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} />, requiredModule: 'socialWork' },
@@ -217,8 +226,26 @@ const SECTION_CLINICA: MenuItem[] = [
 /* ─── Sección: Historial clínico ────────────────────────── */
 
 const SECTION_HISTORIAL: MenuItem[] = [
-  { id: 'expedientes',  label: 'Expedientes Médicos', path: '/medical-records',     icon: <ClipboardList className={ICON_CLASS} />, requiredModule: 'medicalRecords' },
-  { id: 'medicamentos', label: 'Medicamentos',        path: '/clinical-medication', icon: <Pill          className={ICON_CLASS} />, requiredModule: 'clinicalMedication' },
+  {
+    id: 'expedientes',
+    label: 'Expedientes Médicos',
+    icon: <ClipboardList className={ICON_CLASS} />,
+    requiredModule: 'medicalRecords',
+    children: [
+      { id: 'exp-list', label: 'Listado General', path: '/medical-records' },
+      { id: 'exp-soap', label: 'Consulta SOAP',   path: '/medical-records/soap' },
+    ],
+  },
+  {
+    id: 'medicamentos',
+    label: 'Medicamentos',
+    icon: <Pill className={ICON_CLASS} />,
+    requiredModule: 'clinicalMedication',
+    children: [
+      { id: 'med-presc',  label: 'Prescripciones',              path: '/clinical-medication' },
+      { id: 'med-kardex', label: 'Hoja de Medicación (Kardex)', path: '/clinical-medication/kardex' },
+    ],
+  },
   { id: 'condiciones',  label: 'Condiciones',         path: '/clinical-history',    icon: <HeartPulse    className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
   { id: 'vacunas',      label: 'Vacunas',             path: '/vaccines',            icon: <Syringe       className={ICON_CLASS} />, requiredModule: 'vaccines' },
 ];

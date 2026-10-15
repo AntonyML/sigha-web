@@ -1,7 +1,7 @@
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from '@/shared/navigation'
-import { CalendarCheck, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2 } from 'lucide-react'
+import { CalendarCheck, ArrowLeft, Plus, Search, X, AlertCircle, Pencil, Trash2, FileText } from 'lucide-react'
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService'
 import type { SpecializedAppointmentApi } from '@/shared/types/specializedAppointment'
 import { AppointmentStatusApi, AppointmentPriorityApi, AppointmentTypeApi } from '@/shared/types/specializedAppointment'
@@ -204,6 +204,14 @@ export default function SpecializedAppointmentsListPage() {
                     <td>{item.saDurationMinutes ? `${item.saDurationMinutes} min` : <span className="lp-muted"></span>}</td>
                     <td className="center">
                       <div className="lp-table-actions">
+                        <button
+                          className="lp-icon-btn"
+                          title="Iniciar Consulta Clínica (SOAP)"
+                          style={{ color: '#2563eb' }}
+                          onClick={() => navigate(`/medical-records/soap/${item.id}`)}
+                        >
+                          <FileText size={14} />
+                        </button>
                         <button
                           className="lp-icon-btn lp-icon-btn--edit"
                           title="Editar"

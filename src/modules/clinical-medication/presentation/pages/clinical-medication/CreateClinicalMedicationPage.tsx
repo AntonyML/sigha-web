@@ -1,7 +1,8 @@
 import { getApiErrorMessage } from '@/shared/lib/apiError';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { clinicalMedicationService } from '@/infrastructure/api/services/clinicalMedicationService';
+import { pharmacyService, type MedicationCatalogItem } from '@/infrastructure/api/services/pharmacyService';
 import type { CreateClinicalMedicationDto } from '@/shared/types/clinicalMedication';
 import { TreatmentType } from '@/shared/types/clinicalMedication';
 
@@ -9,10 +10,17 @@ const initial: CreateClinicalMedicationDto = { mMedication: '', mDosage: '', mTr
 
 export default function CreateClinicalMedicationPage() {
   const [form, setForm] = useState<CreateClinicalMedicationDto>(initial);
+  const [medSuggestions, setMedSuggestions] = useState<MedicationCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    pharmacyService.getMedications('', true)
+      .then(setMedSuggestions)
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -45,7 +53,28 @@ export default function CreateClinicalMedicationPage() {
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
               <label className="form-label fw-semibold">Medicamento <span className="text-danger">*</span></label>
-              <input name="mMedication" className="form-control" placeholder="Ej: Metformina 850mg" value={form.mMedication} onChange={handleChange} disabled={loading} maxLength={500} autoFocus />
+              <input
+                name="mMedication"
+                list="medications-catalog"
+                className="form-control"
+                placeholder="Buscar en vademécum o escribir... Ej: Metformina 850mg"
+                value={form.mMedication}
+                onChange={handleChange}
+                disabled={loading}
+                maxLength={500}
+                autoFocus
+              />
+              <datalist id="medications-catalog">
+                {medSuggestions.map(m => (
+                  <option
+                    key={m.id}
+                    value={`${m.name}${m.concentration ? ' ' + m.concentration : ''}${m.presentation ? ' (' + m.presentation + ')' : ''}`}
+                  />
+                ))}
+              </datalist>
+              <div className="form-text">
+                Seleccione un fármaco estandarizado del vademécum o digite uno nuevo.
+              </div>
             </div>
             <div className="mb-3">
               <label className="form-label fw-semibold">Dosis <span className="text-danger">*</span></label>
