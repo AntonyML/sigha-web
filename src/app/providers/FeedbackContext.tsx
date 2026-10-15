@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   Modal,
@@ -179,19 +179,22 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     handleModalClose(false);
   }, [modalState.options, handleModalClose]);
 
+  const contextValue = useMemo(
+    () => ({
+      showToast,
+      showModal,
+      showNotification,
+      success,
+      error,
+      warning,
+      info,
+      confirm,
+    }),
+    [showToast, showModal, showNotification, success, error, warning, info, confirm]
+  );
+
   return (
-    <FeedbackContext.Provider
-      value={{
-        showToast,
-        showModal,
-        showNotification,
-        success,
-        error,
-        warning,
-        info,
-        confirm,
-      }}
-    >
+    <FeedbackContext.Provider value={contextValue}>
       {children}
 
       <Modal open={modalState.open} onOpenChange={(open) => !open && handleCancel()}>
