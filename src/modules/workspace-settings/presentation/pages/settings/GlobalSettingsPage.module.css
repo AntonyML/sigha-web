@@ -1,0 +1,270 @@
+.page {
+  display: grid;
+  gap: 1rem;
+  padding-bottom: 2rem;
+}
+
+.header {
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1.1rem;
+}
+
+.backRow {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.securityCard,
+.settingsCard {
+  overflow: hidden;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
+}
+
+.securityHeader,
+.settingsHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.875rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(110deg, #fff, #f8fafc);
+}
+
+.securityIcon,
+.brandIcon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.75rem;
+}
+
+.securityIcon {
+  color: #6d28d9;
+  background: #f3e8ff;
+}
+
+.brandIcon {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.cardTitle {
+  margin: 0 0 0.25rem;
+  color: #0f172a;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.securityContent,
+.settingsContent {
+  display: grid;
+  gap: 1.25rem;
+  padding-top: 1.5rem;
+}
+
+.verifyForm {
+  width: min(100%, 28rem);
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.codeInput {
+  max-width: 18rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.35em;
+  text-align: center;
+}
+
+.helpText {
+  margin: 0.4rem 0 0;
+  color: #64748b;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.verifyActions {
+  display: flex;
+  margin-top: 1rem;
+}
+
+.securityFootnote {
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.scopeBadge {
+  justify-self: end;
+  padding: 0.3rem 0.625rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.brandPreview {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  background: linear-gradient(145deg, #f8fafc, #fff 70%);
+}
+
+.logoFrame {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: 0 0 3.5rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 0.875rem;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.previewText {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.previewText span {
+  color: #64748b;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.previewText strong {
+  overflow-wrap: anywhere;
+  color: #0f172a;
+  font-size: 0.9375rem;
+}
+
+.field {
+  width: min(100%, 38rem);
+}
+
+.fileInput {
+  height: auto;
+  min-height: 3rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.settingsFooter {
+  display: flex;
+  min-height: 4.5rem;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #fbfdff;
+}
+
+.logoActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.uploadStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.lockRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.loading {
+  min-height: 46vh;
+  padding-top: 2rem;
+}
+
+@media (max-width: 560px) {
+  .backRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .securityHeader,
+  .settingsHeader {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 1rem;
+  }
+
+  .scopeBadge {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .securityContent,
+  .settingsContent {
+    padding: 1rem;
+  }
+
+  .settingsFooter,
+  .lockRow {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .settingsFooter > button {
+    width: 100%;
+  }
+
+  .logoActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

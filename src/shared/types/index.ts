@@ -57,3 +57,5 @@ export * from '@/shared/types/nursing';
 export * from '@/shared/types/olderAdultUpdate';
 
 export * from '@/shared/types/olderAdultFamily';
+
+export * from '@/shared/types/globalSettings';

@@ -1,4 +1,10 @@
 import { httpClient } from '@/infrastructure/api/httpClient';
+import type {
+  GlobalSettings,
+  GlobalSettingsRecord,
+  GlobalSettingsStepUpGrant,
+  GlobalSettingsUpdate,
+} from '@/shared/types/globalSettings';
 
 export interface InterfaceSettings {
   theme: string;
@@ -45,6 +51,45 @@ export const settingsService = {
     formData.append('file', file);
     const resp = await httpClient.post<{ logoUrl: string }>('/settings/general/logo', formData, {
       headers: { 'Content-Type': undefined },
+    });
+    return resp.data;
+  },
+
+  /** Reautentica al usuario con TOTP y devuelve un token de acceso de cinco minutos. */
+  verifyGlobalSettingsAccess: async (twoFactorCode: string): Promise<GlobalSettingsStepUpGrant> => {
+    const resp = await httpClient.post<GlobalSettingsStepUpGrant>(
+      '/settings/global/verify-2fa',
+      { twoFactorCode },
+    );
+    return resp.data;
+  },
+
+  /** Lectura protegida por el token temporal de step-up; el token vive en memoria del componente. */
+  getGlobalSettings: async (stepUpToken: string): Promise<GlobalSettings> => {
+    const resp = await httpClient.get<GlobalSettingsRecord>('/settings/global', {
+      headers: { 'x-global-settings-token': stepUpToken },
+    });
+    return resp.data.settings;
+  },
+
+  updateGlobalSettings: async (
+    stepUpToken: string,
+    payload: GlobalSettingsUpdate,
+  ): Promise<GlobalSettings> => {
+    const resp = await httpClient.put<GlobalSettingsRecord>('/settings/global', payload, {
+      headers: { 'x-global-settings-token': stepUpToken },
+    });
+    return resp.data.settings;
+  },
+
+  uploadGlobalLogo: async (stepUpToken: string, file: File): Promise<{ logoUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const resp = await httpClient.post<{ logoUrl: string }>('/settings/global/logo', formData, {
+      headers: {
+        'Content-Type': undefined,
+        'x-global-settings-token': stepUpToken,
+      },
     });
     return resp.data;
   },

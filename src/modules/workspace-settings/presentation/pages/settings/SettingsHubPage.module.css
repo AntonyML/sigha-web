@@ -1,0 +1,140 @@
+.page {
+  padding-bottom: 2rem;
+}
+
+.header {
+  margin-bottom: 1.25rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem;
+}
+
+.categoryCard {
+  height: 100%;
+  overflow: hidden;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.categoryCard:hover {
+  transform: translateY(-2px);
+  border-color: #cbd5e1;
+  box-shadow: 0 12px 24px rgb(15 23 42 / 9%);
+}
+
+.categoryLink {
+  display: grid;
+  height: 100%;
+  min-height: 11rem;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  align-content: start;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.categoryLink:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: -3px;
+}
+
+.categoryIcon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 0.75rem;
+}
+
+.categoryText {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.categoryTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.categoryTitle {
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.categoryLink:hover .chevron {
+  transform: translateX(2px);
+  color: #475569;
+}
+
+.categoryDescription {
+  color: #64748b;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.highlights {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+}
+
+.highlight {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.securityNote {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  color: #6d28d9;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.scopeCard {
+  margin-top: 1.25rem;
+  border-color: #dbeafe;
+  box-shadow: none;
+}
+
+.scopeContent {
+  padding: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .categoryCard,
+  .chevron {
+    transition: none;
+  }
+
+  .categoryCard:hover,
+  .categoryLink:hover .chevron {
+    transform: none;
+  }
+}
