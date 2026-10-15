@@ -16,13 +16,16 @@ type Listener = () => void;
 class PermissionUtilsImpl {
   private granted = new Set<string>();
   private loadedForUserId: number | null = null;
+  private loadError: string | null = null;
   private inFlight: Promise<void> | null = null;
   private listeners = new Set<Listener>();
 
   constructor() {
     // Listen for token changes (e.g., after 2FA enable) to reload permissions
     if (typeof window !== 'undefined') {
-      window.addEventListener('authTokenChanged', () => this.load(true));
+      window.addEventListener('authTokenChanged', () => {
+        void this.load(true).catch(() => undefined);
+      });
     }
   }
 
@@ -43,9 +46,14 @@ class PermissionUtilsImpl {
     return this.loadedForUserId !== null;
   }
 
+  getLoadError(): string | null {
+    return this.loadError;
+  }
+
   clearCache(): void {
     this.granted = new Set();
     this.loadedForUserId = null;
+    this.loadError = null;
     this.inFlight = null;
     this.notify();
   }
@@ -62,6 +70,7 @@ class PermissionUtilsImpl {
     if (!user) {
       this.granted = new Set();
       this.loadedForUserId = null;
+      this.loadError = null;
       this.notify();
       return;
     }
@@ -71,17 +80,17 @@ class PermissionUtilsImpl {
     if (roleIds.length === 0) {
       this.granted = new Set();
       this.loadedForUserId = user.id;
+      this.loadError = null;
       this.notify();
       return;
     }
 
     if (!force && this.loadedForUserId === user.id) return;
 
+    this.loadError = null;
     this.inFlight = (async () => {
       try {
-        const permsPerRole = await Promise.all(
-          roleIds.map(rid => permissionApiService.getByRole(rid).catch(() => []))
-        );
+        const permsPerRole = await Promise.all(roleIds.map(rid => permissionApiService.getByRole(rid)));
 
         const merged = new Set<string>();
         for (const rolePerms of permsPerRole) {
@@ -98,10 +107,12 @@ class PermissionUtilsImpl {
         console.error('Error cargando permisos del usuario:', err);
         this.granted = new Set();
         this.loadedForUserId = null;
+        this.loadError = 'No se pudieron cargar los permisos. Compruebe la conexión e inténtelo de nuevo.';
+        throw err;
       } finally {
         this.inFlight = null;
+        this.notify();
       }
-      this.notify();
     })();
 
     return this.inFlight;
@@ -188,12 +199,13 @@ export function usePermissions() {
 
   useEffect(() => {
     const unsubscribe = PermissionUtils.subscribe(() => force((n) => n + 1));
-    void PermissionUtils.load();
+    void PermissionUtils.load().catch(() => undefined);
     return unsubscribe;
   }, []);
 
   return {
     isLoaded: PermissionUtils.isLoaded(),
+    error: PermissionUtils.getLoadError(),
     canAccessModule: (module: string) => PermissionUtils.canAccessModule(module),
     canPerformAction: (module: string, action: string) => PermissionUtils.canPerformAction(module, action),
     isPublicModule: (module: string) => PermissionUtils.isPublicModule(module),

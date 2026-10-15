@@ -14,7 +14,12 @@ const MODULE_OPTIONS = [
     { value: 'vaccines', label: 'Vacunas' },
     { value: 'subPrograms', label: 'Sub-programas' },
     { value: 'entranceExit', label: 'Entradas/Salidas' },
-    { value: 'twoFactor', label: 'Autenticación 2FA' }
+    { value: 'twoFactor', label: 'Autenticación 2FA' },
+    { value: 'carePlans', label: 'Planes de cuidado' },
+    { value: 'accessLogs', label: 'Entradas y salidas' },
+    { value: 'systemAudit', label: 'Auditoría administrativa' },
+    { value: 'beds', label: 'Censo y camas' },
+    { value: 'lifestyle', label: 'Estilo de vida' }
 ];
 
 const ACTION_OPTIONS = [
