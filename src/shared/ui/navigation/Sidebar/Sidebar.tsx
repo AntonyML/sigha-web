@@ -50,6 +50,7 @@ import {
   Settings,
   ChevronDown,
   LayoutGrid,
+  BedDouble,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor';
 import { usePermissions } from '@/shared/lib/permissionUtils';
@@ -221,6 +222,7 @@ const SECTION_CLINICA: MenuItem[] = [
   { id: 'trabajoSoc',   label: 'Trabajo Social',       path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} />, requiredModule: 'socialWork' },
   { id: 'citas',        label: 'Citas Especializadas', path: '/specialized-appointments', icon: <CalendarCheck  className={ICON_CLASS} />, requiredModule: 'specializedAppointments' },
   { id: 'areas',        label: 'Áreas Especializadas', path: '/specialized-areas',        icon: <Building2      className={ICON_CLASS} />, requiredModule: 'specializedAreas' },
+  { id: 'censo-camas',  label: 'Censo y Camas',        path: '/inpatient',                icon: <BedDouble      className={ICON_CLASS} />, requiredModule: 'nursing' },
 ];
 
 /* ─── Sección: Historial clínico ────────────────────────── */
