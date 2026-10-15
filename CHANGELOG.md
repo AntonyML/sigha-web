@@ -1,4 +1,5 @@
 # Registro de cambios
+2026-10-14 | sigha-web-20261014-m9k2 | tipo: aislar nombre/logo por organización activa y separar preferencias generales; armonizar pantallas de organización | verificación: test:run 70/70 PASS en dev; lint 0 errores (42 avisos); build 109 rutas PASS en dev
 2026-10-14 | sigha-web-20261014-a34r | tipo: ux armonizar configuración general con componentes compartidos, vista previa en vivo y diseño responsivo | verificación: test:run 65/65 PASS en dev (5 nuevos); lint 0 errores y 43 avisos en dev; build PASS en worktree; diff --check limpio
 2026-10-14 | sigha-web-20261014-vrsi | tipo: fix quitar ID adulto mayor de UI emergency-contacts: selector con búsqueda por cédula/nombre + select (create/edit) y lista sin ID | verificación: test:run 60/60 PASS en dev (4 nuevos); eslint focalizado 0 errores en dev; next build PASS en dev (rutas /emergency-contacts prerender OK)
 2026-10-14 | sigha-web-20261014-a3q8 | tipo: feat acoplar ContactInquiryForm al endpoint POST /contact-inquiries con estados y feedback accesible | verificación: test:run 56/56 PASS (4 tests nuevos) en dev; build 109 rutas PASS en worktree
