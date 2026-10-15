@@ -27,6 +27,11 @@ export const PermissionModule = {
   SUB_PROGRAMS: 'subPrograms', // Sub-programas
   ENTRANCE_EXIT: 'entranceExit', // Entrada/Salida
   TWO_FACTOR: 'twoFactor',  // Configuración 2FA
+  CARE_PLANS: 'carePlans',
+  ACCESS_LOGS: 'accessLogs',
+  SYSTEM_AUDIT: 'systemAudit',
+  BEDS: 'beds',
+  LIFESTYLE: 'lifestyle',
   // CONFIGURATIONS = 'configurations', // Futuro: Configuraciones del sistema
   // PROFILE = 'profile', // Futuro: Perfil de usuario
 } as const;

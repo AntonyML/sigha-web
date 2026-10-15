@@ -54,17 +54,15 @@ import {
   Apple,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor';
-import { usePermissions } from '@/shared/lib/permissionUtils';
+import { PermissionUtils, usePermissions } from '@/shared/lib/permissionUtils';
+import type { PermissionModuleType } from '@/shared/types/permissions';
 
 /* ─── Types ───────────────────────────────────────────── */
 
-type PermissionModule =
-  | 'users' | 'roles' | 'permissions' | 'dashboard' | 'virtualFiles' | 'audits'
-  | 'programs' | 'vaccines' | 'subPrograms' | 'entranceExit' | 'twoFactor'
-  | 'nursing' | 'physiotherapy' | 'psychology' | 'socialWork' | 'clinicalHistory'
-  | 'clinicalMedication' | 'medicalRecords' | 'emergencyContacts' | 'olderAdultFamily'
-  | 'olderAdultUpdates' | 'specializedAreas' | 'specializedAppointments'
-  | 'notifications';
+type PermissionModule = PermissionModuleType | 'permissions' | 'nursing' | 'physiotherapy'
+  | 'psychology' | 'socialWork' | 'clinicalHistory' | 'clinicalMedication' | 'medicalRecords'
+  | 'emergencyContacts' | 'olderAdultFamily' | 'olderAdultUpdates' | 'specializedAreas'
+  | 'specializedAppointments' | 'notifications';
 
 interface MenuItem {
   id: string;
@@ -115,12 +113,13 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
     id: 'entradasSalidas',
     label: 'Entradas y Salidas',
     icon: <ArrowLeftRight className={ICON_CLASS} />,
-    requiredModule: 'entranceExit',
+    requiredModule: 'accessLogs',
     children: [
       { id: 'ee-dashboard', label: 'Dashboard', path: '/entrance-exit', icon: <LayoutDashboard className={ICON_CLASS} /> },
       { id: 'ee-history', label: 'Historial', path: '/entrance-exit/history', icon: <History className={ICON_CLASS} /> },
       { id: 'ee-reg-entrance', label: 'Reg. Entrada', path: '/entrance-exit/register?type=entrance', icon: <LogIn className={ICON_CLASS} /> },
       { id: 'ee-reg-exit', label: 'Reg. Salida', path: '/entrance-exit/register?type=exit', icon: <LogOut className={ICON_CLASS} /> },
+      { id: 'ee-reg-visit', label: 'Reg. Visita', path: '/entrance-exit/register?type=visit', icon: <Users className={ICON_CLASS} /> },
     ],
   },
   {
@@ -142,6 +141,13 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
       { id: 'sub-list',   label: 'Listado', path: '/sub-programs' },
       { id: 'sub-create', label: 'Crear',   path: '/sub-programs/create' },
     ],
+  },
+  {
+    id: 'care-plans',
+    label: 'Planes de cuidado',
+    path: '/care-plans',
+    icon: <ClipboardList className={ICON_CLASS} />,
+    requiredModule: 'carePlans',
   },
   {
     id: 'familiares',
@@ -203,6 +209,13 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
       { id: 'aud-health',    label: 'Salud del Sistema', path: '/audits/system-health' },
     ],
   },
+  {
+    id: 'auditoria-administrativa',
+    label: 'Auditoría administrativa',
+    path: '/system-audit-logs',
+    icon: <FileSearch className={ICON_CLASS} />,
+    requiredModule: 'systemAudit',
+  },
 ];
 
 /* ─── Sección: Atención clínica ─────────────────────────── */
@@ -223,7 +236,7 @@ const SECTION_CLINICA: MenuItem[] = [
   { id: 'trabajoSoc',   label: 'Trabajo Social',       path: '/social-work',              icon: <HeartHandshake className={ICON_CLASS} />, requiredModule: 'socialWork' },
   { id: 'citas',        label: 'Citas Especializadas', path: '/specialized-appointments', icon: <CalendarCheck  className={ICON_CLASS} />, requiredModule: 'specializedAppointments' },
   { id: 'areas',        label: 'Áreas Especializadas', path: '/specialized-areas',        icon: <Building2      className={ICON_CLASS} />, requiredModule: 'specializedAreas' },
-  { id: 'censo-camas',  label: 'Censo y Camas',        path: '/inpatient',                icon: <BedDouble      className={ICON_CLASS} />, requiredModule: 'nursing' },
+  { id: 'censo-camas',  label: 'Censo y Camas',        path: '/inpatient',                icon: <BedDouble      className={ICON_CLASS} />, requiredModule: 'beds' },
 ];
 
 /* ─── Sección: Historial clínico ────────────────────────── */
@@ -250,7 +263,7 @@ const SECTION_HISTORIAL: MenuItem[] = [
     ],
   },
   { id: 'condiciones',  label: 'Condiciones',         path: '/clinical-history',    icon: <HeartPulse    className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
-  { id: 'estilo-vida',  label: 'Estilo de Vida y Hábitos', path: '/lifestyle',       icon: <Apple         className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
+  { id: 'estilo-vida',  label: 'Estilo de Vida y Hábitos', path: '/lifestyle',       icon: <Apple         className={ICON_CLASS} />, requiredModule: 'lifestyle' },
   { id: 'vacunas',      label: 'Vacunas',             path: '/vaccines',            icon: <Syringe       className={ICON_CLASS} />, requiredModule: 'vaccines' },
 ];
 
@@ -330,7 +343,7 @@ export default function Sidebar() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { isEnabled, loading: twoFALoading } = useTwoFactorStatus();
-  const { isLoaded: permsLoaded, canAccessModule } = usePermissions();
+  const { isLoaded: permsLoaded, error: permissionError, canAccessModule } = usePermissions();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   /* location.search viene del adaptador '@/shared/navigation' (pathname + '?a=b').
@@ -360,6 +373,23 @@ export default function Sidebar() {
   }, [location.pathname, locationSearch]);
 
   // No renderizar menú completo hasta que sepamos el estado real de 2FA y permisos
+  if (permissionError && !twoFALoading) {
+    return (
+      <aside className="sidebar-root" aria-label="Menú lateral de navegación principal">
+        <div className="alert alert-warning m-3" role="alert">
+          <p className="mb-2">{permissionError}</p>
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
+            onClick={() => void PermissionUtils.load(true).catch(() => undefined)}
+          >
+            Reintentar
+          </button>
+        </div>
+      </aside>
+    );
+  }
+
   if (twoFALoading || !permsLoaded) {
     return (
       <aside className="sidebar-root" aria-label="Menú lateral de navegación principal">
