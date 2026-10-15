@@ -12,6 +12,7 @@ export interface VirtualFile {
   vivienda: string;
   anosEscolaridad: string;
   trabajoPrevio: string;
+  otroTrabajoDescripcion?: string;
 
   // Additional data for API
   provincia?: string;
@@ -84,6 +85,7 @@ export interface CreateVirtualFileData {
   vivienda: string;
   anosEscolaridad: string;
   trabajoPrevio: string;
+  otroTrabajoDescripcion?: string;
 
   // Clinical Background
   ta: string;
@@ -190,6 +192,7 @@ export const defaultVirtualFile: VirtualFile = {
   vivienda: '',
   anosEscolaridad: '',
   trabajoPrevio: '',
+  otroTrabajoDescripcion: '',
 
   // Datos adicionales
   provincia: '',
@@ -307,7 +310,7 @@ export interface VirtualFileApiPayload {
   oa_s_last_name: string;
   oa_birthdate: string;
   oa_marital_status: string;
-  oa_dwelling: string;
+  oa_dwelling?: string;
   oa_years_schooling: string;
   oa_previous_work: string;
   oa_is_retired: boolean;
@@ -322,8 +325,8 @@ export interface VirtualFileApiPayload {
   oa_status: string;
   oa_death_date: string | null;
   oa_economic_income: number;
-  oa_phone_numner: string; // Nota: el API tiene este typo "numner"
-  oa_email: string;
+  oa_phone_numner?: string; // Nota: el API tiene este typo "numner"
+  oa_email?: string;
   oa_profile_photo_url: string | null;
   oa_gender: string;
   oa_blood_type: string;
@@ -454,6 +457,7 @@ export function mapApiToVirtualFile(raw: any): VirtualFile {
     vivienda:        r.oaAddress       ?? '',
     anosEscolaridad: SCHOOLING_REVERSE[r.oaYearsSchooling] ?? r.oaYearsSchooling ?? '',
     trabajoPrevio:   r.oaIsRetired ? 'jubilacion' : r.oaHasPension ? 'pension' : r.oaOther ? 'otros' : (r.oaPreviousWork ?? ''),
+    otroTrabajoDescripcion: r.oaOtherDescription ?? (r.oaOther ? (r.oaPreviousWork ?? '') : ''),
     // Optional fields
     documentType:     r.oaDocumentType ?? 'nacional',
     provincia:        r.oaProvince     ?? '',
@@ -542,13 +546,32 @@ export function transformVirtualFileToApiPayload(
   const imcRaw = parseFloat(virtualFile.imc) || 0;
   const imc = Math.min(Math.round(imcRaw * 10) / 10, 999.9); // Max DECIMAL(4,1) con 1 decimal
 
-  // Determinar descripción de trabajo previo
+  // Determinar descripción de trabajo previo y otros ingresos
+  const isOther = virtualFile.trabajoPrevio === 'otros';
+  const otherDesc = isOther
+    ? (virtualFile.otroTrabajoDescripcion?.trim() || (virtualFile.otrasCondiciones?.trim() ? virtualFile.otrasCondiciones.trim() : null))
+    : null;
+
   const getWorkDescription = (): string => {
-    if (virtualFile.trabajoPrevio === 'otros' && virtualFile.otrasCondiciones) {
-      return virtualFile.otrasCondiciones;
+    if (isOther && otherDesc) {
+      return otherDesc.slice(0, 200);
     }
-    return virtualFile.trabajoPrevio;
+    if (virtualFile.trabajoPrevio === 'jubilacion') return 'Jubilación';
+    if (virtualFile.trabajoPrevio === 'pension') return 'Pensión';
+    return virtualFile.trabajoPrevio?.trim() || 'No especificado';
   };
+
+  const ALLOWED_DWELLINGS = ['Propia', 'Alquilada', 'Prestada', 'Otro'];
+  const dwelling = ALLOWED_DWELLINGS.includes(virtualFile.vivienda) ? virtualFile.vivienda : undefined;
+  const email = virtualFile.email?.trim() || undefined;
+  const phone = virtualFile.telefono?.trim() || undefined;
+
+  const bpRaw = (virtualFile.ta || '').trim();
+  const bp = /^\d{2,3}\/\d{2,3}$/.test(bpRaw) ? bpRaw : '120/80';
+  const hasNeoplasms = Boolean(virtualFile.neoplasias);
+  const neoplasmsDesc = hasNeoplasms && virtualFile.neoplasiasDetalle?.trim()
+    ? virtualFile.neoplasiasDetalle.trim()
+    : null;
 
   const hasFamily =
     !!additionalData.family &&
@@ -564,13 +587,13 @@ export function transformVirtualFileToApiPayload(
     oa_s_last_name: secondLastName || 'Sin segundo apellido',
     oa_birthdate: virtualFile.fechaNacimiento || '',
     oa_marital_status: MARITAL_STATUS_MAP[virtualFile.estadoCivil] || virtualFile.estadoCivil || 'not specified',
-    oa_dwelling: virtualFile.vivienda || 'No especificado',
+    ...(dwelling ? { oa_dwelling: dwelling } : {}),
     oa_years_schooling: YEARS_SCHOOLING_MAP[virtualFile.anosEscolaridad] || 'not specified',
     oa_previous_work: getWorkDescription() || 'No especificado',
     oa_is_retired: virtualFile.trabajoPrevio === 'jubilacion',
     oa_has_pension: virtualFile.trabajoPrevio === 'pension',
-    oa_other: virtualFile.trabajoPrevio === 'otros',
-    oa_other_description: virtualFile.trabajoPrevio === 'otros' ? virtualFile.otrasCondiciones || null : null,
+    oa_other: isOther,
+    oa_other_description: otherDesc,
     oa_document_type: virtualFile.documentType || 'nacional',
     oa_province: virtualFile.provincia || '',
     oa_canton: virtualFile.canton || '',
@@ -579,8 +602,8 @@ export function transformVirtualFileToApiPayload(
     oa_status: 'alive',
     oa_death_date: null,
     oa_economic_income: virtualFile.ingresoEconomico || 0,
-    oa_phone_numner: virtualFile.telefono || '',
-    oa_email: virtualFile.email || '',
+    ...(phone ? { oa_phone_numner: phone } : {}),
+    ...(email ? { oa_email: email } : {}),
     oa_profile_photo_url: null,
     oa_gender: virtualFile.genero || 'not specified',
     oa_blood_type: virtualFile.tipoSangre || 'UNKNOWN',
@@ -595,9 +618,9 @@ export function transformVirtualFileToApiPayload(
       ch_weight: weight > 0 ? weight : 50.0, // DECIMAL(5,2) - max 999.99
       ch_height: height > 0 ? height : 1.60, // DECIMAL(4,2) - max 99.99 metros
       ch_imc: imc > 0 ? imc : 19.5, // DECIMAL(4,1) - max 999.9 con 1 decimal
-      ch_blood_pressure: virtualFile.ta || '120/80',
-      ch_neoplasms: virtualFile.neoplasias || false,
-      ch_neoplasms_description: virtualFile.neoplasias && virtualFile.neoplasiasDetalle ? virtualFile.neoplasiasDetalle : null,
+      ch_blood_pressure: bp,
+      ch_neoplasms: hasNeoplasms,
+      ch_neoplasms_description: neoplasmsDesc,
       ch_observations: additionalData.observations || virtualFile.otrasCondiciones || 'Sin observaciones',
       ch_rcvg: virtualFile.rcvg || 'UNKNOWN',
       ch_vision_problems: virtualFile.dificultadesVision === 'SI',
