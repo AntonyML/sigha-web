@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Activity, Plus } from 'lucide-react';
 import {
   encountersService,
@@ -32,24 +32,42 @@ export default function NursingRoundsPage() {
   const [notes, setNotes] = useState<string>('');
 
   const feedback = useFeedbackWithNotifications();
+  const feedbackRef = useRef(feedback);
+  useEffect(() => {
+    feedbackRef.current = feedback;
+  }, [feedback]);
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const loadRounds = useCallback(async () => {
     setLoading(true);
     try {
       const data = await encountersService.getRoundsByDate(selectedDate, selectedShift);
-      setRounds(data);
+      if (isMountedRef.current) {
+        setRounds(data);
+      }
     } catch (err) {
       console.error(err);
-      feedback.error('Error al cargar las rondas de enfermería');
+      if (isMountedRef.current) {
+        feedbackRef.current.error('Error al cargar las rondas de enfermería');
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
-  }, [selectedDate, selectedShift, feedback]);
+  }, [selectedDate, selectedShift]);
 
   useEffect(() => {
     let active = true;
     void Promise.resolve().then(() => {
-      if (active) loadRounds();
+      if (active) void loadRounds();
     });
     return () => {
       active = false;
