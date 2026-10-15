@@ -1,58 +1,54 @@
-/**
- * SettingsHubPage — Centro de configuración del sistema
- *
- * Punto de entrada único para los ajustes de la aplicación.
- * A diferencia de Administración (que contiene CRUDs y entidades),
- * aquí se centralizan los parámetros, preferencias y reglas.
- *
- * Estructura:
- *   1. Header con título + subtítulo
- *   2. Tarjetas de categoría (grid responsivo)
- *      - General
- *      - Sistema
- *      - Módulos
- *      - Seguridad
- *      - Notificaciones
- *      - Interfaz
- *      - Flujo y comportamiento
- *   3. Footer informativo
- */
+'use client'
 
-import { useNavigate } from '@/shared/navigation';
-import type { ReactNode } from 'react';
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 import {
-  Settings as SettingsIcon, Sliders, Server, Boxes, Lock,
-  Bell, Palette, Workflow, ChevronRight, ShieldAlert, Wrench, Cog,
-} from 'lucide-react';
+  Bell,
+  Boxes,
+  ChevronRight,
+  Globe2,
+  Lock,
+  LockKeyhole,
+  Palette,
+  Server,
+  Sliders,
+  Workflow,
+} from 'lucide-react'
+import { usePermissions } from '@/shared/lib/permissionUtils'
+import { Alert } from '@/shared/ui/feedback/Alert/Alert'
+import { Card, CardContent } from '@/shared/ui/data-display/Card/Card'
+import { PageHeader } from '@/shared/ui/layouts/PageHeader/PageHeader'
+import styles from './SettingsHubPage.module.css'
 
 interface Category {
-  id: string;
-  title: string;
-  description: string;
-  path: string;
-  icon: ReactNode;
-  accent: string;
-  bg: string;
-  highlights: string[];
+  id: string
+  title: string
+  description: string
+  path: string
+  icon: ReactNode
+  accent: string
+  bg: string
+  highlights: string[]
+  adminOnly?: boolean
 }
 
 const CATEGORIES: Category[] = [
   {
     id: 'general',
     title: 'General',
-    description: 'Identidad institucional, idioma, zona horaria y datos básicos.',
+    description: 'Identidad de la organización activa, idioma y zona horaria.',
     path: '/settings/general',
-    icon: <Sliders size={22} />,
+    icon: <Sliders size={21} />,
     accent: '#475569',
     bg: 'rgba(71, 85, 105, 0.10)',
-    highlights: ['Nombre de la app', 'Idioma', 'Zona horaria', 'Logo'],
+    highlights: ['Identidad por organización', 'Idioma', 'Zona horaria'],
   },
   {
     id: 'system',
     title: 'Sistema',
-    description: 'Parámetros de plataforma, mantenimiento, respaldos y diagnóstico.',
+    description: 'Mantenimiento, respaldos y diagnóstico de la instancia.',
     path: '/settings/system',
-    icon: <Server size={22} />,
+    icon: <Server size={21} />,
     accent: '#0f766e',
     bg: 'rgba(15, 118, 110, 0.10)',
     highlights: ['Versión', 'Logs', 'Respaldos', 'Diagnóstico'],
@@ -60,143 +56,125 @@ const CATEGORIES: Category[] = [
   {
     id: 'modules',
     title: 'Módulos',
-    description: 'Activación, desactivación y configuración por módulo.',
+    description: 'Activación y configuración de las capacidades del sistema.',
     path: '/settings/modules',
-    icon: <Boxes size={22} />,
+    icon: <Boxes size={21} />,
     accent: '#7c3aed',
     bg: 'rgba(124, 58, 237, 0.10)',
-    highlights: ['Módulos activos', 'Flags por dominio', 'Capacidades'],
+    highlights: ['Módulos activos', 'Capacidades'],
   },
   {
     id: 'security',
     title: 'Seguridad',
-    description: 'Política de contraseñas, sesiones, 2FA, intentos de login.',
+    description: 'Políticas de contraseñas, sesiones, 2FA e intentos de acceso.',
     path: '/settings/security',
-    icon: <Lock size={22} />,
+    icon: <Lock size={21} />,
     accent: '#dc2626',
     bg: 'rgba(220, 38, 38, 0.10)',
-    highlights: ['Política de contraseñas', '2FA obligatorio', 'Sesiones', 'Intentos'],
+    highlights: ['Contraseñas', '2FA', 'Sesiones', 'Intentos'],
   },
   {
     id: 'notifications',
     title: 'Notificaciones',
     description: 'Reglas de envío, plantillas, canales y destinatarios.',
     path: '/settings/notifications',
-    icon: <Bell size={22} />,
+    icon: <Bell size={21} />,
     accent: '#2563eb',
     bg: 'rgba(37, 99, 235, 0.10)',
-    highlights: ['Plantillas', 'Canales', 'Destinatarios', 'Horarios'],
+    highlights: ['Plantillas', 'Canales', 'Destinatarios'],
   },
   {
     id: 'interface',
     title: 'Interfaz',
-    description: 'Apariencia, idioma, densidad y comportamiento visual.',
+    description: 'Apariencia, densidad, tipografía y comportamiento visual.',
     path: '/settings/interface',
-    icon: <Palette size={22} />,
+    icon: <Palette size={21} />,
     accent: '#d97706',
     bg: 'rgba(217, 119, 6, 0.10)',
-    highlights: ['Tema', 'Densidad', 'Tipografía', 'Color de marca'],
+    highlights: ['Tema', 'Densidad', 'Tipografía', 'Color'],
   },
   {
     id: 'flow',
     title: 'Flujo y comportamiento',
-    description: 'Reglas de negocio, automatizaciones, validaciones y pasos guiados.',
+    description: 'Reglas de negocio, automatizaciones y pasos guiados.',
     path: '/settings/flow',
-    icon: <Workflow size={22} />,
+    icon: <Workflow size={21} />,
     accent: '#be185d',
     bg: 'rgba(190, 24, 93, 0.10)',
-    highlights: ['Reglas de negocio', 'Automatizaciones', 'Validaciones', 'Wizards'],
+    highlights: ['Reglas', 'Automatizaciones', 'Validaciones'],
   },
-];
+  {
+    id: 'global',
+    title: 'Configuraciones Globales',
+    description: 'Identidad compartida de la plataforma, protegida con una verificación 2FA.',
+    path: '/settings/global',
+    icon: <Globe2 size={21} />,
+    accent: '#6d28d9',
+    bg: 'rgba(109, 40, 217, 0.10)',
+    highlights: ['Toda la plataforma', 'Admin o superadmin', 'Código 2FA'],
+    adminOnly: true,
+  },
+]
 
-function CategoryCard({ c }: { c: Category }) {
-  const navigate = useNavigate();
-
+function CategoryCard({ category }: { category: Category }) {
   return (
-    <button
-      type="button"
-      onClick={() => navigate(c.path)}
-      className="lp-card"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.75rem',
-        textAlign: 'left',
-        cursor: 'pointer',
-        border: '1px solid #e2e8f0',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-        <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.625rem', background: c.bg, color: c.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {c.icon}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-            <h3 className="lp-title" style={{ fontSize: '1.0625rem' }}>{c.title}</h3>
-            <ChevronRight size={16} color="#94a3b8" />
-          </div>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.8125rem', lineHeight: 1.4 }}>{c.description}</p>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-        {c.highlights.map((h) => (
-          <span key={h} style={{
-            fontSize: '0.6875rem',
-            padding: '0.2rem 0.5rem',
-            borderRadius: '999px',
-            background: '#f1f5f9',
-            color: '#475569',
-            fontWeight: 500,
-          }}>{h}</span>
-        ))}
-      </div>
-    </button>
-  );
+    <Card className={styles.categoryCard}>
+      <Link href={category.path} className={styles.categoryLink}>
+        <span
+          className={styles.categoryIcon}
+          style={{ color: category.accent, backgroundColor: category.bg }}
+          aria-hidden="true"
+        >
+          {category.icon}
+        </span>
+        <span className={styles.categoryText}>
+          <span className={styles.categoryTitleRow}>
+            <span className={styles.categoryTitle}>{category.title}</span>
+            <ChevronRight size={17} aria-hidden="true" className={styles.chevron} />
+          </span>
+          <span className={styles.categoryDescription}>{category.description}</span>
+        </span>
+        <span className={styles.highlights}>
+          {category.highlights.map((highlight) => (
+            <span key={highlight} className={styles.highlight}>{highlight}</span>
+          ))}
+        </span>
+        {category.adminOnly && (
+          <span className={styles.securityNote}>
+            <LockKeyhole size={14} aria-hidden="true" />
+            Requiere volver a verificar tu identidad
+          </span>
+        )}
+      </Link>
+    </Card>
+  )
 }
 
 export default function SettingsHubPage() {
+  const { isLoaded, isAdminSync, isSuperAdminSync } = usePermissions()
+  const canManageGlobalSettings = isLoaded && (isAdminSync() || isSuperAdminSync())
+  const categories = CATEGORIES.filter((category) => !category.adminOnly || canManageGlobalSettings)
+
   return (
-    <div className="lp-page">
-      <div className="lp-header">
-        <div>
-          <h2 className="lp-title">
-            <SettingsIcon size={22} color="#475569" />
-            Configuración
-          </h2>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.875rem' }}>
-            Centro de control del sistema. Ajustes, preferencias, reglas y
-            parámetros globales. No confundir con la gestión de entidades.
-          </p>
-        </div>
-      </div>
+    <main className={`lp-page ${styles.page}`}>
+      <PageHeader
+        title="Configuración"
+        subtitle="Preferencias del espacio activo y controles del sistema, organizados en un solo lugar."
+        icon="bi-gear"
+        className={styles.header}
+      />
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-        gap: '1rem',
-      }}>
-        {CATEGORIES.map((c) => <CategoryCard key={c.id} c={c} />)}
-      </div>
+      <section className={styles.grid} aria-label="Categorías de configuración">
+        {categories.map((category) => <CategoryCard key={category.id} category={category} />)}
+      </section>
 
-      <div style={{
-        marginTop: '1.5rem',
-        padding: '1rem 1.25rem',
-        background: '#fff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '0.75rem',
-        fontSize: '0.8125rem',
-        color: '#64748b',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-      }}>
-        <ShieldAlert size={18} color="#475569" />
-        <span>
-          Los cambios en configuración pueden requerir permisos especiales.
-          Cada subpágina mostrará los detalles y restricciones aplicables.
-        </span>
-      </div>
-    </div>
-  );
+      <Card className={styles.scopeCard}>
+        <CardContent className={styles.scopeContent}>
+          <Alert variant="info" title="La identidad se mantiene separada">
+            El nombre y el logo de una organización solo afectan a ese espacio. Las configuraciones globales requieren un rol administrativo y una verificación 2FA reciente.
+          </Alert>
+        </CardContent>
+      </Card>
+    </main>
+  )
 }
