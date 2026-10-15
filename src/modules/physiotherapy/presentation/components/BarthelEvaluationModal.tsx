@@ -57,7 +57,6 @@ export default function BarthelEvaluationModal({
     try {
       await specialtiesEvaluationsService.createPhysio({
         idOlderAdult,
-        evaluatorId: 1,
         barthelFeeding: feeding,
         barthelBathing: bathing,
         barthelGrooming: grooming,

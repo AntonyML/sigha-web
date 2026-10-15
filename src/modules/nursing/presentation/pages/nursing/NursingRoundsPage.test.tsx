@@ -156,6 +156,8 @@ describe('NursingRoundsPage', () => {
     await waitFor(() => {
       expect(encountersService.recordVitalSigns).toHaveBeenCalledTimes(1);
       expect(encountersService.recordNursingRound).toHaveBeenCalledTimes(1);
+      expect(encountersService.recordVitalSigns).toHaveBeenCalledWith(expect.not.objectContaining({ recordedBy: expect.anything() }));
+      expect(encountersService.recordNursingRound).toHaveBeenCalledWith(expect.not.objectContaining({ idStaff: expect.anything() }));
       expect(mockFeedback.success).toHaveBeenCalledWith(
         'Ronda de enfermería y signos vitales registrados exitosamente'
       );
