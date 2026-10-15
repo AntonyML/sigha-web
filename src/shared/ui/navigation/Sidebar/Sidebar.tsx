@@ -51,6 +51,7 @@ import {
   ChevronDown,
   LayoutGrid,
   BedDouble,
+  Apple,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor';
 import { usePermissions } from '@/shared/lib/permissionUtils';
@@ -249,6 +250,7 @@ const SECTION_HISTORIAL: MenuItem[] = [
     ],
   },
   { id: 'condiciones',  label: 'Condiciones',         path: '/clinical-history',    icon: <HeartPulse    className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
+  { id: 'estilo-vida',  label: 'Estilo de Vida y Hábitos', path: '/lifestyle',       icon: <Apple         className={ICON_CLASS} />, requiredModule: 'clinicalHistory' },
   { id: 'vacunas',      label: 'Vacunas',             path: '/vaccines',            icon: <Syringe       className={ICON_CLASS} />, requiredModule: 'vaccines' },
 ];
 
