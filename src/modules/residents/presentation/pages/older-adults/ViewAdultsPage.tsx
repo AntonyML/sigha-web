@@ -3,8 +3,9 @@ import { useParams, useNavigate } from '@/shared/navigation'
 import {
   ArrowLeft, Pencil, AlertTriangle, Loader2,
   ShieldCheck, HeartPulse, Syringe, Activity,
-  CalendarCheck, ClipboardList, User,
+  CalendarCheck, ClipboardList, User, MessageSquareText,
 } from 'lucide-react'
+import { TabResidentMemos } from '@/modules/memos/presentation/components/TabResidentMemos'
 import { virtualFileService } from '@/infrastructure/api/services/virtualFileService'
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService'
 import { nursingService } from '@/infrastructure/api/services/nursingService'
@@ -327,12 +328,13 @@ function TabMedicalRecords({ patientId, navigate }: { patientId: number; navigat
 }
 
 /* ─── Main Page ───────────────────────────────────────── */
-type TabId = 'personal' | 'appointments' | 'medical-records'
+type TabId = 'personal' | 'appointments' | 'medical-records' | 'memos'
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'personal',        label: 'Datos Personales', icon: <User size={15} /> },
   { id: 'appointments',    label: 'Citas',             icon: <CalendarCheck size={15} /> },
   { id: 'medical-records', label: 'Registros Médicos', icon: <ClipboardList size={15} /> },
+  { id: 'memos',           label: 'Bitácora y Memos',  icon: <MessageSquareText size={15} /> },
 ]
 
 export default function ViewAdultsPage() {
@@ -576,6 +578,13 @@ export default function ViewAdultsPage() {
 
       {activeTab === 'medical-records' && (
         <TabMedicalRecords patientId={patientId} navigate={navigate} />
+      )}
+
+      {activeTab === 'memos' && data && (
+        <TabResidentMemos
+          olderAdultId={patientId}
+          residentName={data.nombreApellido}
+        />
       )}
     </div>
   )
