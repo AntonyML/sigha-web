@@ -338,6 +338,24 @@ export default function EditVirtualFile() {
             </Field>
           </Grid>
 
+          {formData.trabajoPrevio === 'otros' && (
+            <Field label="Descripción de otros ingresos / ocupación *" style={{ marginBottom: '1rem' }}>
+              <input
+                className="form-control"
+                maxLength={500}
+                value={formData.otroTrabajoDescripcion || ''}
+                onChange={e => set('otroTrabajoDescripcion', e.target.value)}
+                placeholder="Indique la ocupación o fuente de ingresos"
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                <span style={{ color: '#64748b', fontSize: '0.75rem' }}>Requerido al indicar otros ingresos o trabajo.</span>
+                <span style={{ fontSize: '0.75rem', color: (formData.otroTrabajoDescripcion?.length ?? 0) >= 480 ? '#b91c1c' : '#94a3b8' }}>
+                  {formData.otroTrabajoDescripcion?.length ?? 0}/500
+                </span>
+              </div>
+            </Field>
+          )}
+
           <Grid cols={2}>
             <Field label="Cantidad de hijos">
               <input type="number" min={0} className="form-control" value={formData.cantidadHijos || 0}
@@ -431,9 +449,10 @@ export default function EditVirtualFile() {
           )}
 
           <Grid cols={2} style={{ marginTop: '1rem' }}>
-            <Field label="Neoplasias (detalle)">
+            <Field label={formData.neoplasias ? "Neoplasias (detalle) *" : "Neoplasias (detalle)"}>
               <input className="form-control" value={formData.neoplasiasDetalle}
-                onChange={e => set('neoplasiasDetalle', e.target.value)} />
+                onChange={e => set('neoplasiasDetalle', e.target.value)}
+                placeholder={formData.neoplasias ? "Descripción del diagnóstico oncológico (requerido si tiene neoplasias)" : "Descripción si aplica"} />
             </Field>
             <Field label="Otras condiciones">
               <input className="form-control" value={formData.otrasCondiciones}

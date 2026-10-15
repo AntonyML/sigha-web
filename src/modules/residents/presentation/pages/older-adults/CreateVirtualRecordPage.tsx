@@ -282,12 +282,20 @@ export default function CreateVirtualFile() {
     if (!formData.nombreApellido.trim()) {
       errs.push('El nombre completo es obligatorio.')
     }
+    if (formData.trabajoPrevio === 'otros') {
+      if (!formData.otroTrabajoDescripcion?.trim()) {
+        errs.push('La descripción de otros ingresos u ocupación es obligatoria al seleccionar "Otros".')
+      } else if (formData.otroTrabajoDescripcion.length > 500) {
+        errs.push('La descripción de otros ingresos no puede exceder 500 caracteres.')
+      }
+    }
+    if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errs.push('El correo electrónico del residente no tiene un formato válido (ej: usuario@dominio.com).')
+    }
+    if (formData.telefono?.trim() && !/^[0-9-+\s()]+$/.test(formData.telefono.trim())) {
+      errs.push('El teléfono del residente tiene un formato no válido.')
+    }
     return errs
-  }
-  function step4Errors(): string[] {
-    if (programs.length === 0) return ['No hay programas disponibles.']
-    if (!programs.some(p => p.id === programId)) return ['Seleccione el programa principal.']
-    return []
   }
   function step2Errors(): string[] {
     /* Contrato web↔api↔db: el familiar responsable es SIEMPRE obligatorio al
@@ -304,18 +312,62 @@ export default function CreateVirtualFile() {
     if (!(f.pf_name || '').trim()) errs.push('El nombre del familiar es obligatorio.')
     if (!(f.pf_f_last_name || '').trim()) errs.push('El primer apellido del familiar es obligatorio.')
     if (!(f.pf_s_last_name || '').trim()) errs.push('El segundo apellido del familiar es obligatorio.')
-    if (!(f.pf_phone_number || '').trim()) errs.push('El teléfono del familiar es obligatorio.')
+    if (!(f.pf_phone_number || '').trim()) {
+      errs.push('El teléfono del familiar es obligatorio.')
+    } else if (!/^[0-9-+\s()]+$/.test(f.pf_phone_number.trim())) {
+      errs.push('El teléfono del familiar tiene un formato no válido.')
+    }
     if (!(f.pf_email || '').trim()) {
       errs.push('El correo del familiar es obligatorio.')
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.pf_email.trim())) {
-      errs.push('El correo del familiar no es válido.')
+      errs.push('El correo del familiar no es válido (ej: usuario@dominio.com).')
     }
     if (!(f.pf_kinship || '').trim()) errs.push('El parentesco del familiar es obligatorio.')
     return errs
   }
+  function step3Errors(): string[] {
+    const errs: string[] = []
+    if (formData.neoplasias) {
+      if (!formData.neoplasiasDetalle?.trim()) {
+        errs.push('El detalle de neoplasias es obligatorio cuando se indica esta condición.')
+      } else if (formData.neoplasiasDetalle.length > 1000) {
+        errs.push('El detalle de neoplasias no puede exceder 1000 caracteres.')
+      }
+    }
+    const ta = (formData.ta || '').trim()
+    if (ta && ta !== '/') {
+      const parts = ta.split('/')
+      const sys = parts[0]?.trim()
+      const dia = parts[1]?.trim()
+      if ((sys && !dia) || (!sys && dia)) {
+        errs.push('La presión arterial debe incluir tanto la sistólica como la diastólica (ej: 120/80).')
+      } else if (sys && dia && !/^\d{2,3}\/\d{2,3}$/.test(ta)) {
+        errs.push('La presión arterial debe tener formato válido de números (ej: 120/80).')
+      }
+    }
+    if (formData.peso?.trim()) {
+      const w = parseFloat(formData.peso)
+      if (isNaN(w) || w < 1 || w > 500) {
+        errs.push('El peso debe ser un número válido entre 1 y 500 kg.')
+      }
+    }
+    if (formData.talla?.trim()) {
+      const h = parseFloat(formData.talla)
+      if (isNaN(h) || h < 50 || h > 300) {
+        errs.push('La talla debe estar entre 50 y 300 cm.')
+      }
+    }
+    return errs
+  }
+  function step4Errors(): string[] {
+    if (programs.length === 0) return ['No hay programas disponibles.']
+    if (!programs.some(p => p.id === programId)) return ['Seleccione el programa principal.']
+    return []
+  }
   function stepErrors(s: number): string[] {
     if (s === 1) return step1Errors()
     if (s === 2) return step2Errors()
+    if (s === 3) return step3Errors()
     if (s === 4) return step4Errors()
     return []
   }
@@ -339,6 +391,12 @@ export default function CreateVirtualFile() {
     if (e2.length > 0) {
       setStepAttempted(p => ({ ...p, 2: true }))
       setStep(2)
+      return
+    }
+    const e3 = step3Errors()
+    if (e3.length > 0) {
+      setStepAttempted(p => ({ ...p, 3: true }))
+      setStep(3)
       return
     }
     const e4 = step4Errors()
@@ -547,12 +605,38 @@ export default function CreateVirtualFile() {
 
           <Grid cols={3}>
             <Field label="Teléfono">
-              <input className="form-control" value={formData.telefono || ''}
-                onChange={e => set('telefono', e.target.value)} placeholder="8888-8888" />
+              <input
+                type="tel"
+                className="form-control"
+                value={formData.telefono || ''}
+                style={{
+                  borderColor: stepAttempted[1] && !!formData.telefono?.trim() && !/^[0-9-+\s()]+$/.test(formData.telefono.trim()) ? '#f87171' : undefined
+                }}
+                onChange={e => set('telefono', e.target.value)}
+                placeholder="8888-8888"
+              />
+              {stepAttempted[1] && !!formData.telefono?.trim() && !/^[0-9-+\s()]+$/.test(formData.telefono.trim()) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El teléfono tiene un formato no válido.
+                </div>
+              )}
             </Field>
             <Field label="Correo electrónico">
-              <input type="email" className="form-control" value={formData.email || ''}
-                onChange={e => set('email', e.target.value)} placeholder="correo@email.com" />
+              <input
+                type="email"
+                className="form-control"
+                value={formData.email || ''}
+                style={{
+                  borderColor: stepAttempted[1] && !!formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) ? '#f87171' : undefined
+                }}
+                onChange={e => set('email', e.target.value)}
+                placeholder="correo@email.com"
+              />
+              {stepAttempted[1] && !!formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El correo electrónico no es válido (ej: usuario@dominio.com).
+                </div>
+              )}
             </Field>
             <SelectsLocation provincia={formData.provincia ?? ''} canton={formData.canton ?? ''} distrito={formData.distrito ?? ''} onChange={(field, value) => set(field, value)} />
           </Grid>
@@ -587,6 +671,35 @@ export default function CreateVirtualFile() {
             </Field>
           </Grid>
 
+          {formData.trabajoPrevio === 'otros' && (
+            <Field label="Descripción de otros ingresos / ocupación *" style={{ marginBottom: '1rem' }}>
+              <input
+                className="form-control"
+                maxLength={500}
+                value={formData.otroTrabajoDescripcion || ''}
+                style={{
+                  borderColor: stepAttempted[1] && (!formData.otroTrabajoDescripcion?.trim() || (formData.otroTrabajoDescripcion?.length ?? 0) > 500) ? '#f87171' : undefined
+                }}
+                onChange={e => set('otroTrabajoDescripcion', e.target.value)}
+                placeholder="Indique la ocupación o fuente de ingresos (ej: ventas ambulantes, costura...)"
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                {stepAttempted[1] && !formData.otroTrabajoDescripcion?.trim() ? (
+                  <span style={{ color: '#b91c1c', fontSize: '0.75rem' }}>
+                    La descripción de otros ingresos u ocupación es obligatoria al seleccionar &quot;Otros&quot;.
+                  </span>
+                ) : (
+                  <span style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                    Requerido al indicar otros ingresos o trabajo.
+                  </span>
+                )}
+                <span style={{ fontSize: '0.75rem', color: (formData.otroTrabajoDescripcion?.length ?? 0) >= 480 ? '#b91c1c' : '#94a3b8' }}>
+                  {formData.otroTrabajoDescripcion?.length ?? 0}/500
+                </span>
+              </div>
+            </Field>
+          )}
+
           <Grid cols={2}>
             <Field label="Cantidad de hijos">
               <input type="number" min={0} className="form-control" value={formData.cantidadHijos || 0}
@@ -617,7 +730,7 @@ export default function CreateVirtualFile() {
       {step === 2 && (
         <Card title="👨‍👩‍👧 Familiar responsable">
           <Grid cols={2}>
-            <Field label="Cédula del familiar">
+            <Field label="Cédula del familiar *">
               <CedulaInput
                 value={familyData.pf_identification}
                 status={familyCedulaStatus}
@@ -627,6 +740,16 @@ export default function CreateVirtualFile() {
                 onTypeChange={handleFamilyCedulaTypeChange}
                 onChange={v => setF('pf_identification', v)}
               />
+              {stepAttempted[2] && !familyData.pf_identification.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  La cédula del familiar es obligatoria.
+                </div>
+              )}
+              {stepAttempted[2] && !!familyData.pf_identification.trim() && familyCedulaStatus === 'error' && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  La cédula del familiar no es válida.
+                </div>
+              )}
             </Field>
             {showFamilyForeignDialog && (
               <ForeignConfirmDialog
@@ -637,8 +760,8 @@ export default function CreateVirtualFile() {
             <Field label="Parentesco *">
               <select className="form-select" value={familyData.pf_kinship}
                 onChange={e => setF('pf_kinship', e.target.value)}
-                aria-invalid={visibleErrors.some(e => e.includes('parentesco'))}
-                style={visibleErrors.some(e => e.includes('parentesco')) ? { borderColor: '#dc2626' } : undefined}>
+                aria-invalid={stepAttempted[2] && !familyData.pf_kinship.trim()}
+                style={stepAttempted[2] && !familyData.pf_kinship.trim() ? { borderColor: '#dc2626' } : undefined}>
                 <option value="">Seleccionar parentesco</option>
                 <option value="son">Hijo</option>
                 <option value="daughter">Hija</option>
@@ -654,30 +777,101 @@ export default function CreateVirtualFile() {
                 <option value="other">Otro</option>
                 <option value="not specified">No especificado</option>
               </select>
+              {stepAttempted[2] && !familyData.pf_kinship.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El parentesco es obligatorio.
+                </div>
+              )}
             </Field>
           </Grid>
           <Grid cols={3}>
-            <Field label="Nombre">
-              <input className="form-control" value={familyData.pf_name}
-                onChange={e => setF('pf_name', e.target.value)} placeholder="Nombre" />
+            <Field label="Nombre *">
+              <input
+                className="form-control"
+                value={familyData.pf_name}
+                style={{ borderColor: stepAttempted[2] && !familyData.pf_name.trim() ? '#f87171' : undefined }}
+                onChange={e => setF('pf_name', e.target.value)}
+                placeholder="Nombre"
+              />
+              {stepAttempted[2] && !familyData.pf_name.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El nombre es obligatorio.
+                </div>
+              )}
             </Field>
-            <Field label="Primer apellido">
-              <input className="form-control" value={familyData.pf_f_last_name}
-                onChange={e => setF('pf_f_last_name', e.target.value)} placeholder="Primer apellido" />
+            <Field label="Primer apellido *">
+              <input
+                className="form-control"
+                value={familyData.pf_f_last_name}
+                style={{ borderColor: stepAttempted[2] && !familyData.pf_f_last_name.trim() ? '#f87171' : undefined }}
+                onChange={e => setF('pf_f_last_name', e.target.value)}
+                placeholder="Primer apellido"
+              />
+              {stepAttempted[2] && !familyData.pf_f_last_name.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El primer apellido es obligatorio.
+                </div>
+              )}
             </Field>
-            <Field label="Segundo apellido">
-              <input className="form-control" value={familyData.pf_s_last_name}
-                onChange={e => setF('pf_s_last_name', e.target.value)} placeholder="Segundo apellido" />
+            <Field label="Segundo apellido *">
+              <input
+                className="form-control"
+                value={familyData.pf_s_last_name}
+                style={{ borderColor: stepAttempted[2] && !familyData.pf_s_last_name.trim() ? '#f87171' : undefined }}
+                onChange={e => setF('pf_s_last_name', e.target.value)}
+                placeholder="Segundo apellido"
+              />
+              {stepAttempted[2] && !familyData.pf_s_last_name.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El segundo apellido es obligatorio.
+                </div>
+              )}
             </Field>
           </Grid>
           <Grid cols={2}>
-            <Field label="Teléfono">
-              <input className="form-control" value={familyData.pf_phone_number}
-                onChange={e => setF('pf_phone_number', e.target.value)} placeholder="8888-8888" />
+            <Field label="Teléfono *">
+              <input
+                type="tel"
+                className="form-control"
+                value={familyData.pf_phone_number}
+                style={{
+                  borderColor: stepAttempted[2] && (!familyData.pf_phone_number.trim() || !/^[0-9-+\s()]+$/.test(familyData.pf_phone_number.trim())) ? '#f87171' : undefined
+                }}
+                onChange={e => setF('pf_phone_number', e.target.value)}
+                placeholder="8888-8888"
+              />
+              {stepAttempted[2] && !familyData.pf_phone_number.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El teléfono es obligatorio.
+                </div>
+              )}
+              {stepAttempted[2] && !!familyData.pf_phone_number.trim() && !/^[0-9-+\s()]+$/.test(familyData.pf_phone_number.trim()) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El teléfono tiene un formato no válido.
+                </div>
+              )}
             </Field>
-            <Field label="Correo electrónico">
-              <input type="email" className="form-control" value={familyData.pf_email}
-                onChange={e => setF('pf_email', e.target.value)} placeholder="correo@email.com" />
+            <Field label="Correo electrónico *">
+              <input
+                type="email"
+                className="form-control"
+                value={familyData.pf_email}
+                style={{
+                  borderColor: stepAttempted[2] && (!familyData.pf_email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(familyData.pf_email.trim())) ? '#f87171' : undefined
+                }}
+                onChange={e => setF('pf_email', e.target.value)}
+                placeholder="correo@email.com"
+              />
+              {stepAttempted[2] && !familyData.pf_email.trim() && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El correo electrónico es obligatorio.
+                </div>
+              )}
+              {stepAttempted[2] && !!familyData.pf_email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(familyData.pf_email.trim()) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  El correo electrónico no es válido (ej: usuario@dominio.com).
+                </div>
+              )}
             </Field>
           </Grid>
         </Card>
@@ -701,7 +895,10 @@ export default function CreateVirtualFile() {
                     set('ta', `${e.target.value}/${dia}`)
                   }}
                   placeholder="120"
-                  style={{ textAlign: 'center' }}
+                  style={{
+                    textAlign: 'center',
+                    borderColor: stepAttempted[3] && formData.ta && formData.ta !== '/' && (!formData.ta.split('/')[0]?.trim() || !formData.ta.split('/')[1]?.trim() || !/^\d{2,3}\/\d{2,3}$/.test(formData.ta)) ? '#f87171' : undefined
+                  }}
                 />
                 <span style={{ fontWeight: 700, color: '#94a3b8', fontSize: '1.1rem', flexShrink: 0 }}>/</span>
                 <input
@@ -712,17 +909,45 @@ export default function CreateVirtualFile() {
                     set('ta', `${sys}/${e.target.value}`)
                   }}
                   placeholder="80"
-                  style={{ textAlign: 'center' }}
+                  style={{
+                    textAlign: 'center',
+                    borderColor: stepAttempted[3] && formData.ta && formData.ta !== '/' && (!formData.ta.split('/')[0]?.trim() || !formData.ta.split('/')[1]?.trim() || !/^\d{2,3}\/\d{2,3}$/.test(formData.ta)) ? '#f87171' : undefined
+                  }}
                 />
               </div>
+              {stepAttempted[3] && formData.ta && formData.ta !== '/' && (!formData.ta.split('/')[0]?.trim() || !formData.ta.split('/')[1]?.trim() || !/^\d{2,3}\/\d{2,3}$/.test(formData.ta)) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Formato inválido (debe ingresar sistólica y diastólica, ej: 120/80).
+                </div>
+              )}
             </Field>
             <Field label="Peso (kg)">
-              <input type="number" step="0.1" className="form-control" value={formData.peso}
-                onChange={e => set('peso', e.target.value)} placeholder="70.5" />
+              <input
+                type="number" step="0.1" className="form-control" value={formData.peso}
+                style={{
+                  borderColor: stepAttempted[3] && !!formData.peso?.trim() && (isNaN(parseFloat(formData.peso)) || parseFloat(formData.peso) < 1 || parseFloat(formData.peso) > 500) ? '#f87171' : undefined
+                }}
+                onChange={e => set('peso', e.target.value)} placeholder="70.5"
+              />
+              {stepAttempted[3] && !!formData.peso?.trim() && (isNaN(parseFloat(formData.peso)) || parseFloat(formData.peso) < 1 || parseFloat(formData.peso) > 500) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Debe estar entre 1 y 500 kg.
+                </div>
+              )}
             </Field>
             <Field label="Talla (cm)">
-              <input type="number" className="form-control" value={formData.talla}
-                onChange={e => set('talla', e.target.value)} placeholder="170" />
+              <input
+                type="number" className="form-control" value={formData.talla}
+                style={{
+                  borderColor: stepAttempted[3] && !!formData.talla?.trim() && (isNaN(parseFloat(formData.talla)) || parseFloat(formData.talla) < 50 || parseFloat(formData.talla) > 300) ? '#f87171' : undefined
+                }}
+                onChange={e => set('talla', e.target.value)} placeholder="170"
+              />
+              {stepAttempted[3] && !!formData.talla?.trim() && (isNaN(parseFloat(formData.talla)) || parseFloat(formData.talla) < 50 || parseFloat(formData.talla) > 300) && (
+                <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                  Debe estar entre 50 y 300 cm.
+                </div>
+              )}
             </Field>
             <Field label="IMC">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 38 }}>
@@ -761,9 +986,36 @@ export default function CreateVirtualFile() {
             </button>
           </div>
 
-          <Field label="Neoplasias (detalle)" style={{ marginTop: '0.75rem' }}>
-            <input className="form-control" value={formData.neoplasiasDetalle}
-              onChange={e => set('neoplasiasDetalle', e.target.value)} placeholder="Descripción si aplica" />
+          <Field
+            label={formData.neoplasias ? "Neoplasias (detalle) *" : "Neoplasias (detalle)"}
+            style={{ marginTop: '0.75rem' }}
+          >
+            <input
+              className="form-control"
+              maxLength={1000}
+              value={formData.neoplasiasDetalle || ''}
+              style={{
+                borderColor: stepAttempted[3] && formData.neoplasias && (!formData.neoplasiasDetalle?.trim() || (formData.neoplasiasDetalle?.length ?? 0) > 1000) ? '#f87171' : undefined
+              }}
+              onChange={e => set('neoplasiasDetalle', e.target.value)}
+              placeholder={formData.neoplasias ? "Descripción del diagnóstico oncológico (requerido si marcó Neoplasias)" : "Descripción si aplica"}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+              {stepAttempted[3] && formData.neoplasias && !formData.neoplasiasDetalle?.trim() ? (
+                <span style={{ color: '#b91c1c', fontSize: '0.75rem' }}>
+                  El detalle de neoplasias es obligatorio cuando se indica esta condición médica.
+                </span>
+              ) : formData.neoplasias ? (
+                <span style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                  Obligatorio al marcar la condición médica de neoplasias.
+                </span>
+              ) : (
+                <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Opcional si no presenta neoplasias</span>
+              )}
+              <span style={{ fontSize: '0.75rem', color: (formData.neoplasiasDetalle?.length ?? 0) >= 950 ? '#b91c1c' : '#94a3b8' }}>
+                {formData.neoplasiasDetalle?.length ?? 0}/1000
+              </span>
+            </div>
           </Field>
           <Field label="Otras condiciones">
             <input className="form-control" value={formData.otrasCondiciones}

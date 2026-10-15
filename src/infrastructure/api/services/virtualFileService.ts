@@ -101,6 +101,17 @@ export const virtualFileService = {
         throw new Error('El parentesco del familiar es obligatorio.');
       }
 
+      // Validar condiciones específicas requeridas por el API
+      if (apiPayload.oa_other && !apiPayload.oa_other_description?.trim()) {
+        throw new Error('La descripción de otros ingresos es requerida cuando se indica otros ingresos.');
+      }
+      if (apiPayload.oa_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(apiPayload.oa_email)) {
+        throw new Error('El formato del correo electrónico del residente es inválido.');
+      }
+      if (apiPayload.clinical_history.ch_neoplasms && !apiPayload.clinical_history.ch_neoplasms_description?.trim()) {
+        throw new Error('El detalle de neoplasias es requerido cuando se indica esta condición.');
+      }
+
       // Validar que clinical_history tenga valores numéricos válidos
       if (!apiPayload.clinical_history.ch_weight || apiPayload.clinical_history.ch_weight <= 0) {
         console.warn('⚠️ Peso inválido, usando valor por defecto');
@@ -138,7 +149,17 @@ export const virtualFileService = {
       medications: medications || [],
       observations: data.otrasCondiciones
     });
-    
+    // Validar condiciones específicas requeridas por el API
+    if (apiPayload.oa_other && !apiPayload.oa_other_description?.trim()) {
+      throw new Error('La descripción de otros ingresos es requerida cuando se indica otros ingresos.');
+    }
+    if (apiPayload.oa_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(apiPayload.oa_email)) {
+      throw new Error('El formato del correo electrónico del residente es inválido.');
+    }
+    if (apiPayload.clinical_history.ch_neoplasms && !apiPayload.clinical_history.ch_neoplasms_description?.trim()) {
+      throw new Error('El detalle de neoplasias es requerido cuando se indica esta condición.');
+    }
+
     console.log('📤 Payload de actualización enviado al API:', JSON.stringify(apiPayload, null, 2));
     
     const response = await apiClient.put<{ message: string; data: unknown }>(`/virtual-records/${id}`, apiPayload);
