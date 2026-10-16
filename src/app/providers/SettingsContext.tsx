@@ -30,6 +30,14 @@ const INTERFACE_DEFAULTS: InterfaceSettings = {
   brandColor: '#2563eb',
 };
 
+function organizationAppName(organization: ActiveOrganization): string {
+  return organization.brandingOverrides?.displayName ?? organization.name;
+}
+
+function organizationLogoUrl(organization: ActiveOrganization): string {
+  return organization.brandingOverrides?.logoUrl ?? organization.logoUrl ?? '';
+}
+
 interface SettingsContextType {
   general: AppSettings;
   interface: InterfaceSettings;
@@ -80,6 +88,7 @@ function applyInterfaceSettings(s: InterfaceSettings): void {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [general, setGeneral] = useState<AppSettings>(GENERAL_DEFAULTS);
   const [interfaceSettings, setInterfaceSettings] = useState<InterfaceSettings>(INTERFACE_DEFAULTS);
+  const [globalBrandColor, setGlobalBrandColor] = useState(INTERFACE_DEFAULTS.brandColor);
   const [organizations, setOrganizations] = useState<OrganizationSummary[]>([]);
   const [activeOrganization, setActiveOrganization] = useState<ActiveOrganization | null>(null);
   const [selectionRequired, setSelectionRequired] = useState(false);
@@ -91,6 +100,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const resetToDefaults = () => {
       setGeneral(GENERAL_DEFAULTS);
       setInterfaceSettings(INTERFACE_DEFAULTS);
+      setGlobalBrandColor(INTERFACE_DEFAULTS.brandColor);
       applyInterfaceSettings(INTERFACE_DEFAULTS);
       document.title = GENERAL_DEFAULTS.appName;
     };
@@ -141,18 +151,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
 
         setGeneral({
-          appName: active.name,
-          // A logo belongs to the active organization; global settings are not a fallback brand.
-          logoUrl: active.logoUrl || '',
+          appName: organizationAppName(active),
+          logoUrl: organizationLogoUrl(active),
           timezone: generalData?.timezone || GENERAL_DEFAULTS.timezone,
         });
-        document.title = active.name;
+        document.title = organizationAppName(active);
+
+        const globalBrandColor = interfaceData?.brandColor ?? INTERFACE_DEFAULTS.brandColor;
+        setGlobalBrandColor(globalBrandColor);
 
         const iface: InterfaceSettings = {
           theme: interfaceData?.theme || INTERFACE_DEFAULTS.theme,
           density: interfaceData?.density || INTERFACE_DEFAULTS.density,
           typography: interfaceData?.typography || INTERFACE_DEFAULTS.typography,
-          brandColor: interfaceData?.brandColor || INTERFACE_DEFAULTS.brandColor,
+          brandColor: active.brandingOverrides?.primaryColor ?? globalBrandColor,
         };
         setInterfaceSettings(iface);
         applyInterfaceSettings(iface);
@@ -198,46 +210,73 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const switchOrganization = useCallback(async (organizationId: number) => {
     const response = await authService.switchActiveOrganization(organizationId);
     const organization = response.activeOrganization;
+    const appName = organizationAppName(organization);
     setOrganizations(response.organizations);
     setActiveOrganization(organization);
     setSelectionRequired(false);
     setGeneral((current) => ({
       ...current,
-      appName: organization.name,
-      // Clear the previous organization's logo when the new organization has none.
-      logoUrl: organization.logoUrl || '',
+      appName,
+      logoUrl: organizationLogoUrl(organization),
     }));
-    document.title = organization.name;
+    document.title = appName;
+    const nextInterfaceSettings = {
+      ...interfaceSettings,
+      brandColor: organization.brandingOverrides?.primaryColor ?? globalBrandColor,
+    };
+    setInterfaceSettings(nextInterfaceSettings);
+    applyInterfaceSettings(nextInterfaceSettings);
     return organization;
-  }, []);
+  }, [globalBrandColor, interfaceSettings]);
 
   const updateActiveOrganization = useCallback((organization: ActiveOrganization) => {
-    setActiveOrganization(organization);
+    const currentActive = activeOrganization?.id === organization.id ? activeOrganization : null;
+    const nextOrganization: ActiveOrganization = {
+      ...currentActive,
+      ...organization,
+      brandingOverrides: organization.brandingOverrides === undefined
+        ? currentActive?.brandingOverrides ?? null
+        : organization.brandingOverrides,
+    };
+    const appName = organizationAppName(nextOrganization);
+    setActiveOrganization(nextOrganization);
     setOrganizations((current) => current.map((item) => (
-      item.id === organization.id ? { ...item, ...organization } : item
+      item.id === nextOrganization.id ? { ...item, ...nextOrganization } : item
     )));
     setGeneral((current) => ({
       ...current,
-      appName: organization.name,
-      logoUrl: organization.logoUrl || '',
+      appName,
+      logoUrl: organizationLogoUrl(nextOrganization),
     }));
-    document.title = organization.name;
-  }, []);
+    document.title = appName;
+    const nextInterfaceSettings = {
+      ...interfaceSettings,
+      brandColor: nextOrganization.brandingOverrides?.primaryColor ?? globalBrandColor,
+    };
+    setInterfaceSettings(nextInterfaceSettings);
+    applyInterfaceSettings(nextInterfaceSettings);
+  }, [activeOrganization, globalBrandColor, interfaceSettings]);
 
   const updateGeneral = useCallback((s: AppSettings) => {
     const next = {
       ...s,
-      appName: activeOrganization?.name ?? s.appName,
-      logoUrl: activeOrganization?.logoUrl || '',
+      appName: activeOrganization ? organizationAppName(activeOrganization) : s.appName,
+      logoUrl: activeOrganization ? organizationLogoUrl(activeOrganization) : '',
     };
     setGeneral(next);
     document.title = next.appName;
   }, [activeOrganization]);
 
   const updateInterface = useCallback((s: InterfaceSettings) => {
-    setInterfaceSettings(s);
-    applyInterfaceSettings(s);
-  }, []);
+    const nextGlobalBrandColor = s.brandColor ?? INTERFACE_DEFAULTS.brandColor;
+    setGlobalBrandColor(nextGlobalBrandColor);
+    const next = {
+      ...s,
+      brandColor: activeOrganization?.brandingOverrides?.primaryColor ?? nextGlobalBrandColor,
+    };
+    setInterfaceSettings(next);
+    applyInterfaceSettings(next);
+  }, [activeOrganization]);
 
   return (
     <SettingsContext.Provider value={{

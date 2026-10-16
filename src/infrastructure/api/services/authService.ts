@@ -1,11 +1,33 @@
 import axios from 'axios';
 import type { LoginResponse, AuthUser } from '@/shared/types/auth'
-import type { ActiveOrganizationResponse, OrganizationSummary } from '@/shared/types/organization';
+import type { ActiveOrganization, ActiveOrganizationResponse, OrganizationSummary } from '@/shared/types/organization';
 import { createApiClient } from '@/infrastructure/api/organizationAccessRedirect';
 import { navigateTo, getCurrentPath } from '@/shared/lib/navigationUtils'
 import { config } from '@/shared/config/app.config';
 
 const ORGANIZATION_SELECTION_KEY = 'organizationSelectionPending';
+
+function mapOrganizationSummary(organization: OrganizationSummary): OrganizationSummary {
+  return {
+    ...organization,
+    brandingOverrides: organization.brandingOverrides ?? null,
+  };
+}
+
+function mapActiveOrganization(organization: ActiveOrganization): ActiveOrganization {
+  return {
+    ...organization,
+    brandingOverrides: organization.brandingOverrides ?? null,
+  };
+}
+
+function mapActiveOrganizationResponse(response: ActiveOrganizationResponse): ActiveOrganizationResponse {
+  return {
+    ...response,
+    activeOrganization: mapActiveOrganization(response.activeOrganization),
+    organizations: response.organizations.map(mapOrganizationSummary),
+  };
+}
 
 const apiClient = createApiClient({
   baseURL: config.api.baseUrl,
@@ -261,7 +283,7 @@ export const authService = {
 
   getOrganizations: async (): Promise<OrganizationSummary[]> => {
     const response = await apiClient.get<OrganizationSummary[]>('/auth/organizations');
-    return response.data;
+    return response.data.map(mapOrganizationSummary);
   },
 
   getActiveOrganizationId: (): number | null => {
@@ -284,7 +306,8 @@ export const authService = {
     const response = await apiClient.post<ActiveOrganizationResponse>('/auth/context', {
       organizationId,
     });
-    const { accessToken, refreshToken } = response.data;
+    const mappedResponse = mapActiveOrganizationResponse(response.data);
+    const { accessToken, refreshToken } = mappedResponse;
     localStorage.setItem('authToken', accessToken);
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
     else localStorage.removeItem('refreshToken');
@@ -304,7 +327,7 @@ export const authService = {
     }
     authService.setOrganizationSelectionPending(false);
     window.dispatchEvent(new CustomEvent('authTokenChanged'));
-    return response.data;
+    return mappedResponse;
   },
 
   getTempToken: (): string | null => localStorage.getItem('tempToken'),

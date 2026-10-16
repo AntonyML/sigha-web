@@ -21,6 +21,7 @@ vi.mock('@/infrastructure/api/services/settingsService', () => ({ settingsServic
 import {
   SettingsProvider,
   useAppSettings,
+  useInterfaceSettings,
   useOrganizationSettings,
 } from './SettingsContext'
 
@@ -42,6 +43,7 @@ const clinicWithoutLogo = {
 
 function SettingsProbe() {
   const settings = useAppSettings()
+  const interfaceSettings = useInterfaceSettings()
   const { activeOrganization, organizations, switchOrganization, updateActiveOrganization } = useOrganizationSettings()
 
   return (
@@ -49,6 +51,7 @@ function SettingsProbe() {
       <span data-testid="active-name">{activeOrganization?.name}</span>
       <span data-testid="active-logo">{settings.logoUrl || 'Sin logo activo'}</span>
       <span data-testid="app-name">{settings.appName}</span>
+      <span data-testid="brand-color">{interfaceSettings.brandColor}</span>
       <span data-testid="organization-list">{organizations.map((organization) => organization.name).join(', ')}</span>
       <button type="button" onClick={() => { void switchOrganization(2) }}>Cambiar organización</button>
       <button
@@ -93,12 +96,33 @@ describe('SettingsContext — marca de la organización activa', () => {
     })
   })
 
+  it('prioriza brandingOverrides de la organización sobre la marca global', async () => {
+    authMocks.getOrganizations.mockResolvedValue([{
+      ...clinicWithLogo,
+      brandingOverrides: {
+        displayName: 'Roble Salud',
+        logoUrl: 'https://cdn.example/roble-brand.png',
+        primaryColor: '#9b1c31',
+      },
+    }])
+
+    render(<SettingsProvider><SettingsProbe /></SettingsProvider>)
+
+    expect(await screen.findByTestId('active-name')).toHaveTextContent('Clínica Roble')
+    expect(screen.getByTestId('app-name')).toHaveTextContent('Roble Salud')
+    expect(screen.getByTestId('active-logo')).toHaveTextContent('https://cdn.example/roble-brand.png')
+    expect(screen.getByTestId('brand-color')).toHaveTextContent('#9b1c31')
+    expect(document.title).toBe('Roble Salud')
+    expect(screen.getByTestId('app-name')).not.toHaveTextContent('SIGHA global')
+  })
+
   it('no hereda el logo global ni el logo anterior al cambiar de organización', async () => {
     const user = userEvent.setup()
     render(<SettingsProvider><SettingsProbe /></SettingsProvider>)
 
     expect(await screen.findByTestId('active-name')).toHaveTextContent('Clínica Roble')
     expect(screen.getByTestId('active-logo')).toHaveTextContent('https://cdn.example/roble.png')
+    expect(screen.getByTestId('brand-color')).toHaveTextContent('#2563eb')
 
     await user.click(screen.getByRole('button', { name: 'Cambiar organización' }))
 
@@ -106,6 +130,44 @@ describe('SettingsContext — marca de la organización activa', () => {
     expect(screen.getByTestId('app-name')).toHaveTextContent('Centro del Valle')
     expect(screen.getByTestId('active-logo')).toHaveTextContent('Sin logo activo')
     expect(screen.getByTestId('active-logo')).not.toHaveTextContent('global-logo.png')
+    expect(screen.getByTestId('brand-color')).toHaveTextContent('#2563eb')
+  })
+
+  it('reaplica los overrides de marca al cambiar de organización', async () => {
+    const firstOrganization = {
+      ...clinicWithLogo,
+      brandingOverrides: {
+        displayName: 'Roble Salud',
+        logoUrl: 'https://cdn.example/roble-brand.png',
+        primaryColor: '#9b1c31',
+      },
+    }
+    const nextOrganization = {
+      ...clinicWithoutLogo,
+      brandingOverrides: {
+        displayName: 'Valle Bienestar',
+        logoUrl: 'https://cdn.example/valle-brand.png',
+        primaryColor: '#167d62',
+      },
+    }
+    authMocks.getOrganizations.mockResolvedValue([firstOrganization, nextOrganization])
+    authMocks.switchActiveOrganization.mockResolvedValue({
+      activeOrganization: nextOrganization,
+      organizations: [firstOrganization, nextOrganization],
+    })
+
+    const user = userEvent.setup()
+    render(<SettingsProvider><SettingsProbe /></SettingsProvider>)
+
+    expect(await screen.findByTestId('app-name')).toHaveTextContent('Roble Salud')
+    expect(screen.getByTestId('brand-color')).toHaveTextContent('#9b1c31')
+
+    await user.click(screen.getByRole('button', { name: 'Cambiar organización' }))
+
+    await waitFor(() => expect(screen.getByTestId('app-name')).toHaveTextContent('Valle Bienestar'))
+    expect(screen.getByTestId('active-logo')).toHaveTextContent('https://cdn.example/valle-brand.png')
+    expect(screen.getByTestId('brand-color')).toHaveTextContent('#167d62')
+    expect(document.title).toBe('Valle Bienestar')
   })
 
   it('sincroniza el nombre/logo del contexto y el selector después de editar la organización activa', async () => {
