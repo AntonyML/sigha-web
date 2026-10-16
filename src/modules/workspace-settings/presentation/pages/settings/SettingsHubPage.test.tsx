@@ -35,7 +35,7 @@ describe('SettingsHubPage', () => {
     render(<SettingsHubPage />)
 
     const globalLink = screen.getByRole('link', { name: /Configuraciones Globales/ })
-    expect(globalLink).toHaveAttribute('href', '/platform/settings/global')
+    expect(globalLink).toHaveAttribute('href', '/settings/global')
     expect(within(globalLink).getByText('Código 2FA')).toBeInTheDocument()
   })
 
