@@ -6,6 +6,7 @@ import { virtualFileService } from '@/infrastructure/api/services/virtualFileSer
 import type { AppointmentType, AppointmentPriority, CreateAppointmentDto } from '@/shared/types/nursing';
 import { appointmentTypeLabels, appointmentPriorityLabels } from '@/shared/types/nursing';
 import type { PatientBasicInfo } from '@/shared/types/virtualFile';
+import { DatePicker, TimePicker } from '@/shared/ui/forms';
 
 interface AppointmentForm {
   patientId: string;
@@ -390,30 +391,30 @@ export default function ScheduleAppointment() {
               </div>
 
               <div className="col-md-3">
-                <label htmlFor="appointmentDate" className="form-label">Fecha *</label>
-                <input
+                <DatePicker
                   id="appointmentDate"
-                  type="date"
-                  className={`form-control ${errors.appointmentDate ? 'is-invalid' : ''}`}
-                  value={formData.appointmentDate}
-                  onChange={(e) => handleInputChange('appointmentDate', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
+                  name="appointmentDate"
+                  label="Fecha"
                   required
+                  value={formData.appointmentDate}
+                  onChange={(val) => handleInputChange('appointmentDate', val)}
+                  minDate={new Date().toISOString().split('T')[0]}
+                  error={errors.appointmentDate}
+                  containerClassName="mb-0"
                 />
-                {errors.appointmentDate && <div className="invalid-feedback">{errors.appointmentDate}</div>}
               </div>
 
               <div className="col-md-3">
-                <label htmlFor="appointmentTime" className="form-label">Hora *</label>
-                <input
+                <TimePicker
                   id="appointmentTime"
-                  type="time"
-                  className={`form-control ${errors.appointmentTime ? 'is-invalid' : ''}`}
-                  value={formData.appointmentTime}
-                  onChange={(e) => handleInputChange('appointmentTime', e.target.value)}
+                  name="appointmentTime"
+                  label="Hora"
                   required
+                  value={formData.appointmentTime}
+                  onChange={(val) => handleInputChange('appointmentTime', val)}
+                  error={errors.appointmentTime}
+                  containerClassName="mb-0"
                 />
-                {errors.appointmentTime && <div className="invalid-feedback">{errors.appointmentTime}</div>}
               </div>
 
               <div className="col-12">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Activity, Plus } from 'lucide-react';
+import { DatePicker } from '@/shared/ui/forms/DatePicker';
 import {
   encountersService,
   type NursingRoundItem,
@@ -128,11 +129,9 @@ export default function NursingRoundsPage() {
         </div>
 
         <div className="d-flex align-items-center gap-2">
-          <input
-            type="date"
-            className="form-control"
+          <DatePicker
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={setSelectedDate}
           />
 
           <select

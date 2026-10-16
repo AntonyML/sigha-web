@@ -6,6 +6,8 @@ import { vaccineService } from '@/infrastructure/api/services/vaccineService'
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
+import { DatePicker } from '@/shared/ui/forms/DatePicker'
+import { DateDisplay } from '@/shared/ui/data-display/DateDisplay'
 
 interface PatientVaccination {
   id: number;
@@ -304,8 +306,8 @@ export default function VaccineListPage() {
                       <td><span className="lp-badge lp-badge--info">{imm.vaccineName}</span></td>
                       <td>{imm.dose}</td>
                       <td><code>{imm.lotNumber}</code></td>
-                      <td>{imm.expirationDate}</td>
-                      <td>{imm.administeredAt}</td>
+                      <td><DateDisplay value={imm.expirationDate} /></td>
+                      <td><DateDisplay value={imm.administeredAt} /></td>
                       <td><small className="text-muted">{imm.professionalName}</small></td>
                       <td>
                         {imm.adverseReactions === 'Ninguna'
@@ -407,11 +409,10 @@ export default function VaccineListPage() {
                   <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: '#334155', marginBottom: '0.25rem' }}>
                     Fecha Vencimiento Vial
                   </label>
-                  <input
-                    type="date"
-                    style={{ width: '100%', padding: '0.5rem 0.75rem', border: '1px solid #cbd5e1', borderRadius: '0.375rem' }}
+                  <DatePicker
                     value={doseForm.expirationDate}
-                    onChange={e => setDoseForm({ ...doseForm, expirationDate: e.target.value })}
+                    onChange={val => setDoseForm({ ...doseForm, expirationDate: val })}
+                    placeholder="YYYY-MM-DD"
                   />
                 </div>
               </div>

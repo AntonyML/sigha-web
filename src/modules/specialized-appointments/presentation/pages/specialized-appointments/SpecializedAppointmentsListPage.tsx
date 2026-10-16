@@ -8,6 +8,7 @@ import { AppointmentStatusApi, AppointmentPriorityApi, AppointmentTypeApi } from
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
+import { DateDisplay } from '@/shared/ui/data-display'
 
 const statusBadge: Record<string, string> = {
   [AppointmentStatusApi.SCHEDULED]: 'lp-badge--info',
@@ -183,7 +184,7 @@ export default function SpecializedAppointmentsListPage() {
                 {paginatedItems.map(item => (
                   <tr key={item.id}>
                     <td><span className="lp-badge lp-badge--id">{item.id}</span></td>
-                    <td><small>{formatDate(item.saAppointmentDate)}</small></td>
+                    <td><small><DateDisplay value={item.saAppointmentDate} format="datetime" /></small></td>
                     <td>
                       {item.saAppointmentType
                         ? <span className="lp-badge lp-badge--secondary">{typeLabel[item.saAppointmentType] ?? item.saAppointmentType}</span>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@/shared/navigation'
 import type { VirtualFile, UpdateVirtualFileData } from '@/shared/types/virtualFile'
 import { defaultVirtualFile } from '@/shared/types/virtualFile'
 import SelectsLocation from '@/shared/ui/forms/SelectsLocation/SelectsLocation'
+import { DatePicker } from '@/shared/ui'
 import { virtualFileService } from '@/infrastructure/api/services/virtualFileService'
 import { clinicalConditionService } from '@/infrastructure/api/services/clinicalConditionService'
 import type { ClinicalCondition } from '@/shared/types/clinicalCondition'
@@ -244,15 +245,19 @@ export default function EditVirtualFile() {
               />
             )}
             <Field label="Fecha de nacimiento">
-              <input type="date" className="form-control" value={formData.fechaNacimiento}
-                onChange={e => {
-                  set('fechaNacimiento', e.target.value)
-                  const d = e.target.value ? new Date(e.target.value) : null
-                  if (d) {
-                    const age = Math.floor((Date.now() - d.getTime()) / (1000*60*60*24*365.25))
+              <DatePicker
+                value={formData.fechaNacimiento}
+                maxDate={new Date().toISOString().split('T')[0]}
+                onChange={(val) => {
+                  set('fechaNacimiento', val)
+                  const d = val ? new Date(val) : null
+                  if (d && !isNaN(d.getTime())) {
+                    const age = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25))
                     set('edad', String(age))
                   }
-                }} />
+                }}
+                containerClassName="mb-0"
+              />
             </Field>
             <Field label="Edad">
               <input type="number" min={0} max={130} className="form-control" value={formData.edad}

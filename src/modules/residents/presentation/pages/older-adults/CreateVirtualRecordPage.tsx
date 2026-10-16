@@ -7,6 +7,7 @@ import type { Vaccine } from '@/shared/types/vaccine'
 import type { ClinicalCondition } from '@/shared/types/clinicalCondition'
 import { defaultVirtualFile } from '@/shared/types/virtualFile'
 import SelectsLocation from '@/shared/ui/forms/SelectsLocation/SelectsLocation'
+import { DatePicker } from '@/shared/ui'
 import { useNavigate } from '@/shared/navigation'
 import { virtualFileService } from '@/infrastructure/api/services/virtualFileService'
 import { programService } from '@/infrastructure/api/services/programService'
@@ -540,16 +541,21 @@ export default function CreateVirtualFile() {
               />
             )}
             <Field label="Fecha de nacimiento *">
-              <input type="date" className="form-control" value={formData.fechaNacimiento}
-                style={{ borderColor: stepAttempted[1] && !(formData.fechaNacimiento || '').trim() ? '#f87171' : undefined }}
-                onChange={e => {
-                  set('fechaNacimiento', e.target.value)
-                  const d = e.target.value ? new Date(e.target.value) : null
-                  if (d) {
-                    const age = Math.floor((Date.now() - d.getTime()) / (1000*60*60*24*365.25))
+              <DatePicker
+                value={formData.fechaNacimiento}
+                maxDate={new Date().toISOString().split('T')[0]}
+                onChange={(val) => {
+                  set('fechaNacimiento', val)
+                  const d = val ? new Date(val) : null
+                  if (d && !isNaN(d.getTime())) {
+                    const age = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24 * 365.25))
                     set('edad', String(age))
-                  } else { set('edad', '') }
-                }} />
+                  } else {
+                    set('edad', '')
+                  }
+                }}
+                containerClassName="mb-0"
+              />
               {stepAttempted[1] && !(formData.fechaNacimiento || '').trim() && (
                 <div style={{ color: '#b91c1c', fontSize: '0.75rem', marginTop: '0.25rem' }}>
                   La fecha de nacimiento es obligatoria.

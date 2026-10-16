@@ -8,6 +8,7 @@ import { ResidentSearchPicker } from '@/modules/residents';
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications';
 import type { PatientBasicInfo } from '@/shared/types/virtualFile';
 import type { AccessEventType, CreateAccessLog } from '@/shared/types/accessLog';
+import { DateTimePicker } from '@/shared/ui/forms';
 
 type FormType = AccessEventType | '';
 const formatLocalInput = (value: Date) => {
@@ -85,10 +86,31 @@ export default function RegisterEntranceExit() {
                 <option value="exit">Salida de residente</option><option value="return">Regreso de residente</option><option value="visit">Visita</option>
               </select>
             </div>
-            <div className="col-md-6"><label className="form-label fw-semibold" htmlFor="access-occurred-at">Fecha y hora</label><input id="access-occurred-at" className="form-control" type="datetime-local" max={formatLocalInput(new Date())} value={occurredAt} onChange={(change) => setOccurredAt(change.target.value)} required disabled={loading} /></div>
+            <div className="col-md-6">
+              <DateTimePicker
+                id="access-occurred-at"
+                label="Fecha y hora"
+                maxDate={new Date()}
+                value={occurredAt}
+                onChange={(val) => setOccurredAt(val)}
+                required
+                disabled={loading}
+              />
+            </div>
             <div className="col-md-6"><ResidentSearchPicker value={resident} onChange={setResident} required={eventType !== 'visit'} disabled={loading} /></div>
             {eventType === 'visit' && <div className="col-md-6"><label className="form-label fw-semibold" htmlFor="visitor-name">Nombre del visitante</label><input id="visitor-name" className="form-control" value={visitorName} onChange={(change) => setVisitorName(change.target.value)} maxLength={200} disabled={loading} placeholder="Nombre y apellidos" /><small className="text-muted">Puede asociar la visita a un residente o registrar el nombre del visitante.</small></div>}
-            {eventType === 'exit' && <div className="col-md-6"><label className="form-label fw-semibold" htmlFor="expected-return-at">Regreso estimado (opcional)</label><input id="expected-return-at" className="form-control" type="datetime-local" min={occurredAt} value={expectedReturnAt} onChange={(change) => setExpectedReturnAt(change.target.value)} disabled={loading} /></div>}
+            {eventType === 'exit' && (
+              <div className="col-md-6">
+                <DateTimePicker
+                  id="expected-return-at"
+                  label="Regreso estimado (opcional)"
+                  minDate={occurredAt ? occurredAt.split('T')[0] : undefined}
+                  value={expectedReturnAt}
+                  onChange={(val) => setExpectedReturnAt(val)}
+                  disabled={loading}
+                />
+              </div>
+            )}
             <div className="col-12"><label className="form-label fw-semibold" htmlFor="access-notes">Observaciones</label><textarea id="access-notes" className="form-control" rows={3} value={notes} onChange={(change) => setNotes(change.target.value)} maxLength={5000} disabled={loading} placeholder="Destino, motivo o detalles de la visita" /></div>
           </div>
         </div>

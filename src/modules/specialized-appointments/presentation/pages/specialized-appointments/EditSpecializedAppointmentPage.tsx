@@ -4,6 +4,7 @@ import { useNavigate, useParams } from '@/shared/navigation';
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService';
 import type { UpdateSpecializedAppointmentDto } from '@/shared/types/specializedAppointment';
 import { AppointmentTypeApi, AppointmentPriorityApi, AppointmentStatusApi } from '@/shared/types/specializedAppointment';
+import { DateTimePicker } from '@/shared/ui/forms';
 
 export default function EditSpecializedAppointmentPage() {
   const { id } = useParams<{ id: string }>();
@@ -60,8 +61,13 @@ export default function EditSpecializedAppointmentPage() {
             <h6 className="text-muted fw-bold text-uppercase mb-3">Datos requeridos</h6>
             <div className="row g-3">
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Fecha y Hora</label>
-                <input name="saAppointmentDate" type="datetime-local" className="form-control" value={form.saAppointmentDate ?? ''} onChange={e => setForm(p => ({ ...p, saAppointmentDate: e.target.value }))} disabled={saving} />
+                <DateTimePicker
+                  label="Fecha y Hora"
+                  name="saAppointmentDate"
+                  value={form.saAppointmentDate ?? ''}
+                  onChange={(val) => setForm((p) => ({ ...p, saAppointmentDate: val }))}
+                  disabled={saving}
+                />
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">ID Área</label>
@@ -116,8 +122,13 @@ export default function EditSpecializedAppointmentPage() {
                 <input name="saDurationMinutes" type="number" className="form-control" value={form.saDurationMinutes ?? ''} onChange={handleChange} disabled={saving} min={1} max={480} />
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">Próxima Cita</label>
-                <input name="saNextAppointment" type="datetime-local" className="form-control" value={form.saNextAppointment ?? ''} onChange={e => setForm(p => ({ ...p, saNextAppointment: e.target.value || undefined }))} disabled={saving} />
+                <DateTimePicker
+                  label="Próxima Cita"
+                  name="saNextAppointment"
+                  value={form.saNextAppointment ?? ''}
+                  onChange={(val) => setForm((p) => ({ ...p, saNextAppointment: val || undefined }))}
+                  disabled={saving}
+                />
               </div>
               <div className="col-12">
                 <label className="form-label fw-semibold">Notas</label>

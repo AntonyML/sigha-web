@@ -4,6 +4,8 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { systemAuditLogService } from '@/infrastructure/api/services/systemAuditLogService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import type { SystemAuditAction, SystemAuditLog, SystemAuditLogFilters } from '@/shared/types/systemAuditLog';
+import { DatePicker } from '@/shared/ui/forms';
+import { DateDisplay } from '@/shared/ui/data-display';
 
 const PAGE_SIZE = 25;
 const formatDate = (value: string) => new Date(value).toLocaleString('es-CR');
@@ -69,8 +71,24 @@ export default function SystemAuditLogsPage() {
           <div className="col-sm-6 col-lg-2"><label className="form-label" htmlFor="audit-record">Registro</label><input id="audit-record" className="form-control" value={form.recordId} onChange={(event) => setForm((current) => ({ ...current, recordId: event.target.value }))} /></div>
           <div className="col-sm-6 col-lg-2"><label className="form-label" htmlFor="audit-action">Acción</label><select id="audit-action" className="form-select" value={form.action} onChange={(event) => setForm((current) => ({ ...current, action: event.target.value as typeof form.action }))}><option value="">Todas</option><option value="INSERT">Creación</option><option value="UPDATE">Actualización</option><option value="DELETE">Eliminación</option></select></div>
           <div className="col-sm-6 col-lg-2"><label className="form-label" htmlFor="audit-actor">ID del actor</label><input id="audit-actor" className="form-control" type="number" min="1" value={form.actorUserId} onChange={(event) => setForm((current) => ({ ...current, actorUserId: event.target.value }))} /></div>
-          <div className="col-sm-6 col-lg-1"><label className="form-label" htmlFor="audit-from">Desde</label><input id="audit-from" className="form-control" type="date" value={form.from} onChange={(event) => setForm((current) => ({ ...current, from: event.target.value }))} /></div>
-          <div className="col-sm-6 col-lg-1"><label className="form-label" htmlFor="audit-to">Hasta</label><input id="audit-to" className="form-control" type="date" value={form.to} onChange={(event) => setForm((current) => ({ ...current, to: event.target.value }))} /></div>
+          <div className="col-sm-6 col-lg-2">
+            <DatePicker
+              id="audit-from"
+              label="Desde"
+              value={form.from}
+              onChange={(val) => setForm((current) => ({ ...current, from: val }))}
+              containerClassName="mb-0"
+            />
+          </div>
+          <div className="col-sm-6 col-lg-2">
+            <DatePicker
+              id="audit-to"
+              label="Hasta"
+              value={form.to}
+              onChange={(val) => setForm((current) => ({ ...current, to: val }))}
+              containerClassName="mb-0"
+            />
+          </div>
           <div className="col-lg-2 d-flex gap-2"><button className="btn btn-primary flex-grow-1" type="submit" disabled={loading}>Filtrar</button><button className="btn btn-outline-secondary" type="button" onClick={() => { setForm({ tableName: '', recordId: '', action: '', actorUserId: '', from: '', to: '' }); setFilters({}); void loadData(1, {}); }} disabled={loading}>Limpiar</button></div>
         </div>
       </form>
@@ -88,7 +106,7 @@ export default function SystemAuditLogsPage() {
             <tbody>
               {loading ? <tr><td colSpan={5} className="text-center py-4">Cargando auditoría…</td></tr> : rows.length === 0 ? <tr><td colSpan={5} className="text-center text-muted py-4">No hay cambios que coincidan con los filtros.</td></tr> : rows.map((row) => (
                 <tr key={row.id}>
-                  <td className="text-nowrap">{formatDate(row.occurredAt)}</td>
+                  <td className="text-nowrap"><DateDisplay value={row.occurredAt} format="datetime" /></td>
                   <td>{row.actor ? <>{row.actor.name}<br /><small className="text-muted">{row.actor.email}</small></> : row.actorUserId ? `Usuario ${row.actorUserId}` : 'Sistema'}</td>
                   <td><span className={`badge ${row.action === 'DELETE' ? 'text-bg-danger' : row.action === 'INSERT' ? 'text-bg-success' : 'text-bg-primary'}`}>{row.action}</span></td>
                   <td><code>{row.tableName}</code><br /><small>ID {row.recordId}</small></td>
