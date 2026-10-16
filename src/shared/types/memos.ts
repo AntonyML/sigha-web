@@ -28,6 +28,8 @@ export interface ResidentMemo {
   urgency: MemoUrgency;
   attachments: MemoAttachment[];
   isEdited: boolean;
+  acusesCount?: number;
+  acknowledgedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
   replies?: ResidentMemo[];

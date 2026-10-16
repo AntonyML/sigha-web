@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquareText, RefreshCw, AlertCircle } from 'lucide-react';
 import type { ResidentMemo, CreateMemoPayload, MemoStatus } from '@/shared/types/memos';
 import { memosService } from '@/infrastructure/api/services/memosService';
+import { bitacoraService } from '@/infrastructure/api/services/bitacoraService';
 import { MemoComposer } from './MemoComposer';
 import { MemoFeed } from './MemoFeed';
 
@@ -73,6 +74,15 @@ export const TabResidentMemos: React.FC<TabResidentMemosProps> = ({
     setMemos((prev) => prev.map((m) => (m.id === memoId ? updated : m)));
   };
 
+  const handleAcknowledge = async (memoId: number) => {
+    await bitacoraService.acknowledge(memoId);
+    setMemos((prev) =>
+      prev.map((m) =>
+        m.id === memoId ? { ...m, acknowledgedByMe: true, acusesCount: (m.acusesCount || 0) + 1 } : m
+      )
+    );
+  };
+
   return (
     <div style={{ maxWidth: '840px', margin: '0 auto' }}>
       {/* Header bar */}
@@ -98,10 +108,10 @@ export const TabResidentMemos: React.FC<TabResidentMemosProps> = ({
           </div>
           <div>
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
-              Bitácora y Derivaciones Interdepartamentales
+              Bitácora Operativa y Derivaciones
             </h3>
             <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>
-              {residentName ? `Expediente de ${residentName}` : 'Seguimiento clínico y de custodia'}
+              {residentName ? `Expediente de ${residentName}` : 'Seguimiento clínico y operativo'}
             </p>
           </div>
         </div>
@@ -165,6 +175,7 @@ export const TabResidentMemos: React.FC<TabResidentMemosProps> = ({
         availableRoles={availableRoles}
         onStatusChange={handleStatusChange}
         onReply={handleReplyMemo}
+        onAcknowledge={handleAcknowledge}
         isLoading={loading}
       />
     </div>
