@@ -2,18 +2,27 @@ import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
-const serviceMock = vi.hoisted(() => ({
-  listMembers: vi.fn(),
-  addMember: vi.fn(),
-  updateMemberRole: vi.fn(),
-  removeMember: vi.fn(),
-  requestStepUp: vi.fn(),
-  hasStepUpToken: vi.fn(),
-  clearStepUpToken: vi.fn(),
+const { serviceMock, authStorageMock } = vi.hoisted(() => ({
+  serviceMock: {
+    listMembers: vi.fn(),
+    addMember: vi.fn(),
+    updateMemberRole: vi.fn(),
+    removeMember: vi.fn(),
+    requestStepUp: vi.fn(),
+    hasStepUpToken: vi.fn(),
+    clearStepUpToken: vi.fn(),
+  },
+  authStorageMock: {
+    getUser: vi.fn(),
+  },
 }))
 
 vi.mock('@/infrastructure/api/services/platformOrganizationsService', () => ({
   platformOrganizationsService: serviceMock,
+}))
+
+vi.mock('@/infrastructure/storage/authStorage', () => ({
+  authStorage: authStorageMock,
 }))
 
 import PlatformOrganizationMembersSection from './PlatformOrganizationMembersSection'
@@ -42,6 +51,13 @@ const sampleMembers = [
 describe('PlatformOrganizationMembersSection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authStorageMock.getUser.mockReturnValue({
+      id: '1',
+      email: 'owner@sigha.test',
+      name: 'Owner',
+      role: 'admin',
+      platformRole: 'PLATFORM_OWNER',
+    })
     serviceMock.hasStepUpToken.mockReturnValue(true)
     serviceMock.listMembers.mockResolvedValue(sampleMembers)
   })
@@ -57,6 +73,34 @@ describe('PlatformOrganizationMembersSection', () => {
     expect(screen.getByText('Secundaria')).toBeInTheDocument()
     expect(screen.getByText('Cuenta creada')).toBeInTheDocument()
     expect(screen.queryByText(/fecha de ingreso/i)).not.toBeInTheDocument()
+  })
+
+  it('muestra los controles de alta, cambio de rol y baja cuando platformRole es PLATFORM_OWNER', async () => {
+    render(<PlatformOrganizationMembersSection organizationId={1} />)
+
+    expect(await screen.findByText('Ana Rojas')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Añadir miembro' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Cambiar rol' })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: 'Quitar' })).toHaveLength(2)
+  })
+
+  it('oculta los controles de alta, cambio de rol y baja cuando platformRole es PLATFORM_SUPPORT', async () => {
+    authStorageMock.getUser.mockReturnValue({
+      id: '2',
+      email: 'support@sigha.test',
+      name: 'Support',
+      role: 'admin',
+      platformRole: 'PLATFORM_SUPPORT',
+    })
+
+    render(<PlatformOrganizationMembersSection organizationId={1} />)
+
+    expect(await screen.findByText('Ana Rojas')).toBeInTheDocument()
+    expect(screen.getByText('Carlos Mora')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Añadir miembro' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Cambiar rol' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Quitar' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Verificación 2FA')).not.toBeInTheDocument()
   })
 
   it('añade un miembro solicitando step-up 2FA cuando no hay token activo', async () => {

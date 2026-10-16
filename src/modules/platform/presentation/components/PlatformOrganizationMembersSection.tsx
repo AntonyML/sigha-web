@@ -7,10 +7,14 @@ import {
   type FormEvent,
 } from 'react'
 import { Alert, Button, Input, LoadingSpinner } from '@/shared/ui'
+import { authStorage } from '@/infrastructure/storage/authStorage'
 import {
   platformOrganizationsService,
   type PlatformOrganizationMember,
 } from '@/infrastructure/api/services/platformOrganizationsService'
+import { PLATFORM_ROLES } from '@/shared/types/platform'
+
+const PLATFORM_OWNER_ROLE = PLATFORM_ROLES[0]
 
 function extractMessage(error: unknown, fallback: string): string {
   if (typeof error === 'object' && error !== null) {
@@ -48,6 +52,9 @@ export default function PlatformOrganizationMembersSection({
   const [newUserId, setNewUserId] = useState('')
   const [newRoleId, setNewRoleId] = useState('')
   const [roleDrafts, setRoleDrafts] = useState<Record<number, string>>({})
+
+  const currentUser = authStorage.getUser()
+  const canMutate = currentUser?.platformRole === PLATFORM_OWNER_ROLE
 
   const syncRoleDrafts = useCallback((items: PlatformOrganizationMember[]) => {
     const next: Record<number, string> = {}
@@ -111,6 +118,7 @@ export default function PlatformOrganizationMembersSection({
   const handleAddMember = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
+      if (!canMutate) return
       setError(null)
       setNotice(null)
 
@@ -142,11 +150,12 @@ export default function PlatformOrganizationMembersSection({
         setBusy(false)
       }
     },
-    [ensureStepUp, loadMembers, newRoleId, newUserId, organizationId],
+    [canMutate, ensureStepUp, loadMembers, newRoleId, newUserId, organizationId],
   )
 
   const handleUpdateRole = useCallback(
     async (member: PlatformOrganizationMember) => {
+      if (!canMutate) return
       setError(null)
       setNotice(null)
 
@@ -173,11 +182,12 @@ export default function PlatformOrganizationMembersSection({
         setBusy(false)
       }
     },
-    [ensureStepUp, loadMembers, organizationId, roleDrafts],
+    [canMutate, ensureStepUp, loadMembers, organizationId, roleDrafts],
   )
 
   const handleRemoveMember = useCallback(
     async (member: PlatformOrganizationMember) => {
+      if (!canMutate) return
       setError(null)
       setNotice(null)
       setBusy(true)
@@ -199,7 +209,7 @@ export default function PlatformOrganizationMembersSection({
         setBusy(false)
       }
     },
-    [ensureStepUp, loadMembers, organizationId],
+    [canMutate, ensureStepUp, loadMembers, organizationId],
   )
 
   const displayedCount = loading ? initialMemberCount : members.length || initialMemberCount
@@ -226,56 +236,60 @@ export default function PlatformOrganizationMembersSection({
           </Alert>
         )}
 
-        <div className="border rounded p-3 mb-3 bg-light">
-          <h3 className="h6 mb-1">Verificación 2FA</h3>
-          <p className="text-muted small mb-2">
-            Las mutaciones de membresías requieren re-verificar tu código TOTP (válido 5 minutos).
-          </p>
-          {stepUpActive ? (
-            <span className="badge text-bg-success" role="status">
-              Verificación 2FA activa
-            </span>
-          ) : (
-            <Input
-              label="Código 2FA (6 dígitos)"
-              value={stepUpCode}
-              onChange={(event) => setStepUpCode(event.target.value)}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              aria-label="Código 2FA"
-            />
-          )}
-        </div>
+        {canMutate && (
+          <>
+            <div className="border rounded p-3 mb-3 bg-light">
+              <h3 className="h6 mb-1">Verificación 2FA</h3>
+              <p className="text-muted small mb-2">
+                Las mutaciones de membresías requieren re-verificar tu código TOTP (válido 5 minutos).
+              </p>
+              {stepUpActive ? (
+                <span className="badge text-bg-success" role="status">
+                  Verificación 2FA activa
+                </span>
+              ) : (
+                <Input
+                  label="Código 2FA (6 dígitos)"
+                  value={stepUpCode}
+                  onChange={(event) => setStepUpCode(event.target.value)}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  aria-label="Código 2FA"
+                />
+              )}
+            </div>
 
-        <form className="border rounded p-3 mb-3" onSubmit={handleAddMember}>
-          <h3 className="h6 mb-2">Añadir miembro</h3>
-          <div className="row g-3 align-items-end">
-            <div className="col-md-5">
-              <Input
-                label="ID de usuario"
-                value={newUserId}
-                onChange={(event) => setNewUserId(event.target.value)}
-                inputMode="numeric"
-                required
-              />
-            </div>
-            <div className="col-md-5">
-              <Input
-                label="ID de rol"
-                value={newRoleId}
-                onChange={(event) => setNewRoleId(event.target.value)}
-                inputMode="numeric"
-                required
-              />
-            </div>
-            <div className="col-md-2 mb-3">
-              <Button type="submit" disabled={busy}>
-                Añadir miembro
-              </Button>
-            </div>
-          </div>
-        </form>
+            <form className="border rounded p-3 mb-3" onSubmit={handleAddMember}>
+              <h3 className="h6 mb-2">Añadir miembro</h3>
+              <div className="row g-3 align-items-end">
+                <div className="col-md-5">
+                  <Input
+                    label="ID de usuario"
+                    value={newUserId}
+                    onChange={(event) => setNewUserId(event.target.value)}
+                    inputMode="numeric"
+                    required
+                  />
+                </div>
+                <div className="col-md-5">
+                  <Input
+                    label="ID de rol"
+                    value={newRoleId}
+                    onChange={(event) => setNewRoleId(event.target.value)}
+                    inputMode="numeric"
+                    required
+                  />
+                </div>
+                <div className="col-md-2 mb-3">
+                  <Button type="submit" disabled={busy}>
+                    Añadir miembro
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </>
+        )}
 
         {loading ? (
           <LoadingSpinner message="Cargando membresías..." />
@@ -290,8 +304,8 @@ export default function PlatformOrganizationMembersSection({
                   <th scope="col">Rol actual</th>
                   <th scope="col">Primaria</th>
                   <th scope="col">Cuenta creada</th>
-                  <th scope="col">Cambiar rol (ID)</th>
-                  <th scope="col">Acciones</th>
+                  {canMutate && <th scope="col">Cambiar rol (ID)</th>}
+                  {canMutate && <th scope="col">Acciones</th>}
                 </tr>
               </thead>
               <tbody>
@@ -318,45 +332,49 @@ export default function PlatformOrganizationMembersSection({
                     <td className="small text-muted">
                       {member.joinedAt ? formatDateTime(member.joinedAt) : '—'}
                     </td>
-                    <td>
-                      <div className="d-flex gap-2 align-items-center">
-                        <input
-                          type="number"
-                          min={1}
-                          className="form-control form-control-sm"
-                          style={{ maxWidth: '6rem' }}
-                          aria-label={`Nuevo rol para ${member.name}`}
-                          value={roleDrafts[member.userId] ?? String(member.roleId)}
-                          onChange={(event) =>
-                            setRoleDrafts((prev) => ({
-                              ...prev,
-                              [member.userId]: event.target.value,
-                            }))
-                          }
-                          disabled={busy}
-                        />
+                    {canMutate && (
+                      <td>
+                        <div className="d-flex gap-2 align-items-center">
+                          <input
+                            type="number"
+                            min={1}
+                            className="form-control form-control-sm"
+                            style={{ maxWidth: '6rem' }}
+                            aria-label={`Nuevo rol para ${member.name}`}
+                            value={roleDrafts[member.userId] ?? String(member.roleId)}
+                            onChange={(event) =>
+                              setRoleDrafts((prev) => ({
+                                ...prev,
+                                [member.userId]: event.target.value,
+                              }))
+                            }
+                            disabled={busy}
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="btn-sm"
+                            disabled={busy}
+                            onClick={() => void handleUpdateRole(member)}
+                          >
+                            Cambiar rol
+                          </Button>
+                        </div>
+                      </td>
+                    )}
+                    {canMutate && (
+                      <td>
                         <Button
                           type="button"
-                          variant="secondary"
+                          variant="danger"
                           className="btn-sm"
                           disabled={busy}
-                          onClick={() => void handleUpdateRole(member)}
+                          onClick={() => void handleRemoveMember(member)}
                         >
-                          Cambiar rol
+                          Quitar
                         </Button>
-                      </div>
-                    </td>
-                    <td>
-                      <Button
-                        type="button"
-                        variant="danger"
-                        className="btn-sm"
-                        disabled={busy}
-                        onClick={() => void handleRemoveMember(member)}
-                      >
-                        Quitar
-                      </Button>
-                    </td>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
