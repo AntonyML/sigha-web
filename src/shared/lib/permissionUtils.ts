@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { authStorage } from '@/infrastructure/storage/authStorage';
 import { permissionApiService } from '@/infrastructure/api/services/permissionApiService';
+import { PLATFORM_ROLES } from '@/shared/types/platform';
 
 const PUBLIC_MODULES = new Set<string>([
   'profile',
@@ -174,13 +175,39 @@ class PermissionUtilsImpl {
   canDeleteUsers(): boolean { return this.canPerformAction('users', 'delete'); }
   canManageRoles(): boolean { return this.canAccessModule('roles') || this.isSuperAdminUser(); }
   canToggleUserStatus(): boolean { return this.canPerformAction('users', 'edit'); }
-  isSuperAdmin(): boolean { return this.isSuperAdminUser(); }
-  isAdmin(): boolean { return this.isAdminUser(); }
+  /**
+   * Rol del plano plataforma (SaaS): PLATFORM_OWNER o PLATFORM_SUPPORT.
+   * Vive por encima de las organizaciones y no se infiere de roles de organización.
+   */
+  hasPlatformRole(): boolean {
+    const role = authStorage.getUser()?.platformRole;
+    return typeof role === 'string' && (PLATFORM_ROLES as readonly string[]).includes(role);
+  }
 
-  isSuperAdminSync(): boolean { return this.hasRole('super admin'); }
-  isAdminSync(): boolean { return this.hasRole('admin'); }
+  /**
+   * Roles del plano organización. `orgRoles` es el claim canónico de la
+   * membresía activa; `roles` queda como respaldo para sesiones que aún no
+   * traen el claim nuevo.
+   */
+  private getOrgRoleNamesLower(): string[] {
+    const user = authStorage.getUser();
+    if (!user) return [];
+    const source = Array.isArray(user.orgRoles) ? user.orgRoles : user.roles;
+    if (!Array.isArray(source)) return [];
+    return source.map(r => r.toLowerCase());
+  }
+
+  private hasOrgRole(roleName: string): boolean {
+    return this.getOrgRoleNamesLower().includes(roleName.toLowerCase());
+  }
+
+  isSuperAdmin(): boolean { return this.hasPlatformRole() || this.isSuperAdminUser(); }
+  isAdmin(): boolean { return this.hasPlatformRole() || this.isAdminUser(); }
+
+  isSuperAdminSync(): boolean { return this.hasPlatformRole(); }
+  isAdminSync(): boolean { return this.hasOrgRole('admin'); }
   isAdminOrDirectorSync(): boolean {
-    return this.hasRole('super admin') || this.hasRole('admin') || this.hasRole('director');
+    return this.hasOrgRole('admin') || this.hasOrgRole('director');
   }
   isNotSpecifiedSync(): boolean {
     const names = this.getRoleNamesLower();
