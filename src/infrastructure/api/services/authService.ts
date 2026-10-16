@@ -48,6 +48,9 @@ interface JwtPayload {
   email?: string;
   roleIds?: number[];
   roles?: string[];
+  orgRoleIds?: number[];
+  orgRoles?: string[];
+  platformRole?: string | null;
   twoFactorVerified?: boolean;
   orgId?: number | null;
   [key: string]: unknown;
@@ -66,16 +69,60 @@ function decodeJwtPayload(token: string): JwtPayload | null {
   }
 }
 
-function extractRoleIdsFromToken(token: string): number[] {
+const isNumber = (value: unknown): value is number => typeof value === 'number';
+const isString = (value: unknown): value is string => typeof value === 'string';
+
+/**
+ * Effective organization role ids of the active membership. Prefers the
+ * canonical `orgRoleIds` claim and falls back to the legacy `roleIds` claim
+ * while the API still emits both.
+ */
+function extractOrgRoleIdsFromToken(token: string): number[] {
   const payload = decodeJwtPayload(token);
-  if (!payload || !Array.isArray(payload.roleIds)) return [];
-  return payload.roleIds.filter((n): n is number => typeof n === 'number');
+  if (!payload) return [];
+  if (Array.isArray(payload.orgRoleIds)) return payload.orgRoleIds.filter(isNumber);
+  return Array.isArray(payload.roleIds) ? payload.roleIds.filter(isNumber) : [];
 }
 
-function extractRolesFromToken(token: string): string[] {
+/** Effective organization roles of the active membership (canonical `orgRoles`, legacy `roles`). */
+function extractOrgRolesFromToken(token: string): string[] {
   const payload = decodeJwtPayload(token);
-  if (!payload || !Array.isArray(payload.roles)) return [];
-  return payload.roles.filter((s): s is string => typeof s === 'string');
+  if (!payload) return [];
+  if (Array.isArray(payload.orgRoles)) return payload.orgRoles.filter(isString);
+  return Array.isArray(payload.roles) ? payload.roles.filter(isString) : [];
+}
+
+/** Platform-plane role claim, or null when the user has no platform role. */
+function extractPlatformRoleFromToken(token: string): string | null {
+  const payload = decodeJwtPayload(token);
+  return typeof payload?.platformRole === 'string' ? payload.platformRole : null;
+}
+
+/**
+ * Builds the persisted user from an API user payload and its access token,
+ * resolving the effective (organization-scoped) roles and the platform role.
+ */
+function buildAuthUser(
+  user: AuthUser,
+  accessToken: string,
+): AuthUser {
+  const orgRoles = Array.isArray(user.orgRoles) && user.orgRoles.length > 0
+    ? user.orgRoles
+    : extractOrgRolesFromToken(accessToken);
+  const orgRoleIds = Array.isArray(user.orgRoleIds) && user.orgRoleIds.length > 0
+    ? user.orgRoleIds
+    : extractOrgRoleIdsFromToken(accessToken);
+  const platformRole = user.platformRole ?? extractPlatformRoleFromToken(accessToken);
+
+  return {
+    ...user,
+    // Effective (organization-scoped) roles drive existing permission checks.
+    roles: orgRoles,
+    roleIds: orgRoleIds,
+    orgRoles,
+    orgRoleIds,
+    platformRole,
+  };
 }
 
 export const authService = {
@@ -104,16 +151,7 @@ export const authService = {
     }
 
     if (accessToken && user) {
-      const roleIds = extractRoleIdsFromToken(accessToken);
-      const roles = Array.isArray(user.roles) && user.roles.length > 0
-        ? user.roles
-        : extractRolesFromToken(accessToken);
-
-      const enrichedUser: AuthUser = {
-        ...user,
-        roles,
-        roleIds,
-      };
+      const enrichedUser = buildAuthUser(user, accessToken);
 
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('user', JSON.stringify(enrichedUser));
@@ -141,16 +179,7 @@ export const authService = {
     const { accessToken, refreshToken, user } = response.data;
 
     if (accessToken && refreshToken && user) {
-      const roleIds = extractRoleIdsFromToken(accessToken);
-      const roles = Array.isArray(user.roles) && user.roles.length > 0
-        ? user.roles
-        : extractRolesFromToken(accessToken);
-
-      const enrichedUser: AuthUser = {
-        ...user,
-        roles,
-        roleIds,
-      };
+      const enrichedUser = buildAuthUser(user, accessToken);
 
       localStorage.setItem('authToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
@@ -164,14 +193,34 @@ export const authService = {
   },
 
   getProfile: async (): Promise<AuthUser> => {
-    const response = await apiClient.get<{ user: { sub: number; email: string; roleIds: number[]; roles: string[]; twoFactorVerified: boolean } }>('/auth/profile');
+    const response = await apiClient.get<{
+      user: {
+        id?: number;
+        userId?: number;
+        sub?: number;
+        uEmail?: string;
+        email?: string;
+        uName?: string;
+        roleIds?: number[];
+        roles?: string[];
+        orgRoleIds?: number[];
+        orgRoles?: string[];
+        platformRole?: string | null;
+        twoFactorVerified?: boolean;
+      };
+    }>('/auth/profile');
     const u = response.data.user;
+    const orgRoles = Array.isArray(u.orgRoles) ? u.orgRoles : undefined;
+    const orgRoleIds = Array.isArray(u.orgRoleIds) ? u.orgRoleIds : undefined;
     return {
-      id: u.sub,
-      uEmail: u.email,
-      uName: '',
-      roles: Array.isArray(u.roles) ? u.roles : [],
-      roleIds: Array.isArray(u.roleIds) ? u.roleIds : [],
+      id: u.id ?? u.userId ?? u.sub ?? 0,
+      uEmail: u.uEmail ?? u.email ?? '',
+      uName: u.uName ?? '',
+      roles: orgRoles ?? (Array.isArray(u.roles) ? u.roles : []),
+      roleIds: orgRoleIds ?? (Array.isArray(u.roleIds) ? u.roleIds : []),
+      orgRoles,
+      orgRoleIds,
+      platformRole: u.platformRole ?? null,
     };
   },
 
@@ -232,24 +281,24 @@ export const authService = {
   },
 
   switchActiveOrganization: async (organizationId: number): Promise<ActiveOrganizationResponse> => {
-    const response = await apiClient.post<ActiveOrganizationResponse>('/auth/active-organization', {
+    const response = await apiClient.post<ActiveOrganizationResponse>('/auth/context', {
       organizationId,
     });
     const { accessToken, refreshToken } = response.data;
     localStorage.setItem('authToken', accessToken);
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
     else localStorage.removeItem('refreshToken');
-    const tokenPayload = decodeJwtPayload(accessToken);
     const currentUser = authService.getStoredUser();
-    if (currentUser && tokenPayload) {
+    if (currentUser) {
+      const orgRoles = extractOrgRolesFromToken(accessToken);
+      const orgRoleIds = extractOrgRoleIdsFromToken(accessToken);
       const updatedUser: AuthUser = {
         ...currentUser,
-        ...(Array.isArray(tokenPayload.roles)
-          ? { roles: tokenPayload.roles.filter((role): role is string => typeof role === 'string') }
-          : {}),
-        ...(Array.isArray(tokenPayload.roleIds)
-          ? { roleIds: tokenPayload.roleIds.filter((roleId): roleId is number => typeof roleId === 'number') }
-          : {}),
+        roles: orgRoles,
+        roleIds: orgRoleIds,
+        orgRoles,
+        orgRoleIds,
+        platformRole: extractPlatformRoleFromToken(accessToken) ?? currentUser.platformRole ?? null,
       };
       localStorage.setItem('user', JSON.stringify(updatedUser));
     }
@@ -274,6 +323,9 @@ export const authService = {
         uSLastName: parsed.uSLastName,
         roles: parsed.roles,
         roleIds: Array.isArray(parsed.roleIds) ? parsed.roleIds : [],
+        orgRoles: Array.isArray(parsed.orgRoles) ? parsed.orgRoles : undefined,
+        orgRoleIds: Array.isArray(parsed.orgRoleIds) ? parsed.orgRoleIds : undefined,
+        platformRole: parsed.platformRole ?? null,
       };
     } catch {
       return null;

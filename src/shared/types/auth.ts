@@ -27,8 +27,19 @@ export interface AuthUser {
   uName: string;
   uFLastName?: string;
   uSLastName?: string;
+  /**
+   * Effective organization roles (from the active membership). Kept as `roles`
+   * for backwards compatibility with existing permission checks.
+   */
   roles: string[];
+  /** Effective organization role ids (active membership); same note as `roles`. */
   roleIds: number[];
+  /** Organization roles of the active membership (canonical claim). */
+  orgRoles?: string[];
+  /** Organization role ids of the active membership (canonical claim). */
+  orgRoleIds?: number[];
+  /** SaaS platform-plane role (PLATFORM_OWNER | PLATFORM_SUPPORT | null). */
+  platformRole?: string | null;
 }
 
 export interface RefreshTokenResponse {
