@@ -37,6 +37,31 @@ function stepUpHeaders(): AxiosRequestConfig['headers'] {
   return stepUpToken ? { 'x-platform-step-up-token': stepUpToken } : {};
 }
 
+export interface PlatformOrganizationMember {
+  userId: number;
+  name: string;
+  email: string;
+  roleId: number;
+  roleName: string;
+  isPrimary: boolean;
+  /** Account creation date of the user (not membership join date). */
+  joinedAt: string;
+}
+
+export interface CreatePlatformOrganizationMemberPayload {
+  userId: number;
+  roleId: number;
+}
+
+export interface UpdatePlatformOrganizationMemberPayload {
+  roleId: number;
+}
+
+export interface RemovePlatformOrganizationMemberResponse {
+  removed: boolean;
+  promotedUserId: number | null;
+}
+
 export const platformOrganizationsService = {
   list: async (): Promise<PlatformOrganization[]> => {
     const response = await platformClient.get<PlatformOrganization[]>('/platform/organizations');
@@ -68,6 +93,49 @@ export const platformOrganizationsService = {
     const response = await platformClient.patch<PlatformOrganization>(
       `/platform/organizations/${id}`,
       payload,
+      { headers: stepUpHeaders() },
+    );
+    return response.data;
+  },
+
+  listMembers: async (organizationId: number): Promise<PlatformOrganizationMember[]> => {
+    const response = await platformClient.get<PlatformOrganizationMember[]>(
+      `/platform/organizations/${organizationId}/members`,
+    );
+    return response.data;
+  },
+
+  addMember: async (
+    organizationId: number,
+    payload: CreatePlatformOrganizationMemberPayload,
+  ): Promise<PlatformOrganizationMember> => {
+    const response = await platformClient.post<PlatformOrganizationMember>(
+      `/platform/organizations/${organizationId}/members`,
+      payload,
+      { headers: stepUpHeaders() },
+    );
+    return response.data;
+  },
+
+  updateMemberRole: async (
+    organizationId: number,
+    userId: number,
+    payload: UpdatePlatformOrganizationMemberPayload,
+  ): Promise<PlatformOrganizationMember> => {
+    const response = await platformClient.patch<PlatformOrganizationMember>(
+      `/platform/organizations/${organizationId}/members/${userId}`,
+      payload,
+      { headers: stepUpHeaders() },
+    );
+    return response.data;
+  },
+
+  removeMember: async (
+    organizationId: number,
+    userId: number,
+  ): Promise<RemovePlatformOrganizationMemberResponse> => {
+    const response = await platformClient.delete<RemovePlatformOrganizationMemberResponse>(
+      `/platform/organizations/${organizationId}/members/${userId}`,
       { headers: stepUpHeaders() },
     );
     return response.data;

@@ -7,6 +7,10 @@ const serviceMock = vi.hoisted(() => ({
   get: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
+  listMembers: vi.fn(),
+  addMember: vi.fn(),
+  updateMemberRole: vi.fn(),
+  removeMember: vi.fn(),
   requestStepUp: vi.fn(),
   hasStepUpToken: vi.fn(),
   clearStepUpToken: vi.fn(),
@@ -38,6 +42,7 @@ describe('PlatformOrganizationDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     serviceMock.hasStepUpToken.mockReturnValue(true);
+    serviceMock.listMembers.mockResolvedValue([]);
   });
   afterEach(() => vi.clearAllMocks());
 
