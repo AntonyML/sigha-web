@@ -49,7 +49,7 @@ httpClient.interceptors.request.use(async (reqConfig) => {
 });
 
 // Auth endpoints que NO deben disparar redirect al recibir 401
-const AUTH_ENDPOINTS = ['/auth/login', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-2fa', '/auth/enable-2fa', '/auth/disable-2fa', '/auth/setup-2fa'];
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-2fa', '/auth/enable-2fa', '/auth/disable-2fa', '/auth/setup-2fa', '/settings/global/public'];
 
 // Retry config for 429/5xx errors
 const RETRY_CONFIG = {

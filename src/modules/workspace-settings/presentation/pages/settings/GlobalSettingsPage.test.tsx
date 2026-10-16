@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-const { settingsMocks, routerMock } = vi.hoisted(() => ({
+const { settingsMocks, routerMock, brandingMock } = vi.hoisted(() => ({
   settingsMocks: {
     verifyGlobalSettingsAccess: vi.fn(),
     getGlobalSettings: vi.fn(),
@@ -10,6 +10,7 @@ const { settingsMocks, routerMock } = vi.hoisted(() => ({
     uploadGlobalLogo: vi.fn(),
   },
   routerMock: { replace: vi.fn() },
+  brandingMock: { updateBranding: vi.fn() },
 }))
 
 let isLoaded = true
@@ -30,6 +31,14 @@ vi.mock('@/shared/lib/permissionUtils', () => ({
 
 vi.mock('next/navigation', () => ({
   useRouter: () => routerMock,
+}))
+
+vi.mock('@/app/providers/PlatformBrandingContext', () => ({
+  usePlatformBranding: () => ({
+    branding: { appName: 'SIGHA', logoUrl: null },
+    loaded: true,
+    updateBranding: brandingMock.updateBranding,
+  }),
 }))
 
 import GlobalSettingsPage from './GlobalSettingsPage'
@@ -73,6 +82,7 @@ describe('GlobalSettingsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Identidad de SIGHA' })).toBeInTheDocument()
     expect(settingsMocks.verifyGlobalSettingsAccess).toHaveBeenCalledWith('123456')
     expect(settingsMocks.getGlobalSettings).toHaveBeenCalledWith('short-lived-step-up-token')
+    expect(brandingMock.updateBranding).toHaveBeenCalledWith({ appName: 'SIGHA', logoUrl: null })
     expect(screen.getByLabelText('Nombre de la plataforma')).toHaveValue('SIGHA')
     expect(screen.getByText(/El nombre y el logo de cada organización se administran por separado/)).toBeInTheDocument()
     expect(window.localStorage.getItem('global-settings-step-up-token')).toBeNull()
@@ -106,6 +116,10 @@ describe('GlobalSettingsPage', () => {
       'short-lived-step-up-token',
       { appName: 'SIGHA Institucional' },
     ))
+    expect(brandingMock.updateBranding).toHaveBeenLastCalledWith({
+      appName: 'SIGHA Institucional',
+      logoUrl: null,
+    })
     expect(await screen.findByText('La identidad global de la plataforma se guardó correctamente.')).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Bloquear ahora' }))
@@ -123,6 +137,10 @@ describe('GlobalSettingsPage', () => {
     await user.upload(logoInput, file)
 
     await waitFor(() => expect(settingsMocks.uploadGlobalLogo).toHaveBeenCalledWith('short-lived-step-up-token', file))
+    expect(brandingMock.updateBranding).toHaveBeenLastCalledWith({
+      appName: 'SIGHA',
+      logoUrl: 'https://cdn.example/global-logo.png',
+    })
     expect(await screen.findByRole('img', { name: 'Logo global de SIGHA' })).toHaveAttribute('src', 'https://cdn.example/global-logo.png')
   })
 })

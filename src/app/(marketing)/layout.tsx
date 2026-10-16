@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { MarketingBrand, PlatformName } from '@/modules/marketing/presentation/components/MarketingBrand'
 import MarketingNavigation from '@/modules/marketing/presentation/components/MarketingNavigation'
 import StickyDemoCta from '@/modules/marketing/presentation/components/StickyDemoCta'
 import { contactEmail, legalNavigation } from '@/modules/marketing/presentation/content/marketingContent'
@@ -9,10 +10,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
     <div className="marketing-site">
       <header className="marketing-header">
         <div className="marketing-container marketing-header-inner">
-          <Link aria-label="SIGHA, inicio" className="brand" href="/">
-            <span aria-hidden="true" className="brand-mark">S</span>
-            <span>SIGHA</span>
-          </Link>
+          <MarketingBrand className="brand" />
           <MarketingNavigation />
           <div className="marketing-header-actions">
             <Link className="login-link" href="/login">Iniciar sesión</Link>
@@ -24,13 +22,11 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
       <footer className="marketing-footer">
         <div className="marketing-container footer-main">
           <div>
-            <Link aria-label="SIGHA, inicio" className="brand footer-brand" href="/">
-              <span aria-hidden="true" className="brand-mark">S</span><span>SIGHA</span>
-            </Link>
+            <MarketingBrand className="brand footer-brand" />
             <p>Información clara para coordinar mejor el cuidado de cada persona.</p>
           </div>
           <div className="footer-links">
-            <span>Explora SIGHA</span>
+            <span>Explora <PlatformName /></span>
             <Link href="/funcionalidades">Funcionalidades</Link>
             <Link href="/como-funciona">Cómo funciona</Link>
             <Link href="/planes">Planes</Link>
@@ -47,7 +43,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
         <div className="marketing-container footer-bottom">
-          <span>© {new Date().getFullYear()} SIGHA</span>
+          <span>© {new Date().getFullYear()} <PlatformName /></span>
           <span>Plataforma del Sistema Integral de Gestión Holística y de Asistencia</span>
         </div>
       </footer>

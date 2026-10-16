@@ -1,101 +1,35 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
 
-const { getCurrentMock } = vi.hoisted(() => ({
-  getCurrentMock: vi.fn(),
-}));
+const { brandingMock } = vi.hoisted(() => ({
+  brandingMock: {
+    value: { appName: 'SIGHA Global', logoUrl: 'https://cdn/platform.png' as string | null },
+  },
+}))
 
-vi.mock('@/shared/assets/images/asopogua.png', () => ({
-  default: { src: '/asopogua.png' },
-}));
+vi.mock('@/app/providers/PlatformBrandingContext', () => ({
+  usePlatformBranding: () => ({ branding: brandingMock.value, loaded: true, updateBranding: vi.fn() }),
+}))
 
-vi.mock('@/infrastructure/api/services/organizationsService', () => ({
-  organizationsService: { getCurrent: getCurrentMock },
-}));
+import { AuthLayout } from '@/shared/ui/layouts/AuthLayout/AuthLayout'
 
-vi.mock('@/app/providers/SettingsContext', () => ({
-  useAppSettings: () => ({ appName: 'SIGHA', logoUrl: '', timezone: 'America/Costa_Rica' }),
-}));
-
-import { AuthLayout, resolveAuthBrand } from '@/shared/ui/layouts/AuthLayout/AuthLayout';
-
-describe('resolveAuthBrand — cadena de fallback sin PNG genérico', () => {
-  it('usa el logo de la org activa cuando existe', () => {
-    expect(
-      resolveAuthBrand({ slug: 'otra-org', logoUrl: 'https://cdn/logo.png' }),
-    ).toBe('org-logo');
-  });
-
-  it('usa asopogua.png SOLO con slug asopogua sin logo propio', () => {
-    expect(resolveAuthBrand({ slug: 'asopogua', logoUrl: null })).toBe('asopogua');
-  });
-
-  it('marca neutra para otra org sin logo', () => {
-    expect(resolveAuthBrand({ slug: 'otra-org', logoUrl: null })).toBe('neutral');
-  });
-
-  it('marca neutra sin sesión', () => {
-    expect(resolveAuthBrand(null)).toBe('neutral');
-  });
-});
-
-describe('AuthLayout — render del fallback', () => {
+describe('AuthLayout — identidad SaaS', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    localStorage.clear();
-  });
+    vi.clearAllMocks()
+    brandingMock.value = { appName: 'SIGHA Global', logoUrl: 'https://cdn/platform.png' }
+  })
 
-  function withSession() {
-    localStorage.setItem('authToken', 'token');
-    localStorage.setItem('user', JSON.stringify({ id: 1 }));
-  }
+  it('muestra el logo global de la plataforma', () => {
+    render(<AuthLayout title="Acceso">hijos</AuthLayout>)
 
-  it('muestra el logo de la org activa', async () => {
-    withSession();
-    getCurrentMock.mockResolvedValue({
-      id: 2,
-      name: 'Otra org',
-      slug: 'otra-org',
-      logoUrl: 'https://cdn/org.png',
-    });
-    render(<AuthLayout title="Acceso">hijos</AuthLayout>);
-    const img = (await screen.findByAltText('Logo SIGHA')) as HTMLImageElement;
-    expect(img.tagName).toBe('IMG');
-    expect(img.src).toContain('https://cdn/org.png');
-  });
+    const logo = screen.getByRole('img', { name: 'Logo SIGHA Global' })
+    expect(logo.querySelector('img')).toHaveAttribute('src', 'https://cdn/platform.png')
+  })
 
-  it('muestra asopogua.png para ASOPOGUA sin logo y ninguna otra org lo ve', async () => {
-    withSession();
-    getCurrentMock.mockResolvedValue({
-      id: 1,
-      name: 'ASOPOGUA',
-      slug: 'asopogua',
-      logoUrl: null,
-    });
-    render(<AuthLayout title="Acceso">hijos</AuthLayout>);
-    const img = (await screen.findByAltText('Logo SIGHA')) as HTMLImageElement;
-    expect(img.tagName).toBe('IMG');
-    expect(img.src).toContain('asopogua.png');
-  });
+  it('usa la inicial global cuando la plataforma no tiene logo', () => {
+    brandingMock.value = { appName: 'Marea', logoUrl: null }
+    render(<AuthLayout title="Acceso">hijos</AuthLayout>)
 
-  it('marca neutra con la S para org sin logo', async () => {
-    withSession();
-    getCurrentMock.mockResolvedValue({
-      id: 2,
-      name: 'Otra org',
-      slug: 'otra-org',
-      logoUrl: null,
-    });
-    render(<AuthLayout title="Acceso">hijos</AuthLayout>);
-    await waitFor(() => expect(getCurrentMock).toHaveBeenCalled());
-    expect(screen.getByRole('img', { name: 'Logo SIGHA' })).toBeInTheDocument();
-    expect(screen.queryByAltText('Logo SIGHA')?.tagName).not.toBe('IMG');
-    expect(screen.getByText('S', { selector: 'span' })).toBeInTheDocument();
-  });
-
-  it('marca neutra sin sesión y sin llamar al backend', async () => {
-    render(<AuthLayout title="Acceso">hijos</AuthLayout>);
-    expect(screen.getByRole('img', { name: 'Logo SIGHA' })).toBeInTheDocument();
-    expect(getCurrentMock).not.toHaveBeenCalled();
-  });
-});
+    expect(screen.getByRole('img', { name: 'Logo Marea' })).toHaveTextContent('M')
+  })
+})

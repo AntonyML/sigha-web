@@ -11,7 +11,8 @@
 
 import { useState, useEffect } from 'react';
 import type { AuthUser } from '@/shared/types/auth';
-import { useAppSettings } from '@/app/providers/SettingsContext';
+import { usePlatformBranding } from '@/app/providers/PlatformBrandingContext';
+import { PlatformLogo } from '@/shared/ui/branding/PlatformLogo';
 import UserMenu        from '@/shared/ui/navigation/Navbar/UserMenu';
 import MobileBottomNav from '@/shared/ui/navigation/Navbar/MobileBottomNav';
 import GlobalSearch    from '@/shared/ui/navigation/Navbar/GlobalSearch';
@@ -40,7 +41,8 @@ function buildDisplayName(user: AuthUser | null): string {
 
 export default function Navbar() {
   const [user, setUser] = useState<AuthUser | null>(getStoredUser);
-  const { appName } = useAppSettings();
+  const { branding } = usePlatformBranding();
+  const { appName } = branding;
 
   useEffect(() => {
     const refresh = () => setUser(getStoredUser());
@@ -64,9 +66,10 @@ export default function Navbar() {
 
           {/* ── Left: Brand ── */}
           <div className="navbar-brand" aria-label={`${appName} — Inicio`}>
-            <span className="navbar-brand-icon" aria-hidden="true">
-              <span>{appName.charAt(0)}</span>
-            </span>
+            <PlatformLogo
+              className={`navbar-brand-icon${branding.logoUrl ? ' has-image' : ''}`}
+              imageClassName="navbar-brand-image"
+            />
             <span className="navbar-brand-name">{appName}</span>
           </div>
 
@@ -99,10 +102,11 @@ export default function Navbar() {
       <div className="navbar-mobile-top" aria-label="Barra superior">
         <div className="navbar-mobile-top-inner">
           <div className="navbar-brand">
-<span className="navbar-brand-icon" aria-hidden="true">
-                <span>{appName.charAt(0)}</span>
-              </span>
-              <span className="navbar-brand-name">{appName}</span>
+            <PlatformLogo
+              className={`navbar-brand-icon${branding.logoUrl ? ' has-image' : ''}`}
+              imageClassName="navbar-brand-image"
+            />
+            <span className="navbar-brand-name">{appName}</span>
           </div>
 
           <OrganizationSwitcher />

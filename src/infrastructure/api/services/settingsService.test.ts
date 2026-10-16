@@ -17,6 +17,14 @@ import { settingsService } from './settingsService'
 describe('settingsService global settings', () => {
   beforeEach(() => vi.clearAllMocks())
 
+  it('lee el nombre y logo públicos de la plataforma sin step-up', async () => {
+    const branding = { appName: 'SIGHA Bienestar', logoUrl: 'https://cdn.example/sigha.png' }
+    httpMocks.get.mockResolvedValueOnce({ data: branding })
+
+    await expect(settingsService.getPublicGlobalSettings()).resolves.toEqual(branding)
+    expect(httpMocks.get).toHaveBeenCalledWith('/settings/global/public')
+  })
+
   it('verifica el código TOTP en el endpoint de step-up', async () => {
     const grant = { accessToken: 'temporary-token', expiresAt: '2026-10-14T20:00:00.000Z' }
     httpMocks.post.mockResolvedValueOnce({ data: grant })
