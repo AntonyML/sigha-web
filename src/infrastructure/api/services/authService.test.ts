@@ -86,6 +86,20 @@ describe('authService — claims canonicos de sesion (web-1)', () => {
     expect(stored?.platformRole).toBeNull();
   });
 
+  it('getOrganizations aplica defaults seguros cuando la API omite campos opcionales del contrato', async () => {
+    getMock.mockResolvedValue({
+      data: [{ id: 5, name: 'Org', slug: 'org', logoUrl: null, isPrimary: true }],
+    });
+
+    const organizations = await authService.getOrganizations();
+
+    expect(organizations[0]).toMatchObject({
+      status: 'ACTIVE',
+      planTier: 'BASIC',
+      brandingOverrides: null,
+    });
+  });
+
   it('switchActiveOrganization usa POST /auth/context y refresca el contexto del usuario', async () => {
     localStorage.setItem('authToken', 'old-token');
     localStorage.setItem(
@@ -109,9 +123,14 @@ describe('authService — claims canonicos de sesion (web-1)', () => {
       },
     });
 
-    await authService.switchActiveOrganization(8);
+    const response = await authService.switchActiveOrganization(8);
 
     expect(postMock).toHaveBeenCalledWith('/auth/context', { organizationId: 8 });
+    expect(response.activeOrganization).toMatchObject({
+      status: 'ACTIVE',
+      planTier: 'BASIC',
+      brandingOverrides: null,
+    });
     const stored = authService.getStoredUser();
     expect(stored?.roles).toEqual(['director']);
     expect(stored?.roleIds).toEqual([4]);
