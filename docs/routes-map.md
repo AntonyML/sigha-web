@@ -32,6 +32,7 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 |---|---|
 | `/platform` | Inicio del plano de plataforma |
 | `/platform/organizations` | Gestión de organizaciones (listar, crear, estado y plan) |
+| `/platform/settings/global` | Configuración global de identidad de la plataforma |
 
 El plano de plataforma vive en su propio route group `(platform)`, separado del shell de workspace y de sus providers de organización. El acceso lo controla `src/app/platform-gate.tsx` exigiendo un rol `PLATFORM_OWNER` o `PLATFORM_SUPPORT`; la autorización real la sigue imponiendo la API.
 
@@ -39,7 +40,7 @@ El plano de plataforma vive en su propio route group `(platform)`, separado del 
 
 | Módulo | Rutas conservadas |
 |---|---|
-| Inicio y administración | `/dashboard`, `/admin`, `/settings/*` |
+| Inicio y administración | `/dashboard`, `/admin`, `/settings`, `/settings/general`, `/settings/organization`, `/settings/interface`, `/settings/security` |
 | Residentes | `/virtualFiles/*`, `/older-adult-family/*`, `/older-adult-updates`, `/emergency-contacts/*` |
 | Identidad | `/users/*`, `/roles/*`, `/permissions/*`, `/role-changes` |
 | Atención programada | `/programs/*`, `/vaccines/*`, `/sub-programs/*`, `/nursing/*`, `/specialized-appointments/*`, `/specialized-areas/*` |
