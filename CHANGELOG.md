@@ -38,3 +38,4 @@ Formato: `YYYY-MM-DD | <taskId> | tipo: resumen | verificación: resultado`.
 2026-10-15 | sigha-web-20261015-6wqn | fix: derivar firmantes y evaluadores del JWT; validar respuestas Yesavage/Pfeiffer | verificación: 134 tests y build OK; lint 0 errores (39 warnings)
 2026-10-15 | sigha-web-20261015-e8q3 | tipo: flujo de módulos | verificación: 146 pruebas, lint, typecheck y build PASS
 2026-10-15 | sigha-web-20261015-jvqg | tipo: settings | mueve la configuración global a /platform/settings/global | verificación: test:run 42 archivos/161 pruebas; lint 0 errores (39 avisos); build OK, ruta nueva presente y ruta anterior ausente.
+2026-10-15 | sigha-web-20261015-p4m8 | feat: selector de organización inspeccionada en memoria en el shell (platform) y panel de resumen de solo lectura en /platform (T7 Fase 0) | verificación: test:run 43 archivos/165 pruebas PASS en worktree y dev; lint 0 errores (39 warnings); build PASS en worktree y dev.
