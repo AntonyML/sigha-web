@@ -26,6 +26,14 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 | `/auth/verify-2fa` | Verificación de segundo factor |
 | `/auth/create-user` | Solicitud de alta |
 
+## Plataforma (SaaS)
+
+| URL | Pantalla |
+|---|---|
+| `/platform` | Inicio del plano de plataforma |
+
+El plano de plataforma vive en su propio route group `(platform)`, separado del shell de workspace y de sus providers de organización. El acceso lo controla `src/app/platform-gate.tsx` exigiendo un rol `PLATFORM_OWNER` o `PLATFORM_SUPPORT`; la autorización real la sigue imponiendo la API.
+
 ## Workspace
 
 | Módulo | Rutas conservadas |
@@ -39,4 +47,4 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 
 Las páginas con parámetros usan segmentos dinámicos de Next, por ejemplo `/users/view/[id]`, `/nursing/appointments/[id]/results` y `/nursing/patients/[patientId]/appointments`.
 
-Las pantallas migradas se mantienen como clientes durante la fase de compatibilidad. Para comprender la separación de autorización, consulta `src/app/(workspace)/layout.tsx`, `src/app/permission-gate.tsx` y `src/app/(workspace)/users/page.tsx`.
+Las pantallas migradas se mantienen como clientes durante la fase de compatibilidad. Para comprender la separación de autorización, consulta `src/app/(workspace)/layout.tsx`, `src/app/permission-gate.tsx`, `src/app/platform-gate.tsx` y `src/app/(workspace)/users/page.tsx`.
