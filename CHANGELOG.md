@@ -37,3 +37,4 @@ Formato: `YYYY-MM-DD | <taskId> | tipo: resumen | verificación: resultado`.
 2026-10-14 | sigha-web-20261014-p8zq | feat: Configuraciones Globales con acceso admin/superadmin y verificación 2FA; identidad global separada de la organización | verificación: 90 tests PASS, build OK en worktree/dev; lint 0 errores (39 warnings preexistentes).
 2026-10-15 | sigha-web-20261015-6wqn | fix: derivar firmantes y evaluadores del JWT; validar respuestas Yesavage/Pfeiffer | verificación: 134 tests y build OK; lint 0 errores (39 warnings)
 2026-10-15 | sigha-web-20261015-e8q3 | tipo: flujo de módulos | verificación: 146 pruebas, lint, typecheck y build PASS
+2026-10-15 | sigha-web-20261015-jvqg | tipo: settings | mueve la configuración global a /platform/settings/global | verificación: test:run 42 archivos/161 pruebas; lint 0 errores (39 avisos); build OK, ruta nueva presente y ruta anterior ausente.
