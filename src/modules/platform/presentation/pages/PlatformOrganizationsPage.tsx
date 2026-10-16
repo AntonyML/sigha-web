@@ -7,6 +7,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from 'react'
+import Link from 'next/link'
 import { Alert, Button, Input, LoadingSpinner } from '@/shared/ui'
 import { platformOrganizationsService } from '@/infrastructure/api/services/platformOrganizationsService'
 import {
@@ -256,7 +257,12 @@ export default function PlatformOrganizationsPage() {
               {organizations.map((org) => (
                 <tr key={org.id}>
                   <td>
-                    <div className="fw-semibold">{org.name}</div>
+                    <Link
+                      className="fw-semibold link-primary text-decoration-none"
+                      href={`/platform/organizations/view?id=${org.id}`}
+                    >
+                      {org.name}
+                    </Link>
                     <div className="text-muted small">/{org.slug}</div>
                   </td>
                   <td>{org.memberCount}</td>
