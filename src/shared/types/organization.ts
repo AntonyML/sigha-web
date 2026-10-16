@@ -1,4 +1,4 @@
-import type { PlatformBrandingOverrides } from './platform';
+import type { OrganizationStatus, PlanTier, PlatformBrandingOverrides } from './platform';
 
 export interface OrganizationSummary {
   id: number;
@@ -6,6 +6,8 @@ export interface OrganizationSummary {
   slug: string;
   logoUrl: string | null;
   isPrimary: boolean;
+  status?: OrganizationStatus;
+  planTier?: PlanTier;
   brandingOverrides?: PlatformBrandingOverrides | null;
 }
 
@@ -14,6 +16,8 @@ export interface ActiveOrganization {
   name: string;
   slug: string;
   logoUrl: string | null;
+  status?: OrganizationStatus;
+  planTier?: PlanTier;
   brandingOverrides?: PlatformBrandingOverrides | null;
 }
 

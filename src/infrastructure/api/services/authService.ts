@@ -10,6 +10,8 @@ const ORGANIZATION_SELECTION_KEY = 'organizationSelectionPending';
 function mapOrganizationSummary(organization: OrganizationSummary): OrganizationSummary {
   return {
     ...organization,
+    status: organization.status ?? 'ACTIVE',
+    planTier: organization.planTier ?? 'BASIC',
     brandingOverrides: organization.brandingOverrides ?? null,
   };
 }
@@ -17,6 +19,8 @@ function mapOrganizationSummary(organization: OrganizationSummary): Organization
 function mapActiveOrganization(organization: ActiveOrganization): ActiveOrganization {
   return {
     ...organization,
+    status: organization.status ?? 'ACTIVE',
+    planTier: organization.planTier ?? 'BASIC',
     brandingOverrides: organization.brandingOverrides ?? null,
   };
 }
