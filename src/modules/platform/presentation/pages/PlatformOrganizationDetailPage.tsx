@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Alert, LoadingSpinner } from '@/shared/ui'
 import { platformOrganizationsService } from '@/infrastructure/api/services/platformOrganizationsService'
 import type { OrganizationStatus, PlatformOrganization } from '@/shared/types/platform'
+import PlatformOrganizationMembersSection from '../components/PlatformOrganizationMembersSection'
 
 const STATUS_LABELS: Record<OrganizationStatus, string> = {
   ACTIVE: 'Activa',
@@ -41,9 +42,8 @@ interface PlatformOrganizationDetailPageProps {
 }
 
 /**
- * Read-only detail of a single tenant for the platform plane. It only consumes
- * `GET /platform/organizations/:id`; the mutations with step-up 2FA stay in the
- * listing screen.
+ * Detail of a single tenant for the platform plane, including membership
+ * management with step-up 2FA.
  */
 export default function PlatformOrganizationDetailPage({
   organizationId,
@@ -130,19 +130,10 @@ export default function PlatformOrganizationDetailPage({
             </div>
           </div>
 
-          <div className="card mb-4">
-            <div className="card-body">
-              <h2 className="h6">Membresías</h2>
-              <p className="mb-0">
-                <span className="h4 me-2">{organization.memberCount}</span>
-                <span className="text-muted">
-                  {organization.memberCount === 1
-                    ? 'miembro registrado'
-                    : 'miembros registrados'}
-                </span>
-              </p>
-            </div>
-          </div>
+          <PlatformOrganizationMembersSection
+            organizationId={organization.id}
+            initialMemberCount={organization.memberCount}
+          />
 
           <div className="card mb-4">
             <div className="card-body">
