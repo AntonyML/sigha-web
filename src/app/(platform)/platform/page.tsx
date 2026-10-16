@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Plataforma',
@@ -13,9 +14,9 @@ export default function PlatformHomePage() {
       <p className="text-muted">
         Gestión SaaS de SIGHA: organizaciones, planes y estado del servicio.
       </p>
-      <div className="alert alert-info" role="status">
-        La gestión de organizaciones y planes estará disponible en una próxima entrega.
-      </div>
+      <Link className="btn btn-primary" href="/platform/organizations">
+        Gestionar organizaciones
+      </Link>
     </section>
   )
 }
