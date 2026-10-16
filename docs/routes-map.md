@@ -31,6 +31,7 @@ Las rutas se definen con archivos `page.tsx` bajo `src/app`. Los route groups en
 | URL | Pantalla |
 |---|---|
 | `/platform` | Inicio del plano de plataforma |
+| `/platform/organizations` | Gestión de organizaciones (listar, crear, estado y plan) |
 
 El plano de plataforma vive en su propio route group `(platform)`, separado del shell de workspace y de sus providers de organización. El acceso lo controla `src/app/platform-gate.tsx` exigiendo un rol `PLATFORM_OWNER` o `PLATFORM_SUPPORT`; la autorización real la sigue imponiendo la API.
 
