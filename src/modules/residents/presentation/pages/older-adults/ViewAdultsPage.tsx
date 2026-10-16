@@ -6,7 +6,7 @@ import {
   CalendarCheck, ClipboardList, User, MessageSquareText, Sliders,
 } from 'lucide-react'
 import { PerfilDigitalRenderer } from '@/modules/residents/presentation/components/PerfilDigitalRenderer'
-import { TabResidentMemos } from '@/modules/memos/presentation/components/TabResidentMemos'
+import { TabResidentBitacora } from '@/modules/bitacora/presentation/components/TabResidentBitacora'
 import { virtualFileService } from '@/infrastructure/api/services/virtualFileService'
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService'
 import { nursingService } from '@/infrastructure/api/services/nursingService'
@@ -591,7 +591,7 @@ export default function ViewAdultsPage() {
       )}
 
       {activeTab === 'memos' && data && (
-        <TabResidentMemos
+        <TabResidentBitacora
           olderAdultId={patientId}
           residentName={data.nombreApellido}
         />

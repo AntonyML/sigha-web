@@ -48,11 +48,11 @@ describe('Memos Components', () => {
       />
     );
 
-    const textarea = screen.getByPlaceholderText('¿Qué necesita registrar o derivar sobre el residente?');
+    const textarea = screen.getByPlaceholderText(/¿Qué necesita registrar/i);
     expect(textarea).toBeDefined();
 
     fireEvent.change(textarea, { target: { value: 'Nueva observación conductual' } });
-    const submitBtn = screen.getByRole('button', { name: /Publicar Memo/i });
+    const submitBtn = screen.getByRole('button', { name: /Publicar/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
