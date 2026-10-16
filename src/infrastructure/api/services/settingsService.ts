@@ -21,6 +21,12 @@ export interface GeneralSettings {
 }
 
 export const settingsService = {
+  /** GET /settings/global/public — branding SaaS disponible en superficies públicas. */
+  getPublicGlobalSettings: async (): Promise<GlobalSettings> => {
+    const resp = await httpClient.get<GlobalSettings>('/settings/global/public');
+    return resp.data;
+  },
+
   /** GET /settings/interface */
   getInterfaceSettings: async (): Promise<InterfaceSettings> => {
     const resp = await httpClient.get<{ id: number; category: string; settings: InterfaceSettings }>('/settings/interface');

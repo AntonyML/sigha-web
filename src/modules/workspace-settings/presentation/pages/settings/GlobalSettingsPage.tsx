@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Clock3, ImagePlus, LockKeyhole, Save, ShieldCheck } from 'lucide-react'
+import { usePlatformBranding } from '@/app/providers/PlatformBrandingContext'
 import { settingsService } from '@/infrastructure/api/services/settingsService'
 import { getApiErrorMessage } from '@/shared/lib/apiError'
 import { usePermissions } from '@/shared/lib/permissionUtils'
@@ -30,6 +31,7 @@ function formatExpiry(expiry: string): string {
 
 export default function GlobalSettingsPage() {
   const router = useRouter()
+  const { updateBranding } = usePlatformBranding()
   const { isLoaded, isAdminSync, isSuperAdminSync } = usePermissions()
   const canManageGlobalSettings = isAdminSync() || isSuperAdminSync()
 
@@ -92,6 +94,7 @@ export default function GlobalSettingsPage() {
       const settings = await settingsService.getGlobalSettings(grant.accessToken)
       setAppName(settings.appName || 'SIGHA')
       setLogoUrl(settings.logoUrl || null)
+      updateBranding({ appName: settings.appName || 'SIGHA', logoUrl: settings.logoUrl || null })
       setAccessToken(grant.accessToken)
       setExpiresAt(grant.expiresAt)
       setSettingsLoaded(true)
@@ -113,6 +116,7 @@ export default function GlobalSettingsPage() {
       const updated = await settingsService.updateGlobalSettings(accessToken, { appName })
       setAppName(updated.appName)
       setLogoUrl(updated.logoUrl || null)
+      updateBranding({ appName: updated.appName, logoUrl: updated.logoUrl || null })
       setMessage('La identidad global de la plataforma se guardó correctamente.')
     } catch (requestError: unknown) {
       if ([401, 403].includes(responseStatus(requestError) ?? 0)) {
@@ -136,6 +140,7 @@ export default function GlobalSettingsPage() {
     try {
       const result = await settingsService.uploadGlobalLogo(accessToken, file)
       setLogoUrl(result.logoUrl)
+      updateBranding({ appName, logoUrl: result.logoUrl })
       setMessage('El logo global se actualizó correctamente.')
     } catch (requestError: unknown) {
       if ([401, 403].includes(responseStatus(requestError) ?? 0)) {
@@ -160,6 +165,7 @@ export default function GlobalSettingsPage() {
         logoUrl: null,
       })
       setLogoUrl(updated.logoUrl || null)
+      updateBranding({ appName: updated.appName, logoUrl: updated.logoUrl || null })
       setMessage('Se quitó el logo global de la plataforma.')
     } catch (requestError: unknown) {
       if ([401, 403].includes(responseStatus(requestError) ?? 0)) {
