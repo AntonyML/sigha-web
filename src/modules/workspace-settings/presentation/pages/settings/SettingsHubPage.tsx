@@ -107,7 +107,7 @@ const CATEGORIES: Category[] = [
     id: 'global',
     title: 'Configuraciones Globales',
     description: 'Identidad compartida de la plataforma, protegida con una verificación 2FA.',
-    path: '/settings/global',
+    path: '/platform/settings/global',
     icon: <Globe2 size={21} />,
     accent: '#6d28d9',
     bg: 'rgba(109, 40, 217, 0.10)',
