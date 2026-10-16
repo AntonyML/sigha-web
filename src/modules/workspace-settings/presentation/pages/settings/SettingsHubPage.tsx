@@ -104,6 +104,16 @@ const CATEGORIES: Category[] = [
     highlights: ['Reglas', 'Automatizaciones', 'Validaciones'],
   },
   {
+    id: 'perfil-digital',
+    title: 'Perfil Digital y Campos Dinámicos',
+    description: 'Personalización de campos y secciones dinámicas para la entidad Persona.',
+    path: '/settings/perfil-digital',
+    icon: <Sliders size={21} />,
+    accent: '#0284c7',
+    bg: 'rgba(2, 132, 199, 0.10)',
+    highlights: ['Campos personalizados', 'Secciones dinámicas', 'Sin alterar SQL'],
+  },
+  {
     id: 'global',
     title: 'Configuraciones Globales',
     description: 'Identidad compartida de la plataforma, protegida con una verificación 2FA.',

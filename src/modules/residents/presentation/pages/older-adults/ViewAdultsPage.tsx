@@ -3,8 +3,9 @@ import { useParams, useNavigate } from '@/shared/navigation'
 import {
   ArrowLeft, Pencil, AlertTriangle, Loader2,
   ShieldCheck, HeartPulse, Syringe, Activity,
-  CalendarCheck, ClipboardList, User, MessageSquareText,
+  CalendarCheck, ClipboardList, User, MessageSquareText, Sliders,
 } from 'lucide-react'
+import { PerfilDigitalRenderer } from '@/modules/residents/presentation/components/PerfilDigitalRenderer'
 import { TabResidentMemos } from '@/modules/memos/presentation/components/TabResidentMemos'
 import { virtualFileService } from '@/infrastructure/api/services/virtualFileService'
 import { specializedAppointmentsService } from '@/infrastructure/api/services/specializedAppointmentsService'
@@ -328,13 +329,14 @@ function TabMedicalRecords({ patientId, navigate }: { patientId: number; navigat
 }
 
 /* ─── Main Page ───────────────────────────────────────── */
-type TabId = 'personal' | 'appointments' | 'medical-records' | 'memos'
+type TabId = 'personal' | 'perfil-digital' | 'appointments' | 'medical-records' | 'memos'
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
-  { id: 'personal',        label: 'Datos Personales', icon: <User size={15} /> },
-  { id: 'appointments',    label: 'Citas',             icon: <CalendarCheck size={15} /> },
-  { id: 'medical-records', label: 'Registros Médicos', icon: <ClipboardList size={15} /> },
-  { id: 'memos',           label: 'Bitácora y Memos',  icon: <MessageSquareText size={15} /> },
+  { id: 'personal',        label: 'Datos Personales',           icon: <User size={15} /> },
+  { id: 'perfil-digital',  label: 'Perfil Digital (Dinámico)',  icon: <Sliders size={15} /> },
+  { id: 'appointments',    label: 'Citas',                      icon: <CalendarCheck size={15} /> },
+  { id: 'medical-records', label: 'Registros Médicos',          icon: <ClipboardList size={15} /> },
+  { id: 'memos',           label: 'Bitácora Operativa',         icon: <MessageSquareText size={15} /> },
 ]
 
 export default function ViewAdultsPage() {
@@ -570,6 +572,14 @@ export default function ViewAdultsPage() {
             </div>
           </Section>
         </>
+      )}
+
+      {activeTab === 'perfil-digital' && data && (
+        <div style={{ marginTop: '0.5rem' }}>
+          <PerfilDigitalRenderer
+            perfilId={(data as any).perfilId || String(patientId)}
+          />
+        </div>
       )}
 
       {activeTab === 'appointments' && (

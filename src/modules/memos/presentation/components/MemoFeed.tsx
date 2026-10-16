@@ -18,6 +18,7 @@ interface MemoFeedProps {
   availableRoles: Array<{ id: number; name: string }>;
   onStatusChange: (memoId: number, status: MemoStatus) => Promise<void>;
   onReply: (parentMemoId: number, payload: CreateMemoPayload) => Promise<void>;
+  onAcknowledge?: (memoId: number) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -28,6 +29,7 @@ export const MemoFeed: React.FC<MemoFeedProps> = ({
   availableRoles,
   onStatusChange,
   onReply,
+  onAcknowledge,
   isLoading = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -225,6 +227,7 @@ export const MemoFeed: React.FC<MemoFeedProps> = ({
             availableRoles={availableRoles}
             onStatusChange={onStatusChange}
             onReply={onReply}
+            onAcknowledge={onAcknowledge}
           />
         ))}
     </div>

@@ -25,6 +25,7 @@ interface MemoCardProps {
   availableRoles: Array<{ id: number; name: string }>;
   onStatusChange: (memoId: number, status: MemoStatus) => Promise<void>;
   onReply: (parentMemoId: number, payload: CreateMemoPayload) => Promise<void>;
+  onAcknowledge?: (memoId: number) => Promise<void>;
 }
 
 export const MemoCard: React.FC<MemoCardProps> = ({
@@ -34,9 +35,12 @@ export const MemoCard: React.FC<MemoCardProps> = ({
   availableRoles,
   onStatusChange,
   onReply,
+  onAcknowledge,
 }) => {
   const [showReplyComposer, setShowReplyComposer] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isAcknowledged, setIsAcknowledged] = useState(Boolean(memo.acknowledgedByMe));
+  const [isSubmittingAcuse, setIsSubmittingAcuse] = useState(false);
 
   const getInitials = (name?: string) => {
     if (!name) return '??';
@@ -299,11 +303,12 @@ export const MemoCard: React.FC<MemoCardProps> = ({
       <div
         style={{
           display: 'flex',
-          justifyContent: 'flex-start',
+          justifyContent: 'space-between',
           alignItems: 'center',
           gap: '1rem',
           paddingTop: '0.5rem',
           borderTop: '1px solid #f8fafc',
+          flexWrap: 'wrap',
         }}
       >
         <button
@@ -325,6 +330,44 @@ export const MemoCard: React.FC<MemoCardProps> = ({
           <CornerDownRight size={14} />
           <span>Responder en este hilo</span>
         </button>
+
+        {onAcknowledge && (
+          <button
+            type="button"
+            disabled={isAcknowledged || isSubmittingAcuse}
+            onClick={async () => {
+              try {
+                setIsSubmittingAcuse(true);
+                await onAcknowledge(memo.id);
+                setIsAcknowledged(true);
+              } finally {
+                setIsSubmittingAcuse(false);
+              }
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              background: isAcknowledged ? '#f0fdf4' : '#eff6ff',
+              border: `1px solid ${isAcknowledged ? '#86efac' : '#bfdbfe'}`,
+              borderRadius: '0.375rem',
+              padding: '0.25rem 0.65rem',
+              color: isAcknowledged ? '#166534' : '#1d4ed8',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: isAcknowledged ? 'default' : 'pointer',
+            }}
+          >
+            <CheckCircle2 size={13} />
+            <span>
+              {isSubmittingAcuse
+                ? 'Registrando...'
+                : isAcknowledged
+                ? 'Acuse registrado'
+                : 'Confirmar lectura'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Inline Reply Composer */}
@@ -357,6 +400,7 @@ export const MemoCard: React.FC<MemoCardProps> = ({
               availableRoles={availableRoles}
               onStatusChange={onStatusChange}
               onReply={onReply}
+              onAcknowledge={onAcknowledge}
             />
           ))}
         </div>

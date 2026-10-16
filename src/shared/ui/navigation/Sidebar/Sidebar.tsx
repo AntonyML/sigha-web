@@ -52,6 +52,7 @@ import {
   LayoutGrid,
   BedDouble,
   Apple,
+  Sliders,
 } from 'lucide-react';
 import { useTwoFactorStatus } from '@/modules/security/application/flows/twoFactor';
 import { PermissionUtils, usePermissions } from '@/shared/lib/permissionUtils';
@@ -100,12 +101,13 @@ const SECTION_ADMINISTRACION: MenuItem[] = [
   },
   {
     id: 'residentes',
-    label: 'Residentes',
+    label: 'Personas y Residentes',
     icon: <Users className={ICON_CLASS} />,
     requiredModule: 'virtualFiles',
     children: [
       { id: 'res-list',    label: 'Listado',         path: '/virtualFiles' },
       { id: 'res-create',  label: 'Crear registro',  path: '/virtualFiles/create' },
+      { id: 'res-fields',  label: 'Campos dinámicos', path: '/settings/perfil-digital' },
       { id: 'res-updates', label: 'Actualizaciones', path: '/older-adult-updates' },
     ],
   },
@@ -281,8 +283,12 @@ const SECTION_CONFIGURACION: MenuItem[] = [
     label: 'Configuración',
     path: '/settings',
     icon: <Settings className={ICON_CLASS} />,
-    // Sin requiredModule: accesible a cualquier usuario con 2FA activo;
-    // las subpáginas que requieran privilegios especiales los verifican internamente.
+  },
+  {
+    id: 'settings-perfil-digital',
+    label: 'Perfil Digital',
+    path: '/settings/perfil-digital',
+    icon: <Sliders className={ICON_CLASS} />,
   },
 ];
 
