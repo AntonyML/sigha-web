@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 
 const { serviceMock, authStorageMock } = vi.hoisted(() => ({
   serviceMock: {
@@ -69,7 +69,12 @@ describe('PlatformOrganizationMembersSection', () => {
     expect(await screen.findByText('Ana Rojas')).toBeInTheDocument()
     expect(screen.getByText('Carlos Mora')).toBeInTheDocument()
     expect(serviceMock.listMembers).toHaveBeenCalledWith(1)
-    expect(screen.getByText('Primaria')).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: 'Primaria' })).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('row', { name: /Ana Rojas/ })).getByText('Primaria', {
+        selector: 'span.badge',
+      }),
+    ).toBeInTheDocument()
     expect(screen.getByText('Secundaria')).toBeInTheDocument()
     expect(screen.getByText('Cuenta creada')).toBeInTheDocument()
     expect(screen.queryByText(/fecha de ingreso/i)).not.toBeInTheDocument()

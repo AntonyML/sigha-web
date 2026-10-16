@@ -71,6 +71,8 @@ No levantes dos `bun run dev` en el puerto `3001`; si necesitas dev server, usa 
 
 ### Entrega e integración (tú integras; el humano solo hace `push`)
 
+- Los eventos `done` e `integrated` deben incluir en el ledger las líneas literales del runner (`Test Files` / `Tests`) medidas sobre los bytes que se integran. Un resumen sin esas líneas no cuenta como verificación.
+
 1. Commit en tu rama, `git status` limpio, y appendea `event: "done"` con `branch`, `worktree`, `baseSha`, `git diff --stat`, archivos y verificaciones con resultado.
 2. Bajo el lock `dev-sigha-web`: con el checkout principal en `dev` y limpio, `fetch origin dev` y `merge --no-ff "task/<taskId>"`. Si hay conflicto → `merge --abort`, marca `blocked`, conserva el worktree, HARD STOP.
 3. **Re-verifica en `dev`** (test:run, build, lint y una comprobación funcional del flujo afectado). Que pase en el worktree no basta.
