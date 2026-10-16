@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { auditService, type DigitalRecord } from '@/infrastructure/api/services/auditService';
 import type { AuditAction } from '@/shared/types/audit';
+import { DatePicker, DateDisplay } from '@/shared/ui';
 
 export default function ActivityLogsPage() {
   const [logs, setLogs] = useState<DigitalRecord[]>([]);
@@ -88,21 +89,19 @@ export default function ActivityLogsPage() {
               </div>
             </div>
             <div className="col-md-3">
-              <input
-                type="date"
-                className="form-control"
+              <DatePicker
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(val) => setStartDate(val)}
                 placeholder="Fecha inicio"
+                containerClassName="mb-0"
               />
             </div>
             <div className="col-md-3">
-              <input
-                type="date"
-                className="form-control"
+              <DatePicker
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(val) => setEndDate(val)}
                 placeholder="Fecha fin"
+                containerClassName="mb-0"
               />
             </div>
             <div className="col-md-2">
@@ -149,7 +148,7 @@ export default function ActivityLogsPage() {
                     <td><small>{log.userName ?? log.userId ?? '—'}</small></td>
                     <td><small className="text-muted">{log.ipAddress || '—'}</small></td>
                     <td><small>{log.description ?? '—'}</small></td>
-                    <td><small>{log.timestamp ? formatDate(log.timestamp) : '—'}</small></td>
+                    <td><small>{log.timestamp ? <DateDisplay value={log.timestamp} format="datetime" /> : '—'}</small></td>
                   </tr>
                 ))}
               </tbody>

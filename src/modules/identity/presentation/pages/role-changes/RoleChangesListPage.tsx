@@ -22,6 +22,8 @@ import { roleChangesFlow } from '@/modules/identity/application/flows/role-chang
 import type { RoleChange, RoleChangeStatistics } from '@/shared/types/roleChanges'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
+import { DatePicker } from '@/shared/ui/forms/DatePicker'
+import { DateDisplay } from '@/shared/ui/data-display/DateDisplay'
 
 type ChangeKind = 'ASSIGNMENT' | 'REMOVAL' | 'UPDATE';
 
@@ -206,23 +208,17 @@ export default function RoleChangesListPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.8125rem' }}>
           <Filter size={14} aria-hidden="true" />
-          <input
-            type="date"
-            className="form-control form-control-sm"
+          <DatePicker
             value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            aria-label="Fecha desde"
-            title="Desde"
-            style={{ width: 150 }}
+            onChange={setStartDate}
+            placeholder="Desde"
+            maxDate={endDate ? new Date(endDate) : undefined}
           />
-          <input
-            type="date"
-            className="form-control form-control-sm"
+          <DatePicker
             value={endDate}
-            onChange={e => setEndDate(e.target.value)}
-            aria-label="Fecha hasta"
-            title="Hasta"
-            style={{ width: 150 }}
+            onChange={setEndDate}
+            placeholder="Hasta"
+            minDate={startDate ? new Date(startDate) : undefined}
           />
           {(startDate || endDate || searchTerm) && (
             <button
@@ -282,7 +278,7 @@ export default function RoleChangesListPage() {
                   const newName = c.newRole?.rName ?? c.rcNewRole ?? null
                   return (
                     <tr key={c.id}>
-                      <td><span style={{ color: '#475569', fontSize: '0.8125rem', fontFamily: 'monospace' }}>{formatDate(c.changedAt)}</span></td>
+                      <td><DateDisplay value={c.changedAt} format="datetime" /></td>
                       <td>
                         <span
                           className="lp-badge"

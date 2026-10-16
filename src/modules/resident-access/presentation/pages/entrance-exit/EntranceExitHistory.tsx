@@ -7,6 +7,8 @@ import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { ResidentSearchPicker } from '@/modules/residents';
 import type { PatientBasicInfo } from '@/shared/types/virtualFile';
 import type { AccessEventType, AccessLog, AccessLogFilters } from '@/shared/types/accessLog';
+import { DatePicker } from '@/shared/ui/forms';
+import { DateDisplay } from '@/shared/ui/data-display';
 
 const PAGE_SIZE = 25;
 const EVENT_LABELS: Record<AccessEventType, string> = { exit: 'Salida', return: 'Regreso', visit: 'Visita' };
@@ -101,8 +103,24 @@ export default function EntranceExitHistory() {
           <div className="col-md-6 col-xl-3"><label className="form-label" htmlFor="access-event-filter">Movimiento</label><select id="access-event-filter" className="form-select" value={form.eventType} onChange={(event) => setForm((current) => ({ ...current, eventType: event.target.value as typeof form.eventType }))}><option value="">Todos</option><option value="exit">Salida</option><option value="return">Regreso</option><option value="visit">Visita</option></select></div>
           <div className="col-md-6 col-xl-3"><ResidentSearchPicker value={resident} onChange={setResident} label="Residente" /></div>
           <div className="col-md-6 col-xl-2"><label className="form-label" htmlFor="access-visitor-filter">Visitante</label><input id="access-visitor-filter" className="form-control" value={form.visitorName} onChange={(event) => setForm((current) => ({ ...current, visitorName: event.target.value }))} maxLength={200} /></div>
-          <div className="col-md-6 col-xl-2"><label className="form-label" htmlFor="access-from-filter">Desde</label><input id="access-from-filter" className="form-control" type="date" value={form.from} onChange={(event) => setForm((current) => ({ ...current, from: event.target.value }))} /></div>
-          <div className="col-md-6 col-xl-2"><label className="form-label" htmlFor="access-to-filter">Hasta</label><input id="access-to-filter" className="form-control" type="date" value={form.to} onChange={(event) => setForm((current) => ({ ...current, to: event.target.value }))} /></div>
+          <div className="col-md-6 col-xl-2">
+            <DatePicker
+              id="access-from-filter"
+              label="Desde"
+              value={form.from}
+              onChange={(val) => setForm((current) => ({ ...current, from: val }))}
+              containerClassName="mb-0"
+            />
+          </div>
+          <div className="col-md-6 col-xl-2">
+            <DatePicker
+              id="access-to-filter"
+              label="Hasta"
+              value={form.to}
+              onChange={(val) => setForm((current) => ({ ...current, to: val }))}
+              containerClassName="mb-0"
+            />
+          </div>
           <div className="col-12 d-flex gap-2"><button className="btn btn-primary" type="submit" disabled={loading}>Filtrar</button><button className="btn btn-outline-secondary" type="button" onClick={clearFilters} disabled={loading}>Limpiar</button><button className="btn btn-outline-success ms-auto" type="button" onClick={() => exportCsv(records)} disabled={loading || records.length === 0}>Exportar esta página CSV</button></div>
         </div>
       </form>
@@ -115,7 +133,7 @@ export default function EntranceExitHistory() {
           <thead><tr><th>Fecha y hora</th><th>Movimiento</th><th>Residente</th><th>Visitante</th><th>Regreso estimado</th><th>Observaciones</th></tr></thead>
           <tbody>
             {loading ? <tr><td colSpan={6} className="text-center py-4">Cargando historial…</td></tr> : records.length === 0 ? <tr><td colSpan={6} className="text-center text-muted py-4">No hay movimientos que coincidan con los filtros.</td></tr> : records.map((record) => (
-              <tr key={record.id}><td className="text-nowrap">{formatDate(record.occurredAt)}</td><td><span className={`badge ${record.eventType === 'exit' ? 'text-bg-warning' : record.eventType === 'return' ? 'text-bg-success' : 'text-bg-info'}`}>{EVENT_LABELS[record.eventType]}</span></td><td>{record.resident?.name ?? '—'}</td><td>{record.visitorName ?? '—'}</td><td>{record.expectedReturnAt ? formatDate(record.expectedReturnAt) : '—'}</td><td>{record.notes ?? '—'}</td></tr>
+              <tr key={record.id}><td className="text-nowrap"><DateDisplay value={record.occurredAt} format="datetime" /></td><td><span className={`badge ${record.eventType === 'exit' ? 'text-bg-warning' : record.eventType === 'return' ? 'text-bg-success' : 'text-bg-info'}`}>{EVENT_LABELS[record.eventType]}</span></td><td>{record.resident?.name ?? '—'}</td><td>{record.visitorName ?? '—'}</td><td>{record.expectedReturnAt ? <DateDisplay value={record.expectedReturnAt} format="datetime" /> : '—'}</td><td>{record.notes ?? '—'}</td></tr>
             ))}
           </tbody>
         </table></div>

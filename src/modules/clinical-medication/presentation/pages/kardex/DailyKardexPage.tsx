@@ -6,6 +6,7 @@ import {
   type AdministrationStatus,
 } from '@/infrastructure/api/services/pharmacyService';
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications';
+import { DatePicker } from '@/shared/ui';
 
 export default function DailyKardexPage() {
   const [selectedDate, setSelectedDate] = useState<string>(
@@ -125,15 +126,11 @@ export default function DailyKardexPage() {
         </div>
 
         <div className="d-flex align-items-center gap-2">
-          <div className="input-group">
-            <span className="input-group-text bg-white">
-              <Calendar className="w-4 h-4 text-muted" />
-            </span>
-            <input
-              type="date"
-              className="form-control"
+          <div style={{ minWidth: 170 }}>
+            <DatePicker
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(val) => setSelectedDate(val)}
+              containerClassName="mb-0"
               aria-label="Seleccionar fecha para hoja de medicación"
             />
           </div>

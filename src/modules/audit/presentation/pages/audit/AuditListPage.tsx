@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from '@/shared/navigation';
 import { auditFlow } from '@/modules/audit/application/flows/audit';
-import { Icon } from '@/shared/ui';
+import { Icon, DatePicker, DateDisplay } from '@/shared/ui';
 import type { AuditReport, SearchAuditReportsDto } from '@/shared/types/audit';
 import { AuditAction } from '@/shared/types/audit';
 
@@ -200,12 +200,20 @@ export default function AuditListPage() {
                             </select>
                         </div>
                         <div className="col-md-2">
-                            <label className="form-label">Fecha inicio</label>
-                            <input type="date" className="form-control" value={startDate} onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }} />
+                            <DatePicker
+                                label="Fecha inicio"
+                                value={startDate}
+                                onChange={(val) => { setStartDate(val); setCurrentPage(1); }}
+                                containerClassName="mb-0"
+                            />
                         </div>
                         <div className="col-md-2">
-                            <label className="form-label">Fecha fin</label>
-                            <input type="date" className="form-control" value={endDate} onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }} />
+                            <DatePicker
+                                label="Fecha fin"
+                                value={endDate}
+                                onChange={(val) => { setEndDate(val); setCurrentPage(1); }}
+                                containerClassName="mb-0"
+                            />
                         </div>
                     </div>
                     <div className="mt-3">
@@ -252,7 +260,7 @@ export default function AuditListPage() {
                                     {filteredRecords.map((record) => (
                                         <tr key={record.id}>
                                             <td><code>#{record.id}</code></td>
-                                            <td><small>{auditFlow.formatAuditDate(record.create_at)}</small></td>
+                                            <td><small><DateDisplay value={record.create_at} format="datetime" /></small></td>
                                             <td>
                                                 <span className={`badge ${auditFlow.getActionBadgeClass(record.ar_action as AuditAction)} d-inline-flex align-items-center`}>
                                                     <Icon name={auditFlow.getActionIcon(record.ar_action as AuditAction)} size="sm" className="me-1" />

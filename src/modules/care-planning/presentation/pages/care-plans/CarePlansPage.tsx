@@ -6,6 +6,8 @@ import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { usePermissions } from '@/shared/lib/permissionUtils';
 import { ResidentSearchPicker } from '@/modules/residents';
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications';
+import { DatePicker } from '@/shared/ui/forms/DatePicker';
+import { DateDisplay } from '@/shared/ui/data-display/DateDisplay';
 import type { PatientBasicInfo } from '@/shared/types/virtualFile';
 import type { CareProgram, CareScaleEvaluation, CarePlanStatus, ResidentProgramEnrollment } from '@/shared/types/carePlan';
 
@@ -286,7 +288,7 @@ export default function CarePlansPage() {
                   </div>
                   <div className="col-md-3">
                     <label className="form-label fw-semibold" htmlFor="care-start-date">Fecha de inicio</label>
-                    <input id="care-start-date" type="date" className="form-control" value={startedAt} onChange={(event) => setStartedAt(event.target.value)} required disabled={saving} />
+                    <DatePicker id="care-start-date" value={startedAt} onChange={setStartedAt} required disabled={saving} />
                   </div>
                   <div className="col-md-3">
                     <label className="form-label fw-semibold" htmlFor="care-goals">Metas de cuidado</label>
@@ -317,20 +319,22 @@ export default function CarePlansPage() {
                 <tbody>
                   {loading ? <tr><td colSpan={6} className="text-center py-4">Cargando inscripciones…</td></tr> : enrollments.length === 0 ? <tr><td colSpan={6} className="text-center text-muted py-4">No hay inscripciones para mostrar.</td></tr> : enrollments.map((enrollment) => (
                     <tr key={enrollment.id}>
-                      <td>{enrollment.resident?.name ?? `Residente ${enrollment.idOlderAdult}`}</td>
-                      <td><strong>{enrollment.subprogram?.programName ?? 'Programa'}</strong><br />{enrollment.subprogram?.name ?? `Subprograma ${enrollment.subprogramId}`}</td>
-                      <td>{enrollment.scaleEvaluation ? <><strong>{enrollment.scaleEvaluation.scaleType}</strong><br /><small>{enrollment.scaleEvaluation.totalScore} · {new Date(enrollment.scaleEvaluation.evaluatedAt).toLocaleDateString('es-CR')}</small></> : <span className="text-muted">Sin asociar</span>}</td>
-                      <td style={{ minWidth: 240 }}>
-                        <textarea className="form-control form-control-sm" rows={2} aria-label={`Metas de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={goalDrafts[enrollment.id] ?? ''} onChange={(event) => setGoalDrafts((current) => ({ ...current, [enrollment.id]: event.target.value }))} disabled={!canEdit || saving} />
-                        {canEdit && <button type="button" className="btn btn-link btn-sm p-0 mt-1" onClick={() => void saveGoals(enrollment)} disabled={saving}>Guardar metas</button>}
-                      </td>
-                      <td style={{ minWidth: 180 }}>
-                        {canEdit ? <div className="d-grid gap-1">
-                          <label className="small">Inicio<input type="date" className="form-control form-control-sm" aria-label={`Fecha de inicio de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={dateDrafts[enrollment.id]?.startedAt ?? ''} onChange={(event) => setDateDrafts((current) => ({ ...current, [enrollment.id]: { startedAt: event.target.value, endedAt: current[enrollment.id]?.endedAt ?? '' } }))} disabled={saving} /></label>
-                          <label className="small">Fin<input type="date" className="form-control form-control-sm" aria-label={`Fecha de término de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={dateDrafts[enrollment.id]?.endedAt ?? ''} onChange={(event) => setDateDrafts((current) => ({ ...current, [enrollment.id]: { startedAt: current[enrollment.id]?.startedAt ?? asLocalDate(enrollment.startedAt), endedAt: event.target.value } }))} disabled={saving || enrollment.status === 'active'} /></label>
-                          <button type="button" className="btn btn-link btn-sm p-0 text-start" onClick={() => void saveDates(enrollment)} disabled={saving}>Guardar fechas</button>
-                        </div> : <small>Inicio: {new Date(enrollment.startedAt).toLocaleDateString('es-CR')}<br />Fin: {enrollment.endedAt ? new Date(enrollment.endedAt).toLocaleDateString('es-CR') : '—'}</small>}
-                      </td>
+                       <td>{enrollment.resident?.name ?? `Residente ${enrollment.idOlderAdult}`}</td>
+                       <td><strong>{enrollment.subprogram?.programName ?? 'Programa'}</strong><br />{enrollment.subprogram?.name ?? `Subprograma ${enrollment.subprogramId}`}</td>
+                       <td>{enrollment.scaleEvaluation ? <><strong>{enrollment.scaleEvaluation.scaleType}</strong><br /><small>{enrollment.scaleEvaluation.totalScore} · <DateDisplay value={enrollment.scaleEvaluation.evaluatedAt} /></small></> : <span className="text-muted">Sin asociar</span>}</td>
+                       <td style={{ minWidth: 240 }}>
+                         <textarea className="form-control form-control-sm" rows={2} aria-label={`Metas de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={goalDrafts[enrollment.id] ?? ''} onChange={(event) => setGoalDrafts((current) => ({ ...current, [enrollment.id]: event.target.value }))} disabled={!canEdit || saving} />
+                         {canEdit && <button type="button" className="btn btn-link btn-sm p-0 mt-1" onClick={() => void saveGoals(enrollment)} disabled={saving}>Guardar metas</button>}
+                       </td>
+                       <td style={{ minWidth: 180 }}>
+                         {canEdit ? <div className="d-grid gap-1">
+                           <label className="small">Inicio</label>
+                           <DatePicker aria-label={`Fecha de inicio de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={dateDrafts[enrollment.id]?.startedAt ?? ''} onChange={(val) => setDateDrafts((current) => ({ ...current, [enrollment.id]: { startedAt: val, endedAt: current[enrollment.id]?.endedAt ?? '' } }))} disabled={saving} />
+                           <label className="small">Fin</label>
+                           <DatePicker aria-label={`Fecha de término de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={dateDrafts[enrollment.id]?.endedAt ?? ''} onChange={(val) => setDateDrafts((current) => ({ ...current, [enrollment.id]: { startedAt: current[enrollment.id]?.startedAt ?? asLocalDate(enrollment.startedAt), endedAt: val } }))} disabled={saving || enrollment.status === 'active'} />
+                           <button type="button" className="btn btn-link btn-sm p-0 text-start" onClick={() => void saveDates(enrollment)} disabled={saving}>Guardar fechas</button>
+                         </div> : <small>Inicio: <DateDisplay value={enrollment.startedAt} /><br />Fin: {enrollment.endedAt ? <DateDisplay value={enrollment.endedAt} /> : '—'}</small>}
+                       </td>
                       <td>
                         {canEdit ? <select className="form-select form-select-sm" aria-label={`Estado de ${enrollment.resident?.name ?? enrollment.idOlderAdult}`} value={enrollment.status} onChange={(event) => void updateStatus(enrollment, event.target.value as CarePlanStatus)} disabled={saving}>
                           <option value="active">Activo</option><option value="completed">Completado</option><option value="cancelled">Cancelado</option>

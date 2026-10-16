@@ -8,6 +8,7 @@ import { virtualFileService } from '@/infrastructure/api/services/virtualFileSer
 import { useFeedbackWithNotifications } from '@/shared/hooks/useFeedbackWithNotifications'
 import { usePagination } from '@/shared/hooks/usePagination'
 import Pagination from '@/shared/ui/data-display/Pagination/Pagination'
+import { DatePicker, DateDisplay } from '@/shared/ui'
 import type { VirtualFile } from '@/shared/types/virtualFile'
 
 /* ── Helpers ──────────────────────────────────────────────── */
@@ -213,20 +214,22 @@ export default function ListVirtualFile() {
           )}
         </div>
         {/* Date from */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <Calendar size={12} /> Desde
-          </label>
-          <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-            style={{ padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', fontSize: '0.875rem', background: '#f8fafc' }} />
+        <div style={{ minWidth: 150 }}>
+          <DatePicker
+            label="Desde"
+            value={dateFrom}
+            onChange={(val) => setDateFrom(val)}
+            containerClassName="mb-0"
+          />
         </div>
         {/* Date to */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          <label style={{ fontSize: '0.7rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <Calendar size={12} /> Hasta
-          </label>
-          <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-            style={{ padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0', borderRadius: '0.5rem', fontSize: '0.875rem', background: '#f8fafc' }} />
+        <div style={{ minWidth: 150 }}>
+          <DatePicker
+            label="Hasta"
+            value={dateTo}
+            onChange={(val) => setDateTo(val)}
+            containerClassName="mb-0"
+          />
         </div>
         {/* Status */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
